@@ -191,7 +191,8 @@ inline constexpr ParamInfo kParams[kNumParams] = {
 
     detail::toggle  ("sub_on",           "On",                  false),
     detail::choice  ("sub_wave",         "Wave",         "Sine|Triangle|Square|Pulse", 4, 0),
-    detail::choice  ("sub_octave",       "Octave",       "-1 oct|-2 oct", 2, 0),
+    // vae-synth: appended 0..+3 and -3 so the sub can stand in for Surge's Osc 3.
+    detail::choice  ("sub_octave",       "Octave",       "-1 oct|-2 oct|-3 oct|0 oct|+1 oct|+2 oct|+3 oct", 7, 0),
     detail::cont    ("sub_level",        "Sub",          "",    0.0f,   1.0f,     0.5f),
     detail::cont    ("noise_level",      "Noise",        "",    0.0f,   1.0f,     0.0f),
 

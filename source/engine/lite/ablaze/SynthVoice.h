@@ -192,7 +192,7 @@ public:
         const TableTap prev = tableFade > 0.0f ? makeTap (prevTable, level, vp.oscAPos) : cur;
 
         oscB.setIncrement (baseHz * semisToRatio (vp.oscBSemis) / sr);
-        sub.setIncrement (baseHz * vp.subRatio / sr);
+        sub.setIncrement (juce::jmin (0.49f, baseHz * vp.subRatio / sr));   // vae-synth: sub can now go up 3 oct
         const AnalogWave subShape = subWaveToAnalog (vp.subWave);
 
         const float keyOct = vp.keytrack * (static_cast<float> (note) - 60.0f) / 12.0f;

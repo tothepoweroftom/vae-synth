@@ -201,7 +201,8 @@ void SynthEngine::updateControlBlock (int numSamples)
 
     p.subGain = v[kParamSubOn] * v[kParamSubLevel];
     p.subWave = static_cast<SubWave> (asInt (kParamSubWave));
-    p.subRatio = asInt (kParamSubOctave) == 0 ? 0.5f : 0.25f;
+    static constexpr float kSubRatios[] = { 0.5f, 0.25f, 0.125f, 1.0f, 2.0f, 4.0f, 8.0f };
+    p.subRatio = kSubRatios[juce::jlimit (0, 6, asInt (kParamSubOctave))];
 
     p.noiseGain = v[kParamNoiseLevel] * 0.5f;
 
