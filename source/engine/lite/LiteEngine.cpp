@@ -20,7 +20,7 @@ void LiteEngine::prepare (double newSampleRate, int)
 {
     sampleRate = float (newSampleRate);
     if (wavetable == nullptr)
-        wavetable = ablaze::makeFormantTable();
+        wavetable = dsp::makeFormantTable();
 
     for (size_t i = 0; i < voices.size(); ++i)
         voices[i].prepare (sampleRate, wavetable.get(), uint32_t (0x5eed + 977 * i));
@@ -258,7 +258,7 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
         right[i] = std::clamp (right[i] * patch.masterGain, -kOutputLimit, kOutputLimit);
         check += left[i] + right[i];
     }
-    if (! ablaze::isFiniteBits (check))
+    if (! dsp::isFiniteBits (check))
     {
         // Should be unreachable; recover instead of recirculating NaN in FX tails.
         buffer.clear();

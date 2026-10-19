@@ -36,7 +36,7 @@ public:
     // Calibrates the default patch to Surge's level (single saw, note 60).
     static constexpr float kVoiceGain = 0.25f;
 
-    void prepare (float sampleRate, const ablaze::Wavetable* wavetables, uint32_t seed)
+    void prepare (float sampleRate, const dsp::Wavetable* wavetables, uint32_t seed)
     {
         sr = sampleRate;
         table = wavetables;
@@ -271,7 +271,7 @@ private:
     };
 
     float sr = 48000.0f;
-    const ablaze::Wavetable* table = nullptr;
+    const dsp::Wavetable* table = nullptr;
     std::array<Oscillator, 3> osc;
     std::array<FilterUnit, 2> filter;
     ShapedEnvelope amp, feg;

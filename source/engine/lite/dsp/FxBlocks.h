@@ -1,7 +1,6 @@
 /*
   FX building blocks for the Lite engine: an RBJ biquad and a circular delay
-  line. Derived from Ablaze.WASMSynth@947be83 (source/engine/FxChain.h),
-  trimmed to these two classes; DelayLine gained restart() (vae-synth).
+  line with an O(1) restart().
 */
 
 #pragma once
@@ -11,7 +10,7 @@
 #include <cmath>
 #include <vector>
 
-namespace ablaze::fx
+namespace vae::dsp::fx
 {
 
 /** RBJ-cookbook biquad, transposed direct form II, stereo. */
@@ -115,4 +114,4 @@ private:
     int mask = 0, writePos = 0, written = 0;
 };
 
-} // namespace ablaze::fx
+} // namespace vae::dsp::fx

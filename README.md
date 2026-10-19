@@ -23,15 +23,13 @@ prompt ──► PromptEncoder ──► latent[8] ──► LatentDecoder ─�
 | `source/schema/` | `Snapshot`, feature encode/decode, `mockDecode`, and `SurgeCurves.h` (curve units, display) |
 | `tools/` | `vae_schema.py` (Python twin of the schema) and `surge_preset_to_vector.py` (Surge `.fxp` → vectors, for the dataset sampler) |
 | `source/engine/SynthEngine.h` | Backend interface + factory |
-| `source/engine/lite/` | **Lite** backend: Surge-shaped subset on the permissive DSP vendored from Ablaze.WASMSynth (`lite/ablaze/`) |
+| `source/engine/lite/` | **Lite** backend: Surge-shaped subset on the permissive DSP building blocks in `lite/dsp/` |
 | `source/engine/surge/` | **Surge XT** backend: headless `surge-common` (only with `VAE_WITH_SURGE=ON`, GPL) |
 | `source/ml/` | ONNX Runtime (loaded at runtime), generic `OnnxModel`, `PresetGenerator` (encoder → decoder on a worker thread) |
 | `source/params/` | Clean-room parameter store (`ParamStore`, UI bindings), built from `docs/specs/parameter-manager.md` |
 | `source/plugin/` | `AudioProcessor`, editor, look and feel |
 | `models/` | `make_stub_decoder.py` and the committed `stub_decoder.onnx` (embedded in the plug-in) |
 | `tests/` | `vae_params_tests`, `vae_engine_tests`, `vae_ml_tests`, `vae_schema_tools` (CTest) |
-
-No AudioFX.Core dependency.
 
 ## Build
 

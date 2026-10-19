@@ -1,8 +1,6 @@
 /*
   Per-voice DSP building blocks: PolyBLEP analog oscillator, TPT
   state-variable filter, noise. Header-only, allocation-free.
-  Derived from Ablaze.WASMSynth@947be83 (source/engine/VoiceDsp.h), trimmed
-  to what the Lite engine uses.
 */
 
 #pragma once
@@ -11,7 +9,7 @@
 #include <cstdint>
 #include <cstring>
 
-namespace ablaze
+namespace vae::dsp
 {
 
 enum class AnalogWave : int { Sine, Triangle, Saw, Square };
@@ -163,4 +161,4 @@ private:
     uint32_t state = 0x9e3779b9u;
 };
 
-} // namespace ablaze
+} // namespace vae::dsp

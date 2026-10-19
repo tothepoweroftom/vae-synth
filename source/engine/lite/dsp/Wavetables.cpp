@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace ablaze
+namespace vae::dsp
 {
 
 namespace
@@ -169,4 +169,4 @@ std::unique_ptr<Wavetable> makeFormantTable()
     return Wavetable::fromSpectra (spectra, kFrames);
 }
 
-} // namespace ablaze
+} // namespace vae::dsp

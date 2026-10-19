@@ -10,7 +10,7 @@
 #pragma once
 
 #include "LitePatch.h"
-#include "ablaze/FxBlocks.h"
+#include "dsp/FxBlocks.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -93,7 +93,7 @@ private:
     // modelled as low shelf / peak / high shelf.
     void processEq (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        using B = ablaze::fx::Biquad;
+        using B = dsp::fx::Biquad;
         eq[0].set (B::Shape::LowShelf, schema::surge::semitonesToHz (-30.0f), p.eqLowDb, 0.707f, sr);
         eq[1].set (B::Shape::Peak, p.eqMidHz, p.eqMidDb, 0.67f, sr);
         eq[2].set (B::Shape::HighShelf, schema::surge::semitonesToHz (54.0f), p.eqHighDb, 0.707f, sr);
@@ -212,14 +212,14 @@ private:
     float sr = 48000.0f;
     std::array<bool, 6> wasOn {};
     float tone[2][2] {};
-    ablaze::fx::Biquad eq[3];
-    ablaze::fx::DelayLine chorus[2];
+    dsp::fx::Biquad eq[3];
+    dsp::fx::DelayLine chorus[2];
     float chorusPhase = 0.0f;
     float allpass[2][4] {};
     float modState[2] {};
-    ablaze::fx::DelayLine flanger[2];
+    dsp::fx::DelayLine flanger[2];
     float modPhase = 0.0f;
-    ablaze::fx::DelayLine delay[2];
+    dsp::fx::DelayLine delay[2];
     float delayLp[2] {};
     juce::Reverb reverb;
 };

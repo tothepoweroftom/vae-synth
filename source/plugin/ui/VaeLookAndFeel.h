@@ -1,6 +1,5 @@
 /*
-  Look and feel carried over from Ablaze.WASMSynth (source/plugin/PluginEditor):
-  Swiss modern, inverted: black paper, white ink, one signal green for values
+  Look and feel: Swiss modern, inverted: black paper, white ink, one signal green for values
   and "on" states. Hairline rules, no fills or gradients, Inter throughout.
 */
 

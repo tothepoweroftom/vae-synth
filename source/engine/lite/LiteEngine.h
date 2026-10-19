@@ -58,7 +58,7 @@ private:
     void renderVoices (float* left, float* right, int numSamples);
     float glideSource() const noexcept;
 
-    std::shared_ptr<const ablaze::Wavetable> wavetable;
+    std::shared_ptr<const dsp::Wavetable> wavetable;
     schema::Snapshot controls = schema::Snapshot::defaults();
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;

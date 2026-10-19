@@ -1,14 +1,14 @@
 /*
   Per-voice DSP for the Lite engine: shaped ADSR, LFO, dual-SVF filter unit
   and a multi-wave oscillator. Header-only, allocation-free. Oscillator,
-  filter core and noise come from the vendored Ablaze DSP (ablaze/VoiceDsp.h).
+  filter core and noise are the building blocks in dsp/VoiceDsp.h.
 */
 
 #pragma once
 
 #include "LitePatch.h"
-#include "ablaze/VoiceDsp.h"
-#include "ablaze/Wavetables.h"
+#include "dsp/VoiceDsp.h"
+#include "dsp/Wavetables.h"
 
 #include <algorithm>
 #include <cmath>
@@ -159,7 +159,7 @@ public:
 private:
     float phase = 0.0f;
     float current = 0.0f, target = 0.0f;
-    ablaze::Noise rng;
+    dsp::Noise rng;
 };
 
 /** One filter slot (mono): SVF, two cascaded for the 24 dB types. */
@@ -202,8 +202,8 @@ public:
 
 private:
     FilterType type = FilterType::Off;
-    ablaze::SvfCoefs resonant, flat;
-    ablaze::Svf a, b;
+    dsp::SvfCoefs resonant, flat;
+    dsp::Svf a, b;
 };
 
 /** One oscillator slot: every schema wave, band-limited where it matters. */
@@ -219,19 +219,19 @@ public:
     }
 
     /** Per control block: frequency as a phase increment (cycles/sample). */
-    void setIncrement (float inc, Wave wave, const ablaze::Wavetable* table) noexcept
+    void setIncrement (float inc, Wave wave, const dsp::Wavetable* table) noexcept
     {
         increment = std::min (inc, 0.49f);
         analog.setIncrement (increment);
         if (wave == Wave::Wavetable && table != nullptr)
         {
-            const int level = ablaze::Wavetable::levelForMaxHarmonics (0.5f / std::max (1.0e-6f, increment));
+            const int level = dsp::Wavetable::levelForMaxHarmonics (0.5f / std::max (1.0e-6f, increment));
             const int frames = table->getNumFrames();
             const float framePos = kWavetablePosition * float (frames - 1);
             const int f0 = std::min (int (framePos), std::max (0, frames - 2));
             frameA = table->getFrame (level, f0);
             frameB = table->getFrame (level, std::min (f0 + 1, frames - 1));
-            frameSize = float (ablaze::Wavetable::levelSize (level));
+            frameSize = float (dsp::Wavetable::levelSize (level));
             frameMix = framePos - float (f0);
         }
     }
@@ -240,10 +240,10 @@ public:
     {
         switch (wave)
         {
-            case Wave::Sine:     return analog.next (ablaze::AnalogWave::Sine);
-            case Wave::Triangle: return analog.next (ablaze::AnalogWave::Triangle);
-            case Wave::Saw:      return analog.next (ablaze::AnalogWave::Saw);
-            case Wave::Square:   return analog.next (ablaze::AnalogWave::Square);
+            case Wave::Sine:     return analog.next (dsp::AnalogWave::Sine);
+            case Wave::Triangle: return analog.next (dsp::AnalogWave::Triangle);
+            case Wave::Saw:      return analog.next (dsp::AnalogWave::Saw);
+            case Wave::Square:   return analog.next (dsp::AnalogWave::Square);
             case Wave::Noise:    return kNoiseGain * noise.next();
             case Wave::Wavetable:
             {
@@ -279,8 +279,8 @@ public:
     static constexpr float kNoiseGain = 0.6f;
 
 private:
-    ablaze::AnalogOsc analog;
-    ablaze::Noise noise;
+    dsp::AnalogOsc analog;
+    dsp::Noise noise;
     float increment = 0.0f;
     float wtPhase = 0.0f, carrier = 0.0f, modulator = 0.0f;
     const float* frameA = nullptr;
