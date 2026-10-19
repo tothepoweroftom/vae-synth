@@ -101,4 +101,74 @@ inline schema::Snapshot randomSnapshot (juce::Random& rng)
 
 inline const char* engineLabel (EngineKind k) { return k == EngineKind::Surge ? "Surge" : "Lite"; }
 
+namespace testutil
+{
+/** Drives an engine block by block with arbitrary MIDI; blocks may be empty
+    (0 samples), as some hosts send to flush MIDI. Keeps the left channel. */
+struct Player
+{
+    explicit Player (SynthEngine& e) : engine (e) {}
+
+    /** One block of `n` samples (n >= 0) with these messages at offset 0. */
+    void block (int n, std::initializer_list<juce::MidiMessage> messages = {})
+    {
+        juce::AudioBuffer<float> buffer (2, juce::jmax (1, n));
+        buffer.setSize (2, n, false, false, true);
+        juce::MidiBuffer midi;
+        for (const auto& m : messages)
+            midi.addEvent (m, 0);
+        engine.process (buffer, midi);
+        for (int i = 0; i < n; ++i)
+        {
+            const float s = buffer.getSample (0, i);
+            finite = finite && std::isfinite (s);
+            left.push_back (s);
+        }
+    }
+
+    /** Render `n` samples in blocks of 256 with no MIDI. */
+    void run (int n)
+    {
+        for (int done = 0; done < n; done += 256)
+            block (juce::jmin (256, n - done));
+    }
+
+    float peak (size_t from, size_t to) const
+    {
+        float p = 0.0f;
+        for (size_t i = from; i < juce::jmin (to, left.size()); ++i)
+            p = juce::jmax (p, std::abs (left[i]));
+        return p;
+    }
+    float tailPeak (size_t samples) const { return peak (left.size() - juce::jmin (samples, left.size()), left.size()); }
+
+    /** Pitch from positive-going zero crossings in [from, to). */
+    float zeroCrossingHz (size_t from, size_t to, double sampleRate) const
+    {
+        int crossings = 0;
+        size_t first = 0, last = 0;
+        for (size_t i = from + 1; i < juce::jmin (to, left.size()); ++i)
+            if (left[i - 1] <= 0.0f && left[i] > 0.0f)
+            {
+                if (crossings++ == 0)
+                    first = i;
+                last = i;
+            }
+        return crossings > 1 ? float (double (crossings - 1) * sampleRate / double (last - first)) : 0.0f;
+    }
+
+    SynthEngine& engine;
+    std::vector<float> left;
+    bool finite = true;
+};
+
+/** Default patch with osc 1 set to a sine (easy pitch measurement). */
+inline schema::Snapshot sinePatch()
+{
+    auto s = schema::Snapshot::defaults();
+    s[schema::kOsc1Wave] = float (*schema::optionIndex (schema::kOsc1Wave, "sine"));
+    return s;
+}
+} // namespace testutil
+
 } // namespace vae

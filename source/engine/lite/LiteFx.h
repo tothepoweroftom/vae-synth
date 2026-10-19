@@ -1,14 +1,16 @@
 /*
   The Lite FX chain, in the schema's fixed order:
     distortion -> EQ -> chorus -> phaser/flanger -> delay -> reverb
-  Each block is skipped when off; its state is cleared when it switches off
-  so a stale tail never reappears. Buffers are allocated in prepare() only.
+  Each block is skipped when off; its state is forgotten when it switches off
+  so a stale tail never reappears (delay lines restart in O(1) rather than
+  clearing their buffers on the audio thread). Buffers are allocated in
+  prepare() only.
 */
 
 #pragma once
 
 #include "LitePatch.h"
-#include "ablaze/FxChain.h"   // fx::Biquad, fx::DelayLine
+#include "ablaze/FxBlocks.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -122,7 +124,7 @@ private:
             r[i] += p.chorusMix * (wr - r[i]);
         }
     }
-    void resetChorus() noexcept { chorus[0].clear(); chorus[1].clear(); }
+    void resetChorus() noexcept { chorus[0].restart(); chorus[1].restart(); }
 
     // Phaser (4 first-order all-passes, swept) or flanger (short modulated delay).
     void processMod (float* l, float* r, int n, const FxSettings& p) noexcept
@@ -170,8 +172,8 @@ private:
             for (auto& z : c)
                 z = 0.0f;
         modState[0] = modState[1] = 0.0f;
-        flanger[0].clear();
-        flanger[1].clear();
+        flanger[0].restart();
+        flanger[1].restart();
     }
 
     // Delay: unsynced stereo delay with gentle damping; mix crossfades dry/wet.
@@ -190,7 +192,7 @@ private:
                 ch[k][i] += p.delayMix * (wet - ch[k][i]);
             }
     }
-    void resetDelay() noexcept { delay[0].clear(); delay[1].clear(); delayLp[0] = delayLp[1] = 0.0f; }
+    void resetDelay() noexcept { delay[0].restart(); delay[1].restart(); delayLp[0] = delayLp[1] = 0.0f; }
 
     // Reverb: juce::Reverb (Freeverb); decay time and size both drive room size.
     void processReverb (float* l, float* r, int n, const FxSettings& p) noexcept

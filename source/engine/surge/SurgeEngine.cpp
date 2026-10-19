@@ -186,6 +186,7 @@ struct SurgeEngine::Impl
     std::unordered_map<std::string, Parameter*> byName;
     std::array<Parameter*, kControlCount> direct {};   // continuous / int controls with one Surge param
     std::array<Parameter*, 7> destinations {};         // route destination option -> param (none = null)
+    std::array<Parameter*, 2> filterSubtype {};         // a_filter1_subtype, a_filter2_subtype
 
     std::array<bool, 3> oscDirty {};
     std::array<bool, std::size (kFxUnits)> fxDirty {};
@@ -252,6 +253,7 @@ struct SurgeEngine::Impl
 
         destinations = { nullptr, find ("a_pitch"), find ("a_filter1_cutoff"), find ("a_filter2_cutoff"),
                          find ("a_filter1_resonance"), find ("a_volume"), find ("a_pan") };
+        filterSubtype = { find ("a_filter1_subtype"), find ("a_filter2_subtype") };
     }
 
     int numResolved() const
@@ -333,8 +335,7 @@ struct SurgeEngine::Impl
             case kFilter1Type: case kFilter2Type:
             {
                 setUnits (*p, float (kFilterTypes[k]));
-                auto* subtype = find (index == kFilter1Type ? "a_filter1_subtype" : "a_filter2_subtype");
-                if (subtype != nullptr)
+                if (auto* subtype = filterSubtype[index == kFilter1Type ? 0 : 1])
                     setUnits (*subtype, 0.0f);
                 return;
             }
@@ -378,17 +379,36 @@ struct SurgeEngine::Impl
     //--------------------------------------------------------------------------
     Parameter& fxTypeParam (int unit) { return synth->storage.getPatch().fx[kFxUnits[unit].slot].type; }
 
+    /** Load a unit's FX type (lazy: settle() makes it live, which allocates).
+        Done for every unit in prepare(), and again only when modfx_type changes. */
+    void stageFxType (int unit)
+    {
+        // setParameter01 on an FX type stages it in fxsync; loadFx makes it live.
+        setUnits (fxTypeParam (unit), float (fxTypeFor (unit, controls)));
+        fxDirty[(size_t) unit] = true;
+    }
+
     void writeFx (int unit, int index)
     {
-        const bool on = controls[kFxUnits[unit].onControl] >= 0.5f;
-        if (index == kFxUnits[unit].onControl || index == kModfxType)
+        if (index == kFxUnits[unit].onControl)
         {
-            // setParameter01 on an FX type stages it in fxsync; loadFx makes it live.
-            setUnits (fxTypeParam (unit), float (on ? fxTypeFor (unit, controls) : fxt_off));
-            fxDirty[(size_t) unit] = true;
+            // On/off goes through Surge's per-slot fx_disable bits: the effect
+            // stays loaded, so toggling never allocates on the audio thread.
+            const int slot = kFxUnits[unit].slot;
+            const bool on = controls[index] >= 0.5f;
+            auto& mask = synth->storage.getPatch().fx_disable.val.i;
+            const bool wasOn = (mask & (1 << slot)) == 0;
+            mask = on ? (mask & ~(1 << slot)) : (mask | (1 << slot));
+            if (wasOn && ! on && synth->fx[slot] != nullptr)
+                synth->fx[slot]->suspend();   // no stale tail when re-enabled
             return;
         }
-        if (on && ! fxDirty[(size_t) unit])
+        if (index == kModfxType)
+        {
+            stageFxType (unit);
+            return;
+        }
+        if (! fxDirty[(size_t) unit])
             writeFxParam (unit, index);
     }
 
@@ -521,6 +541,10 @@ void SurgeEngine::prepare (double sampleRate, int)
     impl->fxDirty.fill (false);
     impl->routeDestination.fill (0);
 
+    // Load the fixed FX chain once; *_on only flips fx_disable bits afterwards.
+    for (int u = 0; u < int (std::size (kFxUnits)); ++u)
+        impl->stageFxType (u);
+
     // Make every wave's parameters explicit, even when the osc type is the default.
     for (int n = 0; n < 3; ++n)
         impl->oscDirty[(size_t) n] = true;
@@ -618,6 +642,11 @@ float SurgeEngine::oscParam (int osc, int k) const
 int SurgeEngine::fxType (int slot) const
 {
     return impl->synth->storage.getPatch().fx[juce::jlimit (0, n_fx_slots - 1, slot)].type.val.i;
+}
+
+bool SurgeEngine::fxEnabled (int slot) const
+{
+    return (impl->synth->storage.getPatch().fx_disable.val.i & (1 << juce::jlimit (0, n_fx_slots - 1, slot))) == 0;
 }
 
 float SurgeEngine::fxParam (int slot, int k) const

@@ -1,7 +1,8 @@
 /*
   One Lite voice: 3 oscillators -> filter routing (serial / parallel, per-osc
   route) -> 2 filters -> amp envelope -> pan. Owns its filter EG and two
-  key-triggered LFOs; free-running LFO values come from the engine.
+  key-triggered LFOs; free-running LFO values and pitch bend come from the
+  engine.
 
   render() is called per control block (<= LiteEngine::kControlBlock
   samples): pitch, LFOs, filter coefficients and modulation are updated per
@@ -17,10 +18,11 @@
 namespace vae::lite
 {
 
-/** Values of the engine's free-running LFOs for the current control block. */
-struct FreeLfoValues
+/** Engine-wide values for the current control block. */
+struct BlockValues
 {
-    std::array<float, 2> value {};
+    std::array<float, 2> freeLfo {};   // free-running LFO outputs
+    float pitchBendSemis = 0.0f;       // MIDI pitch wheel
 };
 
 class Voice
@@ -32,10 +34,10 @@ public:
     // Calibrates the default patch to Surge's level (single saw, note 60).
     static constexpr float kVoiceGain = 0.25f;
 
-    void prepare (float sampleRate, const ablaze::WavetableBank* wavetables, uint32_t seed)
+    void prepare (float sampleRate, const ablaze::Wavetable* wavetables, uint32_t seed)
     {
         sr = sampleRate;
-        bank = wavetables;
+        table = wavetables;
         for (size_t i = 0; i < osc.size(); ++i)
             osc[i].seed (seed * 3u + uint32_t (i) + 1u);
         for (size_t i = 0; i < lfo.size(); ++i)
@@ -113,7 +115,7 @@ public:
 
     float getCurrentSemis() const noexcept { return current; }
 
-    void render (float* left, float* right, int n, const Patch& p, const FreeLfoValues& freeLfo) noexcept
+    void render (float* left, float* right, int n, const Patch& p, const BlockValues& shared) noexcept
     {
         if (! amp.isActive() || n <= 0)
             return;
@@ -132,7 +134,7 @@ public:
         for (size_t i = 0; i < lfo.size(); ++i)
         {
             const auto& s = p.lfo[i];
-            float v = s.retrigger ? lfo[i].advance (s, blockSeconds) : freeLfo.value[i];
+            float v = s.retrigger ? lfo[i].advance (s, blockSeconds) : shared.freeLfo[i];
             if (s.unipolar)
                 v = 0.5f * (v + 1.0f);
             const float fade = s.fadeIn > 0.0f ? std::min (1.0f, age / s.fadeIn) : 1.0f;
@@ -149,9 +151,9 @@ public:
         for (size_t i = 0; i < osc.size(); ++i)
         {
             const auto& o = p.osc[i];
-            const float semis = current + o.semitones + mods.pitch;
+            const float semis = current + o.semitones + mods.pitch + shared.pitchBendSemis;
             const float hz = 440.0f * std::exp2 ((semis - 69.0f) / 12.0f);
-            osc[i].setIncrement (hz / sr, o.wave, bank != nullptr ? &bank->getTable (Oscillator::kWavetableIndex) : nullptr);
+            osc[i].setIncrement (hz / sr, o.wave, table);
         }
 
         // Filter coefficients.
@@ -260,7 +262,7 @@ private:
     };
 
     float sr = 48000.0f;
-    const ablaze::WavetableBank* bank = nullptr;
+    const ablaze::Wavetable* table = nullptr;
     std::array<Oscillator, 3> osc;
     std::array<FilterUnit, 2> filter;
     ShapedEnvelope amp, feg;

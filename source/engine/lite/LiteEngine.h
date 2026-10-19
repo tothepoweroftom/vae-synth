@@ -33,6 +33,7 @@ class LiteEngine final : public SynthEngine
 public:
     static constexpr int kMaxVoices = 16;
     static constexpr int kControlBlock = 16;
+    static constexpr float kPitchBendRange = 2.0f;   // semitones, Surge's default
 
     LiteEngine();
     ~LiteEngine() override;
@@ -51,21 +52,24 @@ public:
 private:
     void noteOn (int note);
     void noteOff (int note);
+    void releaseNote (int note);
+    void setSustain (bool down);
     void allNotesOff();
     void renderVoices (float* left, float* right, int numSamples);
     float glideSource() const noexcept;
 
-    std::shared_ptr<const ablaze::WavetableBank> bank;
+    std::shared_ptr<const ablaze::Wavetable> wavetable;
     schema::Snapshot controls = schema::Snapshot::defaults();
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;
     lite::FxRack fx;
     std::array<lite::Lfo, 2> freeLfo;
-    lite::FreeLfoValues freeLfoValues;
+    lite::BlockValues blockValues;
 
     // Held keys, oldest first (mono/legato note priority and glide).
     std::array<int, 128> held {};
     int numHeld = 0;
+    bool sustainDown = false;   // CC64: note-offs wait for pedal up
     float lastNoteSemis = -1.0f;
     uint64_t noteCounter = 0;
     float sampleRate = 48000.0f;

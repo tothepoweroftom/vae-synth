@@ -1,7 +1,8 @@
 /*
-  Per-voice DSP building blocks: PolyBLEP analog oscillator, analog-style
-  envelope, TPT state-variable filter. Header-only, allocation-free, no JUCE
-  dependency beyond math helpers.
+  Per-voice DSP building blocks: PolyBLEP analog oscillator, TPT
+  state-variable filter, noise. Header-only, allocation-free.
+  Derived from Ablaze.WASMSynth@947be83 (source/engine/VoiceDsp.h), trimmed
+  to what the Lite engine uses.
 */
 
 #pragma once
@@ -10,10 +11,10 @@
 #include <cstdint>
 #include <cstring>
 
-#include "Params.h"
-
 namespace ablaze
 {
+
+enum class AnalogWave : int { Sine, Triangle, Saw, Square };
 
 /** NaN/Inf test that survives -ffast-math (which lets the compiler assume
     std::isfinite is always true): checks the exponent bits directly. */
@@ -25,7 +26,7 @@ inline bool isFiniteBits (float x) noexcept
 }
 
 //==============================================================================
-/** Band-limited "analog" oscillator: PolyBLEP saw/square/pulse, PolyBLAMP
+/** Band-limited "analog" oscillator: PolyBLEP saw/square, PolyBLAMP
     triangle, pure sine. Phase in cycles [0, 1). */
 class AnalogOsc
 {
@@ -33,7 +34,7 @@ public:
     void setPhase (float p) noexcept      { phase = p; }
     void setIncrement (float inc) noexcept { dt = inc < 0.49f ? inc : 0.49f; }
 
-    float next (AnalogWave wave, float pulseWidth) noexcept
+    float next (AnalogWave wave) noexcept
     {
         const float p = phase;
         float y = 0.0f;
@@ -59,14 +60,6 @@ public:
             case AnalogWave::Square:
                 y = (p < 0.5f ? 1.0f : -1.0f) + blep (p) - blep (wrap (p + 0.5f));
                 break;
-
-            case AnalogWave::Pulse:
-            {
-                const float w = pulseWidth;
-                y = (p < w ? 1.0f : -1.0f) + blep (p) - blep (wrap (p + 1.0f - w));
-                y -= 2.0f * w - 1.0f;   // remove the width-dependent DC offset
-                break;
-            }
         }
 
         phase += dt;
@@ -111,85 +104,6 @@ private:
 
     float phase = 0.0f;
     float dt = 0.0f;
-};
-
-//==============================================================================
-/** Per-sample coefficients for an Envelope, computed once per control block. */
-struct EnvCoefs
-{
-    float attackCoef = 0.0f;    // one-pole toward kAttackTarget
-    float decayCoef = 0.0f;
-    float sustain = 1.0f;
-    float releaseCoef = 0.0f;
-
-    static constexpr float kAttackTarget = 1.3f;
-
-    static EnvCoefs make (float attackMs, float decayMs, float sustain, float releaseMs, float sampleRate) noexcept
-    {
-        EnvCoefs c;
-        const float sr = sampleRate;
-        // Attack: an RC charge toward 1.3 that crosses 1.0 at exactly attackMs.
-        c.attackCoef = std::exp (-std::log (kAttackTarget / (kAttackTarget - 1.0f))
-                                 / (attackMs * 0.001f * sr));
-        // Decay/release: reach 1 % of the distance in the given time.
-        c.decayCoef = std::exp (-4.6f / (decayMs * 0.001f * sr));
-        c.releaseCoef = std::exp (-4.6f / (releaseMs * 0.001f * sr));
-        c.sustain = sustain;
-        return c;
-    }
-};
-
-/** Analog-style ADSR (exponential segments). noteOn() ramps from the current
-    level, so retriggering a sounding voice never clicks. */
-class Envelope
-{
-public:
-    enum class Stage { Idle, Attack, Decay, Release };
-
-    void noteOn() noexcept   { stage = Stage::Attack; }
-    void noteOff() noexcept  { if (stage != Stage::Idle) stage = Stage::Release; }
-    void reset() noexcept    { stage = Stage::Idle; level = 0.0f; }
-
-    bool isActive() const noexcept { return stage != Stage::Idle; }
-    float getLevel() const noexcept { return level; }
-
-    float next (const EnvCoefs& c) noexcept
-    {
-        switch (stage)
-        {
-            case Stage::Attack:
-                level = EnvCoefs::kAttackTarget + (level - EnvCoefs::kAttackTarget) * c.attackCoef;
-                if (level >= 1.0f)
-                {
-                    level = 1.0f;
-                    stage = Stage::Decay;
-                }
-                break;
-
-            case Stage::Decay:
-                // Also tracks sustain changes while held.
-                level = c.sustain + (level - c.sustain) * c.decayCoef;
-                break;
-
-            case Stage::Release:
-                level *= c.releaseCoef;
-                if (level < 1.0e-4f)   // -80 dB
-                {
-                    level = 0.0f;
-                    stage = Stage::Idle;
-                }
-                break;
-
-            case Stage::Idle:
-                break;
-        }
-
-        return level;
-    }
-
-private:
-    Stage stage = Stage::Idle;
-    float level = 0.0f;
 };
 
 //==============================================================================

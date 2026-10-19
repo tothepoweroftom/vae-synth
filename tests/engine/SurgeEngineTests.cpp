@@ -5,6 +5,32 @@
 
 #include <juce_dsp/juce_dsp.h>
 
+#include <atomic>
+#include <cstdlib>
+#include <new>
+
+// Counting operator new for the audio-thread allocation test below. Counting
+// is only on while that test processes blocks.
+namespace
+{
+std::atomic<bool> gCountAllocations { false };
+std::atomic<int> gAllocations { 0 };
+} // namespace
+
+// GCC cannot see that this operator new is malloc-backed and warns on free().
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmismatched-new-delete")
+void* operator new (std::size_t size)
+{
+    if (gCountAllocations.load (std::memory_order_relaxed))
+        gAllocations.fetch_add (1, std::memory_order_relaxed);
+    if (void* p = std::malloc (size != 0 ? size : 1))
+        return p;
+    throw std::bad_alloc();
+}
+void operator delete (void* p) noexcept { std::free (p); }
+void operator delete (void* p, std::size_t) noexcept { std::free (p); }
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+
 namespace vae
 {
 namespace
@@ -113,9 +139,15 @@ public:
         expectEquals (e.oscType (0), 0);                               // Classic (saw)
         expectEquals (e.oscParam (0, 0), 0.0f);
         expectEquals (e.numModRoutes(), 0);
-        for (int slot : { SurgeEngine::kDistSlot, SurgeEngine::kEqSlot, SurgeEngine::kChorusSlot,
-                          SurgeEngine::kModFxSlot, SurgeEngine::kDelaySlot, SurgeEngine::kReverbSlot })
-            expectEquals (e.fxType (slot), 0);
+        // The fixed chain is always loaded; *_on = 0 disables the slot.
+        const std::pair<int, int> chain[] = { { SurgeEngine::kDistSlot, 5 }, { SurgeEngine::kEqSlot, 6 },
+                                              { SurgeEngine::kChorusSlot, 9 }, { SurgeEngine::kModFxSlot, 3 },
+                                              { SurgeEngine::kDelaySlot, 1 }, { SurgeEngine::kReverbSlot, 11 } };
+        for (const auto& [slot, type] : chain)
+        {
+            expectEquals (e.fxType (slot), type);
+            expect (! e.fxEnabled (slot));
+        }
 
         beginTest ("categoricals write the expected Surge integers");
         struct Case { int control; const char* storage; std::vector<int> expected; };
@@ -270,6 +302,7 @@ public:
                 s[index] = value;
             const auto wet = capture (e, s, pluck, 24000);
             expectEquals (e.fxType (c.slot), c.type, control (c.on).id);
+            expect (e.fxEnabled (c.slot), control (c.on).id);
             expectWithinAbsoluteError (e.fxParam (c.slot, c.checkK), surge::toUnits (c.checkControl, s[c.checkControl]), 1.0e-3f,
                                        control (c.checkControl).id);
             double diff = 0.0, ref = 0.0;
@@ -294,7 +327,8 @@ public:
             expectWithinAbsoluteError (e.fxParam (SurgeEngine::kModFxSlot, 2), surge::toUnits (kModfxRate, 0.6f), 1.0e-3f);
             s[kModfxOn] = 0.0f;
             applyAndSettle (e, s);
-            expectEquals (e.fxType (SurgeEngine::kModFxSlot), 0);
+            expect (! e.fxEnabled (SurgeEngine::kModFxSlot));
+            expectEquals (e.fxType (SurgeEngine::kModFxSlot), 12);   // stays loaded
         }
 
         beginTest ("modulation routes follow the shared depth convention");
@@ -379,6 +413,48 @@ public:
             }
             expect (finite);
             expect (peak < 16.0f, "peak " + juce::String (peak));
+        }
+
+        beginTest ("FX on/off, filter types and continuous changes do not allocate on the audio thread");
+        {
+            SurgeEngine a;
+            a.prepare (kRate, 256);
+            applyAndSettle (a, Snapshot::defaults());
+            juce::AudioBuffer<float> b (2, 256);
+            juce::MidiBuffer noMidi, noteOn;
+            noteOn.addEvent (juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100), 0);
+            a.process (b, noteOn);
+            for (int i = 0; i < 8; ++i)
+                a.process (b, noMidi);   // warm up
+
+            // The counter itself works.
+            gAllocations = 0;
+            gCountAllocations = true;
+            auto probe = std::make_unique<int> (1);
+            gCountAllocations = false;
+            expectEquals (gAllocations.load(), 1);
+
+            // Each step is one host block: a control change, then process().
+            const std::pair<int, float> steps[] = {
+                { kDistOn, 1.0f }, { kEqOn, 1.0f }, { kChorusOn, 1.0f }, { kModfxOn, 1.0f },
+                { kDelayOn, 1.0f }, { kReverbOn, 1.0f },
+                { kReverbMix, 0.9f }, { kDelayTime, 0.2f }, { kDistDrive, 0.9f }, { kModfxRate, 0.7f },
+                { kFilter1Type, 2.0f }, { kFilter2Type, 4.0f }, { kFilter1Type, 6.0f },
+                { kFilter1Cutoff, 0.3f }, { kAmpRelease, 0.6f }, { kLfo1Shape, 3.0f }, { kPlayMode, 1.0f },
+                { kDistOn, 0.0f }, { kEqOn, 0.0f }, { kChorusOn, 0.0f }, { kModfxOn, 0.0f },
+                { kDelayOn, 0.0f }, { kReverbOn, 0.0f }, { kReverbOn, 1.0f }, { kDelayOn, 1.0f },
+            };
+            for (const auto& [index, value] : steps)
+            {
+                gAllocations = 0;
+                gCountAllocations = true;
+                a.setControl (index, value);
+                a.process (b, noMidi);
+                gCountAllocations = false;
+                expectEquals (gAllocations.load(), 0, juce::String (control (index).id) + " = " + juce::String (value));
+            }
+            expect (a.fxEnabled (SurgeEngine::kReverbSlot));
+            expect (! a.fxEnabled (SurgeEngine::kDistSlot));
         }
     }
 };
