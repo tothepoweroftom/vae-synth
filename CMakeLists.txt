@@ -41,7 +41,7 @@ add_library(vae_engine INTERFACE)
 target_sources(vae_engine INTERFACE
     source/engine/EngineFactory.cpp
     source/engine/lite/LiteEngine.cpp
-    source/engine/lite/ablaze/SynthEngine.cpp
+    source/engine/lite/LitePatch.cpp
     source/engine/lite/ablaze/Wavetables.cpp)
 target_link_libraries(vae_engine INTERFACE vae_schema juce::juce_audio_basics juce::juce_dsp)
 if(VAE_WITH_SURGE)
