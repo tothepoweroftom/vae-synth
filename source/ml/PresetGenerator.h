@@ -88,7 +88,7 @@ public:
         juce::String prompt;
         schema::Latent latent {};
         schema::Snapshot controls;
-        juce::String note;   // e.g. "mock decoder" or an inference error
+        juce::String note; // e.g. "mock decoder" or an inference error
     };
 
     PresetGenerator();
@@ -114,14 +114,14 @@ public:
 private:
     void load (std::function<juce::Result (LatentDecoder&)> loadFn, std::function<void (juce::Result)> done);
     void start (juce::String prompt, std::optional<schema::Latent> latent, std::function<void (const Result&)> done);
-    void refreshStatus();   // call with `lock` held
+    void refreshStatus(); // call with `lock` held
 
-    std::mutex lock;   // guards encoder/decoder between worker and message thread
+    std::mutex lock; // guards encoder/decoder between worker and message thread
     std::unique_ptr<PromptEncoder> encoder;
     LatentDecoder decoder;
-    mutable std::mutex statusLock;   // guards status only; never held during a job
+    mutable std::mutex statusLock; // guards status only; never held during a job
     juce::String status;
-    juce::ThreadPool pool { juce::ThreadPoolOptions{}.withThreadName ("vae-ml").withNumberOfThreads (1) };
+    juce::ThreadPool pool { juce::ThreadPoolOptions {}.withThreadName ("vae-ml").withNumberOfThreads (1) };
     std::atomic<uint64_t> latestRequest { 0 };
     std::shared_ptr<bool> alive = std::make_shared<bool> (true);
 };

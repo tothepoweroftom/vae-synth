@@ -1,0 +1,46 @@
+# JUCE house style.
+Language: Cpp
+Standard: c++20
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+BreakBeforeBraces: Allman
+SpaceBeforeParens: NonEmptyParentheses
+SpaceBeforeCpp11BracedList: true
+PointerAlignment: Left
+AccessModifierOffset: -4
+NamespaceIndentation: None
+FixNamespaceComments: true
+IndentCaseLabels: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 4
+BreakInheritanceList: BeforeComma
+Cpp11BracedListStyle: false
+IncludeBlocks: Preserve
+SortIncludes: Never
+ReflowComments: false
+AlignTrailingComments: true
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+SpaceAfterCStyleCast: true
+SpacesInContainerLiterals: false
+LambdaBodyIndentation: Signature
+PackConstructorInitializers: Never
+SpacesBeforeTrailingComments: 1
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AllowShortEnumsOnASingleLine: true
+BinPackArguments: true
+BinPackParameters: true
+SpaceAfterLogicalNot: true
+BreakBeforeBinaryOperators: NonAssignment

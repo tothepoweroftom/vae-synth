@@ -75,22 +75,26 @@ inline float fromUnits (int index, float x)
 
 // Physical conversions of curve units ----------------------------------------
 /** ct_amplitude: shown in dB, applied as x^3. */
-inline float amplitudeGain (float v)      { const float x = std::max (0.0f, v); return x * x * x; }
+inline float amplitudeGain (float v)
+{
+    const float x = std::max (0.0f, v);
+    return x * x * x;
+}
 /** Semitones from A440 -> Hz (cutoff, EQ frequency). */
-inline float semitonesToHz (float st)     { return 440.0f * std::exp2 (st / 12.0f); }
+inline float semitonesToHz (float st) { return 440.0f * std::exp2 (st / 12.0f); }
 /** log2 seconds -> seconds (envelopes, glide, delay, reverb). */
-inline float log2Seconds (float x)        { return std::exp2 (x); }
+inline float log2Seconds (float x) { return std::exp2 (x); }
 /** log2 Hz -> Hz (LFO / chorus / mod FX rates). */
-inline float log2Hz (float x)             { return std::exp2 (x); }
+inline float log2Hz (float x) { return std::exp2 (x); }
 
 // Common shortcuts for continuous controls by index --------------------------
-inline float seconds (int index, float v)  { return log2Seconds (toUnits (index, v)); }
-inline float hz (int index, float v)       { return log2Hz (toUnits (index, v)); }
+inline float seconds (int index, float v) { return log2Seconds (toUnits (index, v)); }
+inline float hz (int index, float v) { return log2Hz (toUnits (index, v)); }
 inline float cutoffHz (int index, float v) { return semitonesToHz (toUnits (index, v)); }
-inline float bipolar (float v)             { return 2.0f * v - 1.0f; }
+inline float bipolar (float v) { return 2.0f * v - 1.0f; }
 
 /** Glide: the curve minimum means "off". */
-inline float glideSeconds (float v)       { return v <= kOffAtCurveMin ? 0.0f : log2Seconds (toUnits (kGlideTime, v)); }
+inline float glideSeconds (float v) { return v <= kOffAtCurveMin ? 0.0f : log2Seconds (toUnits (kGlideTime, v)); }
 
 // Display ----------------------------------------------------------------------
 inline std::string formatNumber (float x, int decimals)

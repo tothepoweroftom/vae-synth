@@ -122,6 +122,13 @@ if(VAE_BUILD_TESTS)
     add_subdirectory(tests/ml)
     add_subdirectory(tests/plugin)
 
+    find_program(VAE_CLANG_FORMAT NAMES clang-format)
+    if(VAE_CLANG_FORMAT)
+        add_test(NAME vae_format_check
+                 COMMAND ${CMAKE_COMMAND} -D CLANG_FORMAT=${VAE_CLANG_FORMAT} -D ROOT=${CMAKE_CURRENT_SOURCE_DIR}
+                         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VaeFormatCheck.cmake")
+    endif()
+
     find_package(Python3 COMPONENTS Interpreter)
     if(Python3_FOUND)
         set(_vae_py_args "${VAE_GENERATED_DIR}/schema/ControlSchema.generated.h")

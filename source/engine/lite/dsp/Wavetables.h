@@ -21,8 +21,8 @@ namespace vae::dsp
 class Wavetable
 {
 public:
-    static constexpr int kFrameSize = 2048;     // source frame size
-    static constexpr int kNumLevels = 11;       // 1024 harmonics down to 1
+    static constexpr int kFrameSize = 2048; // source frame size
+    static constexpr int kNumLevels = 11;   // 1024 harmonics down to 1
     static constexpr int kMaxFrames = 256;
     static constexpr int kMinLevelSize = 256;
 

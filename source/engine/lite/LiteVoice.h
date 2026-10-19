@@ -21,8 +21,8 @@ namespace vae::lite
 /** Engine-wide values for the current control block. */
 struct BlockValues
 {
-    std::array<float, 2> freeLfo {};   // free-running LFO outputs
-    float pitchBendSemis = 0.0f;       // MIDI pitch wheel
+    std::array<float, 2> freeLfo {}; // free-running LFO outputs
+    float pitchBendSemis = 0.0f;     // MIDI pitch wheel
 };
 
 class Voice
@@ -166,7 +166,9 @@ public:
             const float cutMod = f == 0 ? mods.cutoff1 : mods.cutoff2;
             const float semis = fs.cutoffSemis + fs.envSemis * fegLevel + fs.keytrack * keyOffset + cutMod;
             const float reso = fs.resonance + (f == 0 ? mods.resonance1 : 0.0f);
-            filter[f].configure (fs.type, schema::surge::semitonesToHz (std::clamp (semis, kCutoffCurve->min, kCutoffCurve->max)), reso, sr);
+            filter[f].configure (
+                fs.type, schema::surge::semitonesToHz (std::clamp (semis, kCutoffCurve->min, kCutoffCurve->max)), reso,
+                sr);
         }
 
         // Output gains, ramped across the block.

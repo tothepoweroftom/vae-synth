@@ -3,7 +3,7 @@
 #include "lite/LiteEngine.h"
 
 #if VAE_WITH_SURGE
- #include "surge/SurgeEngine.h"
+#include "surge/SurgeEngine.h"
 #endif
 
 namespace vae
@@ -22,8 +22,7 @@ std::unique_ptr<SynthEngine> createEngine (EngineKind kind)
 {
     switch (kind)
     {
-        case EngineKind::Lite:
-            return std::make_unique<LiteEngine>();
+        case EngineKind::Lite: return std::make_unique<LiteEngine>();
         case EngineKind::Surge:
 #if VAE_WITH_SURGE
             return std::make_unique<SurgeEngine>();

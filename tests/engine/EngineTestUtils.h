@@ -132,7 +132,10 @@ inline float zeroCrossingHz (const std::vector<float>& x, size_t from, size_t to
     (0 samples), as some hosts send to flush MIDI. Keeps the left channel. */
 struct Player
 {
-    explicit Player (SynthEngine& e) : engine (e) {}
+    explicit Player (SynthEngine& e)
+        : engine (e)
+    {
+    }
 
     /** One block of `n` samples (n >= 0) with these messages at offset 0. */
     void block (int n, std::initializer_list<juce::MidiMessage> messages = {})
@@ -165,7 +168,10 @@ struct Player
             p = juce::jmax (p, std::abs (left[i]));
         return p;
     }
-    float tailPeak (size_t samples) const { return peak (left.size() - juce::jmin (samples, left.size()), left.size()); }
+    float tailPeak (size_t samples) const
+    {
+        return peak (left.size() - juce::jmin (samples, left.size()), left.size());
+    }
 
     float zeroCrossingHz (size_t from, size_t to, double sampleRate) const
     {

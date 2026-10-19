@@ -63,8 +63,8 @@ juce::Typeface::Ptr VaeLookAndFeel::getTypefaceForFont (const juce::Font& font)
     return font.isBold() ? bold : regular;
 }
 
-void VaeLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
-                                          float startAngle, float endAngle, juce::Slider& s)
+void VaeLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float startAngle,
+                                       float endAngle, juce::Slider& s)
 {
     const auto bounds = juce::Rectangle<int> (x, y, w, h).toFloat();
     const float radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.5f - 6.0f;
@@ -119,10 +119,7 @@ void VaeLookAndFeel::drawComboBox (juce::Graphics& g, int w, int h, bool, int, i
     g.strokePath (chevron, juce::PathStrokeType (1.2f));
 }
 
-juce::Font VaeLookAndFeel::getComboBoxFont (juce::ComboBox&)
-{
-    return juce::Font (juce::FontOptions (13.0f));
-}
+juce::Font VaeLookAndFeel::getComboBoxFont (juce::ComboBox&) { return juce::Font (juce::FontOptions (13.0f)); }
 
 void VaeLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {
@@ -131,7 +128,8 @@ void VaeLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& lab
     label.setFont (getComboBoxFont (box));
 }
 
-void VaeLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool highlighted, bool down)
+void VaeLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool highlighted,
+                                           bool down)
 {
     // Hairline box; hover/press inverts to solid ink (green while pressed).
     const auto r = b.getLocalBounds().toFloat().reduced (0.5f);
@@ -147,10 +145,7 @@ void VaeLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, c
     }
 }
 
-juce::Font VaeLookAndFeel::getTextButtonFont (juce::TextButton&, int)
-{
-    return juce::Font (labelFont (11.0f, true));
-}
+juce::Font VaeLookAndFeel::getTextButtonFont (juce::TextButton&, int) { return juce::Font (labelFont (11.0f, true)); }
 
 void VaeLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool highlighted, bool down)
 {
@@ -159,10 +154,7 @@ void VaeLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b, boo
     g.drawText (b.getButtonText().toUpperCase(), b.getLocalBounds(), juce::Justification::centred);
 }
 
-void VaeLookAndFeel::fillTextEditorBackground (juce::Graphics& g, int, int, juce::TextEditor&)
-{
-    g.fillAll (paper);
-}
+void VaeLookAndFeel::fillTextEditorBackground (juce::Graphics& g, int, int, juce::TextEditor&) { g.fillAll (paper); }
 
 void VaeLookAndFeel::drawTextEditorOutline (juce::Graphics& g, int w, int h, juce::TextEditor& e)
 {
@@ -177,9 +169,6 @@ void VaeLookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int w, int h)
     g.drawRect (0, 0, w, h, 1);
 }
 
-juce::Font VaeLookAndFeel::getPopupMenuFont()
-{
-    return juce::Font (juce::FontOptions (13.0f));
-}
+juce::Font VaeLookAndFeel::getPopupMenuFont() { return juce::Font (juce::FontOptions (13.0f)); }
 
 } // namespace vae

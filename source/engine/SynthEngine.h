@@ -23,8 +23,8 @@ namespace vae
 
 enum class EngineKind : int
 {
-    Lite = 0,   // permissive subset engine (always built)
-    Surge = 1,  // Surge XT DSP (VAE_WITH_SURGE, GPL)
+    Lite = 0,  // permissive subset engine (always built)
+    Surge = 1, // Surge XT DSP (VAE_WITH_SURGE, GPL)
 };
 
 class SynthEngine

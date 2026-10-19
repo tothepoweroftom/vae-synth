@@ -83,7 +83,15 @@ public:
     /** Surge FX slot indices (0-based) used by the fixed chain. Surge XT appended
         A3/A4 as slots 8/9 after the original eight (A1 A2 B1 B2 S1 S2 G1 G2);
         patch XML numbers the same slots fx1..fx16 (1-based). */
-    enum FxSlot : int { kDistSlot = 0, kEqSlot = 1, kDelaySlot = 6, kReverbSlot = 7, kChorusSlot = 8, kModFxSlot = 9 };
+    enum FxSlot : int
+    {
+        kDistSlot = 0,
+        kEqSlot = 1,
+        kDelaySlot = 6,
+        kReverbSlot = 7,
+        kChorusSlot = 8,
+        kModFxSlot = 9
+    };
 
 private:
     struct Impl;

@@ -33,7 +33,7 @@ class LiteEngine final : public SynthEngine
 public:
     static constexpr int kMaxVoices = 16;
     static constexpr int kControlBlock = 16;
-    static constexpr float kPitchBendRange = 2.0f;   // semitones, Surge's default
+    static constexpr float kPitchBendRange = 2.0f; // semitones, Surge's default
 
     LiteEngine();
     ~LiteEngine() override;
@@ -69,7 +69,7 @@ private:
     // Held keys, oldest first (mono/legato note priority and glide).
     std::array<int, 128> held {};
     int numHeld = 0;
-    bool sustainDown = false;   // CC64: note-offs wait for pedal up
+    bool sustainDown = false; // CC64: note-offs wait for pedal up
     float lastNoteSemis = -1.0f;
     uint64_t noteCounter = 0;
     float sampleRate = 48000.0f;

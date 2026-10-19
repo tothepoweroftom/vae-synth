@@ -47,7 +47,10 @@ std::vector<float> capture (LiteEngine& e, const Snapshot& s, int samples, std::
 class LiteEngineTests final : public juce::UnitTest
 {
 public:
-    LiteEngineTests() : juce::UnitTest ("Lite engine", "vae_engine") {}
+    LiteEngineTests()
+        : juce::UnitTest ("Lite engine", "vae_engine")
+    {
+    }
 
     void runTest() override
     {
@@ -71,7 +74,7 @@ public:
             // Envelope decays to silence (sustain 0); a second key while the first
             // is held retriggers in mono, but stays silent in legato.
             auto s = basePatch();
-            s[kAmpDecay] = fromUnitsFor (kAmpDecay, -4.0f);   // 62.5 ms
+            s[kAmpDecay] = fromUnitsFor (kAmpDecay, -4.0f); // 62.5 ms
             s[kAmpSustain] = 0.0f;
             for (const char* mode : { "mono", "legato" })
             {
@@ -88,14 +91,14 @@ public:
             s[kAmpSustain] = 1.0f;
             const auto out = capture (e, s, second, { { 0, 60, 100 }, { 4800, 72, 100 }, { second / 2, 72, 0 } });
             const float hz = zeroCrossingHz (out, size_t (second / 2 + 2400), size_t (second - 100));
-            expectWithinAbsoluteError (hz, 261.6f, 15.0f);   // back on note 60
+            expectWithinAbsoluteError (hz, 261.6f, 15.0f); // back on note 60
         }
 
         beginTest ("glide moves the pitch over time");
         {
             auto s = basePatch();
             s[kPlayMode] = option (kPlayMode, "legato");
-            s[kGlideTime] = 0.75f;   // 2^-0.5 s ~ 0.7 s
+            s[kGlideTime] = 0.75f; // 2^-0.5 s ~ 0.7 s
             const auto out = capture (e, s, 2 * second, { { 0, 48, 100 }, { 4800, 72, 100 } });
             const float early = zeroCrossingHz (out, 4800, 4800 + 4800);
             const float late = zeroCrossingHz (out, size_t (second + 4800), size_t (second + 14400));
@@ -127,13 +130,15 @@ public:
         {
             auto s = basePatch();
             s[kOsc1Octave] = option (kOsc1Octave, "+1");
-            expectWithinAbsoluteError (zeroCrossingHz (capture (e, s, 9600, { { 0, 57, 100 } }), 100, 9600), 440.0f, 15.0f);
+            expectWithinAbsoluteError (zeroCrossingHz (capture (e, s, 9600, { { 0, 57, 100 } }), 100, 9600), 440.0f,
+                                       15.0f);
             s = basePatch();
             s[kOsc1Pitch] = fromUnitsFor (kOsc1Pitch, 7.0f);
-            expectWithinAbsoluteError (zeroCrossingHz (capture (e, s, 9600, { { 0, 57, 100 } }), 100, 9600), 329.6f, 15.0f);
+            expectWithinAbsoluteError (zeroCrossingHz (capture (e, s, 9600, { { 0, 57, 100 } }), 100, 9600), 329.6f,
+                                       15.0f);
             s = basePatch();
             const float full = rmsOf (capture (e, s, 4800, { { 0, 57, 100 } }), 0, 4800);
-            s[kOsc1Level] = 0.5f;   // x^3 = -18 dB
+            s[kOsc1Level] = 0.5f; // x^3 = -18 dB
             const float low = rmsOf (capture (e, s, 4800, { { 0, 57, 100 } }), 0, 4800);
             expectWithinAbsoluteError (low / full, 0.125f, 0.01f);
         }
@@ -149,7 +154,8 @@ public:
             const float serial = rmsOf (capture (e, s, 9600, { { 0, 48, 100 } }), 0, 9600);
             s[kFilterRouting] = option (kFilterRouting, "parallel");
             const float parallel = rmsOf (capture (e, s, 9600, { { 0, 48, 100 } }), 0, 9600);
-            expect (serial < 0.3f * parallel, "serial " + juce::String (serial) + " parallel " + juce::String (parallel));
+            expect (serial < 0.3f * parallel,
+                    "serial " + juce::String (serial) + " parallel " + juce::String (parallel));
 
             // An osc routed to filter 2 skips filter 1 in serial mode.
             s[kFilterRouting] = option (kFilterRouting, "serial");
@@ -168,7 +174,7 @@ public:
             s[kFilter1Cutoff] = 0.3f;
             s[kOsc1Filter] = option (kOsc1Filter, "filter1");
             const float base = rmsOf (capture (e, s, 9600, { { 0, 48, 100 } }), 0, 9600);
-            s[kFilter1Env] = 1.0f;   // +96 st at full filter EG (sustain 1)
+            s[kFilter1Env] = 1.0f; // +96 st at full filter EG (sustain 1)
             const float opened = rmsOf (capture (e, s, 9600, { { 0, 48, 100 } }), 0, 9600);
             expect (opened > 2.0f * base);
             s[kFilter1Env] = 0.5f;
@@ -182,7 +188,7 @@ public:
         beginTest ("envelope curve options differ");
         {
             auto s = basePatch();
-            s[kAmpAttack] = fromUnitsFor (kAmpAttack, 0.0f);   // 1 s
+            s[kAmpAttack] = fromUnitsFor (kAmpAttack, 0.0f); // 1 s
             s[kAmpAttackCurve] = option (kAmpAttackCurve, "convex");
             const float convex = rmsOf (capture (e, s, second / 2, { { 0, 57, 100 } }), 9600, 14400);
             s[kAmpAttackCurve] = option (kAmpAttackCurve, "concave");
@@ -205,9 +211,9 @@ public:
             {
                 const int base = l == 0 ? kLfo1Shape : kLfo2Shape;
                 auto s = basePatch();
-                s[base + 1] = fromUnitsFor (base + 1, 2.0f);   // 4 Hz
+                s[base + 1] = fromUnitsFor (base + 1, 2.0f); // 4 Hz
                 s[base + 7] = option (base + 7, "volume");
-                s[base + 8] = 0.0f;                            // depth -1
+                s[base + 8] = 0.0f; // depth -1
                 const auto out = capture (e, s, second, { { 0, 57, 100 } });
                 float lo = 1.0e9f, hi = 0.0f;
                 for (size_t w = 0; w + 480 <= out.size(); w += 480)
@@ -215,9 +221,10 @@ public:
                     lo = std::min (lo, rmsOf (out, w, w + 480));
                     hi = std::max (hi, rmsOf (out, w, w + 480));
                 }
-                expect (hi > 4.0f * lo + 1.0e-4f, "lfo " + juce::String (l + 1) + " hi " + juce::String (hi) + " lo " + juce::String (lo));
+                expect (hi > 4.0f * lo + 1.0e-4f,
+                        "lfo " + juce::String (l + 1) + " hi " + juce::String (hi) + " lo " + juce::String (lo));
 
-                s[base + 2] = 0.0f;   // amount 0
+                s[base + 2] = 0.0f; // amount 0
                 const auto flat = capture (e, s, second, { { 0, 57, 100 } });
                 expectWithinAbsoluteError (rmsOf (flat, 9600, 14400), rmsOf (flat, 24000, 28800), 0.002f);
             }
@@ -235,16 +242,22 @@ public:
             s[kFegDestination] = float (d);
             s[kFegDepth] = 0.8f;
             const auto routed = capture (e, s, 9600, { { 0, 57, 100 } });
-            expect (correlation (plain, routed) < 0.999f || std::abs (rmsOf (plain, 0, 9600) - rmsOf (routed, 0, 9600)) > 1.0e-3f,
+            expect (correlation (plain, routed) < 0.999f
+                        || std::abs (rmsOf (plain, 0, 9600) - rmsOf (routed, 0, 9600)) > 1.0e-3f,
                     control (kFegDestination).options[d]);
         }
 
         beginTest ("each FX changes the output");
         {
-            struct Case { int on; int tweak; float value; };
+            struct Case
+            {
+                int on;
+                int tweak;
+                float value;
+            };
             const Case cases[] = {
-                { kDistOn, kDistDrive, 0.9f },   { kEqOn, kEqLowGain, 0.8f },     { kChorusOn, kChorusDepth, 0.8f },
-                { kModfxOn, kModfxDepth, 0.9f }, { kDelayOn, kDelayTime, 0.4f },  { kReverbOn, kReverbMix, 0.6f },
+                { kDistOn, kDistDrive, 0.9f },   { kEqOn, kEqLowGain, 0.8f },    { kChorusOn, kChorusDepth, 0.8f },
+                { kModfxOn, kModfxDepth, 0.9f }, { kDelayOn, kDelayTime, 0.4f }, { kReverbOn, kReverbMix, 0.6f },
             };
             auto s = basePatch ("saw");
             const auto dry = capture (e, s, second / 2, { { 0, 57, 100 }, { 9600, 57, 0 } });
@@ -301,7 +314,7 @@ public:
             s[kDelayOn] = 1.0f;
             s[kDelayMix] = 1.0f;
             s[kDelayFeedback] = 0.9f;
-            s[kDelayTime] = fromUnitsFor (kDelayTime, -1.0f);   // 0.5 s
+            s[kDelayTime] = fromUnitsFor (kDelayTime, -1.0f); // 0.5 s
             e.setControls (s);
             testutil::Player p (e);
             p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
@@ -313,7 +326,8 @@ public:
             p.run (256);
             e.setControl (kDelayOn, 1.0f);
             p.run (second);
-            expect (p.tailPeak (size_t (second)) < 1.0e-6f, "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
+            expect (p.tailPeak (size_t (second)) < 1.0e-6f,
+                    "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
         }
     }
 

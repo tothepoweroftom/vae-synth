@@ -13,8 +13,8 @@ namespace sc = schema::surge;
 float dbToGain (float db) { return std::pow (10.0f, db / 20.0f); }
 
 // Shaped-domain exponents (Surge's envelope shapes).
-constexpr float kAttackPowers[] = { 0.5f, 1.0f, 2.0f };   // convex, linear, concave
-constexpr float kDecayPowers[] = { 1.0f, 2.0f, 3.0f };    // linear, quadratic, cubic
+constexpr float kAttackPowers[] = { 0.5f, 1.0f, 2.0f }; // convex, linear, concave
+constexpr float kDecayPowers[] = { 1.0f, 2.0f, 3.0f };  // linear, quadratic, cubic
 
 // The enums in LitePatch.h are read straight from option indices, so they must
 // mirror the option lists in schema/controls.json; these fail to compile when
@@ -90,47 +90,92 @@ void Patch::set (int index, const Snapshot& s)
         case kPlayMode:  playMode = PlayMode (idx (s, index)); break;
         case kGlideTime: glideSeconds = sc::glideSeconds (s[index]); break;
 
-        case kOsc1On: case kOsc1Wave: case kOsc1Level: case kOsc1Octave: case kOsc1Pitch: case kOsc1Filter:
+        case kOsc1On:
+        case kOsc1Wave:
+        case kOsc1Level:
+        case kOsc1Octave:
+        case kOsc1Pitch:
+        case kOsc1Filter:
             setOsc (osc[0], s, kOsc1On, kOsc1Wave, kOsc1Level, kOsc1Octave, kOsc1Pitch, kOsc1Filter);
             break;
-        case kOsc2On: case kOsc2Wave: case kOsc2Level: case kOsc2Octave: case kOsc2Pitch: case kOsc2Filter:
+        case kOsc2On:
+        case kOsc2Wave:
+        case kOsc2Level:
+        case kOsc2Octave:
+        case kOsc2Pitch:
+        case kOsc2Filter:
             setOsc (osc[1], s, kOsc2On, kOsc2Wave, kOsc2Level, kOsc2Octave, kOsc2Pitch, kOsc2Filter);
             break;
-        case kOsc3On: case kOsc3Wave: case kOsc3Level: case kOsc3Octave: case kOsc3Pitch: case kOsc3Filter:
+        case kOsc3On:
+        case kOsc3Wave:
+        case kOsc3Level:
+        case kOsc3Octave:
+        case kOsc3Pitch:
+        case kOsc3Filter:
             setOsc (osc[2], s, kOsc3On, kOsc3Wave, kOsc3Level, kOsc3Octave, kOsc3Pitch, kOsc3Filter);
             break;
 
         case kFilterRouting: parallel = idx (s, index) == 1; break;
-        case kFilter1Type: case kFilter1Cutoff: case kFilter1Resonance: case kFilter1Env: case kFilter1Keytrack:
+        case kFilter1Type:
+        case kFilter1Cutoff:
+        case kFilter1Resonance:
+        case kFilter1Env:
+        case kFilter1Keytrack:
             setFilter (filter[0], s, kFilter1Type, kFilter1Cutoff, kFilter1Resonance, kFilter1Env, kFilter1Keytrack);
             break;
-        case kFilter2Type: case kFilter2Cutoff: case kFilter2Resonance: case kFilter2Env: case kFilter2Keytrack:
+        case kFilter2Type:
+        case kFilter2Cutoff:
+        case kFilter2Resonance:
+        case kFilter2Env:
+        case kFilter2Keytrack:
             setFilter (filter[1], s, kFilter2Type, kFilter2Cutoff, kFilter2Resonance, kFilter2Env, kFilter2Keytrack);
             break;
 
-        case kAmpAttack: case kAmpAttackCurve: case kAmpDecay: case kAmpDecayCurve:
-        case kAmpSustain: case kAmpRelease: case kAmpReleaseCurve:
-            setEnv (ampEnv, s, kAmpAttack, kAmpAttackCurve, kAmpDecay, kAmpDecayCurve, kAmpSustain, kAmpRelease, kAmpReleaseCurve);
+        case kAmpAttack:
+        case kAmpAttackCurve:
+        case kAmpDecay:
+        case kAmpDecayCurve:
+        case kAmpSustain:
+        case kAmpRelease:
+        case kAmpReleaseCurve:
+            setEnv (ampEnv, s, kAmpAttack, kAmpAttackCurve, kAmpDecay, kAmpDecayCurve, kAmpSustain, kAmpRelease,
+                    kAmpReleaseCurve);
             break;
-        case kFegAttack: case kFegAttackCurve: case kFegDecay: case kFegDecayCurve:
-        case kFegSustain: case kFegRelease: case kFegReleaseCurve:
-            setEnv (filterEnv, s, kFegAttack, kFegAttackCurve, kFegDecay, kFegDecayCurve, kFegSustain, kFegRelease, kFegReleaseCurve);
+        case kFegAttack:
+        case kFegAttackCurve:
+        case kFegDecay:
+        case kFegDecayCurve:
+        case kFegSustain:
+        case kFegRelease:
+        case kFegReleaseCurve:
+            setEnv (filterEnv, s, kFegAttack, kFegAttackCurve, kFegDecay, kFegDecayCurve, kFegSustain, kFegRelease,
+                    kFegReleaseCurve);
             break;
         case kFegDestination: fegRoute.dest = ModDest (idx (s, index)); break;
         case kFegDepth:       fegRoute.depth = sc::bipolar (s[index]); break;
 
-        case kLfo1Shape: case kLfo1Rate: case kLfo1Amount: case kLfo1Unipolar: case kLfo1Retrigger:
-        case kLfo1Phase: case kLfo1FadeIn: case kLfo1Destination: case kLfo1Depth:
-            setLfo (lfo[0], s, kLfo1Shape);
-            break;
-        case kLfo2Shape: case kLfo2Rate: case kLfo2Amount: case kLfo2Unipolar: case kLfo2Retrigger:
-        case kLfo2Phase: case kLfo2FadeIn: case kLfo2Destination: case kLfo2Depth:
-            setLfo (lfo[1], s, kLfo2Shape);
-            break;
+        case kLfo1Shape:
+        case kLfo1Rate:
+        case kLfo1Amount:
+        case kLfo1Unipolar:
+        case kLfo1Retrigger:
+        case kLfo1Phase:
+        case kLfo1FadeIn:
+        case kLfo1Destination:
+        case kLfo1Depth:       setLfo (lfo[0], s, kLfo1Shape); break;
+        case kLfo2Shape:
+        case kLfo2Rate:
+        case kLfo2Amount:
+        case kLfo2Unipolar:
+        case kLfo2Retrigger:
+        case kLfo2Phase:
+        case kLfo2FadeIn:
+        case kLfo2Destination:
+        case kLfo2Depth:       setLfo (lfo[1], s, kLfo2Shape); break;
 
-        case kDistOn:     fx.distOn = on (s, index); break;
-        case kDistDrive:  fx.distDriveDb = sc::toUnits (index, s[index]); break;
-        case kDistTone:   fx.distToneHz = sc::cutoffHz (index, s[index]); break;
+        case kDistOn:    fx.distOn = on (s, index); break;
+        case kDistDrive: fx.distDriveDb = sc::toUnits (index, s[index]); break;
+        case kDistTone:  fx.distToneHz = sc::cutoffHz (index, s[index]); break;
 
         case kEqOn:       fx.eqOn = on (s, index); break;
         case kEqLowGain:  fx.eqLowDb = sc::toUnits (index, s[index]); break;
@@ -161,7 +206,7 @@ void Patch::set (int index, const Snapshot& s)
         case kReverbDamping: fx.reverbDamping = s[index]; break;
         case kReverbMix:     fx.reverbMix = s[index]; break;
 
-        case kMasterVolume:  masterGain = dbToGain (sc::toUnits (index, s[index])); break;
+        case kMasterVolume: masterGain = dbToGain (sc::toUnits (index, s[index])); break;
 
         default: break;
     }

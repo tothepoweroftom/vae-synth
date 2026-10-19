@@ -8,53 +8,51 @@ namespace vae::params
 
 namespace
 {
-    const juce::Identifier paramTag { "PARAM" };    // matches the APVTS child type
-    const juce::Identifier idProp { "id" };
-    const juce::Identifier valueProp { "value" };
-    const juce::Identifier hiddenTag { "VAE_HIDDEN_PARAMS" };
+const juce::Identifier paramTag { "PARAM" }; // matches the APVTS child type
+const juce::Identifier idProp { "id" };
+const juce::Identifier valueProp { "value" };
+const juce::Identifier hiddenTag { "VAE_HIDDEN_PARAMS" };
 
-    static_assert (std::atomic<float>::is_always_lock_free);
-    static_assert (std::atomic<bool>::is_always_lock_free);
-    static_assert (std::atomic<std::size_t>::is_always_lock_free);
+static_assert (std::atomic<float>::is_always_lock_free);
+static_assert (std::atomic<bool>::is_always_lock_free);
+static_assert (std::atomic<std::size_t>::is_always_lock_free);
 
-    /** Adds a meta flag that can be forced after construction (parameters that take part in a link). */
-    template <typename Base>
-    class StoreParameter : public Base
+/** Adds a meta flag that can be forced after construction (parameters that take part in a link). */
+template <typename Base>
+class StoreParameter : public Base
+{
+public:
+    using Base::Base;
+
+    bool isMetaParameter() const override { return forcedMeta.load() || Base::isMetaParameter(); }
+
+    std::atomic<bool> forcedMeta { false };
+};
+
+/** Float parameter that also passes the spec's discrete hint through. */
+class StoreFloatParameter final : public StoreParameter<juce::AudioParameterFloat>
+{
+public:
+    template <typename... Args>
+    explicit StoreFloatParameter (bool discreteHint, Args&&... args)
+        : StoreParameter<juce::AudioParameterFloat> (std::forward<Args> (args)...)
+        , discrete (discreteHint)
     {
-    public:
-        using Base::Base;
-
-        bool isMetaParameter() const override   { return forcedMeta.load() || Base::isMetaParameter(); }
-
-        std::atomic<bool> forcedMeta { false };
-    };
-
-    /** Float parameter that also passes the spec's discrete hint through. */
-    class StoreFloatParameter final : public StoreParameter<juce::AudioParameterFloat>
-    {
-    public:
-        template <typename... Args>
-        explicit StoreFloatParameter (bool discreteHint, Args&&... args)
-            : StoreParameter<juce::AudioParameterFloat> (std::forward<Args> (args)...), discrete (discreteHint)
-        {
-        }
-
-        bool isDiscrete() const override        { return discrete; }
-
-    private:
-        const bool discrete;
-    };
-
-    float nearlyEqualTolerance (float a, float b) noexcept
-    {
-        return 1.0e-6f * (1.0f + juce::jmax (std::abs (a), std::abs (b)));
     }
 
-    bool nearlyEqual (float a, float b) noexcept
-    {
-        return std::abs (a - b) <= nearlyEqualTolerance (a, b);
-    }
+    bool isDiscrete() const override { return discrete; }
+
+private:
+    const bool discrete;
+};
+
+float nearlyEqualTolerance (float a, float b) noexcept
+{
+    return 1.0e-6f * (1.0f + juce::jmax (std::abs (a), std::abs (b)));
 }
+
+bool nearlyEqual (float a, float b) noexcept { return std::abs (a - b) <= nearlyEqualTolerance (a, b); }
+} // namespace
 
 //==============================================================================
 /** Bounded lock-free MPMC queue of indices (used as MPSC), sequence-numbered cells. */
@@ -152,12 +150,16 @@ private:
 struct ParamStore::Entry final : public juce::AudioProcessorParameter::Listener
 {
     Entry (ParamStore& o, int i, ParamSpec s)
-        : owner (o), index (i), spec (std::move (s)), value (spec.defaultValue), requestedRaw (spec.defaultValue)
+        : owner (o)
+        , index (i)
+        , spec (std::move (s))
+        , value (spec.defaultValue)
+        , requestedRaw (spec.defaultValue)
     {
     }
 
-    void parameterValueChanged (int, float normalised) override   { owner.onHostValueChanged (*this, normalised); }
-    void parameterGestureChanged (int, bool) override              {}
+    void parameterValueChanged (int, float normalised) override { owner.onHostValueChanged (*this, normalised); }
+    void parameterGestureChanged (int, bool) override {}
 
     ParamStore& owner;
     const int index;
@@ -166,7 +168,7 @@ struct ParamStore::Entry final : public juce::AudioProcessorParameter::Listener
     std::atomic<bool>* forcedMeta = nullptr;
 
     std::atomic<float> value;
-    std::atomic<float> requestedRaw;   // exact raw value behind the last host-bound set (precision hint)
+    std::atomic<float> requestedRaw; // exact raw value behind the last host-bound set (precision hint)
     std::atomic<bool> dirty { false };
     std::atomic<int> gestureDepth { 0 };
 
@@ -179,14 +181,17 @@ struct ParamStore::Entry final : public juce::AudioProcessorParameter::Listener
     juce::CriticalSection listenerLock;
     juce::Array<ParamStore::Listener*> listeners;
 
-    std::vector<int> linkIndices;      // rules this parameter is a member of
-    std::vector<int> enablerIndices;   // rules this parameter enables
+    std::vector<int> linkIndices;    // rules this parameter is a member of
+    std::vector<int> enablerIndices; // rules this parameter enables
 };
 
 //==============================================================================
 struct ParamStore::Link
 {
-    explicit Link (const LinkRule& r) : rule (r) {}
+    explicit Link (const LinkRule& r)
+        : rule (r)
+    {
+    }
 
     float toSpace (const Entry& e, float raw) const noexcept
     {
@@ -198,8 +203,14 @@ struct ParamStore::Link
         return rule.space == LinkRule::Space::Raw ? v : e.spec.range.convertFrom0to1 (juce::jlimit (0.0f, 1.0f, v));
     }
 
-    float spaceMin (const Entry& e) const noexcept   { return rule.space == LinkRule::Space::Raw ? e.spec.range.start : 0.0f; }
-    float spaceMax (const Entry& e) const noexcept   { return rule.space == LinkRule::Space::Raw ? e.spec.range.end : 1.0f; }
+    float spaceMin (const Entry& e) const noexcept
+    {
+        return rule.space == LinkRule::Space::Raw ? e.spec.range.start : 0.0f;
+    }
+    float spaceMax (const Entry& e) const noexcept
+    {
+        return rule.space == LinkRule::Space::Raw ? e.spec.range.end : 1.0f;
+    }
 
     const LinkRule rule;
     int first = -1, second = -1, enabler = -1;
@@ -220,11 +231,9 @@ ParamStore::~ParamStore()
     state.reset();
 }
 
-bool ParamStore::isBuilt() const noexcept   { return built.load(); }
+bool ParamStore::isBuilt() const noexcept { return built.load(); }
 
-void ParamStore::build (std::vector<ParamSpec> specs,
-                        juce::AudioProcessor& processor,
-                        const juce::Identifier& treeType,
+void ParamStore::build (std::vector<ParamSpec> specs, juce::AudioProcessor& processor, const juce::Identifier& treeType,
                         juce::UndoManager* undoManager)
 {
     if (built.load())
@@ -257,11 +266,7 @@ void ParamStore::build (std::vector<ParamSpec> specs,
             };
 
             auto configure = [&s] (auto attributes)
-            {
-                return attributes.withCategory (s.category)
-                                 .withMeta (s.meta)
-                                 .withAutomatable (s.automatable);
-            };
+            { return attributes.withCategory (s.category).withMeta (s.meta).withAutomatable (s.automatable); };
 
             std::unique_ptr<juce::RangedAudioParameter> param;
 
@@ -269,10 +274,12 @@ void ParamStore::build (std::vector<ParamSpec> specs,
             {
                 case ParamKind::Float:
                 {
-                    auto attr = configure (juce::AudioParameterFloatAttributes())
-                                    .withStringFromValueFunction (toText)
-                                    .withValueFromStringFunction ([s] (const juce::String& t) { return s.textToValue (t); });
-                    auto p = std::make_unique<StoreFloatParameter> (s.discrete, pid, s.name, s.range, s.defaultValue, attr);
+                    auto attr =
+                        configure (juce::AudioParameterFloatAttributes())
+                            .withStringFromValueFunction (toText)
+                            .withValueFromStringFunction ([s] (const juce::String& t) { return s.textToValue (t); });
+                    auto p =
+                        std::make_unique<StoreFloatParameter> (s.discrete, pid, s.name, s.range, s.defaultValue, attr);
                     entry->forcedMeta = &p->forcedMeta;
                     param = std::move (p);
                     break;
@@ -282,11 +289,11 @@ void ParamStore::build (std::vector<ParamSpec> specs,
                 {
                     auto attr = configure (juce::AudioParameterIntAttributes())
                                     .withStringFromValueFunction (toText)
-                                    .withValueFromStringFunction ([s] (const juce::String& t) { return juce::roundToInt (s.textToValue (t)); });
-                    auto p = std::make_unique<StoreParameter<juce::AudioParameterInt>> (pid, s.name,
-                                                                                          juce::roundToInt (s.range.start),
-                                                                                          juce::roundToInt (s.range.end),
-                                                                                          juce::roundToInt (s.defaultValue), attr);
+                                    .withValueFromStringFunction ([s] (const juce::String& t)
+                                                                  { return juce::roundToInt (s.textToValue (t)); });
+                    auto p = std::make_unique<StoreParameter<juce::AudioParameterInt>> (
+                        pid, s.name, juce::roundToInt (s.range.start), juce::roundToInt (s.range.end),
+                        juce::roundToInt (s.defaultValue), attr);
                     entry->forcedMeta = &p->forcedMeta;
                     param = std::move (p);
                     break;
@@ -296,8 +303,10 @@ void ParamStore::build (std::vector<ParamSpec> specs,
                 {
                     auto attr = configure (juce::AudioParameterBoolAttributes())
                                     .withStringFromValueFunction (toText)
-                                    .withValueFromStringFunction ([s] (const juce::String& t) { return s.textToValue (t) >= 0.5f; });
-                    auto p = std::make_unique<StoreParameter<juce::AudioParameterBool>> (pid, s.name, s.defaultValue >= 0.5f, attr);
+                                    .withValueFromStringFunction ([s] (const juce::String& t)
+                                                                  { return s.textToValue (t) >= 0.5f; });
+                    auto p = std::make_unique<StoreParameter<juce::AudioParameterBool>> (pid, s.name,
+                                                                                         s.defaultValue >= 0.5f, attr);
                     entry->forcedMeta = &p->forcedMeta;
                     param = std::move (p);
                     break;
@@ -307,9 +316,10 @@ void ParamStore::build (std::vector<ParamSpec> specs,
                 {
                     auto attr = configure (juce::AudioParameterChoiceAttributes())
                                     .withStringFromValueFunction (toText)
-                                    .withValueFromStringFunction ([s] (const juce::String& t) { return juce::roundToInt (s.textToValue (t)); });
-                    auto p = std::make_unique<StoreParameter<juce::AudioParameterChoice>> (pid, s.name, s.choices,
-                                                                                             juce::roundToInt (s.defaultValue), attr);
+                                    .withValueFromStringFunction ([s] (const juce::String& t)
+                                                                  { return juce::roundToInt (s.textToValue (t)); });
+                    auto p = std::make_unique<StoreParameter<juce::AudioParameterChoice>> (
+                        pid, s.name, s.choices, juce::roundToInt (s.defaultValue), attr);
                     entry->forcedMeta = &p->forcedMeta;
                     param = std::move (p);
                     break;
@@ -567,17 +577,13 @@ void ParamStore::endGesture (ParamIndex index)
             jassertfalse; // endGesture() without a matching beginGesture()
             return;
         }
-    }
-    while (! e->gestureDepth.compare_exchange_weak (depth, depth - 1));
+    } while (! e->gestureDepth.compare_exchange_weak (depth, depth - 1));
 
     if (depth == 1 && e->host != nullptr)
         e->host->endChangeGesture();
 }
 
-const ParamSpec& ParamStore::spec (const juce::String& id) const
-{
-    return spec (indexOf (id));
-}
+const ParamSpec& ParamStore::spec (const juce::String& id) const { return spec (indexOf (id)); }
 
 const ParamSpec& ParamStore::spec (ParamIndex index) const
 {
@@ -598,15 +604,9 @@ juce::RangedAudioParameter* ParamStore::hostParam (ParamIndex index) const noexc
     return e != nullptr ? e->host : nullptr;
 }
 
-juce::AudioProcessorValueTreeState* ParamStore::apvts() const noexcept
-{
-    return built.load() ? state.get() : nullptr;
-}
+juce::AudioProcessorValueTreeState* ParamStore::apvts() const noexcept { return built.load() ? state.get() : nullptr; }
 
-size_t ParamStore::size() const noexcept
-{
-    return built.load() ? entries.size() : 0;
-}
+size_t ParamStore::size() const noexcept { return built.load() ? entries.size() : 0; }
 
 juce::StringArray ParamStore::ids() const
 {
@@ -709,10 +709,7 @@ void ParamStore::propagate (Entry& e, float oldRaw, float newRaw)
     applyEnables (e, newRaw);
 }
 
-void ParamStore::handleChange (Entry& e, float raw)
-{
-    propagate (e, storeChange (e, raw), raw);
-}
+void ParamStore::handleChange (Entry& e, float raw) { propagate (e, storeChange (e, raw), raw); }
 
 //==============================================================================
 void ParamStore::addLink (const LinkRule& rule)
@@ -810,12 +807,9 @@ void ParamStore::onLinkEnabled (Link& link)
             link.offset.store (link.toSpace (a, a.value.load()) - link.toSpace (b, b.value.load()));
             break;
 
-        case LinkRule::Mode::Ordered:
-            enforceOrdered (link, true);
-            break;
+        case LinkRule::Mode::Ordered: enforceOrdered (link, true); break;
 
-        case LinkRule::Mode::Opposite:
-            break;
+        case LinkRule::Mode::Opposite: break;
     }
 }
 
@@ -847,9 +841,7 @@ void ParamStore::applyRule (Link& link, int movedIndex, float oldRaw, float newR
             break;
         }
 
-        case LinkRule::Mode::Ordered:
-            enforceOrdered (link, movedIsFirst);
-            break;
+        case LinkRule::Mode::Ordered: enforceOrdered (link, movedIsFirst); break;
     }
 }
 
@@ -907,7 +899,8 @@ float ParamStore::constrain (const juce::String& id, float candidateRaw) const n
 
         // The other member can be pushed up to its range end, so that end bounds this one.
         if (e->index == link.first)
-            hi = juce::jmin (hi, link.fromSpace (*e, link.spaceMax (*entries[(size_t) link.second]) - link.rule.minGap));
+            hi =
+                juce::jmin (hi, link.fromSpace (*e, link.spaceMax (*entries[(size_t) link.second]) - link.rule.minGap));
         else
             lo = juce::jmax (lo, link.fromSpace (*e, link.spaceMin (*entries[(size_t) link.first]) + link.rule.minGap));
     }
@@ -971,8 +964,8 @@ void ParamStore::save (juce::MemoryBlock& destination)
         juce::AudioProcessor::copyXmlToBinary (*xml, destination);
 }
 
-bool ParamStore::load (const void* data, int sizeInBytes)        { return loadState (data, sizeInBytes, false); }
-bool ParamStore::loadPreset (const void* data, int sizeInBytes)  { return loadState (data, sizeInBytes, true); }
+bool ParamStore::load (const void* data, int sizeInBytes) { return loadState (data, sizeInBytes, false); }
+bool ParamStore::loadPreset (const void* data, int sizeInBytes) { return loadState (data, sizeInBytes, true); }
 
 bool ParamStore::loadState (const void* data, int sizeInBytes, bool asPreset)
 {
@@ -996,7 +989,8 @@ bool ParamStore::loadState (const void* data, int sizeInBytes, bool asPreset)
     {
         for (const auto& child : parent)
         {
-            if (child.hasType (paramTag) && child.getProperty (idProp).toString() == id && child.hasProperty (valueProp))
+            if (child.hasType (paramTag) && child.getProperty (idProp).toString() == id
+                && child.hasProperty (valueProp))
             {
                 out = (float) child.getProperty (valueProp);
                 return true;
@@ -1071,8 +1065,9 @@ bool ParamStore::loadState (const void* data, int sizeInBytes, bool asPreset)
             if (findValue (hidden, link->rule.offsetStateId(), storedOffset))
                 link->offset.store (storedOffset);
             else if (link->enabled.load())
-                link->offset.store (link->toSpace (*entries[(size_t) link->first], entries[(size_t) link->first]->value.load())
-                                    - link->toSpace (*entries[(size_t) link->second], entries[(size_t) link->second]->value.load()));
+                link->offset.store (
+                    link->toSpace (*entries[(size_t) link->first], entries[(size_t) link->first]->value.load())
+                    - link->toSpace (*entries[(size_t) link->second], entries[(size_t) link->second]->value.load()));
         }
     }
 

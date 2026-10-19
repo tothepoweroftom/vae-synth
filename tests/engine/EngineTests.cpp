@@ -7,7 +7,10 @@ namespace vae
 class SchemaTests final : public juce::UnitTest
 {
 public:
-    SchemaTests() : juce::UnitTest ("Schema", "vae_engine") {}
+    SchemaTests()
+        : juce::UnitTest ("Schema", "vae_engine")
+    {
+    }
 
     void runTest() override
     {
@@ -80,7 +83,10 @@ public:
 class EngineTests final : public juce::UnitTest
 {
 public:
-    EngineTests() : juce::UnitTest ("Engines (generic)", "vae_engine") {}
+    EngineTests()
+        : juce::UnitTest ("Engines (generic)", "vae_engine")
+    {
+    }
 
     void runTest() override
     {
@@ -97,7 +103,8 @@ public:
             const auto on = render (*engine, { 1, 31, 32, 33, 64, 512, 7 }, int (kRate));
             expect (on.finite);
             expect (on.peak > 1.0e-3f, "peak " + juce::String (on.peak));
-            logMessage (label + " default patch: peak " + juce::String (on.peak, 4) + ", rms " + juce::String (on.rms(), 4));
+            logMessage (label + " default patch: peak " + juce::String (on.peak, 4) + ", rms "
+                        + juce::String (on.rms(), 4));
 
             beginTest (label + ": release decays");
             engine->reset();
@@ -114,7 +121,7 @@ public:
                 {
                     engine->reset();
                     auto s = Snapshot::defaults();
-                    s[kOsc2On] = 1.0f;   // more of the patch in play
+                    s[kOsc2On] = 1.0f; // more of the patch in play
                     s[kFilter1Type] = 2.0f;
                     s[i] = float (k);
                     engine->setControls (s);
@@ -166,7 +173,10 @@ public:
 class MidiEdgeCaseTests final : public juce::UnitTest
 {
 public:
-    MidiEdgeCaseTests() : juce::UnitTest ("Engines (MIDI edge cases)", "vae_engine") {}
+    MidiEdgeCaseTests()
+        : juce::UnitTest ("Engines (MIDI edge cases)", "vae_engine")
+    {
+    }
 
     void runTest() override
     {
@@ -239,10 +249,12 @@ public:
                 p.run (4800);
                 p.block (256, { M::noteOff (1, 60) });
                 p.run (second);
-                expect (p.tailPeak (4800) > 1.0e-3f, "still sounding with the pedal down: " + juce::String (p.tailPeak (4800)));
+                expect (p.tailPeak (4800) > 1.0e-3f,
+                        "still sounding with the pedal down: " + juce::String (p.tailPeak (4800)));
                 p.block (256, { M::controllerEvent (1, 64, 0) });
                 p.run (2 * second);
-                expect (p.tailPeak (size_t (second / 2)) < 1.0e-3f, "released on pedal up: " + juce::String (p.tailPeak (size_t (second / 2))));
+                expect (p.tailPeak (size_t (second / 2)) < 1.0e-3f,
+                        "released on pedal up: " + juce::String (p.tailPeak (size_t (second / 2))));
             }
 
             beginTest (label + ": finite and in tune at 22.05 / 44.1 / 96 / 192 kHz");

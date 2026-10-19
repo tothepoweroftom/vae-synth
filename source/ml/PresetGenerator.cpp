@@ -28,11 +28,12 @@ uint64_t splitmix (uint64_t& state)
 
 void callOnMessageThread (std::weak_ptr<bool> alive, std::function<void()> fn)
 {
-    juce::MessageManager::callAsync ([alive = std::move (alive), fn = std::move (fn)]
-    {
-        if (alive.lock() != nullptr)
-            fn();
-    });
+    juce::MessageManager::callAsync (
+        [alive = std::move (alive), fn = std::move (fn)]
+        {
+            if (alive.lock() != nullptr)
+                fn();
+        });
 }
 } // namespace
 
@@ -77,7 +78,8 @@ juce::Result LatentDecoder::loadModel (const void* data, size_t size, const juce
     return install (std::move (candidate), loaded, name);
 }
 
-juce::Result LatentDecoder::install (std::unique_ptr<OnnxModel> candidate, juce::Result loaded, const juce::String& name)
+juce::Result LatentDecoder::install (std::unique_ptr<OnnxModel> candidate, juce::Result loaded,
+                                     const juce::String& name)
 {
     if (loaded.failed())
         return loaded;
@@ -92,9 +94,7 @@ juce::Result LatentDecoder::validate (const OnnxModel& m)
 {
     // [batch, n] with batch 1 or dynamic: what decode() feeds and reads.
     const auto fits = [] (const TensorInfo& t, int64_t n)
-    {
-        return t.isFloat && t.shape.size() == 2 && (t.shape[0] == 1 || t.shape[0] < 0) && t.shape[1] == n;
-    };
+    { return t.isFloat && t.shape.size() == 2 && (t.shape[0] == 1 || t.shape[0] < 0) && t.shape[1] == n; };
 
     if (! fits (m.getInputs().front(), schema::kLatentDimensions))
         return juce::Result::fail ("Decoder input must be float [1, " + juce::String (schema::kLatentDimensions)
@@ -129,8 +129,8 @@ schema::Snapshot LatentDecoder::decode (const schema::Latent& latent, juce::Stri
         else if (! std::all_of (outs.front().begin(), outs.front().end(), [] (float v) { return std::isfinite (v); }))
             problem = "decoder returned non-finite values";
         else
-            return schema::decodeFeatures (std::span<const float, schema::kFeatureCount> (outs.front().data(),
-                                                                                         schema::kFeatureCount));
+            return schema::decodeFeatures (
+                std::span<const float, schema::kFeatureCount> (outs.front().data(), schema::kFeatureCount));
         if (error != nullptr)
             *error = problem + " (mock decoder used)";
     }
@@ -138,7 +138,8 @@ schema::Snapshot LatentDecoder::decode (const schema::Latent& latent, juce::Stri
 }
 
 //==============================================================================
-PresetGenerator::PresetGenerator() : encoder (std::make_unique<HashPromptEncoder>())
+PresetGenerator::PresetGenerator()
+    : encoder (std::make_unique<HashPromptEncoder>())
 {
     const std::scoped_lock sl (lock);
     refreshStatus();
@@ -170,19 +171,21 @@ void PresetGenerator::setPromptEncoder (std::unique_ptr<PromptEncoder> e)
     refreshStatus();
 }
 
-void PresetGenerator::load (std::function<juce::Result (LatentDecoder&)> loadFn, std::function<void (juce::Result)> done)
+void PresetGenerator::load (std::function<juce::Result (LatentDecoder&)> loadFn,
+                            std::function<void (juce::Result)> done)
 {
-    pool.addJob ([this, loadFn = std::move (loadFn), done = std::move (done), weak = std::weak_ptr<bool> (alive)]
-    {
-        juce::Result r = juce::Result::ok();
+    pool.addJob (
+        [this, loadFn = std::move (loadFn), done = std::move (done), weak = std::weak_ptr<bool> (alive)]
         {
-            const std::scoped_lock sl (lock);
-            r = loadFn (decoder);
-            refreshStatus();
-        }
-        if (done)
-            callOnMessageThread (weak, [done, r] { done (r); });
-    });
+            juce::Result r = juce::Result::ok();
+            {
+                const std::scoped_lock sl (lock);
+                r = loadFn (decoder);
+                refreshStatus();
+            }
+            if (done)
+                callOnMessageThread (weak, [done, r] { done (r); });
+        });
 }
 
 void PresetGenerator::loadDecoder (const juce::File& file, std::function<void (juce::Result)> done)
@@ -192,31 +195,32 @@ void PresetGenerator::loadDecoder (const juce::File& file, std::function<void (j
 
 void PresetGenerator::loadDecoder (juce::MemoryBlock data, juce::String name, std::function<void (juce::Result)> done)
 {
-    load ([data = std::move (data), name] (LatentDecoder& d) { return d.loadModel (data.getData(), data.getSize(), name); },
-          std::move (done));
+    load ([data = std::move (data), name] (LatentDecoder& d)
+          { return d.loadModel (data.getData(), data.getSize(), name); }, std::move (done));
 }
 
 void PresetGenerator::start (juce::String prompt, std::optional<schema::Latent> latent,
                              std::function<void (const Result&)> done)
 {
     const auto request = ++latestRequest;
-    pool.addJob ([this, request, prompt = std::move (prompt), latent, done = std::move (done),
-                  weak = std::weak_ptr<bool> (alive)]
-    {
-        if (request != latestRequest.load())
-            return;   // superseded by a newer request
-        Result result;
-        result.prompt = prompt;
+    pool.addJob (
+        [this, request, prompt = std::move (prompt), latent, done = std::move (done),
+         weak = std::weak_ptr<bool> (alive)]
         {
-            const std::scoped_lock sl (lock);
-            result.latent = latent.has_value() ? *latent : encoder->encode (prompt);
-            result.controls = decoder.decode (result.latent, &result.note);
-        }
-        if (result.note.isEmpty())
-            result.note = describe();
-        if (done)
-            callOnMessageThread (weak, [done, result] { done (result); });
-    });
+            if (request != latestRequest.load())
+                return; // superseded by a newer request
+            Result result;
+            result.prompt = prompt;
+            {
+                const std::scoped_lock sl (lock);
+                result.latent = latent.has_value() ? *latent : encoder->encode (prompt);
+                result.controls = decoder.decode (result.latent, &result.note);
+            }
+            if (result.note.isEmpty())
+                result.note = describe();
+            if (done)
+                callOnMessageThread (weak, [done, result] { done (result); });
+        });
 }
 
 void PresetGenerator::generate (const juce::String& prompt, std::function<void (const Result&)> done)

@@ -48,7 +48,7 @@ OrtRuntime::OrtRuntime()
         return;
     }
 
-    using GetApiBaseFn = const OrtApiBase* (ORT_API_CALL*) ();
+    using GetApiBaseFn = const OrtApiBase*(ORT_API_CALL*) ();
     auto getApiBase = reinterpret_cast<GetApiBaseFn> (library.getFunction ("OrtGetApiBase"));
     if (getApiBase == nullptr)
     {
@@ -60,8 +60,8 @@ OrtRuntime::OrtRuntime()
     const OrtApi* api = getApiBase()->GetApi (ORT_API_VERSION);
     if (api == nullptr)
     {
-        status = juce::String ("ONNX Runtime ") + getApiBase()->GetVersionString()
-                 + " does not provide API version " + juce::String (ORT_API_VERSION);
+        status = juce::String ("ONNX Runtime ") + getApiBase()->GetVersionString() + " does not provide API version "
+                 + juce::String (ORT_API_VERSION);
         library.close();
         return;
     }
@@ -81,7 +81,7 @@ OrtRuntime::OrtRuntime()
 
 OrtRuntime::~OrtRuntime()
 {
-    env.reset();   // before the library goes away
+    env.reset(); // before the library goes away
 }
 
 Ort::Env& OrtRuntime::getEnv() const

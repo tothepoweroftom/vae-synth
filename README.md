@@ -29,7 +29,7 @@ prompt ──► PromptEncoder ──► latent[8] ──► LatentDecoder ─�
 | `source/params/` | Clean-room parameter store (`ParamStore`, UI bindings), built from `docs/specs/parameter-manager.md` |
 | `source/plugin/` | `AudioProcessor`, editor, look and feel |
 | `models/` | `make_stub_decoder.py` and the committed `stub_decoder.onnx` (embedded in the plug-in) |
-| `tests/` | `vae_params_tests`, `vae_engine_tests`, `vae_ml_tests`, `vae_schema_tools` (CTest) |
+| `tests/` | `vae_params_tests`, `vae_engine_tests`, `vae_ml_tests`, `vae_plugin_tests`, `vae_schema_tools`, `vae_format_check` (CTest) |
 
 ## Build
 
@@ -40,6 +40,13 @@ Needs CMake ≥ 3.22, a C++20 compiler and network access on first configure
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ctest --test-dir build
+```
+
+Formatting (`.clang-format`, JUCE house style; `vae_format_check` in CTest
+fails on unformatted code):
+
+```sh
+clang-format -i $(git ls-files 'source/*.h' 'source/*.cpp' 'tests/*.h' 'tests/*.cpp')
 ```
 
 Options:

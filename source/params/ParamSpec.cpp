@@ -15,11 +15,9 @@ juce::NormalisableRange<float> ParamSpec::frequencyRange (float lo, float hi)
 
 bool ParamSpec::rangeIsUnset() const noexcept
 {
-    return juce::exactlyEqual (range.start, 0.0f)
-        && juce::exactlyEqual (range.end, 1.0f)
-        && juce::exactlyEqual (range.interval, 0.0f)
-        && juce::exactlyEqual (range.skew, 1.0f)
-        && ! range.symmetricSkew;
+    return juce::exactlyEqual (range.start, 0.0f) && juce::exactlyEqual (range.end, 1.0f)
+           && juce::exactlyEqual (range.interval, 0.0f) && juce::exactlyEqual (range.skew, 1.0f)
+           && ! range.symmetricSkew;
 }
 
 ParamSpec ParamSpec::completed() const
@@ -31,9 +29,7 @@ ParamSpec ParamSpec::completed() const
 
     switch (s.kind)
     {
-        case ParamKind::Bool:
-            s.range = juce::NormalisableRange<float> { 0.0f, 1.0f, 1.0f };
-            break;
+        case ParamKind::Bool: s.range = juce::NormalisableRange<float> { 0.0f, 1.0f, 1.0f }; break;
 
         case ParamKind::Choice:
             if (s.rangeIsUnset())
@@ -45,8 +41,7 @@ ParamSpec ParamSpec::completed() const
                 s.range.interval = 1.0f;
             break;
 
-        case ParamKind::Float:
-            break;
+        case ParamKind::Float: break;
     }
 
     s.defaultValue = s.range.snapToLegalValue (s.defaultValue);
@@ -68,9 +63,9 @@ juce::String ParamSpec::valueToText (float raw) const
 
     switch (kind)
     {
-        case ParamKind::Float:  return withUnit (juce::String (raw, 2), unit);
-        case ParamKind::Int:    return withUnit (juce::String (juce::roundToInt (raw)), unit);
-        case ParamKind::Bool:   return raw >= 0.5f ? "On" : "Off";
+        case ParamKind::Float: return withUnit (juce::String (raw, 2), unit);
+        case ParamKind::Int:   return withUnit (juce::String (juce::roundToInt (raw)), unit);
+        case ParamKind::Bool:  return raw >= 0.5f ? "On" : "Off";
         case ParamKind::Choice:
         {
             const auto index = juce::roundToInt (raw);
@@ -90,8 +85,8 @@ float ParamSpec::textToValue (const juce::String& text) const
 
     switch (kind)
     {
-        case ParamKind::Float:  return t.getFloatValue();
-        case ParamKind::Int:    return (float) t.getIntValue();
+        case ParamKind::Float: return t.getFloatValue();
+        case ParamKind::Int:   return (float) t.getIntValue();
         case ParamKind::Bool:
         {
             const auto lower = t.toLowerCase();

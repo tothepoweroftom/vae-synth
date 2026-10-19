@@ -67,10 +67,7 @@ int LiteEngine::numActiveVoices() const noexcept
     return n;
 }
 
-float LiteEngine::glideSource() const noexcept
-{
-    return patch.glideSeconds > 0.0f ? lastNoteSemis : -1.0f;
-}
+float LiteEngine::glideSource() const noexcept { return patch.glideSeconds > 0.0f ? lastNoteSemis : -1.0f; }
 
 void LiteEngine::noteOn (int note)
 {
@@ -104,7 +101,8 @@ void LiteEngine::noteOn (int note)
         for (int pass = 0; chosen == nullptr && pass < 2; ++pass)
         {
             for (auto& v : voices)
-                if ((pass == 1 || v.isReleasing()) && (chosen == nullptr || v.getStartOrder() < chosen->getStartOrder()))
+                if ((pass == 1 || v.isReleasing())
+                    && (chosen == nullptr || v.getStartOrder() < chosen->getStartOrder()))
                     chosen = &v;
         }
         chosen->start (patch, note, glideSource(), ++noteCounter);
@@ -216,7 +214,7 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
     buffer.clear();
     const int numSamples = buffer.getNumSamples();
     if (! prepared || buffer.getNumChannels() < 2)
-        return;   // a 0-sample block still runs the event loop: hosts flush MIDI that way
+        return; // a 0-sample block still runs the event loop: hosts flush MIDI that way
 
     auto* left = buffer.getWritePointer (0);
     auto* right = buffer.getWritePointer (1);

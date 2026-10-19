@@ -48,11 +48,11 @@ public:
 
     void process (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        run (0, p.distOn,   [&] { processDist (l, r, n, p); },   [&] { resetDist(); });
-        run (1, p.eqOn,     [&] { processEq (l, r, n, p); },     [&] { resetEq(); });
+        run (0, p.distOn, [&] { processDist (l, r, n, p); }, [&] { resetDist(); });
+        run (1, p.eqOn, [&] { processEq (l, r, n, p); }, [&] { resetEq(); });
         run (2, p.chorusOn, [&] { processChorus (l, r, n, p); }, [&] { resetChorus(); });
-        run (3, p.modfxOn,    [&] { processModFx (l, r, n, p); },    [&] { resetModFx(); });
-        run (4, p.delayOn,  [&] { processDelay (l, r, n, p); },  [&] { resetDelay(); });
+        run (3, p.modfxOn, [&] { processModFx (l, r, n, p); }, [&] { resetModFx(); });
+        run (4, p.delayOn, [&] { processDelay (l, r, n, p); }, [&] { resetDelay(); });
         run (5, p.reverbOn, [&] { processReverb (l, r, n, p); }, [&] { reverb.reset(); });
     }
 
@@ -104,7 +104,11 @@ private:
                 r[i] = b.process (1, r[i]);
             }
     }
-    void resetEq() noexcept { for (auto& b : eq) b.reset(); }
+    void resetEq() noexcept
+    {
+        for (auto& b : eq)
+            b.reset();
+    }
 
     // Chorus: two modulated delay lines, 90 degrees apart.
     void processChorus (float* l, float* r, int n, const FxSettings& p) noexcept
@@ -124,7 +128,11 @@ private:
             r[i] += p.chorusMix * (wr - r[i]);
         }
     }
-    void resetChorus() noexcept { chorus[0].restart(); chorus[1].restart(); }
+    void resetChorus() noexcept
+    {
+        chorus[0].restart();
+        chorus[1].restart();
+    }
 
     // Phaser (4 first-order all-passes, swept) or flanger (short modulated delay).
     void processModFx (float* l, float* r, int n, const FxSettings& p) noexcept
@@ -192,12 +200,17 @@ private:
                 ch[k][i] += p.delayMix * (wet - ch[k][i]);
             }
     }
-    void resetDelay() noexcept { delay[0].restart(); delay[1].restart(); delayLp[0] = delayLp[1] = 0.0f; }
+    void resetDelay() noexcept
+    {
+        delay[0].restart();
+        delay[1].restart();
+        delayLp[0] = delayLp[1] = 0.0f;
+    }
 
     // Reverb: juce::Reverb (Freeverb); decay time and size both drive room size.
     void processReverb (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        const float t = p.reverbDecay;   // the 0..1 reverb_decay control
+        const float t = p.reverbDecay; // the 0..1 reverb_decay control
         juce::Reverb::Parameters rp;
         rp.roomSize = std::clamp (0.25f + 0.7f * t + 0.1f * p.reverbSize, 0.0f, 1.0f);
         rp.damping = p.reverbDamping;

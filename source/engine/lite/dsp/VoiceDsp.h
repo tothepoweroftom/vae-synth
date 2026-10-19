@@ -12,7 +12,13 @@
 namespace vae::dsp
 {
 
-enum class AnalogWave : int { Sine, Triangle, Saw, Square };
+enum class AnalogWave : int
+{
+    Sine,
+    Triangle,
+    Saw,
+    Square
+};
 
 /** NaN/Inf test that survives -ffast-math (which lets the compiler assume
     std::isfinite is always true): checks the exponent bits directly. */
@@ -29,7 +35,7 @@ inline bool isFiniteBits (float x) noexcept
 class AnalogOsc
 {
 public:
-    void setPhase (float p) noexcept      { phase = p; }
+    void setPhase (float p) noexcept { phase = p; }
     void setIncrement (float inc) noexcept { dt = inc < 0.49f ? inc : 0.49f; }
 
     float next (AnalogWave wave) noexcept
@@ -39,9 +45,7 @@ public:
 
         switch (wave)
         {
-            case AnalogWave::Sine:
-                y = std::sin (6.2831853f * p);
-                break;
+            case AnalogWave::Sine: y = std::sin (6.2831853f * p); break;
 
             case AnalogWave::Triangle:
             {
@@ -51,13 +55,9 @@ public:
                 break;
             }
 
-            case AnalogWave::Saw:
-                y = 2.0f * p - 1.0f - blep (p);
-                break;
+            case AnalogWave::Saw: y = 2.0f * p - 1.0f - blep (p); break;
 
-            case AnalogWave::Square:
-                y = (p < 0.5f ? 1.0f : -1.0f) + blep (p) - blep (wrap (p + 0.5f));
-                break;
+            case AnalogWave::Square: y = (p < 0.5f ? 1.0f : -1.0f) + blep (p) - blep (wrap (p + 0.5f)); break;
         }
 
         phase += dt;
@@ -124,7 +124,10 @@ struct SvfCoefs
 class Svf
 {
 public:
-    struct Out { float low, band, high; };
+    struct Out
+    {
+        float low, band, high;
+    };
 
     Out process (float v0, const SvfCoefs& c) noexcept
     {

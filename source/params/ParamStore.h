@@ -24,8 +24,8 @@ struct ParamIndex
 /** Whether a set() call notifies the host. */
 enum class Notify
 {
-    host,           ///< Through the JUCE parameter's setValueNotifyingHost (default).
-    listenersOnly   ///< Internal state + store listeners only; no host notification.
+    host,         ///< Through the JUCE parameter's setValueNotifyingHost (default).
+    listenersOnly ///< Internal state + store listeners only; no host notification.
 };
 
 /**
@@ -51,9 +51,7 @@ public:
     ParamStore& operator= (const ParamStore&) = delete;
 
     /** Creates the parameters and the APVTS. Call exactly once, at the end of the processor's constructor. */
-    void build (std::vector<ParamSpec> specs,
-                juce::AudioProcessor& processor,
-                const juce::Identifier& treeType,
+    void build (std::vector<ParamSpec> specs, juce::AudioProcessor& processor, const juce::Identifier& treeType,
                 juce::UndoManager* undoManager = nullptr);
 
     /** True once build() has run. */

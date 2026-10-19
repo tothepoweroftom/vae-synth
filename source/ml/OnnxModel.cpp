@@ -80,22 +80,21 @@ juce::Result OnnxModel::load (const juce::File& file)
         return juce::Result::fail ("Model not found: " + file.getFullPathName());
     }
 
-    return loadWith ([&file] (Ort::Env& env, const Ort::SessionOptions& options)
-    {
+    return loadWith (
+        [&file] (Ort::Env& env, const Ort::SessionOptions& options)
+        {
 #if JUCE_WINDOWS
-        return std::make_unique<Ort::Session> (env, file.getFullPathName().toWideCharPointer(), options);
+            return std::make_unique<Ort::Session> (env, file.getFullPathName().toWideCharPointer(), options);
 #else
-        return std::make_unique<Ort::Session> (env, file.getFullPathName().toRawUTF8(), options);
+            return std::make_unique<Ort::Session> (env, file.getFullPathName().toRawUTF8(), options);
 #endif
-    });
+        });
 }
 
 juce::Result OnnxModel::load (const void* data, size_t size)
 {
     return loadWith ([data, size] (Ort::Env& env, const Ort::SessionOptions& options)
-    {
-        return std::make_unique<Ort::Session> (env, data, size, options);
-    });
+                     { return std::make_unique<Ort::Session> (env, data, size, options); });
 }
 
 juce::Result OnnxModel::finishLoad()
@@ -124,8 +123,7 @@ juce::Result OnnxModel::finishLoad()
     return juce::Result::ok();
 }
 
-juce::Result OnnxModel::run (std::span<const float> input,
-                             std::span<const int64_t> inputShape,
+juce::Result OnnxModel::run (std::span<const float> input, std::span<const int64_t> inputShape,
                              std::vector<std::vector<float>>& outputsOut)
 {
     if (! isLoaded())
@@ -139,11 +137,13 @@ juce::Result OnnxModel::run (std::span<const float> input,
                                                        inputShape.data(), inputShape.size());
 
         std::vector<const char*> inNames, outNames;
-        for (auto& n : session->inputNames)  inNames.push_back (n.c_str());
-        for (auto& n : session->outputNames) outNames.push_back (n.c_str());
+        for (auto& n : session->inputNames)
+            inNames.push_back (n.c_str());
+        for (auto& n : session->outputNames)
+            outNames.push_back (n.c_str());
 
-        auto results = session->session->Run (Ort::RunOptions { nullptr }, inNames.data(), &tensor, 1,
-                                               outNames.data(), outNames.size());
+        auto results = session->session->Run (Ort::RunOptions { nullptr }, inNames.data(), &tensor, 1, outNames.data(),
+                                              outNames.size());
 
         outputsOut.clear();
         for (auto& value : results)
