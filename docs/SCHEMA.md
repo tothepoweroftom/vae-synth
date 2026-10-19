@@ -55,12 +55,12 @@ exactly the defaults.
 | schema | Surge render (engine) | Surge import (sampler) |
 |---|---|---|
 | sine | Sine osc | Sine osc |
-| triangle | see `source/engine/surge/SurgeEngine.h` | Modern osc where triangle dominates |
+| triangle | Modern osc, triangle mix only | Modern osc where triangle dominates |
 | saw | Classic, shape 0 | Classic with shape > −0.5; String / Twist / Alias (lossy) |
 | square | Classic, shape −1, width 0.5 | Classic with shape ≤ −0.5; Modern where pulse dominates |
-| noise | see `SurgeEngine.h` | S&H Noise osc |
-| wavetable | Wavetable osc (default table) | Wavetable, Window |
-| fm | FM2 osc | FM2, FM3 |
+| noise | S&H Noise, correlation 0, sync +48 st (broadband) | S&H Noise osc |
+| wavetable | Wavetable osc on a fixed 8-frame additive table (headless Surge has no factory tables) | Wavetable, Window |
+| fm | FM2 osc, M1 amount 0.3, ratio 2 (its defaults are a pure sine) | FM2, FM3 |
 
 Classic's shape morphs square (−1) → saw (0). Surge's *Init Square*
 template uses shape −1.
@@ -73,9 +73,17 @@ ladders, OB-Xd, K35, diode and warp lowpasses → `lp24`; their highpass, band
 and notch variants likewise; multi-mode filters → their usual LP setting;
 effect types (comb, S&H, allpass) → `off`. Each fold is reported as lossy.
 
-`filter_routing`: Surge Serial 1–3 → `serial`, every other configuration →
-`parallel`. The exact Surge configuration used for rendering is documented in
-`SurgeEngine.h`.
+`filter_routing` renders as Surge **Serial 1** or **Dual 1** (measured):
+
+- serial: oscs routed to `filter1` / `both` go through F1 then F2; `filter2` skips F1.
+- parallel: each filter path carries the oscs routed to it at −6 dB, and the
+  paths are summed.
+- In both, a filter set to `off` passes its oscs through unfiltered.
+
+Surge's template default *Wide* ignores per-osc routing, so it is not used
+for rendering. On import, Serial 1–3 → `serial` and every other configuration
+→ `parallel` (lossy unless Serial 1 or Dual 1). The Lite engine copies this
+behaviour.
 
 ## Effects
 

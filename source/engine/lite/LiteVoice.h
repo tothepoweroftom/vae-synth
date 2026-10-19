@@ -189,9 +189,10 @@ public:
             const float g = o.on ? o.gain : 0.0f;
             if (p.parallel)
             {
-                // "Both" splits equally so a patch with both filters off keeps its level.
-                toF1[i] = o.route == Route::Filter1 ? g : o.route == Route::Both ? 0.5f * g : 0.0f;
-                toF2[i] = o.route == Route::Filter2 ? g : o.route == Route::Both ? 0.5f * g : 0.0f;
+                // As Surge's Dual 1 (measured): each filter path carries the
+                // oscs routed to it at -6 dB, and the two paths are summed.
+                toF1[i] = o.route != Route::Filter2 ? 0.5f * g : 0.0f;
+                toF2[i] = o.route != Route::Filter1 ? 0.5f * g : 0.0f;
             }
             else
             {
