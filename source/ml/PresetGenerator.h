@@ -28,6 +28,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 namespace vae::ml
 {
@@ -54,22 +55,28 @@ public:
 class LatentDecoder
 {
 public:
-    /** Load an ONNX decoder; validates its tensor shapes. Empty file = unload. */
+    /** Load an ONNX decoder. The current model stays in use unless the new one
+        loads and passes validate(). An empty file unloads (mock decoder). */
     juce::Result loadModel (const juce::File& file);
     juce::Result loadModel (const void* data, size_t size, const juce::String& name = {});
-    bool hasModel() const noexcept { return model.isLoaded(); }
+    bool hasModel() const noexcept { return model != nullptr; }
     juce::String describe() const;
-    juce::String getRuntimeStatus() const { return model.getRuntimeStatus(); }
+    juce::String getRuntimeStatus() const { return runtime->getStatus(); }
 
     /** Decode one latent. Falls back to mockDecode when no model is loaded or
-        inference fails (the reason goes to `error` if given). */
+        inference fails or returns non-finite values (the reason goes to
+        `error` if given). */
     schema::Snapshot decode (const schema::Latent& latent, juce::String* error = nullptr);
 
-private:
-    juce::Result validate();
+    /** The decoder contract: one float input [1 or dynamic, latent_dimensions],
+        first output float [1 or dynamic, feature_count]. */
+    static juce::Result validate (const OnnxModel&);
 
-    OnnxModel model;
-    juce::File modelFile;
+private:
+    juce::Result install (std::unique_ptr<OnnxModel> candidate, juce::Result loaded, const juce::String& name);
+
+    juce::SharedResourcePointer<OrtRuntime> runtime;
+    std::unique_ptr<OnnxModel> model;
     juce::String modelName;
 };
 
@@ -101,14 +108,19 @@ public:
     void generate (const juce::String& prompt, std::function<void (const Result&)> done);
     void generateFromLatent (const schema::Latent& latent, std::function<void (const Result&)> done);
 
+    /** "encoder -> decoder" status. Never waits for a running job. */
     juce::String describe() const;
 
 private:
-    void enqueue (std::function<void()> job);
+    void load (std::function<juce::Result (LatentDecoder&)> loadFn, std::function<void (juce::Result)> done);
+    void start (juce::String prompt, std::optional<schema::Latent> latent, std::function<void (const Result&)> done);
+    void refreshStatus();   // call with `lock` held
 
-    mutable std::mutex lock;   // guards encoder/decoder between worker and message thread
+    std::mutex lock;   // guards encoder/decoder between worker and message thread
     std::unique_ptr<PromptEncoder> encoder;
     LatentDecoder decoder;
+    mutable std::mutex statusLock;   // guards status only; never held during a job
+    juce::String status;
     juce::ThreadPool pool { juce::ThreadPoolOptions{}.withThreadName ("vae-ml").withNumberOfThreads (1) };
     std::atomic<uint64_t> latestRequest { 0 };
     std::shared_ptr<bool> alive = std::make_shared<bool> (true);

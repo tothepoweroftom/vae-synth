@@ -120,6 +120,7 @@ if(VAE_BUILD_TESTS)
     add_subdirectory(tests/params)
     add_subdirectory(tests/engine)
     add_subdirectory(tests/ml)
+    add_subdirectory(tests/plugin)
 
     find_package(Python3 COMPONENTS Interpreter)
     if(Python3_FOUND)

@@ -680,6 +680,21 @@ void ParamStore::onHostValueChanged (Entry& e, float normalised)
 float ParamStore::storeChange (Entry& e, float raw)
 {
     const auto old = e.value.exchange (raw);
+
+    // Two threads writing the same host parameter at once (automation and the
+    // UI) can deliver their notifications in the opposite order to their
+    // writes. Settle on the host's final value so the store never keeps the
+    // loser. Compared in normalised space; bounded, as each pass re-reads.
+    if (e.host != nullptr)
+        for (int pass = 0; pass < 8; ++pass)
+        {
+            const auto hostNorm = e.host->getValue();
+            if (std::abs (e.host->convertTo0to1 (raw) - hostNorm) <= 1.0e-6f)
+                break;
+            raw = e.host->convertFrom0to1 (hostNorm);
+            e.value.store (raw);
+        }
+
     markDirty (e);
     notifyListeners (e, raw);
     return old;

@@ -72,8 +72,7 @@ PluginProcessor::PluginProcessor()
             s.choices.add (engineName (kind));
         // Default to the reference engine when it is built in.
         s.defaultValue = float (engineKinds.size() - 1);
-        s.hostVisible = false;          // a build/setup choice, not automation
-        s.restoreFromPreset = false;    // presets are engine-neutral vectors
+        s.hostVisible = false;   // a build/setup choice, not automation; saved with the state
         s.onAudioChange = [this] (float v) { selectEngine (juce::roundToInt (v)); };
         specs.push_back (std::move (s));
     }
@@ -122,7 +121,12 @@ void PluginProcessor::selectEngine (int choiceIndex)
         return;
 
     if (activeEngine != nullptr)
+    {
         activeEngine->reset();
+        // The new engine never saw the held notes: release them everywhere
+        // (on-screen keyboard included) rather than leave keys shown as down.
+        keyboardState.allNotesOff (0);
+    }
 
     schema::Snapshot s;
     s.values = audioControls;
@@ -167,7 +171,10 @@ void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 
 void PluginProcessor::generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String&)> done)
 {
-    lastPrompt = prompt;
+    {
+        const juce::ScopedLock sl (stateLock);
+        lastPrompt = prompt;
+    }
     generator.generate (prompt, [this, done] (const ml::PresetGenerator::Result& r)
     {
         applyControls (r.controls);
@@ -192,12 +199,52 @@ void PluginProcessor::generateRandom (std::function<void (const juce::String&)> 
 
 void PluginProcessor::loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done)
 {
-    decoderModelFile = file;
-    if (file == juce::File())
+    requestModel (file, file, false, std::move (done));
+}
+
+void PluginProcessor::requestModel (const juce::File& toLoad, const juce::File& toRecord, bool missing,
+                                    std::function<void (juce::Result)> done)
+{
+    const auto id = ++modelRequest;
+    auto onLoaded = [this, id, toRecord, missing, done = std::move (done)] (juce::Result r)
+    {
+        // Only the latest request may change what is saved, and only on success.
+        if (r.wasOk() && id == modelRequest.load())
+        {
+            const juce::ScopedLock sl (stateLock);
+            modelPath = toRecord;
+            modelMissing = missing;
+        }
+        if (done)
+            done (r);
+    };
+
+    if (toLoad == juce::File())
         generator.loadDecoder (juce::MemoryBlock (BinaryData::stub_decoder_onnx, BinaryData::stub_decoder_onnxSize),
-                               "stub_decoder.onnx (embedded)", std::move (done));
+                               "stub_decoder.onnx (embedded)", std::move (onLoaded));
     else
-        generator.loadDecoder (file, std::move (done));
+        generator.loadDecoder (toLoad, std::move (onLoaded));
+}
+
+juce::File PluginProcessor::getDecoderModelFile() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return modelPath;
+}
+
+juce::String PluginProcessor::getLastPrompt() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return lastPrompt;
+}
+
+juce::String PluginProcessor::describeModel() const
+{
+    auto text = generator.describe();
+    const juce::ScopedLock sl (stateLock);
+    if (modelMissing)
+        text += "  (saved model not found: " + modelPath.getFullPathName() + ")";
+    return text;
 }
 
 //==============================================================================
@@ -209,8 +256,11 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
     juce::XmlElement xml (kStateType);
     xml.setAttribute (kAttrSchema, schema::kSchemaVersion);
     xml.setAttribute (kAttrParams, paramState.toBase64Encoding());
-    xml.setAttribute (kAttrModel, decoderModelFile.getFullPathName());
-    xml.setAttribute (kAttrPrompt, lastPrompt);
+    {
+        const juce::ScopedLock sl (stateLock);
+        xml.setAttribute (kAttrModel, modelPath.getFullPathName());
+        xml.setAttribute (kAttrPrompt, lastPrompt);
+    }
     copyXmlToBinary (xml, destData);
 }
 
@@ -228,10 +278,17 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
     if (sameSchema && paramState.fromBase64Encoding (xml->getStringAttribute (kAttrParams)))
         params.load (paramState.getData(), (int) paramState.getSize());
 
-    lastPrompt = xml->getStringAttribute (kAttrPrompt);
     const juce::File model (xml->getStringAttribute (kAttrModel));
-    if (model != decoderModelFile)
-        loadDecoderModel (model.existsAsFile() ? model : juce::File(), nullptr);
+    const bool missing = model != juce::File() && ! model.existsAsFile();
+    {
+        // Keep the saved path even when the file is missing (unplugged drive),
+        // so saving again does not lose the reference.
+        const juce::ScopedLock sl (stateLock);
+        lastPrompt = xml->getStringAttribute (kAttrPrompt);
+        modelPath = model;
+        modelMissing = missing;
+    }
+    requestModel (missing ? juce::File() : model, model, missing, nullptr);
 }
 
 juce::AudioProcessorEditor* PluginProcessor::createEditor()

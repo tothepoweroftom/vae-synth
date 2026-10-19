@@ -77,7 +77,8 @@ The host parameters are the 93 schema controls: continuous controls are
 0..1 knobs, categorical ones are choices and toggles are switches. Both
 backends read the vector with Surge's semantics, so a vector sounds broadly
 similar on either. The backend is a hidden, persisted setting (the combo box
-at the top right). It is not restored from presets.
+at the top right). It is part of the plug-in state, so loading a project or a
+host preset restores it too (JUCE cannot tell the two apart).
 
 - **Lite** (always built, permissive): its own implementation of the full v2
   feature set. See `source/engine/lite/`.

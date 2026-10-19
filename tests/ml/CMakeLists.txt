@@ -7,6 +7,7 @@ target_sources(vae_ml_tests PRIVATE
 target_compile_definitions(vae_ml_tests PRIVATE
     VAE_TEST_CATEGORY="vae_ml"
     VAE_STUB_DECODER_PATH="${CMAKE_SOURCE_DIR}/models/stub_decoder.onnx"
+    VAE_ML_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
     JUCE_MODAL_LOOPS_PERMITTED=1
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
 

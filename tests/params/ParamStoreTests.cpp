@@ -1,6 +1,7 @@
 #include "params/Attachments.h"
 #include "params/ParamStore.h"
 
+#include <barrier>
 #include <thread>
 
 namespace vae::params::tests
@@ -153,6 +154,7 @@ public:
         testBuild();
         testDispatch();
         testCrossThread();
+        testConcurrentWriters();
         testSetGetNotify();
         testHiddenPersistence();
         testPresets();
@@ -384,6 +386,38 @@ private:
         expectEquals (latest["uiZoom"], 2.0f);
 
         store.removeListener ("cutoff", &listener);
+    }
+
+    //==========================================================================
+    void testConcurrentWriters()
+    {
+        beginTest ("Concurrent writers to one parameter: store, host and delivery agree");
+
+        float delivered = -1.0f;
+        TestProcessor proc;
+        auto spec = floatSpec ("x", 0.0f, 1.0f, 0.5f);
+        spec.onAudioChange = [&delivered] (float v) { delivered = v; };
+        proc.buildStore ({ spec });
+        auto& store = proc.store;
+        auto* host = store.hostParam ("x");
+
+        int diverged = 0;
+        constexpr int trials = 3000;
+        for (int t = 0; t < trials; ++t)
+        {
+            std::barrier sync (2);
+            std::thread automation ([&] { sync.arrive_and_wait(); host->setValueNotifyingHost (0.25f); });
+            std::thread ui ([&] { sync.arrive_and_wait(); store.set ("x", 0.75f); });
+            automation.join();
+            ui.join();
+
+            store.dispatch();
+            if (std::abs (host->getValue() - store.get ("x")) > 1.0e-6f
+                || std::abs (delivered - store.get ("x")) > 1.0e-6f)
+                ++diverged;
+            store.set ("x", 0.5f);
+        }
+        expectEquals (diverged, 0, "trials where store, host or delivered value disagree");
     }
 
     //==========================================================================
