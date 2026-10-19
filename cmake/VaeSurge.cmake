@@ -39,10 +39,15 @@ add_subdirectory("${VAE_SURGE_DIR}" "${CMAKE_BINARY_DIR}/_deps/surge-build" EXCL
 # Surge's common/CMakeLists.txt assumes it is the top-level project and refers
 # to ${CMAKE_SOURCE_DIR}/libs/r8brain-free-src. Re-point those entries at the
 # Surge tree instead of patching Surge.
+# Plain string replacement: the paths may contain regex characters (C++, ...).
 foreach(prop SOURCES INCLUDE_DIRECTORIES)
     get_target_property(values surge-common ${prop})
-    list(TRANSFORM values REPLACE "^${CMAKE_SOURCE_DIR}/libs/" "${VAE_SURGE_DIR}/libs/")
-    set_target_properties(surge-common PROPERTIES ${prop} "${values}")
+    set(fixed "")
+    foreach(value IN LISTS values)
+        string(REPLACE "${CMAKE_SOURCE_DIR}/libs/" "${VAE_SURGE_DIR}/libs/" value "${value}")
+        list(APPEND fixed "${value}")
+    endforeach()
+    set_target_properties(surge-common PROPERTIES ${prop} "${fixed}")
 endforeach()
 
 # Surge's headers need SSE4.1 on x86 (Surge sets it directory-wide for itself).

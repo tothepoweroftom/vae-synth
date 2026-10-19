@@ -2,7 +2,7 @@
 #
 # The plug-in does not link against onnxruntime: it compiles against the C/C++
 # headers with ORT_API_MANUAL_INIT and loads the shared library at runtime
-# (source/ml/OrtLoader.cpp). That keeps the plug-in loadable when the library
+# (source/ml/OrtRuntime.cpp). That keeps the plug-in loadable when the library
 # is missing (ML features just report "unavailable"), avoids the Windows
 # "DLL next to the host .exe" problem, and lets us ship the library inside
 # each plug-in bundle.
@@ -10,15 +10,23 @@
 # Provides:
 #   vae::onnxruntime_headers   INTERFACE target with include dirs
 #   VAE_ORT_RUNTIME_FILE       the shared library to bundle
-#   VAE_ORT_RUNTIME_NAME       its file name (what OrtLoader looks for)
+#   VAE_ORT_RUNTIME_NAME       its file name (what OrtRuntime looks for)
 #   vae_bundle_onnxruntime(<juce plugin target>)
 
 set(VAE_ORT_VERSION "1.22.0" CACHE STRING "ONNX Runtime release to download")
 set(VAE_ORT_ROOT "" CACHE PATH "Existing extracted ONNX Runtime package (empty = download)")
 
 if(NOT VAE_ORT_ROOT)
+    # SHA-256 of each pinned 1.22.0 package (bump together with VAE_ORT_VERSION).
+    set(_ort_sha_onnxruntime-linux-x64-1.22.0        8344d55f93d5bc5021ce342db50f62079daf39aaafb5d311a451846228be49b3)
+    set(_ort_sha_onnxruntime-linux-aarch64-1.22.0    bb76395092d150b52c7092dc6b8f2fe4d80f0f3bf0416d2f269193e347e24702)
+    set(_ort_sha_onnxruntime-osx-universal2-1.22.0   cfa6f6584d87555ed9f6e7e8a000d3947554d589efe3723b8bfa358cd263d03c)
+    set(_ort_sha_onnxruntime-win-x64-1.22.0          174c616efc0271194488642a72f1a514e01487da4dfe84c49296d66e40ebe0da)
+    set(_ort_sha_onnxruntime-win-arm64-1.22.0        7008f7ff82f8e7de563a22f2b590e08e706a1289eba606b93de2b56edfb1e04b)
+
     if(WIN32)
-        if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|arm64|aarch64")
+        # The target architecture; CMAKE_SYSTEM_PROCESSOR is the host's under Visual Studio -A ARM64.
+        if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "ARM64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|arm64|aarch64")
             set(_ort_pkg "onnxruntime-win-arm64-${VAE_ORT_VERSION}")
         else()
             set(_ort_pkg "onnxruntime-win-x64-${VAE_ORT_VERSION}")
@@ -37,8 +45,15 @@ if(NOT VAE_ORT_ROOT)
     endif()
 
     include(FetchContent)
+    if(DEFINED _ort_sha_${_ort_pkg})
+        set(_ort_hash URL_HASH SHA256=${_ort_sha_${_ort_pkg}})
+    else()
+        message(WARNING "No pinned SHA-256 for ${_ort_pkg}; download is not verified")
+        set(_ort_hash "")
+    endif()
     FetchContent_Declare(onnxruntime_prebuilt
         URL https://github.com/microsoft/onnxruntime/releases/download/v${VAE_ORT_VERSION}/${_ort_pkg}.${_ort_ext}
+        ${_ort_hash}
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
     FetchContent_MakeAvailable(onnxruntime_prebuilt)
     set(VAE_ORT_ROOT "${onnxruntime_prebuilt_SOURCE_DIR}")

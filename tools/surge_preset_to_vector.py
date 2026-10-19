@@ -70,13 +70,19 @@ class Patch:
         params = root.find("parameters")
         if params is None:
             raise ValueError("no <parameters> in patch")
+        # Surge inserted a modulation source after ms_ctrl7 (13) at patch
+        # revision 9 and renumbers older patches on load (SurgePatch.cpp).
+        revision = int(root.attrib.get("revision", "999"))
         for p in params:
             if "value" in p.attrib:
                 self.values[p.tag] = float(p.attrib["value"])
             for r in p.findall("modrouting"):
                 if r.attrib.get("muted", "0") == "1":
                     continue
-                self.routes.setdefault(p.tag, []).append((int(r.attrib["source"]), float(r.attrib["depth"])))
+                source = int(r.attrib["source"])
+                if revision < 9 and source > 13:
+                    source += 1
+                self.routes.setdefault(p.tag, []).append((source, float(r.attrib["depth"])))
 
     def get(self, name: str, default: float = 0.0) -> float:
         return self.values.get(name, default)
@@ -239,18 +245,24 @@ def convert(patch: Patch, schema: vae_schema.Schema) -> tuple[list[float], list[
         if others or unsupported:
             lossy.append(f"{prefix}: {others + unsupported} extra modulation route(s) dropped")
 
-    # FX: first occurrence of each type along the chain (scene inserts, sends, globals).
-    send_levels = {5: p("send_fx_1_level"), 6: p("send_fx_2_level"),
-                   13: p("send_fx_3_level"), 14: p("send_fx_4_level")}
+    # FX: first enabled occurrence of each type along the chain (scene inserts,
+    # sends, globals). fx_disable has one bit per slot (bit slot-1).
+    # A send's wetness is its scene send level times the send's return level,
+    # both applied by Surge as amplitude^3 (send N = slot 5, 6, 13, 14).
+    send_index = {5: 1, 6: 2, 13: 3, 14: 4}
+    disabled = int(patch.get("fx_disable"))
     seen: set[int] = set()
     for slot in FX_SLOTS[sc] + SEND_SLOTS + GLOBAL_SLOTS:
         t = int(patch.get(f"fx{slot}_type"))
-        if t == 0:
+        if t == 0 or (disabled >> (slot - 1)) & 1:
             continue
         fx = lambda k: patch.get(f"fx{slot}_p{k}")  # noqa: E731
         wet = 1.0
-        if slot in send_levels:
-            wet = patch.get(send_levels[slot], 0.0)  # a send's wetness is its send level
+        if slot in send_index:
+            n = send_index[slot]
+            wet = patch.get(p(f"send_fx_{n}"), 0.0) ** 3 * patch.get(f"volume_FX{n}", 1.0) ** 3
+            if wet <= 0.0:
+                continue  # nothing is sent to it: inaudible, so treat as off
         family = {FX_REVERB1: FX_REVERB2, FX_FLANGER: FX_PHASER}.get(t, t)
         if family in seen:
             lossy.append(f"fx slot {slot}: second {t} ignored")
@@ -305,6 +317,17 @@ def convert(patch: Patch, schema: vae_schema.Schema) -> tuple[list[float], list[
         else:
             lossy.append(f"fx slot {slot}: type {t} not in schema")
             continue
+        mixed = {FX_CHORUS: "chorus", FX_PHASER: "modfx", FX_FLANGER: "modfx", FX_DELAY: "delay",
+                 FX_REVERB1: "reverb", FX_REVERB2: "reverb"}.get(t)
+        if mixed is not None and values[schema[f"{mixed}_mix"].index] <= 0.0:
+            # Mix 0 is inaudible (Surge loads it that way too): label it off so
+            # "on, silent" and "off" don't become two labels for one sound.
+            put(f"{mixed}_on", 0)
+            for c in schema.controls:
+                if c.section == schema[f"{mixed}_on"].section:
+                    values[c.index] = c.default
+            lossy.append(f"fx slot {slot}: {mixed} with mix 0 -> off")
+            continue
         seen.add(family)
 
     put_units("master_volume", patch.get("volume", 0.0))
@@ -335,7 +358,7 @@ def main() -> int:
     for preset in iter_presets(args.inputs):
         try:
             values, lossy = convert(read_fxp(preset), schema)
-        except (ValueError, ET.ParseError) as e:
+        except Exception as e:  # one bad third-party file must not stop the batch
             print(f"skip {preset}: {e}", file=sys.stderr)
             n_fail += 1
             continue

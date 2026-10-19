@@ -89,10 +89,20 @@ behaviour.
 
 One unit of each type in a fixed order. On render they go into fixed Surge
 slots: A1 Distortion, A2 EQ, A3 Chorus, A4 Phaser/Flanger, Global 1 Delay,
-Global 2 Reverb 2. On import, the importer takes the first effect of each type
-along the chain (scene inserts → sends → globals). A send effect's mix is
-scaled by the scene's send level. Reverb 1 maps onto the Reverb 2 controls
-(lossy). Other effect types are dropped (lossy).
+Global 2 Reverb 2.
+
+On import, the importer takes the first *audible* effect of each type along
+the chain (scene inserts → sends → globals):
+
+- Slots switched off in Surge's `fx_disable` mask are skipped.
+- A send effect's mix is scaled by how much reaches it: scene send level³ ×
+  send return level³. Surge applies both as amplitude cubed. A send with
+  nothing sent to it is skipped.
+- An effect whose resulting mix is 0 is inaudible (Surge loads it that way
+  too), so it is labelled off with its controls at their defaults. That
+  avoids two labels, "on but silent" and "off", for one sound.
+- Reverb 1 maps onto the Reverb 2 controls (lossy). Other effect types are
+  dropped (lossy).
 
 ## Modulation routing (provisional)
 
@@ -129,7 +139,9 @@ python3 tools/surge_preset_to_vector.py <preset or dir>... -o vectors.jsonl --st
 ```
 
 Each output line has `values` (raw), `features` (model) and `lossy`, the list
-of everything that did not map exactly. It uses the active scene (scene A
+of everything that did not map exactly. A file that cannot be read is
+reported and skipped; the batch continues. Modulation sources in patches older
+than Surge revision 9 are renumbered the way Surge does on load. It uses the active scene (scene A
 unless scene B is active in single-scene mode). Split and dual scene modes use
 scene A only and are flagged. The noise mixer channel and ring modulators are
 not in the schema and are flagged when used.

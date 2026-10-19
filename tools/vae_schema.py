@@ -65,7 +65,9 @@ class Schema:
             return min(max(v, 0.0), 1.0)
         if control.kind == "toggle":
             return 1.0 if v >= 0.5 else 0.0
-        return float(min(max(round(v), 0), len(control.options) - 1))
+        # floor(v + 0.5) matches C++ std::round for the non-negative values used here
+        # (Python's round() rounds halves to even).
+        return float(min(max(math.floor(v + 0.5), 0), len(control.options) - 1))
 
     def to_units(self, control: Control, v: float) -> float:
         curve = self.curves[control.curve]
