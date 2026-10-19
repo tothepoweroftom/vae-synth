@@ -1,0 +1,183 @@
+# Generates a constexpr C++ table from schema/controls.json at configure time,
+# so the JSON stays the single source of truth for the plug-in, the engines
+# and the modelling side. Re-runs automatically when the JSON changes.
+
+# Escape a JSON string for a C++ string literal.
+function(_vae_cpp_escape text out)
+    string(REPLACE "\\" "\\\\" text "${text}")
+    string(REPLACE "\"" "\\\"" text "${text}")
+    set(${out} "${text}" PARENT_SCOPE)
+endfunction()
+
+# osc1_wave -> kOsc1Wave
+function(_vae_enum_name id out)
+    string(REPLACE "_" ";" parts "${id}")
+    set(name "k")
+    foreach(part IN LISTS parts)
+        string(SUBSTRING "${part}" 0 1 first)
+        string(SUBSTRING "${part}" 1 -1 rest)
+        string(TOUPPER "${first}" first)
+        string(APPEND name "${first}${rest}")
+    endforeach()
+    set(${out} "${name}" PARENT_SCOPE)
+endfunction()
+
+function(vae_generate_schema json_file out_header)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${json_file}")
+    file(READ "${json_file}" json)
+
+    string(JSON version GET "${json}" schema_version)
+    string(JSON latent GET "${json}" latent_dimensions)
+    string(JSON reference GET "${json}" reference_engine)
+
+    # Curves, in declaration order.
+    string(JSON curve_count LENGTH "${json}" curves)
+    math(EXPR curve_last "${curve_count} - 1")
+    set(curve_names "")
+    set(curve_rows "")
+    foreach(i RANGE ${curve_last})
+        string(JSON cname MEMBER "${json}" curves ${i})
+        string(JSON cmin GET "${json}" curves ${cname} min)
+        string(JSON cmax GET "${json}" curves ${cname} max)
+        string(JSON cunit GET "${json}" curves ${cname} unit)
+        string(JSON cdisplay GET "${json}" curves ${cname} display)
+        if(NOT cmin LESS cmax)
+            message(FATAL_ERROR "schema: curve '${cname}' needs min < max (got ${cmin}..${cmax})")
+        endif()
+        list(APPEND curve_names "${cname}")
+        _vae_cpp_escape("${cunit}" cunit)
+        _vae_cpp_escape("${cdisplay}" cdisplay)
+        string(APPEND curve_rows "    { \"${cname}\", float (${cmin}), float (${cmax}), \"${cunit}\", \"${cdisplay}\" },\n")
+    endforeach()
+
+    string(JSON count LENGTH "${json}" controls)
+    math(EXPR last "${count} - 1")
+
+    set(option_arrays "")
+    set(rows "")
+    set(enum_entries "")
+    set(feature 0)
+    foreach(i RANGE ${last})
+        string(JSON id GET "${json}" controls ${i} id)
+        string(JSON name GET "${json}" controls ${i} name)
+        string(JSON section GET "${json}" controls ${i} section)
+        if(NOT id MATCHES "^[a-z][a-z0-9_]*$")
+            message(FATAL_ERROR "schema: control id '${id}' must be lower_snake_case")
+        endif()
+        _vae_cpp_escape("${name}" name)
+        _vae_cpp_escape("${section}" section)
+        string(JSON kind GET "${json}" controls ${i} kind)
+        string(JSON provisional ERROR_VARIABLE no_prov GET "${json}" controls ${i} provisional)
+        if(no_prov OR NOT provisional)
+            set(provisional "false")
+        else()
+            set(provisional "true")
+        endif()
+
+        set(num_options 0)
+        set(options_ref "nullptr")
+        set(curve_index -1)
+        if(kind STREQUAL "continuous")
+            set(kind_enum "Kind::Continuous")
+            string(JSON def GET "${json}" controls ${i} default)
+            string(JSON curve GET "${json}" controls ${i} curve)
+            list(FIND curve_names "${curve}" curve_index)
+            if(curve_index LESS 0)
+                message(FATAL_ERROR "schema: control ${id} uses unknown curve '${curve}'")
+            endif()
+            set(width 1)
+        elseif(kind STREQUAL "toggle")
+            set(kind_enum "Kind::Toggle")
+            string(JSON def GET "${json}" controls ${i} default)
+            if(NOT def MATCHES "^[01]$")
+                message(FATAL_ERROR "schema: toggle ${id} default must be 0 or 1, got '${def}'")
+            endif()
+            set(width 1)
+        elseif(kind STREQUAL "categorical")
+            set(kind_enum "Kind::Categorical")
+            string(JSON default_name GET "${json}" controls ${i} default)
+            string(JSON num_options LENGTH "${json}" controls ${i} options)
+            math(EXPR olast "${num_options} - 1")
+            set(def -1)
+            set(names "")
+            foreach(o RANGE ${olast})
+                string(JSON oname GET "${json}" controls ${i} options ${o})
+                if(oname STREQUAL default_name)
+                    set(def ${o})
+                endif()
+                _vae_cpp_escape("${oname}" oname)
+                string(APPEND names "\"${oname}\", ")
+            endforeach()
+            if(def LESS 0)
+                message(FATAL_ERROR "schema: default '${default_name}' of ${id} is not one of its options")
+            endif()
+            string(APPEND option_arrays "inline constexpr const char* kOptions_${id}[] = { ${names}};\n")
+            set(options_ref "kOptions_${id}")
+            set(width ${num_options})
+        else()
+            message(FATAL_ERROR "schema: control ${id} has unknown kind '${kind}'")
+        endif()
+
+        _vae_enum_name("${id}" enum_name)
+        string(APPEND enum_entries "    ${enum_name},\n")
+        string(APPEND rows "    { \"${id}\", \"${name}\", \"${section}\", ${kind_enum}, float (${def}), ${num_options}, ${options_ref}, ${curve_index}, ${provisional}, ${feature} },\n")
+        math(EXPR feature "${feature} + ${width}")
+    endforeach()
+
+    set(content "// Generated by cmake/VaeSchema.cmake from schema/controls.json. Do not edit.
+#pragma once
+
+namespace vae::schema::generated
+{
+inline constexpr int kSchemaVersion = ${version};
+inline constexpr int kLatentDimensions = ${latent};
+inline constexpr const char* kReferenceEngine = \"${reference}\";
+inline constexpr int kControlCount = ${count};
+inline constexpr int kFeatureCount = ${feature};
+inline constexpr int kCurveCount = ${curve_count};
+
+enum class Kind
+{
+    Continuous,   // 0..1 along its curve
+    Categorical,  // index into options
+    Toggle,       // 0 or 1
+};
+
+struct Curve
+{
+    const char* name;
+    float min, max;      // in the curve's (Surge) units
+    const char* unit;
+    const char* display; // how describe() renders a value
+};
+
+inline constexpr Curve kCurves[kCurveCount] = {
+${curve_rows}};
+
+${option_arrays}
+struct Row
+{
+    const char* id;
+    const char* name;
+    const char* section;
+    Kind kind;
+    float defaultValue;          // continuous 0..1, categorical index, toggle 0/1
+    int numOptions;              // categorical only
+    const char* const* options;  // categorical only
+    int curve;                   // index into kCurves, continuous only (-1 otherwise)
+    bool provisional;
+    int firstFeature;            // offset in the model feature vector
+};
+
+inline constexpr Row kRows[kControlCount] = {
+${rows}};
+
+/** Control indices, in schema order. */
+enum Control : int
+{
+${enum_entries}    kNumControls
+};
+} // namespace vae::schema::generated
+")
+    file(CONFIGURE OUTPUT "${out_header}" CONTENT "${content}" @ONLY)
+endfunction()

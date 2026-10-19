@@ -1,0 +1,129 @@
+/*
+  Prompt -> latent -> control vector, the stubbed "prompt to preset" path.
+
+  Two replaceable stages, both deliberately minimal until the model design is
+  settled:
+    PromptEncoder  text -> latent. Default: HashPromptEncoder, a deterministic
+                   bag-of-words hash (no model). A learned text encoder (CLAP,
+                   sentence embedding + projection, ...) goes behind the same
+                   interface.
+    LatentDecoder  latent -> schema vector. Uses an ONNX model when one is
+                   loaded (input [1, latent_dimensions], output
+                   [1, feature_count]: continuous/toggle values in 0..1 and
+                   per-option scores for categoricals, decoded by argmax), else
+                   schema::mockDecode.
+
+  PresetGenerator runs the pipeline on a worker thread and reports back on the
+  message thread.
+*/
+
+#pragma once
+
+#include <juce_events/juce_events.h>
+
+#include "OnnxModel.h"
+#include "schema/ControlSchema.h"
+
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <optional>
+
+namespace vae::ml
+{
+
+class PromptEncoder
+{
+public:
+    virtual ~PromptEncoder() = default;
+    virtual juce::String describe() const = 0;
+    virtual schema::Latent encode (const juce::String& prompt) = 0;
+};
+
+/** Placeholder encoder: each lower-cased word hashes to a fixed pseudo-random
+    direction; the latent is their mean, scaled into -1..1. Deterministic, so
+    the same prompt always gives the same preset, and prompts that share words
+    land near each other. Carries no meaning: swap for a trained encoder. */
+class HashPromptEncoder final : public PromptEncoder
+{
+public:
+    juce::String describe() const override { return "hash (stub)"; }
+    schema::Latent encode (const juce::String& prompt) override;
+};
+
+class LatentDecoder
+{
+public:
+    /** Load an ONNX decoder. The current model stays in use unless the new one
+        loads and passes validate(). An empty file unloads (mock decoder). */
+    juce::Result loadModel (const juce::File& file);
+    juce::Result loadModel (const void* data, size_t size, const juce::String& name = {});
+    bool hasModel() const noexcept { return model != nullptr; }
+    juce::String describe() const;
+    juce::String getRuntimeStatus() const { return runtime->getStatus(); }
+
+    /** Decode one latent. Falls back to mockDecode when no model is loaded or
+        inference fails or returns non-finite values (the reason goes to
+        `error` if given). */
+    schema::Snapshot decode (const schema::Latent& latent, juce::String* error = nullptr);
+
+    /** The decoder contract: one float input [1 or dynamic, latent_dimensions],
+        first output float [1 or dynamic, feature_count]. */
+    static juce::Result validate (const OnnxModel&);
+
+private:
+    juce::Result install (std::unique_ptr<OnnxModel> candidate, juce::Result loaded, const juce::String& name);
+
+    juce::SharedResourcePointer<OrtRuntime> runtime;
+    std::unique_ptr<OnnxModel> model;
+    juce::String modelName;
+};
+
+class PresetGenerator
+{
+public:
+    struct Result
+    {
+        juce::String prompt;
+        schema::Latent latent {};
+        schema::Snapshot controls;
+        juce::String note;   // e.g. "mock decoder" or an inference error
+    };
+
+    PresetGenerator();
+    ~PresetGenerator();
+
+    /** Replace the prompt encoder (default: HashPromptEncoder). Message thread. */
+    void setPromptEncoder (std::unique_ptr<PromptEncoder>);
+
+    /** Load or clear the decoder model (worker thread; `done` on message thread). */
+    void loadDecoder (const juce::File& file, std::function<void (juce::Result)> done);
+    /** As loadDecoder, from a model held in memory (copied). */
+    void loadDecoder (juce::MemoryBlock model, juce::String name, std::function<void (juce::Result)> done);
+
+    /** Start a generation; `done` is called on the message thread. A request
+        made before an earlier one starts supersedes it (the
+        earlier one is skipped and never calls back). */
+    void generate (const juce::String& prompt, std::function<void (const Result&)> done);
+    void generateFromLatent (const schema::Latent& latent, std::function<void (const Result&)> done);
+
+    /** "encoder -> decoder" status. Never waits for a running job. */
+    juce::String describe() const;
+
+private:
+    void load (std::function<juce::Result (LatentDecoder&)> loadFn, std::function<void (juce::Result)> done);
+    void start (juce::String prompt, std::optional<schema::Latent> latent, std::function<void (const Result&)> done);
+    void refreshStatus();   // call with `lock` held
+
+    std::mutex lock;   // guards encoder/decoder between worker and message thread
+    std::unique_ptr<PromptEncoder> encoder;
+    LatentDecoder decoder;
+    mutable std::mutex statusLock;   // guards status only; never held during a job
+    juce::String status;
+    juce::ThreadPool pool { juce::ThreadPoolOptions{}.withThreadName ("vae-ml").withNumberOfThreads (1) };
+    std::atomic<uint64_t> latestRequest { 0 };
+    std::shared_ptr<bool> alive = std::make_shared<bool> (true);
+};
+
+} // namespace vae::ml
