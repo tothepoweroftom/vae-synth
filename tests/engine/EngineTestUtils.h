@@ -99,15 +99,43 @@ inline schema::Snapshot randomSnapshot (juce::Random& rng)
     return s;
 }
 
-inline const char* engineLabel (EngineKind k) { return k == EngineKind::Surge ? "Surge" : "Lite"; }
-
 namespace testutil
 {
+/** RMS of x[from, to). */
+inline float rmsOf (const std::vector<float>& x, size_t from, size_t to)
+{
+    to = std::min (to, x.size());
+    double sum = 0.0;
+    for (size_t i = from; i < to; ++i)
+        sum += double (x[i]) * double (x[i]);
+    return to > from ? float (std::sqrt (sum / double (to - from))) : 0.0f;
+}
+
+/** Pitch of x[from, to) from positive-going zero crossings: crossings counted
+    between the first and the last one, so partial periods at the edges don't
+    bias the estimate. */
+inline float zeroCrossingHz (const std::vector<float>& x, size_t from, size_t to, double sampleRate = kRate)
+{
+    int crossings = 0;
+    size_t first = 0, last = 0;
+    for (size_t i = from + 1; i < std::min (to, x.size()); ++i)
+        if (x[i - 1] <= 0.0f && x[i] > 0.0f)
+        {
+            if (crossings++ == 0)
+                first = i;
+            last = i;
+        }
+    return crossings > 1 ? float (double (crossings - 1) * sampleRate / double (last - first)) : 0.0f;
+}
+
 /** Drives an engine block by block with arbitrary MIDI; blocks may be empty
     (0 samples), as some hosts send to flush MIDI. Keeps the left channel. */
 struct Player
 {
-    explicit Player (SynthEngine& e) : engine (e) {}
+    explicit Player (SynthEngine& e)
+        : engine (e)
+    {
+    }
 
     /** One block of `n` samples (n >= 0) with these messages at offset 0. */
     void block (int n, std::initializer_list<juce::MidiMessage> messages = {})
@@ -140,21 +168,14 @@ struct Player
             p = juce::jmax (p, std::abs (left[i]));
         return p;
     }
-    float tailPeak (size_t samples) const { return peak (left.size() - juce::jmin (samples, left.size()), left.size()); }
+    float tailPeak (size_t samples) const
+    {
+        return peak (left.size() - juce::jmin (samples, left.size()), left.size());
+    }
 
-    /** Pitch from positive-going zero crossings in [from, to). */
     float zeroCrossingHz (size_t from, size_t to, double sampleRate) const
     {
-        int crossings = 0;
-        size_t first = 0, last = 0;
-        for (size_t i = from + 1; i < juce::jmin (to, left.size()); ++i)
-            if (left[i - 1] <= 0.0f && left[i] > 0.0f)
-            {
-                if (crossings++ == 0)
-                    first = i;
-                last = i;
-            }
-        return crossings > 1 ? float (double (crossings - 1) * sampleRate / double (last - first)) : 0.0f;
+        return testutil::zeroCrossingHz (left, from, to, sampleRate);
     }
 
     SynthEngine& engine;

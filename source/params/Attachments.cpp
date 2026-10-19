@@ -4,7 +4,9 @@ namespace vae::params
 {
 
 ValueAttachment::ValueAttachment (ParamStore& s, const juce::String& paramId, std::function<void (float)> callback)
-    : store (s), id (paramId), onChange (std::move (callback))
+    : store (s)
+    , id (paramId)
+    , onChange (std::move (callback))
 {
     store.addListener (id, this);
 }
@@ -16,10 +18,7 @@ ValueAttachment::~ValueAttachment()
     cancelPendingUpdate();
 }
 
-void ValueAttachment::sendInitialUpdate()
-{
-    apply (store.get (id));
-}
+void ValueAttachment::sendInitialUpdate() { apply (store.get (id)); }
 
 void ValueAttachment::setAsCompleteGesture (float raw)
 {
@@ -64,10 +63,7 @@ void ValueAttachment::paramChanged (const juce::String&, float raw)
     }
 }
 
-void ValueAttachment::handleAsyncUpdate()
-{
-    apply (pending.load());
-}
+void ValueAttachment::handleAsyncUpdate() { apply (pending.load()); }
 
 void ValueAttachment::apply (float raw)
 {
@@ -81,21 +77,21 @@ void ValueAttachment::apply (float raw)
 //==============================================================================
 namespace
 {
-    const ParamSpec* findSpec (ParamStore& store, const juce::String& id)
+const ParamSpec* findSpec (ParamStore& store, const juce::String& id)
+{
+    if (! store.indexOf (id).isValid())
     {
-        if (! store.indexOf (id).isValid())
-        {
-            jassertfalse; // unknown id, or the store has not been built yet
-            return nullptr;
-        }
-
-        return &store.spec (id);
+        jassertfalse; // unknown id, or the store has not been built yet
+        return nullptr;
     }
+
+    return &store.spec (id);
 }
+} // namespace
 
 SliderBinding::SliderBinding (ParamStore& store, const juce::String& id, juce::Slider& s)
-    : slider (s),
-      attachment (store, id, [this] (float raw) { slider.setValue ((double) raw, juce::dontSendNotification); })
+    : slider (s)
+    , attachment (store, id, [this] (float raw) { slider.setValue ((double) raw, juce::dontSendNotification); })
 {
     if (auto* spec = findSpec (store, id))
     {
@@ -103,13 +99,10 @@ SliderBinding::SliderBinding (ParamStore& store, const juce::String& id, juce::S
         auto* storePtr = &store;
 
         juce::NormalisableRange<double> sliderRange {
-            (double) r.start, (double) r.end,
-            [r] (double, double, double n) { return (double) r.convertFrom0to1 ((float) n); },
-            [r] (double, double, double v) { return (double) r.convertTo0to1 ((float) v); },
-            [r, storePtr, id] (double, double, double v)
-            {
-                return (double) storePtr->constrain (id, r.snapToLegalValue ((float) v));
-            }
+            (double) r.start, (double) r.end, [r] (double, double, double n)
+            { return (double) r.convertFrom0to1 ((float) n); }, [r] (double, double, double v)
+            { return (double) r.convertTo0to1 ((float) v); }, [r, storePtr, id] (double, double, double v)
+            { return (double) storePtr->constrain (id, r.snapToLegalValue ((float) v)); }
         };
         sliderRange.interval = (double) r.interval;
         slider.setNormalisableRange (sliderRange);
@@ -125,10 +118,7 @@ SliderBinding::SliderBinding (ParamStore& store, const juce::String& id, juce::S
     attachment.sendInitialUpdate();
 }
 
-SliderBinding::~SliderBinding()
-{
-    slider.removeListener (this);
-}
+SliderBinding::~SliderBinding() { slider.removeListener (this); }
 
 void SliderBinding::sliderValueChanged (juce::Slider*)
 {
@@ -157,18 +147,15 @@ void SliderBinding::sliderDragEnded (juce::Slider*)
 
 //==============================================================================
 ButtonBinding::ButtonBinding (ParamStore& store, const juce::String& id, juce::Button& b)
-    : button (b),
-      attachment (store, id, [this] (float raw) { button.setToggleState (raw >= 0.5f, juce::dontSendNotification); })
+    : button (b)
+    , attachment (store, id, [this] (float raw) { button.setToggleState (raw >= 0.5f, juce::dontSendNotification); })
 {
     findSpec (store, id);
     button.addListener (this);
     attachment.sendInitialUpdate();
 }
 
-ButtonBinding::~ButtonBinding()
-{
-    button.removeListener (this);
-}
+ButtonBinding::~ButtonBinding() { button.removeListener (this); }
 
 void ButtonBinding::buttonClicked (juce::Button*)
 {
@@ -178,8 +165,9 @@ void ButtonBinding::buttonClicked (juce::Button*)
 
 //==============================================================================
 ComboBinding::ComboBinding (ParamStore& store, const juce::String& id, juce::ComboBox& c)
-    : comboBox (c),
-      attachment (store, id, [this] (float raw) { comboBox.setSelectedId (juce::roundToInt (raw) + 1, juce::dontSendNotification); })
+    : comboBox (c)
+    , attachment (store, id, [this] (float raw)
+                  { comboBox.setSelectedId (juce::roundToInt (raw) + 1, juce::dontSendNotification); })
 {
     if (auto* spec = findSpec (store, id))
         if (comboBox.getNumItems() == 0)
@@ -189,10 +177,7 @@ ComboBinding::ComboBinding (ParamStore& store, const juce::String& id, juce::Com
     attachment.sendInitialUpdate();
 }
 
-ComboBinding::~ComboBinding()
-{
-    comboBox.removeListener (this);
-}
+ComboBinding::~ComboBinding() { comboBox.removeListener (this); }
 
 void ComboBinding::comboBoxChanged (juce::ComboBox*)
 {

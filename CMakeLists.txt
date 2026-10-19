@@ -28,9 +28,9 @@ set(VAE_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
 vae_generate_schema("${CMAKE_CURRENT_SOURCE_DIR}/schema/controls.json"
                     "${VAE_GENERATED_DIR}/schema/ControlSchema.generated.h")
 
-# Project code is compiled into each final target (plug-in, tests) through
-# INTERFACE sources, the same way JUCE modules are, so JUCE code is compiled
-# exactly once per binary.
+# Project code (except the vae_params static library) is compiled into each
+# final target (plug-in, tests) through INTERFACE sources, the same way JUCE
+# modules are, so JUCE code is compiled exactly once per binary.
 add_library(vae_schema INTERFACE)
 target_include_directories(vae_schema INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
@@ -42,7 +42,7 @@ target_sources(vae_engine INTERFACE
     source/engine/EngineFactory.cpp
     source/engine/lite/LiteEngine.cpp
     source/engine/lite/LitePatch.cpp
-    source/engine/lite/ablaze/Wavetables.cpp)
+    source/engine/lite/dsp/Wavetables.cpp)
 target_link_libraries(vae_engine INTERFACE vae_schema juce::juce_audio_basics juce::juce_dsp)
 if(VAE_WITH_SURGE)
     target_sources(vae_engine INTERFACE source/engine/surge/SurgeEngine.cpp)
@@ -121,6 +121,13 @@ if(VAE_BUILD_TESTS)
     add_subdirectory(tests/engine)
     add_subdirectory(tests/ml)
     add_subdirectory(tests/plugin)
+
+    find_program(VAE_CLANG_FORMAT NAMES clang-format)
+    if(VAE_CLANG_FORMAT)
+        add_test(NAME vae_format_check
+                 COMMAND ${CMAKE_COMMAND} -D CLANG_FORMAT=${VAE_CLANG_FORMAT} -D ROOT=${CMAKE_CURRENT_SOURCE_DIR}
+                         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/VaeFormatCheck.cmake")
+    endif()
 
     find_package(Python3 COMPONENTS Interpreter)
     if(Python3_FOUND)

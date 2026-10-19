@@ -47,6 +47,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     int getPreferredWidth() const;
+    int getNumCells() const { return cells.size(); }
 
     static constexpr int kCellW = 64, kCellH = 66, kHeaderH = 28, kRows = 2;
     static constexpr int kHeight = kHeaderH + kRows * kCellH;
@@ -77,8 +78,8 @@ private:
     VaeLookAndFeel lookAndFeel;
 
     juce::TextEditor promptEditor;
-    juce::TextButton generateButton { "Generate" }, randomButton { "Random" },
-                     initButton { "Init" }, modelButton { "Model..." }, stubButton { "Stub" };
+    juce::TextButton generateButton { "Generate" }, randomButton { "Random" }, initButton { "Init" },
+        modelButton { "Model..." }, stubButton { "Stub" };
     juce::ComboBox engineBox;
     std::unique_ptr<params::ComboBinding> engineBinding;
     juce::Label status;

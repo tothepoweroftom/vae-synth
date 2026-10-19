@@ -1,14 +1,14 @@
 /*
   Per-voice DSP for the Lite engine: shaped ADSR, LFO, dual-SVF filter unit
   and a multi-wave oscillator. Header-only, allocation-free. Oscillator,
-  filter core and noise come from the vendored Ablaze DSP (ablaze/VoiceDsp.h).
+  filter core and noise are the building blocks in dsp/VoiceDsp.h.
 */
 
 #pragma once
 
 #include "LitePatch.h"
-#include "ablaze/VoiceDsp.h"
-#include "ablaze/Wavetables.h"
+#include "dsp/VoiceDsp.h"
+#include "dsp/Wavetables.h"
 
 #include <algorithm>
 #include <cmath>
@@ -21,18 +21,24 @@ inline constexpr float kTwoPi = 6.28318530718f;
 /** x^p for the exponents the envelope uses (0.5, 1, 2, 3), cheaply. */
 inline float shapePow (float x, float p) noexcept
 {
-    if (p < 0.75f) return std::sqrt (x);
-    if (p < 1.5f)  return x;
-    if (p < 2.5f)  return x * x;
+    if (p < 0.75f)
+        return std::sqrt (x);
+    if (p < 1.5f)
+        return x;
+    if (p < 2.5f)
+        return x * x;
     return x * x * x;
 }
 
 /** x^(1/p): inverse of shapePow. */
 inline float shapeRoot (float y, float p) noexcept
 {
-    if (p < 0.75f) return y * y;
-    if (p < 1.5f)  return y;
-    if (p < 2.5f)  return std::sqrt (y);
+    if (p < 0.75f)
+        return y * y;
+    if (p < 1.5f)
+        return y;
+    if (p < 2.5f)
+        return std::sqrt (y);
     return std::cbrt (y);
 }
 
@@ -43,7 +49,13 @@ inline float shapeRoot (float y, float p) noexcept
 class ShapedEnvelope
 {
 public:
-    enum class Stage { Idle, Attack, Decay, Release };
+    enum class Stage
+    {
+        Idle,
+        Attack,
+        Decay,
+        Release
+    };
 
     void noteOn (const EnvSettings& e) noexcept
     {
@@ -59,7 +71,12 @@ public:
         x = shapeRoot (level, e.releasePower);
     }
 
-    void reset() noexcept { stage = Stage::Idle; level = 0.0f; x = 0.0f; }
+    void reset() noexcept
+    {
+        stage = Stage::Idle;
+        level = 0.0f;
+        x = 0.0f;
+    }
     bool isActive() const noexcept { return stage != Stage::Idle; }
     bool isReleasing() const noexcept { return stage == Stage::Release; }
     float getLevel() const noexcept { return level; }
@@ -85,7 +102,7 @@ public:
                 if (x > target)
                     x = std::max (target, x - dt / std::max (e.decay, 1.0e-4f));
                 else
-                    x = target;   // sustain moved up: follow it
+                    x = target; // sustain moved up: follow it
                 level = shapePow (x, e.decayPower);
                 break;
             }
@@ -98,8 +115,7 @@ public:
                 }
                 level = shapePow (x, e.releasePower);
                 break;
-            case Stage::Idle:
-                break;
+            case Stage::Idle: break;
         }
         return level;
     }
@@ -114,7 +130,12 @@ private:
 class Lfo
 {
 public:
-    void seed (uint32_t s) noexcept { rng.seed (s); current = rng.next(); target = rng.next(); }
+    void seed (uint32_t s) noexcept
+    {
+        rng.seed (s);
+        current = rng.next();
+        target = rng.next();
+    }
 
     void restart (float startPhase) noexcept
     {
@@ -140,13 +161,12 @@ public:
     {
         switch (shape)
         {
-            case LfoShape::Sine:         return std::sin (kTwoPi * phase);
-            case LfoShape::Triangle:     return phase < 0.25f ? 4.0f * phase
-                                              : phase < 0.75f ? 2.0f - 4.0f * phase
-                                                              : 4.0f * phase - 4.0f;
-            case LfoShape::Square:       return phase < 0.5f ? 1.0f : -1.0f;
-            case LfoShape::Saw:          return 2.0f * phase - 1.0f;
-            case LfoShape::Random:       return current;
+            case LfoShape::Sine: return std::sin (kTwoPi * phase);
+            case LfoShape::Triangle:
+                return phase < 0.25f ? 4.0f * phase : phase < 0.75f ? 2.0f - 4.0f * phase : 4.0f * phase - 4.0f;
+            case LfoShape::Square: return phase < 0.5f ? 1.0f : -1.0f;
+            case LfoShape::Saw:    return 2.0f * phase - 1.0f;
+            case LfoShape::Random: return current;
             case LfoShape::SmoothRandom:
             {
                 const float t = 0.5f - 0.5f * std::cos (kTwoPi * 0.5f * phase);
@@ -159,14 +179,18 @@ public:
 private:
     float phase = 0.0f;
     float current = 0.0f, target = 0.0f;
-    ablaze::Noise rng;
+    dsp::Noise rng;
 };
 
 /** One filter slot (mono): SVF, two cascaded for the 24 dB types. */
 class FilterUnit
 {
 public:
-    void reset() noexcept { a.reset(); b.reset(); }
+    void reset() noexcept
+    {
+        a.reset();
+        b.reset();
+    }
 
     /** Set coefficients for this control block. */
     void configure (FilterType t, float cutoffHz, float resonance, float sampleRate) noexcept
@@ -185,12 +209,12 @@ public:
     {
         switch (type)
         {
-            case FilterType::Off:   return x;
-            case FilterType::Lp12:  return a.process (x, resonant).low;
-            case FilterType::Lp24:  return b.process (a.process (x, flat).low, resonant).low;
-            case FilterType::Hp12:  return a.process (x, resonant).high;
-            case FilterType::Hp24:  return b.process (a.process (x, flat).high, resonant).high;
-            case FilterType::Bp:    return a.process (x, resonant).band;
+            case FilterType::Off:  return x;
+            case FilterType::Lp12: return a.process (x, resonant).low;
+            case FilterType::Lp24: return b.process (a.process (x, flat).low, resonant).low;
+            case FilterType::Hp12: return a.process (x, resonant).high;
+            case FilterType::Hp24: return b.process (a.process (x, flat).high, resonant).high;
+            case FilterType::Bp:   return a.process (x, resonant).band;
             case FilterType::Notch:
             {
                 const auto o = a.process (x, resonant);
@@ -202,8 +226,8 @@ public:
 
 private:
     FilterType type = FilterType::Off;
-    ablaze::SvfCoefs resonant, flat;
-    ablaze::Svf a, b;
+    dsp::SvfCoefs resonant, flat;
+    dsp::Svf a, b;
 };
 
 /** One oscillator slot: every schema wave, band-limited where it matters. */
@@ -219,19 +243,19 @@ public:
     }
 
     /** Per control block: frequency as a phase increment (cycles/sample). */
-    void setIncrement (float inc, Wave wave, const ablaze::Wavetable* table) noexcept
+    void setIncrement (float inc, Wave wave, const dsp::Wavetable* table) noexcept
     {
         increment = std::min (inc, 0.49f);
         analog.setIncrement (increment);
         if (wave == Wave::Wavetable && table != nullptr)
         {
-            const int level = ablaze::Wavetable::levelForMaxHarmonics (0.5f / std::max (1.0e-6f, increment));
+            const int level = dsp::Wavetable::levelForMaxHarmonics (0.5f / std::max (1.0e-6f, increment));
             const int frames = table->getNumFrames();
             const float framePos = kWavetablePosition * float (frames - 1);
             const int f0 = std::min (int (framePos), std::max (0, frames - 2));
             frameA = table->getFrame (level, f0);
             frameB = table->getFrame (level, std::min (f0 + 1, frames - 1));
-            frameSize = float (ablaze::Wavetable::levelSize (level));
+            frameSize = float (dsp::Wavetable::levelSize (level));
             frameMix = framePos - float (f0);
         }
     }
@@ -240,10 +264,10 @@ public:
     {
         switch (wave)
         {
-            case Wave::Sine:     return analog.next (ablaze::AnalogWave::Sine);
-            case Wave::Triangle: return analog.next (ablaze::AnalogWave::Triangle);
-            case Wave::Saw:      return analog.next (ablaze::AnalogWave::Saw);
-            case Wave::Square:   return analog.next (ablaze::AnalogWave::Square);
+            case Wave::Sine:     return analog.next (dsp::AnalogWave::Sine);
+            case Wave::Triangle: return analog.next (dsp::AnalogWave::Triangle);
+            case Wave::Saw:      return analog.next (dsp::AnalogWave::Saw);
+            case Wave::Square:   return analog.next (dsp::AnalogWave::Square);
             case Wave::Noise:    return kNoiseGain * noise.next();
             case Wave::Wavetable:
             {
@@ -273,14 +297,14 @@ public:
         return 0.0f;
     }
 
-    static constexpr float kWavetablePosition = 0.5f;  // between the table's two frames
+    static constexpr float kWavetablePosition = 0.5f; // between the table's two frames
     static constexpr float kFmRatio = 2.0f;
     static constexpr float kFmIndex = 1.5f;
     static constexpr float kNoiseGain = 0.6f;
 
 private:
-    ablaze::AnalogOsc analog;
-    ablaze::Noise noise;
+    dsp::AnalogOsc analog;
+    dsp::Noise noise;
     float increment = 0.0f;
     float wtPhase = 0.0f, carrier = 0.0f, modulator = 0.0f;
     const float* frameA = nullptr;

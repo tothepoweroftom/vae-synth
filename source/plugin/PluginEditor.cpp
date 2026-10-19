@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include <numeric>
+
 namespace vae
 {
 namespace
@@ -13,24 +15,12 @@ struct SectionInfo
 };
 
 constexpr SectionInfo kSections[] = {
-    { "voice",      "Voice" },
-    { "osc1",       "Osc 1" },
-    { "osc2",       "Osc 2" },
-    { "osc3",       "Osc 3" },
-    { "filters",    "Routing" },
-    { "filter1",    "Filter 1" },
-    { "filter2",    "Filter 2" },
-    { "amp_env",    "Amp Env" },
-    { "filter_env", "Filter Env" },
-    { "lfo1",       "LFO 1" },
-    { "lfo2",       "LFO 2" },
-    { "fx_dist",    "Distortion" },
-    { "fx_eq",      "EQ" },
-    { "fx_chorus",  "Chorus" },
-    { "fx_mod",     "Phaser / Flanger" },
-    { "fx_delay",   "Delay" },
-    { "fx_reverb",  "Reverb" },
-    { "global",     "Out" },
+    { "voice", "Voice" },      { "osc1", "Osc 1" },       { "osc2", "Osc 2" },
+    { "osc3", "Osc 3" },       { "filters", "Routing" },  { "filter1", "Filter 1" },
+    { "filter2", "Filter 2" }, { "amp_env", "Amp Env" },  { "filter_env", "Filter Env" },
+    { "lfo1", "LFO 1" },       { "lfo2", "LFO 2" },       { "fx_dist", "Distortion" },
+    { "fx_eq", "EQ" },         { "fx_chorus", "Chorus" }, { "fx_mod", "Phaser / Flanger" },
+    { "fx_delay", "Delay" },   { "fx_reverb", "Reverb" }, { "global", "Out" },
 };
 
 constexpr int kMargin = 20, kTopBarH = 76, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
@@ -57,8 +47,8 @@ int layOutSections (juce::OwnedArray<ControlSection>& sections, juce::Rectangle<
 
 //==============================================================================
 ControlCell::ControlCell (params::ParamStore& store, int controlIndex)
-    : kind (schema::control (controlIndex).kind),
-      name (schema::control (controlIndex).name)
+    : kind (schema::control (controlIndex).kind)
+    , name (schema::control (controlIndex).name)
 {
     const auto& c = schema::control (controlIndex);
     juce::String tip (c.id);
@@ -76,7 +66,11 @@ ControlCell::ControlCell (params::ParamStore& store, int controlIndex)
             slider.setRotaryParameters (juce::degreesToRadians (225.0f), juce::degreesToRadians (495.0f), true);
             slider.setTooltip (tip);
             slider.onDragEnd = [this] { showValue (isMouseOver (true)); };
-            slider.onValueChange = [this] { if (showing) showValue (true); };
+            slider.onValueChange = [this]
+            {
+                if (showing)
+                    showValue (true);
+            };
             slider.addMouseListener (this, false);
             addAndMakeVisible (slider);
             sliderBinding = std::make_unique<params::SliderBinding> (store, c.id, slider);
@@ -124,25 +118,24 @@ void ControlCell::resized()
 }
 
 //==============================================================================
-ControlSection::ControlSection (params::ParamStore& store, const juce::String& t, const juce::Array<int>& controls, int n)
-    : title (t), number (n)
+ControlSection::ControlSection (params::ParamStore& store, const juce::String& t, const juce::Array<int>& controls,
+                                int n)
+    : title (t)
+    , number (n)
 {
     for (auto index : controls)
         addAndMakeVisible (cells.add (new ControlCell (store, index)));
 }
 
-int ControlSection::getPreferredWidth() const
-{
-    return juce::jmax (columns() * kCellW, 96);
-}
+int ControlSection::getPreferredWidth() const { return juce::jmax (columns() * kCellW, 96); }
 
 void ControlSection::paint (juce::Graphics& g)
 {
     g.setColour (LF::ink);
     g.fillRect (0, 0, getWidth(), 1);
     g.setFont (LF::labelFont (11.0f, true));
-    g.drawText (juce::String (number).paddedLeft ('0', 2) + "  " + title.toUpperCase(),
-                0, 8, getWidth(), 16, juce::Justification::centredLeft);
+    g.drawText (juce::String (number).paddedLeft ('0', 2) + "  " + title.toUpperCase(), 0, 8, getWidth(), 16,
+                juce::Justification::centredLeft);
 }
 
 void ControlSection::resized()
@@ -154,9 +147,9 @@ void ControlSection::resized()
 
 //==============================================================================
 PluginEditor::PluginEditor (PluginProcessor& p)
-    : AudioProcessorEditor (p),
-      processor (p),
-      keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
+    : AudioProcessorEditor (p)
+    , processor (p)
+    , keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel (&lookAndFeel);
 
@@ -170,28 +163,39 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     randomButton.setTooltip ("Decode a random latent vector");
     randomButton.onClick = [this]
     {
-        processor.generateRandom ([safe = juce::Component::SafePointer (this)] (const juce::String& note)
-                                  { if (safe != nullptr) safe->setStatus ("Random latent: " + note); });
+        processor.generateRandom (
+            [safe = juce::Component::SafePointer (this)] (const juce::String& note)
+            {
+                if (safe != nullptr)
+                    safe->setStatus ("Random latent: " + note);
+            });
     };
     initButton.setTooltip ("Reset every control to the schema default");
-    initButton.onClick = [this] { processor.applyControls (schema::Snapshot::defaults()); setStatus ("Init"); };
-    modelButton.setTooltip ("Load an ONNX latent decoder ([1, latent] -> [1, controls])");
+    initButton.onClick = [this]
+    {
+        processor.applyControls (schema::Snapshot::defaults());
+        setStatus ("Init");
+    };
+    modelButton.setTooltip ("Load an ONNX latent decoder ([1, " + juce::String (schema::kLatentDimensions) + "] -> [1, "
+                            + juce::String (schema::kFeatureCount) + "] features)");
     modelButton.onClick = [this] { chooseModel(); };
     stubButton.setTooltip ("Use the embedded stub decoder");
     stubButton.onClick = [this]
     {
-        processor.loadDecoderModel ({}, [safe = juce::Component::SafePointer (this)] (juce::Result r)
-        {
-            if (safe != nullptr)
-                safe->setStatus (r.wasOk() ? "Stub decoder loaded" : r.getErrorMessage());
-        });
+        processor.loadDecoderModel ({},
+                                    [safe = juce::Component::SafePointer (this)] (juce::Result r)
+                                    {
+                                        if (safe != nullptr)
+                                            safe->setStatus (r.wasOk() ? "Stub decoder loaded" : r.getErrorMessage());
+                                    });
     };
     for (auto* b : { &generateButton, &randomButton, &initButton, &modelButton, &stubButton })
         addAndMakeVisible (b);
 
     engineBox.setTooltip ("Synth engine backend");
     addAndMakeVisible (engineBox);
-    engineBinding = std::make_unique<params::ComboBinding> (processor.getParams(), PluginProcessor::kEngineParamId, engineBox);
+    engineBinding =
+        std::make_unique<params::ComboBinding> (processor.getParams(), PluginProcessor::kEngineParamId, engineBox);
 
     status.setFont (LF::labelFont (10.0f));
     status.setColour (juce::Label::textColourId, LF::quiet());
@@ -206,8 +210,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
             if (juce::String (schema::controls()[(size_t) i].section) == info.key)
                 controls.add (i);
         if (! controls.isEmpty())
-            addAndMakeVisible (sections.add (new ControlSection (processor.getParams(), info.title, controls, number++)));
+            addAndMakeVisible (
+                sections.add (new ControlSection (processor.getParams(), info.title, controls, number++)));
     }
+    jassert (std::accumulate (sections.begin(), sections.end(), 0,
+                              [] (int n, const ControlSection* s) { return n + s->getNumCells(); })
+             == schema::kControlCount); // a schema section missing from kSections hides its controls
 
     keyboard.setKeyWidth (16.0f);
     keyboard.setLowestVisibleKey (36);
@@ -217,10 +225,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     setSize (kEditorW, kMargin + kTopBarH + sectionsH + kGap + kKeyboardH + kMargin);
 }
 
-PluginEditor::~PluginEditor()
-{
-    setLookAndFeel (nullptr);
-}
+PluginEditor::~PluginEditor() { setLookAndFeel (nullptr); }
 
 void PluginEditor::generate()
 {
@@ -228,8 +233,12 @@ void PluginEditor::generate()
     if (prompt.isEmpty())
         return;
     setStatus ("Generating...");
-    processor.generateFromPrompt (prompt, [safe = juce::Component::SafePointer (this)] (const juce::String& note)
-                                  { if (safe != nullptr) safe->setStatus (note); });
+    processor.generateFromPrompt (prompt,
+                                  [safe = juce::Component::SafePointer (this)] (const juce::String& note)
+                                  {
+                                      if (safe != nullptr)
+                                          safe->setStatus (note);
+                                  });
 }
 
 void PluginEditor::chooseModel()
@@ -237,22 +246,22 @@ void PluginEditor::chooseModel()
     chooser = std::make_unique<juce::FileChooser> ("Load ONNX decoder", processor.getDecoderModelFile(), "*.onnx");
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [this] (const juce::FileChooser& fc)
-    {
-        const auto file = fc.getResult();
-        if (file == juce::File())
-            return;
-        processor.loadDecoderModel (file, [safe = juce::Component::SafePointer (this)] (juce::Result r)
-        {
-            if (safe != nullptr)
-                safe->setStatus (r.wasOk() ? safe->processor.describeModel() : r.getErrorMessage());
-        });
-    });
+                          {
+                              const auto file = fc.getResult();
+                              if (file == juce::File())
+                                  return;
+                              processor.loadDecoderModel (file,
+                                                          [safe = juce::Component::SafePointer (this)] (juce::Result r)
+                                                          {
+                                                              if (safe != nullptr)
+                                                                  safe->setStatus (r.wasOk()
+                                                                                       ? safe->processor.describeModel()
+                                                                                       : r.getErrorMessage());
+                                                          });
+                          });
 }
 
-void PluginEditor::setStatus (const juce::String& text)
-{
-    status.setText (text, juce::dontSendNotification);
-}
+void PluginEditor::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
 
 void PluginEditor::paint (juce::Graphics& g)
 {
@@ -262,9 +271,8 @@ void PluginEditor::paint (juce::Graphics& g)
     g.drawText ("VAE SYNTH", kMargin, kMargin - 4, 200, 24, juce::Justification::centredLeft);
     g.setFont (LF::labelFont (10.0f));
     g.setColour (LF::quiet());
-    g.drawText ("SCHEMA V" + juce::String (schema::kSchemaVersion) + "  /  "
-                    + juce::String (schema::kControlCount) + " CONTROLS  /  LATENT "
-                    + juce::String (schema::kLatentDimensions),
+    g.drawText ("SCHEMA V" + juce::String (schema::kSchemaVersion) + "  /  " + juce::String (schema::kControlCount)
+                    + " CONTROLS  /  LATENT " + juce::String (schema::kLatentDimensions),
                 kMargin + 140, kMargin - 4, 300, 24, juce::Justification::centredLeft);
 }
 

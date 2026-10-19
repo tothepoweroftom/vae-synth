@@ -1,6 +1,7 @@
 #include <juce_events/juce_events.h>
 
 #include "PluginProcessor.h"
+#include "../engine/EngineTestUtils.h"
 
 namespace vae
 {
@@ -36,28 +37,12 @@ juce::MemoryBlock stateOf (PluginProcessor& p)
     return mb;
 }
 
-schema::Snapshot randomControls (juce::Random& rng)
-{
-    schema::Snapshot s;
-    for (int i = 0; i < schema::kControlCount; ++i)
-    {
-        const auto& c = schema::control (i);
-        switch (c.kind)
-        {
-            case schema::Kind::Continuous:  s[i] = rng.nextFloat(); break;
-            case schema::Kind::Toggle:      s[i] = rng.nextBool() ? 1.0f : 0.0f; break;
-            case schema::Kind::Categorical: s[i] = float (rng.nextInt (c.numOptions)); break;
-        }
-    }
-    return s;
-}
-
 struct GestureCounter final : juce::AudioProcessorListener
 {
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override {}
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails&) override {}
     void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override { ++begins; }
-    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override   { ++ends; }
+    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override { ++ends; }
     int begins = 0, ends = 0;
 };
 } // namespace
@@ -65,7 +50,10 @@ struct GestureCounter final : juce::AudioProcessorListener
 class PluginTests final : public juce::UnitTest
 {
 public:
-    PluginTests() : juce::UnitTest ("Plug-in processor", "vae_plugin") {}
+    PluginTests()
+        : juce::UnitTest ("Plug-in processor", "vae_plugin")
+    {
+    }
 
     void runTest() override
     {
@@ -78,24 +66,31 @@ public:
         beginTest ("state round trip: controls, engine, prompt, model path");
         {
             PluginProcessor a;
-            const auto controls = randomControls (rng);
+            const auto controls = randomSnapshot (rng);
             a.applyControls (controls);
             a.getParams().set (PluginProcessor::kEngineParamId, float (a.getEngineKinds().size() - 1));
 
             bool loaded = false, generated = false;
-            a.loadDecoderModel (model, [&] (juce::Result r) { expect (r.wasOk(), r.getErrorMessage()); loaded = true; });
+            a.loadDecoderModel (model,
+                                [&] (juce::Result r)
+                                {
+                                    expect (r.wasOk(), r.getErrorMessage());
+                                    loaded = true;
+                                });
             expect (pumpUntil ([&] { return loaded; }));
             a.generateFromPrompt ("dusty tape pad", [&] (const juce::String&) { generated = true; });
             expect (pumpUntil ([&] { return generated; }));
-            a.applyControls (controls);   // the generation replaced them
+            a.applyControls (controls); // the generation replaced them
 
             const auto state = stateOf (a);
             PluginProcessor b;
             b.setStateInformation (state.getData(), (int) state.getSize());
-            expect (pumpUntil ([&] { return b.describeModel().contains ("roundtrip_decoder.onnx"); }), b.describeModel());
+            expect (pumpUntil ([&] { return b.describeModel().contains ("roundtrip_decoder.onnx"); }),
+                    b.describeModel());
 
             expect (b.getControls().values == a.getControls().values, "controls differ after round trip");
-            expectEquals (b.getParams().get (PluginProcessor::kEngineParamId), a.getParams().get (PluginProcessor::kEngineParamId));
+            expectEquals (b.getParams().get (PluginProcessor::kEngineParamId),
+                          a.getParams().get (PluginProcessor::kEngineParamId));
             expectEquals (b.getLastPrompt(), juce::String ("dusty tape pad"));
             expect (b.getDecoderModelFile() == model);
         }
@@ -113,7 +108,7 @@ public:
 
             PluginProcessor b;
             b.setStateInformation (state.getData(), (int) state.getSize());
-            settleModel (b);   // every pending load (constructor stub, state load) has called back
+            settleModel (b); // every pending load (constructor stub, state load) has called back
             expect (b.getDecoderModelFile() == model, b.getDecoderModelFile().getFullPathName());
             expect (b.describeModel().contains ("not found"), b.describeModel());
             expect (b.describeModel().contains ("stub_decoder.onnx (embedded)"), b.describeModel());
@@ -127,7 +122,7 @@ public:
         beginTest ("a different schema version keeps the default controls");
         {
             PluginProcessor a;
-            a.applyControls (randomControls (rng));
+            a.applyControls (randomSnapshot (rng));
             const auto block = stateOf (a);
             auto xml = juce::AudioProcessor::getXmlFromBinary (block.getData(), (int) block.getSize());
             expect (xml != nullptr);
@@ -146,7 +141,7 @@ public:
             PluginProcessor p;
             GestureCounter gestures;
             p.addListener (&gestures);
-            const auto controls = randomControls (rng);
+            const auto controls = randomSnapshot (rng);
             p.applyControls (controls);
             p.removeListener (&gestures);
             expectEquals (gestures.begins, schema::kControlCount);
@@ -162,13 +157,22 @@ public:
         {
             PluginProcessor p;
             bool loaded = false;
-            p.loadDecoderModel (model, [&] (juce::Result r) { expect (r.wasOk()); loaded = true; });
+            p.loadDecoderModel (model,
+                                [&] (juce::Result r)
+                                {
+                                    expect (r.wasOk());
+                                    loaded = true;
+                                });
             expect (pumpUntil ([&] { return loaded; }));
 
             juce::Result rejected = juce::Result::ok();
             bool done = false;
             p.loadDecoderModel (juce::File (VAE_ML_FIXTURES).getChildFile ("rank1.onnx"),
-                                [&] (juce::Result r) { rejected = r; done = true; });
+                                [&] (juce::Result r)
+                                {
+                                    rejected = r;
+                                    done = true;
+                                });
             expect (pumpUntil ([&] { return done; }));
             expect (rejected.failed());
             expect (p.getDecoderModelFile() == model, p.getDecoderModelFile().getFullPathName());

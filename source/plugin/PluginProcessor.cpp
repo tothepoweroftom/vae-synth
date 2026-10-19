@@ -14,16 +14,11 @@ constexpr const char* kAttrParams = "params";
 constexpr const char* kAttrModel = "decoderModel";
 constexpr const char* kAttrPrompt = "prompt";
 constexpr const char* kAttrSchema = "schemaVersion";
-
-juce::String engineName (EngineKind k)
-{
-    return k == EngineKind::Surge ? "Surge XT" : "Lite";
-}
 } // namespace
 
 PluginProcessor::PluginProcessor()
-    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      engineKinds (availableEngines())
+    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+    , engineKinds (availableEngines())
 {
     for (auto kind : engineKinds)
         engines.push_back (createEngine (kind));
@@ -50,9 +45,7 @@ PluginProcessor::PluginProcessor()
                 for (int o = 0; o < c.numOptions; ++o)
                     s.choices.add (c.options[o]);
                 break;
-            case schema::Kind::Toggle:
-                s.kind = params::ParamKind::Bool;
-                break;
+            case schema::Kind::Toggle: s.kind = params::ParamKind::Bool; break;
         }
         s.onAudioChange = [this, i] (float v)
         {
@@ -68,11 +61,11 @@ PluginProcessor::PluginProcessor()
         s.id = kEngineParamId;
         s.name = "Engine";
         s.kind = params::ParamKind::Choice;
-        for (auto kind : engineKinds)
-            s.choices.add (engineName (kind));
+        for (const auto& engine : engines)
+            s.choices.add (engine->displayName());
         // Default to the reference engine when it is built in.
         s.defaultValue = float (engineKinds.size() - 1);
-        s.hostVisible = false;   // a build/setup choice, not automation; saved with the state
+        s.hostVisible = false; // a build/setup choice, not automation; saved with the state
         s.onAudioChange = [this] (float v) { selectEngine (juce::roundToInt (v)); };
         specs.push_back (std::move (s));
     }
@@ -154,7 +147,7 @@ schema::Snapshot PluginProcessor::getControls() const
 {
     schema::Snapshot s;
     for (int i = 0; i < schema::kControlCount; ++i)
-        s[i] = params.get (controlIndex[(size_t) i]);   // raw: 0..1, option index or 0/1
+        s[i] = params.get (controlIndex[(size_t) i]); // raw: 0..1, option index or 0/1
     return s;
 }
 
@@ -175,12 +168,13 @@ void PluginProcessor::generateFromPrompt (const juce::String& prompt, std::funct
         const juce::ScopedLock sl (stateLock);
         lastPrompt = prompt;
     }
-    generator.generate (prompt, [this, done] (const ml::PresetGenerator::Result& r)
-    {
-        applyControls (r.controls);
-        if (done)
-            done (r.note);
-    });
+    generator.generate (prompt,
+                        [this, done] (const ml::PresetGenerator::Result& r)
+                        {
+                            applyControls (r.controls);
+                            if (done)
+                                done (r.note);
+                        });
 }
 
 void PluginProcessor::generateRandom (std::function<void (const juce::String&)> done)
@@ -189,12 +183,13 @@ void PluginProcessor::generateRandom (std::function<void (const juce::String&)> 
     for (auto& l : latent)
         l = random.nextFloat() * 2.0f - 1.0f;
 
-    generator.generateFromLatent (latent, [this, done] (const ml::PresetGenerator::Result& r)
-    {
-        applyControls (r.controls);
-        if (done)
-            done (r.note);
-    });
+    generator.generateFromLatent (latent,
+                                  [this, done] (const ml::PresetGenerator::Result& r)
+                                  {
+                                      applyControls (r.controls);
+                                      if (done)
+                                          done (r.note);
+                                  });
 }
 
 void PluginProcessor::loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done)
@@ -291,14 +286,8 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
     requestModel (missing ? juce::File() : model, model, missing, nullptr);
 }
 
-juce::AudioProcessorEditor* PluginProcessor::createEditor()
-{
-    return new PluginEditor (*this);
-}
+juce::AudioProcessorEditor* PluginProcessor::createEditor() { return new PluginEditor (*this); }
 
 } // namespace vae
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new vae::PluginProcessor();
-}
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new vae::PluginProcessor(); }

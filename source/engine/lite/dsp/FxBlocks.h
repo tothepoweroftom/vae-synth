@@ -1,7 +1,6 @@
 /*
   FX building blocks for the Lite engine: an RBJ biquad and a circular delay
-  line. Derived from Ablaze.WASMSynth@947be83 (source/engine/FxChain.h),
-  trimmed to these two classes; DelayLine gained restart() (vae-synth).
+  line with an O(1) restart().
 */
 
 #pragma once
@@ -11,40 +10,49 @@
 #include <cmath>
 #include <vector>
 
-namespace ablaze::fx
+namespace vae::dsp::fx
 {
 
 /** RBJ-cookbook biquad, transposed direct form II, stereo. */
 class Biquad
 {
 public:
-    enum class Shape { LowShelf, Peak, HighShelf };
+    enum class Shape
+    {
+        LowShelf,
+        Peak,
+        HighShelf
+    };
 
     void set (Shape shape, float freq, float gainDb, float q, float sr) noexcept
     {
         const double A = std::pow (10.0, gainDb / 40.0);
-        const double w0 = 2.0 * juce::MathConstants<double>::pi
-                          * juce::jlimit (10.0, 0.49 * sr, static_cast<double> (freq)) / sr;
+        const double w0 =
+            2.0 * juce::MathConstants<double>::pi * juce::jlimit (10.0, 0.49 * sr, static_cast<double> (freq)) / sr;
         const double cw = std::cos (w0), sw = std::sin (w0);
         double b0, b1, b2, a0, a1, a2;
 
         if (shape == Shape::Peak)
         {
             const double alpha = sw / (2.0 * q);
-            b0 = 1.0 + alpha * A;  b1 = -2.0 * cw;  b2 = 1.0 - alpha * A;
-            a0 = 1.0 + alpha / A;  a1 = -2.0 * cw;  a2 = 1.0 - alpha / A;
+            b0 = 1.0 + alpha * A;
+            b1 = -2.0 * cw;
+            b2 = 1.0 - alpha * A;
+            a0 = 1.0 + alpha / A;
+            a1 = -2.0 * cw;
+            a2 = 1.0 - alpha / A;
         }
         else
         {
-            const double alpha = sw / 2.0 * std::sqrt (2.0);   // shelf slope S = 1
+            const double alpha = sw / 2.0 * std::sqrt (2.0); // shelf slope S = 1
             const double sA = 2.0 * std::sqrt (A) * alpha;
             const double s = shape == Shape::LowShelf ? 1.0 : -1.0;
-            b0 =     A * ((A + 1.0) - s * (A - 1.0) * cw + sA);
+            b0 = A * ((A + 1.0) - s * (A - 1.0) * cw + sA);
             b1 = s * 2.0 * A * ((A - 1.0) - s * (A + 1.0) * cw);
-            b2 =     A * ((A + 1.0) - s * (A - 1.0) * cw - sA);
-            a0 =          (A + 1.0) + s * (A - 1.0) * cw + sA;
+            b2 = A * ((A + 1.0) - s * (A - 1.0) * cw - sA);
+            a0 = (A + 1.0) + s * (A - 1.0) * cw + sA;
             a1 = -s * 2.0 * ((A - 1.0) + s * (A + 1.0) * cw);
-            a2 =          (A + 1.0) + s * (A - 1.0) * cw - sA;
+            a2 = (A + 1.0) + s * (A - 1.0) * cw - sA;
         }
 
         c0 = static_cast<float> (b0 / a0);
@@ -115,4 +123,4 @@ private:
     int mask = 0, writePos = 0, written = 0;
 };
 
-} // namespace ablaze::fx
+} // namespace vae::dsp::fx

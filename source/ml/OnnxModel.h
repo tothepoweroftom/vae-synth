@@ -25,7 +25,7 @@ namespace vae::ml
 struct TensorInfo
 {
     std::string name;
-    std::vector<int64_t> shape;   // -1 for dynamic dimensions
+    std::vector<int64_t> shape; // -1 for dynamic dimensions
     bool isFloat = false;
 };
 
@@ -47,8 +47,7 @@ public:
 
     /** Run with one float input tensor; returns every float output, flattened,
         in getOutputs() order. Not thread-safe per instance. */
-    juce::Result run (std::span<const float> input,
-                      std::span<const int64_t> inputShape,
+    juce::Result run (std::span<const float> input, std::span<const int64_t> inputShape,
                       std::vector<std::vector<float>>& outputsOut);
 
     /** Status of the shared runtime ("not found", version, ...). */

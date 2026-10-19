@@ -13,8 +13,9 @@ namespace vae::params
     Generic message-thread binding between a store parameter and some UI state.
     Works for host-visible and hidden parameters. The store must outlive the attachment.
 */
-class ValueAttachment final : private ParamStore::Listener,
-                              private juce::AsyncUpdater
+class ValueAttachment final
+    : private ParamStore::Listener
+    , private juce::AsyncUpdater
 {
 public:
     /** Registers as a store listener; onChange(raw) is always called on the message thread. */
@@ -32,7 +33,7 @@ public:
     void endGesture();
 
     /** True while onChange is running (used by bindings to avoid feedback loops). */
-    bool isApplyingFromStore() const noexcept   { return applying; }
+    bool isApplyingFromStore() const noexcept { return applying; }
 
 private:
     void paramChanged (const juce::String& id, float raw) override;

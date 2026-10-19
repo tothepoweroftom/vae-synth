@@ -6,7 +6,7 @@ juce_add_console_app(vae_params_tests
 
 target_sources(vae_params_tests PRIVATE
     ParamStoreTests.cpp
-    TestMain.cpp)
+    ../common/TestMain.cpp)
 
 target_link_libraries(vae_params_tests
     PRIVATE
@@ -16,6 +16,8 @@ target_link_libraries(vae_params_tests
         juce::juce_recommended_warning_flags)
 
 # The attachment tests pump the message loop (MessageManager::runDispatchLoopUntil).
-target_compile_definitions(vae_params_tests PRIVATE JUCE_MODAL_LOOPS_PERMITTED=1)
+target_compile_definitions(vae_params_tests PRIVATE
+    VAE_TEST_CATEGORY="vae_params"
+    JUCE_MODAL_LOOPS_PERMITTED=1)
 
 add_test(NAME vae_params_tests COMMAND vae_params_tests)

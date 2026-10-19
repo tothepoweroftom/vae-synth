@@ -74,7 +74,7 @@ public:
     void generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String& note)> done);
     void generateRandom (std::function<void (const juce::String& note)> done);
 
-    /** Load a decoder model (empty file = embedded stub). The model path is
+    /** Load a decoder model (default-constructed File = embedded stub). The model path is
         recorded (and saved with the state) only when the load succeeds; a
         rejected file leaves the previous decoder in use. */
     void loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done);
@@ -85,14 +85,14 @@ public:
     juce::String describeModel() const;
 
 private:
-    void selectEngine (int choiceIndex);   // audio thread, from dispatch()
+    void selectEngine (int choiceIndex); // audio thread, from dispatch()
     void requestModel (const juce::File& toLoad, const juce::File& toRecord, bool missing,
                        std::function<void (juce::Result)> done);
 
     std::vector<EngineKind> engineKinds;
     std::vector<std::unique_ptr<SynthEngine>> engines;
     std::atomic<int> requestedEngine { 0 };
-    SynthEngine* activeEngine = nullptr;   // audio thread only
+    SynthEngine* activeEngine = nullptr; // audio thread only
 
     // Last values delivered on the audio thread, so a newly selected engine
     // can be brought up to date.
@@ -104,10 +104,10 @@ private:
 
     // Read by the host's state save on any thread; written on the message thread.
     mutable juce::CriticalSection stateLock;
-    juce::File modelPath;          // saved with the state; may point at a missing file
-    bool modelMissing = false;     // modelPath did not exist when the state was loaded
+    juce::File modelPath;      // saved with the state; may point at a missing file
+    bool modelMissing = false; // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
-    std::atomic<uint64_t> modelRequest { 0 };   // latest loadDecoderModel / state load wins
+    std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
 
     ml::PresetGenerator generator;
     juce::Random random;

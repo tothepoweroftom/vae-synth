@@ -30,12 +30,12 @@ using generated::Control;
 using generated::kControlCount;
 using generated::kCurveCount;
 using generated::kFeatureCount;
+using generated::Kind;
 using generated::kLatentDimensions;
 using generated::kSchemaVersion;
-using generated::Kind;
 using ControlSpec = generated::Row;
 using Curve = generated::Curve;
-using namespace generated;   // Control enumerators (kOsc1Wave, ...)
+using namespace generated; // Control enumerators (kOsc1Wave, ...)
 
 inline constexpr std::span<const ControlSpec, kControlCount> controls() { return generated::kRows; }
 inline constexpr const ControlSpec& control (int index) { return generated::kRows[index]; }
@@ -66,10 +66,7 @@ inline std::optional<int> optionIndex (int controlIndex, std::string_view option
 }
 
 /** Number of features a control occupies. */
-inline constexpr int featureWidth (const ControlSpec& c)
-{
-    return c.kind == Kind::Categorical ? c.numOptions : 1;
-}
+inline constexpr int featureWidth (const ControlSpec& c) { return c.kind == Kind::Categorical ? c.numOptions : 1; }
 
 /** Clamp/round one raw value to what its kind allows. */
 inline float sanitiseValue (int index, float v)
@@ -112,7 +109,7 @@ struct Snapshot
         {
             const float v = values[(size_t) i];
             const float clean = sanitiseValue (i, v);
-            if (! std::isfinite (v) || v < clean || v > clean)
+            if (! std::isfinite (v) || v < clean || v > clean) // != without -Wfloat-equal
                 return false;
         }
         return true;
@@ -172,8 +169,7 @@ inline Snapshot decodeFeatures (std::span<const float, kFeatureCount> f)
 /** Deterministic stand-in decoder with no trained model: each feature is
     0.5 * default + 0.5 * a latent-seeded value. At the zero latent, toggles and
     categoricals keep their defaults and continuous values sit halfway between
-    their default and 0.5. (v1 used the same rule on controls; v2 applies it
-    to features.) */
+    their default and 0.5. */
 inline Snapshot mockDecode (const Latent& latent)
 {
     const auto defaults = encodeFeatures (Snapshot::defaults());

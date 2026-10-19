@@ -23,8 +23,8 @@ namespace vae
 
 enum class EngineKind : int
 {
-    Lite = 0,   // permissive subset engine (always built)
-    Surge = 1,  // Surge XT DSP (VAE_WITH_SURGE, GPL)
+    Lite = 0,  // permissive subset engine (always built)
+    Surge = 1, // Surge XT DSP (VAE_WITH_SURGE, GPL)
 };
 
 class SynthEngine
@@ -41,8 +41,9 @@ public:
     /** Hard-cut all voices and tails. */
     virtual void reset() = 0;
 
-    /** Set one schema control (normalised 0..1). Cheap; may be called per block. */
-    virtual void setControl (int index, float normalised) = 0;
+    /** Set one schema control to its raw schema value (continuous 0..1, option
+        index, or 0/1; see ControlSchema.h). Cheap; may be called per block. */
+    virtual void setControl (int index, float value) = 0;
 
     /** Apply a whole vector (after a preset, model output or engine switch). */
     virtual void setControls (const schema::Snapshot& snapshot)

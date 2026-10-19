@@ -12,27 +12,33 @@ namespace vae::params::tests
 class TestProcessor final : public juce::AudioProcessor
 {
 public:
-    TestProcessor() : juce::AudioProcessor (BusesProperties()) {}
+    TestProcessor()
+        : juce::AudioProcessor (BusesProperties())
+    {
+    }
 
-    void buildStore (std::vector<ParamSpec> specs)   { store.build (std::move (specs), *this, juce::Identifier ("VaeTestState")); }
+    void buildStore (std::vector<ParamSpec> specs)
+    {
+        store.build (std::move (specs), *this, juce::Identifier ("VaeTestState"));
+    }
 
-    const juce::String getName() const override                         { return "VaeTest"; }
-    void prepareToPlay (double, int) override                           {}
-    void releaseResources() override                                    {}
+    const juce::String getName() const override { return "VaeTest"; }
+    void prepareToPlay (double, int) override {}
+    void releaseResources() override {}
     using juce::AudioProcessor::processBlock;
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override { store.dispatch(); }
-    bool hasEditor() const override                                     { return false; }
-    juce::AudioProcessorEditor* createEditor() override                 { return nullptr; }
-    bool acceptsMidi() const override                                   { return false; }
-    bool producesMidi() const override                                  { return false; }
-    double getTailLengthSeconds() const override                        { return 0.0; }
-    int getNumPrograms() override                                       { return 1; }
-    int getCurrentProgram() override                                    { return 0; }
-    void setCurrentProgram (int) override                               {}
-    const juce::String getProgramName (int) override                    { return {}; }
-    void changeProgramName (int, const juce::String&) override          {}
-    void getStateInformation (juce::MemoryBlock& dest) override         { store.save (dest); }
-    void setStateInformation (const void* data, int size) override      { store.load (data, size); }
+    bool hasEditor() const override { return false; }
+    juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+    bool acceptsMidi() const override { return false; }
+    bool producesMidi() const override { return false; }
+    double getTailLengthSeconds() const override { return 0.0; }
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram (int) override {}
+    const juce::String getProgramName (int) override { return {}; }
+    void changeProgramName (int, const juce::String&) override {}
+    void getStateInformation (juce::MemoryBlock& dest) override { store.save (dest); }
+    void setStateInformation (const void* data, int size) override { store.load (data, size); }
 
     ParamStore store;
 };
@@ -40,7 +46,12 @@ public:
 /** Records audio-thread deliveries. */
 struct DeliveryLog
 {
-    struct Item { juce::String id; float value; std::thread::id thread; };
+    struct Item
+    {
+        juce::String id;
+        float value;
+        std::thread::id thread;
+    };
     std::vector<Item> items;
 
     ParamSpec::AudioChange recorder (const juce::String& id)
@@ -48,7 +59,7 @@ struct DeliveryLog
         return [this, id] (float v) { items.push_back ({ id, v, std::this_thread::get_id() }); };
     }
 
-    void clear()    { items.clear(); }
+    void clear() { items.clear(); }
 };
 
 struct CountingListener final : ParamStore::Listener
@@ -67,10 +78,10 @@ struct CountingListener final : ParamStore::Listener
 
 struct HostListener final : juce::AudioProcessorListener
 {
-    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override  { ++changes; }
+    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override { ++changes; }
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails&) override {}
     void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override { ++gestureBegins; }
-    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override   { ++gestureEnds; }
+    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override { ++gestureEnds; }
 
     int changes = 0, gestureBegins = 0, gestureEnds = 0;
 };
@@ -147,7 +158,10 @@ static juce::MemoryBlock xmlToBinary (const juce::String& xmlText)
 class ParamStoreTests final : public juce::UnitTest
 {
 public:
-    ParamStoreTests() : juce::UnitTest ("ParamStore", "vae_params") {}
+    ParamStoreTests()
+        : juce::UnitTest ("ParamStore", "vae_params")
+    {
+    }
 
     void runTest() override
     {
@@ -224,8 +238,14 @@ private:
         expectWithinAbsoluteError (store.getNormalised ("cutoff"), fr.convertTo0to1 (1000.0f), 1.0e-5f);
 
         bool threw = false;
-        try { (void) store.spec ("nope"); }
-        catch (const std::out_of_range&) { threw = true; }
+        try
+        {
+            (void) store.spec ("nope");
+        }
+        catch (const std::out_of_range&)
+        {
+            threw = true;
+        }
         expect (threw, "spec() throws std::out_of_range for unknown ids");
     }
 
@@ -327,15 +347,16 @@ private:
 
         std::thread::id setterThread;
 
-        std::thread setter ([&]
-        {
-            setterThread = std::this_thread::get_id();
+        std::thread setter (
+            [&]
+            {
+                setterThread = std::this_thread::get_id();
 
-            for (int i = 0; i < 100; ++i)
-                store.set ("cutoff", 100.0f + (float) i);
+                for (int i = 0; i < 100; ++i)
+                    store.set ("cutoff", 100.0f + (float) i);
 
-            store.set ("uiZoom", 0.75f);
-        });
+                store.set ("uiZoom", 0.75f);
+            });
         setter.join();
 
         expect (log.items.empty(), "no delivery on the setter thread");
@@ -358,16 +379,23 @@ private:
 
         for (int t = 0; t < 3; ++t)
         {
-            threads.emplace_back ([&store, t]
-            {
-                for (int i = 0; i < 2000; ++i)
-                    store.setNormalised (t == 0 ? "cutoff" : (t == 1 ? "voices" : "uiZoom"), (float) (i % 100) / 99.0f);
+            threads.emplace_back (
+                [&store, t]
+                {
+                    for (int i = 0; i < 2000; ++i)
+                        store.setNormalised (t == 0 ? "cutoff" : (t == 1 ? "voices" : "uiZoom"),
+                                             (float) (i % 100) / 99.0f);
 
-                store.setNormalised (t == 0 ? "cutoff" : (t == 1 ? "voices" : "uiZoom"), 1.0f);
-            });
+                    store.setNormalised (t == 0 ? "cutoff" : (t == 1 ? "voices" : "uiZoom"), 1.0f);
+                });
         }
 
-        std::thread audio ([&] { while (! stop.load()) store.dispatch(); });
+        std::thread audio (
+            [&]
+            {
+                while (! stop.load())
+                    store.dispatch();
+            });
 
         for (auto& t : threads)
             t.join();
@@ -406,8 +434,18 @@ private:
         for (int t = 0; t < trials; ++t)
         {
             std::barrier sync (2);
-            std::thread automation ([&] { sync.arrive_and_wait(); host->setValueNotifyingHost (0.25f); });
-            std::thread ui ([&] { sync.arrive_and_wait(); store.set ("x", 0.75f); });
+            std::thread automation (
+                [&]
+                {
+                    sync.arrive_and_wait();
+                    host->setValueNotifyingHost (0.25f);
+                });
+            std::thread ui (
+                [&]
+                {
+                    sync.arrive_and_wait();
+                    store.set ("x", 0.75f);
+                });
             automation.join();
             ui.join();
 
@@ -444,13 +482,15 @@ private:
         // Exact raw values survive the host round trip.
         store.set ("cutoff", 440.0f);
         expectEquals (store.get ("cutoff"), 440.0f);
-        expectWithinAbsoluteError (store.hostParam ("cutoff")->convertFrom0to1 (store.hostParam ("cutoff")->getValue()), 440.0f, 0.01f);
+        expectWithinAbsoluteError (store.hostParam ("cutoff")->convertFrom0to1 (store.hostParam ("cutoff")->getValue()),
+                                   440.0f, 0.01f);
 
         const auto before = host.changes;
         store.set ("voices", 5.0f, Notify::listenersOnly);
         expectEquals (host.changes, before, "listenersOnly does not notify the host");
         expectEquals (store.get ("voices"), 5.0f);
-        expectEquals (juce::roundToInt (store.hostParam ("voices")->convertFrom0to1 (store.hostParam ("voices")->getValue())), 5);
+        expectEquals (
+            juce::roundToInt (store.hostParam ("voices")->convertFrom0to1 (store.hostParam ("voices")->getValue())), 5);
 
         store.set ("voices", 6.0f);
         expectEquals (host.changes, before + 1, "Notify::host notifies the host");
@@ -624,7 +664,8 @@ private:
         expectEquals (store.get ("voices"), 7.0f, "failed loads change nothing");
 
         // Out-of-range values in data are clamped/snapped.
-        const auto wild = xmlToBinary (R"(<VaeTestState><PARAM id="voices" value="3.7"/><VAE_HIDDEN_PARAMS><PARAM id="uiZoom" value="9"/></VAE_HIDDEN_PARAMS></VaeTestState>)");
+        const auto wild = xmlToBinary (
+            R"(<VaeTestState><PARAM id="voices" value="3.7"/><VAE_HIDDEN_PARAMS><PARAM id="uiZoom" value="9"/></VAE_HIDDEN_PARAMS></VaeTestState>)");
         expect (store.load (wild.getData(), (int) wild.getSize()));
         expectEquals (store.get ("voices"), 4.0f);
         expectEquals (store.get ("uiZoom"), 2.0f);
@@ -879,7 +920,8 @@ private:
 
         ParamSpec custom = floatSpec ("gain", -60.0f, 12.0f, 0.0f);
         custom.toText = [] (float v) { return juce::String (v, 1) + " dB"; };
-        custom.fromText = [] (const juce::String& t) { return t.upToFirstOccurrenceOf (" ", false, false).getFloatValue(); };
+        custom.fromText = [] (const juce::String& t)
+        { return t.upToFirstOccurrenceOf (" ", false, false).getFloatValue(); };
         specs.push_back (custom);
 
         ParamSpec semis;
@@ -940,7 +982,8 @@ private:
 
         auto* hostGain = store.hostParam ("gain");
         expectEquals (hostGain->getText (hostGain->convertTo0to1 (-6.0f), 0), juce::String ("-6.0 dB"));
-        expectEquals (hostGain->getText (hostGain->convertTo0to1 (-6.0f), 3), juce::String ("-6."), "max length honoured");
+        expectEquals (hostGain->getText (hostGain->convertTo0to1 (-6.0f), 3), juce::String ("-6."),
+                      "max length honoured");
     }
 
     //==========================================================================
@@ -979,8 +1022,14 @@ private:
         expectEquals (store.constrain ("x", 0.25f), 0.25f);
 
         bool threw = false;
-        try { (void) store.spec ("x"); }
-        catch (const std::out_of_range&) { threw = true; }
+        try
+        {
+            (void) store.spec ("x");
+        }
+        catch (const std::out_of_range&)
+        {
+            threw = true;
+        }
         expect (threw);
     }
 
@@ -1000,12 +1049,22 @@ private:
         {
             std::vector<float> seen;
             std::thread::id callbackThread;
-            ValueAttachment va (store, "uiZoom", [&] (float v) { seen.push_back (v); callbackThread = std::this_thread::get_id(); });
+            ValueAttachment va (store, "uiZoom",
+                                [&] (float v)
+                                {
+                                    seen.push_back (v);
+                                    callbackThread = std::this_thread::get_id();
+                                });
             va.sendInitialUpdate();
             expectEquals ((int) seen.size(), 1);
             expectEquals (seen.back(), 1.0f);
 
-            std::thread t ([&] { store.set ("uiZoom", 1.2f); store.set ("uiZoom", 1.4f); });
+            std::thread t (
+                [&]
+                {
+                    store.set ("uiZoom", 1.2f);
+                    store.set ("uiZoom", 1.4f);
+                });
             t.join();
             expectEquals ((int) seen.size(), 1, "not called on the setter thread");
             juce::MessageManager::getInstance()->runDispatchLoopUntil (50);

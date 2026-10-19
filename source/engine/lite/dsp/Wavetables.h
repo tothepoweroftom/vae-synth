@@ -1,6 +1,5 @@
 /*
-  Band-limited wavetables (derived from Ablaze.WASMSynth@947be83, trimmed to
-  what the Lite engine uses).
+  Band-limited wavetables for the Lite engine.
 
   A Wavetable is 1..kMaxFrames single-cycle frames. Each frame is stored at
   kNumLevels mip levels (one per octave): level L keeps harmonics
@@ -16,14 +15,14 @@
 #include <memory>
 #include <vector>
 
-namespace ablaze
+namespace vae::dsp
 {
 
 class Wavetable
 {
 public:
-    static constexpr int kFrameSize = 2048;     // source frame size
-    static constexpr int kNumLevels = 11;       // 1024 harmonics down to 1
+    static constexpr int kFrameSize = 2048; // source frame size
+    static constexpr int kNumLevels = 11;   // 1024 harmonics down to 1
     static constexpr int kMaxFrames = 256;
     static constexpr int kMinLevelSize = 256;
 
@@ -58,9 +57,8 @@ private:
     size_t levelOffset[kNumLevels] = {};
 };
 
-/** The table the Lite "wavetable" wave plays: frames 7 and 8 of Ablaze's
-    16-frame "Formant" table (two resonant peaks on the harmonic series), the
-    pair its position 0.5 interpolates. */
+/** The table the Lite "wavetable" wave plays: two frames of a "Formant"
+    table (two resonant peaks on the harmonic series), read at position 0.5. */
 std::unique_ptr<Wavetable> makeFormantTable();
 
-} // namespace ablaze
+} // namespace vae::dsp

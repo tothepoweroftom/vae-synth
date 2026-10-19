@@ -3,10 +3,9 @@
 #include "schema/SurgeCurves.h"
 
 // Surge's headers are not written for JUCE's recommended warning set.
-JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wfloat-equal", "-Wpedantic", "-Wshadow",
-                                     "-Wconversion", "-Wfloat-conversion", "-Wold-style-cast",
-                                     "-Wzero-as-null-pointer-constant", "-Wunused-parameter",
-                                     "-Wswitch-enum", "-Wimplicit-int-float-conversion",
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wfloat-equal", "-Wpedantic", "-Wshadow", "-Wconversion",
+                                     "-Wfloat-conversion", "-Wold-style-cast", "-Wzero-as-null-pointer-constant",
+                                     "-Wunused-parameter", "-Wswitch-enum", "-Wimplicit-int-float-conversion",
                                      "-Wshorten-64-to-32", "-Wextra-semi", "-Wcast-align", "-Wunused-value",
                                      "-Wunused-variable", "-Wunused-local-typedefs", "-Wstrict-aliasing",
                                      "-Wsign-compare")
@@ -38,57 +37,93 @@ constexpr float kNaN = std::numeric_limits<float>::quiet_NaN();
 
 // Schema option index -> Surge integer value.
 constexpr int kPlayModes[] = { pm_poly, pm_mono, pm_mono_st };
-constexpr int kFilterTypes[] = { 0, 1, 2, 4, 5, 6, 7 };
+constexpr int kFilterTypes[] = { sst::filters::fut_none,   sst::filters::fut_lp12, sst::filters::fut_lp24,
+                                 sst::filters::fut_hp12,   sst::filters::fut_hp24, sst::filters::fut_bp12,
+                                 sst::filters::fut_notch12 };
 constexpr int kLfoShapes[] = { lt_sine, lt_tri, lt_square, lt_ramp, lt_snh, lt_noise };
 constexpr int kFilterConfigs[] = { fc_serial1, fc_dual1 };
 constexpr modsources kRouteSources[] = { ms_filtereg, ms_lfo1, ms_lfo2 };
 
-enum Wave { kSine, kTriangle, kSaw, kSquare, kNoise, kWavetable, kFm, kNumWaves };
+enum Wave
+{
+    kSine,
+    kTriangle,
+    kSaw,
+    kSquare,
+    kNoise,
+    kWavetable,
+    kFm,
+    kNumWaves
+};
 constexpr int kWaveOscType[] = { ot_sine, ot_modern, ot_classic, ot_classic, ot_shnoise, ot_wavetable, ot_FM2 };
 static_assert (std::size (kWaveOscType) == kNumWaves);
 
-struct OscControls { int on, wave, level, octave, pitch, route; };
+struct OscControls
+{
+    int on, wave, level, octave, pitch, route;
+};
 constexpr OscControls kOscControls[] = {
     { kOsc1On, kOsc1Wave, kOsc1Level, kOsc1Octave, kOsc1Pitch, kOsc1Filter },
     { kOsc2On, kOsc2Wave, kOsc2Level, kOsc2Octave, kOsc2Pitch, kOsc2Filter },
     { kOsc3On, kOsc3Wave, kOsc3Level, kOsc3Octave, kOsc3Pitch, kOsc3Filter },
 };
 
-struct RouteControls { int destination, depth; };
+struct RouteControls
+{
+    int destination, depth;
+};
 constexpr RouteControls kRouteControls[] = {
-    { kFegDestination, kFegDepth }, { kLfo1Destination, kLfo1Depth }, { kLfo2Destination, kLfo2Depth },
+    { kFegDestination, kFegDepth },
+    { kLfo1Destination, kLfo1Depth },
+    { kLfo2Destination, kLfo2Depth },
 };
 
 // Fixed FX chain: slot, Surge type, and (control, p index) for its parameters.
-struct FxParamMap { int control; int k; };
+struct FxParamMap
+{
+    int control;
+    int k;
+};
 struct FxUnit
 {
     int slot;
+    int fxType; // the mod FX unit's type depends on modfx_type, see fxTypeFor
     int onControl;
-    std::array<FxParamMap, 5> params;   // control < 0 = unused
+    std::array<FxParamMap, 5> params; // control < 0 = unused
 };
 constexpr FxUnit kFxUnits[] = {
-    { SurgeEngine::kDistSlot,   kDistOn,   { { { kDistDrive, 4 }, { kDistTone, 9 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },
-    { SurgeEngine::kEqSlot,     kEqOn,     { { { kEqLowGain, 0 }, { kEqMidFreq, 4 }, { kEqMidGain, 3 }, { kEqHighGain, 6 }, { -1, 0 } } } },
-    { SurgeEngine::kChorusSlot, kChorusOn, { { { kChorusRate, 1 }, { kChorusDepth, 2 }, { kChorusMix, 6 }, { -1, 0 }, { -1, 0 } } } },
-    { SurgeEngine::kModFxSlot,  kModfxOn,  { { { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },   // type-dependent, see modFxParam
-    { SurgeEngine::kDelaySlot,  kDelayOn,  { { { kDelayTime, 0 }, { kDelayTime, 1 }, { kDelayFeedback, 2 }, { kDelayMix, 10 }, { -1, 0 } } } },
-    { SurgeEngine::kReverbSlot, kReverbOn, { { { kReverbSize, 1 }, { kReverbDecay, 2 }, { kReverbDamping, 7 }, { kReverbMix, 9 }, { -1, 0 } } } },
+    { SurgeEngine::kDistSlot,
+      fxt_distortion,
+      kDistOn,
+      { { { kDistDrive, 4 }, { kDistTone, 9 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },
+    { SurgeEngine::kEqSlot,
+      fxt_eq,
+      kEqOn,
+      { { { kEqLowGain, 0 }, { kEqMidFreq, 4 }, { kEqMidGain, 3 }, { kEqHighGain, 6 }, { -1, 0 } } } },
+    { SurgeEngine::kChorusSlot,
+      fxt_chorus4,
+      kChorusOn,
+      { { { kChorusRate, 1 }, { kChorusDepth, 2 }, { kChorusMix, 6 }, { -1, 0 }, { -1, 0 } } } },
+    { SurgeEngine::kModFxSlot,
+      fxt_phaser,
+      kModfxOn,
+      { { { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } }, // type-dependent, see modFxParam
+    { SurgeEngine::kDelaySlot,
+      fxt_delay,
+      kDelayOn,
+      { { { kDelayTime, 0 }, { kDelayTime, 1 }, { kDelayFeedback, 2 }, { kDelayMix, 10 }, { -1, 0 } } } },
+    { SurgeEngine::kReverbSlot,
+      fxt_reverb2,
+      kReverbOn,
+      { { { kReverbSize, 1 }, { kReverbDecay, 2 }, { kReverbDamping, 7 }, { kReverbMix, 9 }, { -1, 0 } } } },
 };
 constexpr int kModFxUnit = 3;
 
 int fxTypeFor (int unit, const Snapshot& c)
 {
-    switch (unit)
-    {
-        case 0: return fxt_distortion;
-        case 1: return fxt_eq;
-        case 2: return fxt_chorus4;
-        case 3: return asIndex (kModfxType, c[kModfxType]) == 0 ? fxt_phaser : fxt_flanger;
-        case 4: return fxt_delay;
-        case 5: return fxt_reverb2;
-        default: return fxt_off;
-    }
+    if (unit == kModFxUnit)
+        return asIndex (kModfxType, c[kModfxType]) == 0 ? fxt_phaser : fxt_flanger;
+    return kFxUnits[(size_t) unit].fxType;
 }
 
 /** Phaser / flanger parameter index for a modfx control, or -1. */
@@ -116,8 +151,8 @@ int fxUnitOf (int control)
             if (p.control == control)
                 return u;
     }
-    if (control == kModfxType || control == kModfxRate || control == kModfxDepth
-        || control == kModfxFeedback || control == kModfxMix)
+    if (control == kModfxType || control == kModfxRate || control == kModfxDepth || control == kModfxFeedback
+        || control == kModfxMix)
         return kModFxUnit;
     return -1;
 }
@@ -155,7 +190,7 @@ void buildDefaultWavetable (Wavetable& wt)
     std::memcpy (header.tag, "vawt", 4);
     header.n_samples = size;
     header.n_tables = frames;
-    header.flags = 0;   // float data
+    header.flags = 0; // float data
     wt.BuildWT (data.data(), header, false);
 }
 
@@ -177,20 +212,18 @@ struct SurgeEngine::Impl
     SilentPluginLayer layer;
     std::unique_ptr<SurgeSynthesizer> synth;
 
-    Snapshot controls = Snapshot::defaults();   // desired
-    Snapshot written;                           // last written to Surge (NaN = never)
+    Snapshot controls = Snapshot::defaults(); // desired
+    Snapshot written;                         // last written to Surge (NaN = never)
 
     // Scene A / global parameters, by role.
-    struct Osc { Parameter *type = nullptr, *octave = nullptr, *pitch = nullptr, *level = nullptr, *mute = nullptr, *route = nullptr; };
-    std::array<Osc, 3> osc {};
     std::unordered_map<std::string, Parameter*> byName;
-    std::array<Parameter*, kControlCount> direct {};   // continuous / int controls with one Surge param
-    std::array<Parameter*, 7> destinations {};         // route destination option -> param (none = null)
-    std::array<Parameter*, 2> filterSubtype {};         // a_filter1_subtype, a_filter2_subtype
+    std::array<Parameter*, kControlCount> direct {}; // continuous / int controls with one Surge param
+    std::array<Parameter*, 7> destinations {};       // route destination option -> param (none = null)
+    std::array<Parameter*, 2> filterSubtype {};      // a_filter1_subtype, a_filter2_subtype
 
     std::array<bool, 3> oscDirty {};
     std::array<bool, std::size (kFxUnits)> fxDirty {};
-    std::array<int, 3> routeDestination { 0, 0, 0 };   // option currently routed per source
+    std::array<int, 3> routeDestination { 0, 0, 0 }; // option currently routed per source
 
     std::array<float, kQuantum> quantumL {}, quantumR {};
     int quantumPos = kQuantum;
@@ -206,53 +239,82 @@ struct SurgeEngine::Impl
     {
         byName.clear();
         for (auto* p : synth->storage.getPatch().param_ptr)
-            if (p->scene <= 1)   // global (0) and scene A (1)
+            if (p->scene <= 1) // global (0) and scene A (1)
                 byName.emplace (p->get_storage_name(), p);
 
-        for (int n = 0; n < 3; ++n)
-        {
-            const auto s = std::to_string (n + 1);
-            osc[(size_t) n] = { find (("a_osc" + s + "_type").c_str()), find (("a_osc" + s + "_octave").c_str()),
-                                find (("a_osc" + s + "_pitch").c_str()), find (("a_level_o" + s).c_str()),
-                                find (("a_mute_o" + s).c_str()), find (("a_route_o" + s).c_str()) };
-        }
-
         static const std::pair<int, const char*> kDirect[] = {
-            { kPlayMode, "a_polymode" }, { kGlideTime, "a_portamento" }, { kFilterRouting, "a_fb_config" },
-            { kOsc1Level, "a_level_o1" }, { kOsc1Octave, "a_osc1_octave" }, { kOsc1Pitch, "a_osc1_pitch" },
-            { kOsc1On, "a_mute_o1" }, { kOsc1Filter, "a_route_o1" }, { kOsc1Wave, "a_osc1_type" },
-            { kOsc2Level, "a_level_o2" }, { kOsc2Octave, "a_osc2_octave" }, { kOsc2Pitch, "a_osc2_pitch" },
-            { kOsc2On, "a_mute_o2" }, { kOsc2Filter, "a_route_o2" }, { kOsc2Wave, "a_osc2_type" },
-            { kOsc3Level, "a_level_o3" }, { kOsc3Octave, "a_osc3_octave" }, { kOsc3Pitch, "a_osc3_pitch" },
-            { kOsc3On, "a_mute_o3" }, { kOsc3Filter, "a_route_o3" }, { kOsc3Wave, "a_osc3_type" },
-            { kFilter1Type, "a_filter1_type" }, { kFilter1Cutoff, "a_filter1_cutoff" },
-            { kFilter1Resonance, "a_filter1_resonance" }, { kFilter1Env, "a_filter1_envmod" },
+            { kPlayMode, "a_polymode" },
+            { kGlideTime, "a_portamento" },
+            { kFilterRouting, "a_fb_config" },
+            { kOsc1Level, "a_level_o1" },
+            { kOsc1Octave, "a_osc1_octave" },
+            { kOsc1Pitch, "a_osc1_pitch" },
+            { kOsc1On, "a_mute_o1" },
+            { kOsc1Filter, "a_route_o1" },
+            { kOsc1Wave, "a_osc1_type" },
+            { kOsc2Level, "a_level_o2" },
+            { kOsc2Octave, "a_osc2_octave" },
+            { kOsc2Pitch, "a_osc2_pitch" },
+            { kOsc2On, "a_mute_o2" },
+            { kOsc2Filter, "a_route_o2" },
+            { kOsc2Wave, "a_osc2_type" },
+            { kOsc3Level, "a_level_o3" },
+            { kOsc3Octave, "a_osc3_octave" },
+            { kOsc3Pitch, "a_osc3_pitch" },
+            { kOsc3On, "a_mute_o3" },
+            { kOsc3Filter, "a_route_o3" },
+            { kOsc3Wave, "a_osc3_type" },
+            { kFilter1Type, "a_filter1_type" },
+            { kFilter1Cutoff, "a_filter1_cutoff" },
+            { kFilter1Resonance, "a_filter1_resonance" },
+            { kFilter1Env, "a_filter1_envmod" },
             { kFilter1Keytrack, "a_filter1_keytrack" },
-            { kFilter2Type, "a_filter2_type" }, { kFilter2Cutoff, "a_filter2_cutoff" },
-            { kFilter2Resonance, "a_filter2_resonance" }, { kFilter2Env, "a_filter2_envmod" },
+            { kFilter2Type, "a_filter2_type" },
+            { kFilter2Cutoff, "a_filter2_cutoff" },
+            { kFilter2Resonance, "a_filter2_resonance" },
+            { kFilter2Env, "a_filter2_envmod" },
             { kFilter2Keytrack, "a_filter2_keytrack" },
-            { kAmpAttack, "a_env1_attack" }, { kAmpAttackCurve, "a_env1_attack_shape" },
-            { kAmpDecay, "a_env1_decay" }, { kAmpDecayCurve, "a_env1_decay_shape" },
-            { kAmpSustain, "a_env1_sustain" }, { kAmpRelease, "a_env1_release" },
+            { kAmpAttack, "a_env1_attack" },
+            { kAmpAttackCurve, "a_env1_attack_shape" },
+            { kAmpDecay, "a_env1_decay" },
+            { kAmpDecayCurve, "a_env1_decay_shape" },
+            { kAmpSustain, "a_env1_sustain" },
+            { kAmpRelease, "a_env1_release" },
             { kAmpReleaseCurve, "a_env1_release_shape" },
-            { kFegAttack, "a_env2_attack" }, { kFegAttackCurve, "a_env2_attack_shape" },
-            { kFegDecay, "a_env2_decay" }, { kFegDecayCurve, "a_env2_decay_shape" },
-            { kFegSustain, "a_env2_sustain" }, { kFegRelease, "a_env2_release" },
+            { kFegAttack, "a_env2_attack" },
+            { kFegAttackCurve, "a_env2_attack_shape" },
+            { kFegDecay, "a_env2_decay" },
+            { kFegDecayCurve, "a_env2_decay_shape" },
+            { kFegSustain, "a_env2_sustain" },
+            { kFegRelease, "a_env2_release" },
             { kFegReleaseCurve, "a_env2_release_shape" },
-            { kLfo1Shape, "a_lfo0_shape" }, { kLfo1Rate, "a_lfo0_rate" }, { kLfo1Amount, "a_lfo0_magnitude" },
-            { kLfo1Unipolar, "a_lfo0_unipolar" }, { kLfo1Retrigger, "a_lfo0_trigmode" },
-            { kLfo1Phase, "a_lfo0_phase" }, { kLfo1FadeIn, "a_lfo0_attack" },
-            { kLfo2Shape, "a_lfo1_shape" }, { kLfo2Rate, "a_lfo1_rate" }, { kLfo2Amount, "a_lfo1_magnitude" },
-            { kLfo2Unipolar, "a_lfo1_unipolar" }, { kLfo2Retrigger, "a_lfo1_trigmode" },
-            { kLfo2Phase, "a_lfo1_phase" }, { kLfo2FadeIn, "a_lfo1_attack" },
+            { kLfo1Shape, "a_lfo0_shape" },
+            { kLfo1Rate, "a_lfo0_rate" },
+            { kLfo1Amount, "a_lfo0_magnitude" },
+            { kLfo1Unipolar, "a_lfo0_unipolar" },
+            { kLfo1Retrigger, "a_lfo0_trigmode" },
+            { kLfo1Phase, "a_lfo0_phase" },
+            { kLfo1FadeIn, "a_lfo0_attack" },
+            { kLfo2Shape, "a_lfo1_shape" },
+            { kLfo2Rate, "a_lfo1_rate" },
+            { kLfo2Amount, "a_lfo1_magnitude" },
+            { kLfo2Unipolar, "a_lfo1_unipolar" },
+            { kLfo2Retrigger, "a_lfo1_trigmode" },
+            { kLfo2Phase, "a_lfo1_phase" },
+            { kLfo2FadeIn, "a_lfo1_attack" },
             { kMasterVolume, "volume" },
         };
         direct.fill (nullptr);
         for (const auto& [index, name] : kDirect)
             direct[(size_t) index] = find (name);
 
-        destinations = { nullptr, find ("a_pitch"), find ("a_filter1_cutoff"), find ("a_filter2_cutoff"),
-                         find ("a_filter1_resonance"), find ("a_volume"), find ("a_pan") };
+        destinations = { nullptr,
+                         find ("a_pitch"),
+                         find ("a_filter1_cutoff"),
+                         find ("a_filter2_cutoff"),
+                         find ("a_filter1_resonance"),
+                         find ("a_volume"),
+                         find ("a_pan") };
         filterSubtype = { find ("a_filter1_subtype"), find ("a_filter2_subtype") };
     }
 
@@ -264,17 +326,15 @@ struct SurgeEngine::Impl
             bool ok = direct[(size_t) i] != nullptr || fxUnitOf (i) >= 0;
             for (const auto& r : kRouteControls)
                 if (i == r.destination || i == r.depth)
-                    ok = std::all_of (destinations.begin() + 1, destinations.end(), [] (auto* p) { return p != nullptr; });
+                    ok = std::all_of (destinations.begin() + 1, destinations.end(),
+                                      [] (auto* p) { return p != nullptr; });
             n += ok ? 1 : 0;
         }
         return n;
     }
 
     //--------------------------------------------------------------------------
-    void setNorm (Parameter& p, float norm)
-    {
-        synth->setParameter01 (synth->idForParameter (&p), norm, false, false);
-    }
+    void setNorm (Parameter& p, float norm) { synth->setParameter01 (synth->idForParameter (&p), norm, false, false); }
 
     void setUnits (Parameter& p, float units)
     {
@@ -314,39 +374,43 @@ struct SurgeEngine::Impl
 
         switch (index)
         {
-            case kPlayMode:       setUnits (*p, float (kPlayModes[k])); return;
-            case kFilterRouting:  setUnits (*p, float (kFilterConfigs[k])); return;
-            case kOsc1On: case kOsc2On: case kOsc3On:
-                setUnits (*p, k != 0 ? 0.0f : 1.0f);   // mute is inverted
+            case kPlayMode:      setUnits (*p, float (kPlayModes[k])); return;
+            case kFilterRouting: setUnits (*p, float (kFilterConfigs[k])); return;
+            case kOsc1On:
+            case kOsc2On:
+            case kOsc3On:
+                setUnits (*p, k != 0 ? 0.0f : 1.0f); // mute is inverted
                 return;
-            case kOsc1Octave: case kOsc2Octave: case kOsc3Octave:
-                setUnits (*p, float (k - 3));
-                return;
-            case kOsc1Filter: case kOsc2Filter: case kOsc3Filter:
-                setUnits (*p, float (k));
-                return;
-            case kOsc1Wave: case kOsc2Wave: case kOsc3Wave:
+            case kOsc1Octave:
+            case kOsc2Octave:
+            case kOsc3Octave: setUnits (*p, float (k - 3)); return;
+            case kOsc1Filter:
+            case kOsc2Filter:
+            case kOsc3Filter: setUnits (*p, float (k)); return;
+            case kOsc1Wave:
+            case kOsc2Wave:
+            case kOsc3Wave:
             {
                 const int n = index == kOsc1Wave ? 0 : index == kOsc2Wave ? 1 : 2;
                 setUnits (*p, float (kWaveOscType[k]));
-                oscDirty[(size_t) n] = true;   // shape params are written once the type is live
+                oscDirty[(size_t) n] = true; // shape params are written once the type is live
                 return;
             }
-            case kFilter1Type: case kFilter2Type:
+            case kFilter1Type:
+            case kFilter2Type:
             {
                 setUnits (*p, float (kFilterTypes[k]));
                 if (auto* subtype = filterSubtype[index == kFilter1Type ? 0 : 1])
                     setUnits (*subtype, 0.0f);
                 return;
             }
-            case kLfo1Shape: case kLfo2Shape:
-                setUnits (*p, float (kLfoShapes[k]));
+            case kLfo1Shape:
+            case kLfo2Shape: setUnits (*p, float (kLfoShapes[k])); return;
+            case kLfo1Retrigger:
+            case kLfo2Retrigger:
+                setUnits (*p, k != 0 ? 1.0f : 0.0f); // keytrigger / freerun
                 return;
-            case kLfo1Retrigger: case kLfo2Retrigger:
-                setUnits (*p, k != 0 ? 1.0f : 0.0f);   // keytrigger / freerun
-                return;
-            default:
-                break;
+            default: break;
         }
 
         // Remaining categoricals/toggles store their index directly (envelope curves, unipolar).
@@ -400,7 +464,7 @@ struct SurgeEngine::Impl
             const bool wasOn = (mask & (1 << slot)) == 0;
             mask = on ? (mask & ~(1 << slot)) : (mask | (1 << slot));
             if (wasOn && ! on && synth->fx[slot] != nullptr)
-                synth->fx[slot]->suspend();   // no stale tail when re-enabled
+                synth->fx[slot]->suspend(); // no stale tail when re-enabled
             return;
         }
         if (index == kModfxType)
@@ -466,28 +530,28 @@ struct SurgeEngine::Impl
         const int wave = asIndex (kOscControls[n].wave, controls[kOscControls[n].wave]);
         switch (wave)
         {
-            case kTriangle:   // Modern: saw, pulse, triangle mixes
+            case kTriangle: // Modern: saw, pulse, triangle mixes
                 setUnits (data.p[0], 0.0f);
                 setUnits (data.p[1], 0.0f);
                 setUnits (data.p[2], 1.0f);
                 break;
             case kSaw:
-            case kSquare:     // Classic: shape, width 1, width 2, sub mix, sync
+            case kSquare: // Classic: shape, width 1, width 2, sub mix, sync
                 setUnits (data.p[0], wave == kSaw ? 0.0f : -1.0f);
                 setUnits (data.p[1], 0.5f);
                 setUnits (data.p[2], 0.5f);
                 setUnits (data.p[3], 0.0f);
                 setUnits (data.p[4], 0.0f);
                 break;
-            case kNoise:      // S&H Noise: correlation 0; sync +48 st so the hold rate
-                setUnits (data.p[0], 0.0f);   // sits well above the note (broadband)
+            case kNoise:                    // S&H Noise: correlation 0; sync +48 st so the hold rate
+                setUnits (data.p[0], 0.0f); // sits well above the note (broadband)
                 setUnits (data.p[4], 48.0f);
                 break;
-            case kFm:         // FM2: M1 amount, M1 ratio
+            case kFm: // FM2: M1 amount, M1 ratio
                 setUnits (data.p[0], 0.3f);
                 setUnits (data.p[1], 2.0f);
                 break;
-            default:          // Sine, Wavetable: type defaults
+            default: // Sine, Wavetable: type defaults
                 break;
         }
     }
@@ -517,7 +581,10 @@ struct SurgeEngine::Impl
 };
 
 //==============================================================================
-SurgeEngine::SurgeEngine() : impl (std::make_unique<Impl>()) {}
+SurgeEngine::SurgeEngine()
+    : impl (std::make_unique<Impl>())
+{
+}
 SurgeEngine::~SurgeEngine() = default;
 
 void SurgeEngine::prepare (double sampleRate, int)
@@ -526,7 +593,7 @@ void SurgeEngine::prepare (double sampleRate, int)
     impl->synth = std::make_unique<SurgeSynthesizer> (&impl->layer, SurgeStorage::skipPatchLoadDataPathSentinel);
     impl->synth->setSamplerate (static_cast<float> (sampleRate));
     impl->synth->time_data.tempo = 120.0;
-    impl->synth->process();   // let the default patch settle
+    impl->synth->process(); // let the default patch settle
 
     for (auto& osc : impl->synth->storage.getPatch().scene[0].osc)
     {
@@ -618,10 +685,7 @@ void SurgeEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuf
 }
 
 //==============================================================================
-int SurgeEngine::numResolvedControls() const noexcept
-{
-    return impl->synth != nullptr ? impl->numResolved() : 0;
-}
+int SurgeEngine::numResolvedControls() const noexcept { return impl->synth != nullptr ? impl->numResolved() : 0; }
 
 float SurgeEngine::surgeValue (const char* storageName) const
 {
@@ -636,7 +700,8 @@ int SurgeEngine::oscType (int osc) const
 
 float SurgeEngine::oscParam (int osc, int k) const
 {
-    return unitsOf (impl->synth->storage.getPatch().scene[0].osc[juce::jlimit (0, 2, osc)].p[juce::jlimit (0, n_osc_params - 1, k)]);
+    return unitsOf (impl->synth->storage.getPatch().scene[0].osc[juce::jlimit (0, 2, osc)].p[juce::jlimit (
+        0, n_osc_params - 1, k)]);
 }
 
 int SurgeEngine::fxType (int slot) const
@@ -651,13 +716,12 @@ bool SurgeEngine::fxEnabled (int slot) const
 
 float SurgeEngine::fxParam (int slot, int k) const
 {
-    return unitsOf (impl->synth->storage.getPatch().fx[juce::jlimit (0, n_fx_slots - 1, slot)].p[juce::jlimit (0, n_fx_params - 1, k)]);
+    return unitsOf (impl->synth->storage.getPatch()
+                        .fx[juce::jlimit (0, n_fx_slots - 1, slot)]
+                        .p[juce::jlimit (0, n_fx_params - 1, k)]);
 }
 
-int SurgeEngine::numModRoutes() const
-{
-    return int (impl->synth->storage.getPatch().scene[0].modulation_voice.size());
-}
+int SurgeEngine::numModRoutes() const { return int (impl->synth->storage.getPatch().scene[0].modulation_voice.size()); }
 
 float SurgeEngine::modRouteDepth (int source, const char* destinationStorageName) const
 {
@@ -670,9 +734,6 @@ float SurgeEngine::modRouteDepth (int source, const char* destinationStorageName
     return kNaN;
 }
 
-int SurgeEngine::numHeldVoices() const
-{
-    return impl->synth->getNonReleasedVoices (0);
-}
+int SurgeEngine::numHeldVoices() const { return impl->synth->getNonReleasedVoices (0); }
 
 } // namespace vae

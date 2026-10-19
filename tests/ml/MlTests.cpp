@@ -11,7 +11,10 @@ namespace vae::ml
 class MlTests final : public juce::UnitTest
 {
 public:
-    MlTests() : juce::UnitTest ("ONNX / prompt pipeline", "vae_ml") {}
+    MlTests()
+        : juce::UnitTest ("ONNX / prompt pipeline", "vae_ml")
+    {
+    }
 
     void runTest() override
     {
@@ -75,8 +78,18 @@ public:
         PresetGenerator generator;
         bool loaded = false, generated = false;
         PresetGenerator::Result result;
-        generator.loadDecoder (stub, [&] (juce::Result r) { expect (r.wasOk()); loaded = true; });
-        generator.generate ("glassy bell", [&] (const PresetGenerator::Result& r) { result = r; generated = true; });
+        generator.loadDecoder (stub,
+                               [&] (juce::Result r)
+                               {
+                                   expect (r.wasOk());
+                                   loaded = true;
+                               });
+        generator.generate ("glassy bell",
+                            [&] (const PresetGenerator::Result& r)
+                            {
+                                result = r;
+                                generated = true;
+                            });
         for (int i = 0; i < 200 && ! (loaded && generated); ++i)
             juce::MessageManager::getInstance()->runDispatchLoopUntil (10);
         expect (loaded && generated);
@@ -110,7 +123,11 @@ public:
         {
             std::atomic<bool>& entered;
             std::atomic<bool>& release;
-            BlockingEncoder (std::atomic<bool>& e, std::atomic<bool>& r) : entered (e), release (r) {}
+            BlockingEncoder (std::atomic<bool>& e, std::atomic<bool>& r)
+                : entered (e)
+                , release (r)
+            {
+            }
             juce::String describe() const override { return "blocking"; }
             schema::Latent encode (const juce::String&) override
             {
@@ -128,7 +145,7 @@ public:
             juce::Thread::sleep (2);
         expect (entered.load(), "job started");
         const auto t0 = juce::Time::getMillisecondCounterHiRes();
-        const auto status = busy.describe();   // the job holds the decoder lock right now
+        const auto status = busy.describe(); // the job holds the decoder lock right now
         expect (juce::Time::getMillisecondCounterHiRes() - t0 < 100.0, "describe() blocked");
         expect (status.startsWith ("blocking"), status);
         release = true;

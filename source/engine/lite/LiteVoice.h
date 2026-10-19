@@ -21,12 +21,14 @@ namespace vae::lite
 /** Engine-wide values for the current control block. */
 struct BlockValues
 {
-    std::array<float, 2> freeLfo {};   // free-running LFO outputs
-    float pitchBendSemis = 0.0f;       // MIDI pitch wheel
+    std::array<float, 2> freeLfo {}; // free-running LFO outputs
+    float pitchBendSemis = 0.0f;     // MIDI pitch wheel
 };
 
 class Voice
 {
+    static constexpr const schema::Curve* kCutoffCurve = schema::surge::curveNamed ("cutoff");
+
 public:
     // Scene volume of Surge's default patch (0.8909 amplitude -> x^3 = -3 dB):
     // the base the "volume" mod destination moves around.
@@ -34,7 +36,7 @@ public:
     // Calibrates the default patch to Surge's level (single saw, note 60).
     static constexpr float kVoiceGain = 0.25f;
 
-    void prepare (float sampleRate, const ablaze::Wavetable* wavetables, uint32_t seed)
+    void prepare (float sampleRate, const dsp::Wavetable* wavetables, uint32_t seed)
     {
         sr = sampleRate;
         table = wavetables;
@@ -48,7 +50,7 @@ public:
     bool isActive() const noexcept { return amp.isActive(); }
     bool isReleasing() const noexcept { return amp.isReleasing(); }
     int getNote() const noexcept { return note; }
-    uint64_t getAge() const noexcept { return startedAt; }
+    uint64_t getStartOrder() const noexcept { return startedAt; }
 
     void kill() noexcept
     {
@@ -78,7 +80,7 @@ public:
         glideTo (p, midiNote, fromSemis);
         amp.noteOn (p.ampEnv);
         feg.noteOn (p.filterEnv);
-        age = 0.0f;
+        secondsSinceStart = 0.0f;
         for (size_t i = 0; i < lfo.size(); ++i)
             if (p.lfo[i].retrigger)
                 lfo[i].restart (p.lfo[i].phase);
@@ -129,7 +131,7 @@ public:
             current = std::max (target, current - glideRate * blockSeconds);
 
         // Modulators for this block.
-        age += blockSeconds;
+        secondsSinceStart += blockSeconds;
         std::array<float, 2> lfoOut {};
         for (size_t i = 0; i < lfo.size(); ++i)
         {
@@ -137,7 +139,7 @@ public:
             float v = s.retrigger ? lfo[i].advance (s, blockSeconds) : shared.freeLfo[i];
             if (s.unipolar)
                 v = 0.5f * (v + 1.0f);
-            const float fade = s.fadeIn > 0.0f ? std::min (1.0f, age / s.fadeIn) : 1.0f;
+            const float fade = s.fadeIn > 0.0f ? std::min (1.0f, secondsSinceStart / s.fadeIn) : 1.0f;
             lfoOut[i] = v * s.amount * fade;
         }
         const float fegLevel = feg.getLevel();
@@ -145,7 +147,7 @@ public:
         Mods mods;
         mods.add (p.fegRoute.dest, p.fegRoute.depth * fegLevel);
         for (size_t i = 0; i < lfo.size(); ++i)
-            mods.add (p.lfo[i].dest, p.lfo[i].depth * lfoOut[i]);
+            mods.add (p.lfo[i].route.dest, p.lfo[i].route.depth * lfoOut[i]);
 
         // Oscillator increments.
         for (size_t i = 0; i < osc.size(); ++i)
@@ -164,7 +166,9 @@ public:
             const float cutMod = f == 0 ? mods.cutoff1 : mods.cutoff2;
             const float semis = fs.cutoffSemis + fs.envSemis * fegLevel + fs.keytrack * keyOffset + cutMod;
             const float reso = fs.resonance + (f == 0 ? mods.resonance1 : 0.0f);
-            filter[f].configure (fs.type, schema::surge::semitonesToHz (std::clamp (semis, -60.0f, 70.0f)), reso, sr);
+            filter[f].configure (
+                fs.type, schema::surge::semitonesToHz (std::clamp (semis, kCutoffCurve->min, kCutoffCurve->max)), reso,
+                sr);
         }
 
         // Output gains, ramped across the block.
@@ -245,24 +249,31 @@ private:
     {
         float pitch = 0.0f, cutoff1 = 0.0f, cutoff2 = 0.0f, resonance1 = 0.0f, volume = 0.0f, pan = 0.0f;
 
-        // Full range of each destination's Surge parameter.
+        // A route moves its destination by depth x the full range of the
+        // destination's Surge parameter, i.e. the width of its schema curve.
+        static constexpr float kPitchSpan = schema::surge::curveSpan ("pitch7");
+        static constexpr float kCutoffSpan = schema::surge::curveSpan ("cutoff");
+        static constexpr float kResonanceSpan = schema::surge::curveSpan ("unit");
+        static constexpr float kVolumeSpan = schema::surge::curveSpan ("amplitude");
+        static constexpr float kPanSpan = schema::surge::curveSpan ("bipolar");
+
         void add (ModDest d, float amount) noexcept
         {
             switch (d)
             {
                 case ModDest::None:             break;
-                case ModDest::Pitch:            pitch += 14.0f * amount; break;
-                case ModDest::Filter1Cutoff:    cutoff1 += 130.0f * amount; break;
-                case ModDest::Filter2Cutoff:    cutoff2 += 130.0f * amount; break;
-                case ModDest::Filter1Resonance: resonance1 += amount; break;
-                case ModDest::Volume:           volume += amount; break;
-                case ModDest::Pan:              pan += 2.0f * amount; break;
+                case ModDest::Pitch:            pitch += kPitchSpan * amount; break;
+                case ModDest::Filter1Cutoff:    cutoff1 += kCutoffSpan * amount; break;
+                case ModDest::Filter2Cutoff:    cutoff2 += kCutoffSpan * amount; break;
+                case ModDest::Filter1Resonance: resonance1 += kResonanceSpan * amount; break;
+                case ModDest::Volume:           volume += kVolumeSpan * amount; break;
+                case ModDest::Pan:              pan += kPanSpan * amount; break;
             }
         }
     };
 
     float sr = 48000.0f;
-    const ablaze::Wavetable* table = nullptr;
+    const dsp::Wavetable* table = nullptr;
     std::array<Oscillator, 3> osc;
     std::array<FilterUnit, 2> filter;
     ShapedEnvelope amp, feg;
@@ -271,7 +282,7 @@ private:
     int note = -1;
     uint64_t startedAt = 0;
     float current = 60.0f, target = 60.0f, glideRate = 0.0f;
-    float age = 0.0f;
+    float secondsSinceStart = 0.0f;
     float gainL = 0.0f, gainR = 0.0f;
     bool firstBlock = true;
 };

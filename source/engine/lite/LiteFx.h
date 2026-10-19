@@ -10,7 +10,7 @@
 #pragma once
 
 #include "LitePatch.h"
-#include "ablaze/FxBlocks.h"
+#include "dsp/FxBlocks.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -40,7 +40,7 @@ public:
         resetDist();
         resetEq();
         resetChorus();
-        resetMod();
+        resetModFx();
         resetDelay();
         reverb.reset();
         wasOn = {};
@@ -48,11 +48,11 @@ public:
 
     void process (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        run (0, p.distOn,   [&] { processDist (l, r, n, p); },   [&] { resetDist(); });
-        run (1, p.eqOn,     [&] { processEq (l, r, n, p); },     [&] { resetEq(); });
+        run (0, p.distOn, [&] { processDist (l, r, n, p); }, [&] { resetDist(); });
+        run (1, p.eqOn, [&] { processEq (l, r, n, p); }, [&] { resetEq(); });
         run (2, p.chorusOn, [&] { processChorus (l, r, n, p); }, [&] { resetChorus(); });
-        run (3, p.modOn,    [&] { processMod (l, r, n, p); },    [&] { resetMod(); });
-        run (4, p.delayOn,  [&] { processDelay (l, r, n, p); },  [&] { resetDelay(); });
+        run (3, p.modfxOn, [&] { processModFx (l, r, n, p); }, [&] { resetModFx(); });
+        run (4, p.delayOn, [&] { processDelay (l, r, n, p); }, [&] { resetDelay(); });
         run (5, p.reverbOn, [&] { processReverb (l, r, n, p); }, [&] { reverb.reset(); });
     }
 
@@ -93,7 +93,7 @@ private:
     // modelled as low shelf / peak / high shelf.
     void processEq (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        using B = ablaze::fx::Biquad;
+        using B = dsp::fx::Biquad;
         eq[0].set (B::Shape::LowShelf, schema::surge::semitonesToHz (-30.0f), p.eqLowDb, 0.707f, sr);
         eq[1].set (B::Shape::Peak, p.eqMidHz, p.eqMidDb, 0.67f, sr);
         eq[2].set (B::Shape::HighShelf, schema::surge::semitonesToHz (54.0f), p.eqHighDb, 0.707f, sr);
@@ -104,7 +104,11 @@ private:
                 r[i] = b.process (1, r[i]);
             }
     }
-    void resetEq() noexcept { for (auto& b : eq) b.reset(); }
+    void resetEq() noexcept
+    {
+        for (auto& b : eq)
+            b.reset();
+    }
 
     // Chorus: two modulated delay lines, 90 degrees apart.
     void processChorus (float* l, float* r, int n, const FxSettings& p) noexcept
@@ -124,13 +128,17 @@ private:
             r[i] += p.chorusMix * (wr - r[i]);
         }
     }
-    void resetChorus() noexcept { chorus[0].restart(); chorus[1].restart(); }
+    void resetChorus() noexcept
+    {
+        chorus[0].restart();
+        chorus[1].restart();
+    }
 
     // Phaser (4 first-order all-passes, swept) or flanger (short modulated delay).
-    void processMod (float* l, float* r, int n, const FxSettings& p) noexcept
+    void processModFx (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        const float inc = p.modRateHz / sr;
-        const float fb = 0.9f * p.modFeedback;
+        const float inc = p.modfxRateHz / sr;
+        const float fb = 0.9f * p.modfxFeedback;
         float* ch[] = { l, r };
         for (int i = 0; i < n; ++i)
         {
@@ -141,9 +149,9 @@ private:
                 const float lfo = std::sin (juce::MathConstants<float>::twoPi * (modPhase + 0.25f * float (c)));
                 const float x = ch[c][i];
                 float wet;
-                if (p.modType == ModFxType::Phaser)
+                if (p.modfxType == ModFxType::Phaser)
                 {
-                    const float hz = 800.0f * std::exp2 (2.5f * p.modDepth * lfo);
+                    const float hz = 800.0f * std::exp2 (2.5f * p.modfxDepth * lfo);
                     const float t = std::tan (juce::MathConstants<float>::pi * std::min (hz, 0.45f * sr) / sr);
                     const float a = (t - 1.0f) / (t + 1.0f);
                     float y = x + fb * modState[c];
@@ -158,15 +166,15 @@ private:
                 }
                 else
                 {
-                    const float d = (0.0008f + p.modDepth * 0.004f * (0.5f + 0.5f * lfo)) * sr;
+                    const float d = (0.0008f + p.modfxDepth * 0.004f * (0.5f + 0.5f * lfo)) * sr;
                     wet = flanger[c].read (std::max (1.0f, d));
                     flanger[c].push (x + fb * wet);
                 }
-                ch[c][i] = x + p.modMix * (wet - x);
+                ch[c][i] = x + p.modfxMix * (wet - x);
             }
         }
     }
-    void resetMod() noexcept
+    void resetModFx() noexcept
     {
         for (auto& c : allpass)
             for (auto& z : c)
@@ -192,12 +200,17 @@ private:
                 ch[k][i] += p.delayMix * (wet - ch[k][i]);
             }
     }
-    void resetDelay() noexcept { delay[0].restart(); delay[1].restart(); delayLp[0] = delayLp[1] = 0.0f; }
+    void resetDelay() noexcept
+    {
+        delay[0].restart();
+        delay[1].restart();
+        delayLp[0] = delayLp[1] = 0.0f;
+    }
 
     // Reverb: juce::Reverb (Freeverb); decay time and size both drive room size.
     void processReverb (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        const float t = std::clamp ((p.reverbDecayLog2 + 4.0f) / 10.0f, 0.0f, 1.0f);
+        const float t = p.reverbDecay; // the 0..1 reverb_decay control
         juce::Reverb::Parameters rp;
         rp.roomSize = std::clamp (0.25f + 0.7f * t + 0.1f * p.reverbSize, 0.0f, 1.0f);
         rp.damping = p.reverbDamping;
@@ -212,14 +225,14 @@ private:
     float sr = 48000.0f;
     std::array<bool, 6> wasOn {};
     float tone[2][2] {};
-    ablaze::fx::Biquad eq[3];
-    ablaze::fx::DelayLine chorus[2];
+    dsp::fx::Biquad eq[3];
+    dsp::fx::DelayLine chorus[2];
     float chorusPhase = 0.0f;
     float allpass[2][4] {};
     float modState[2] {};
-    ablaze::fx::DelayLine flanger[2];
+    dsp::fx::DelayLine flanger[2];
     float modPhase = 0.0f;
-    ablaze::fx::DelayLine delay[2];
+    dsp::fx::DelayLine delay[2];
     float delayLp[2] {};
     juce::Reverb reverb;
 };

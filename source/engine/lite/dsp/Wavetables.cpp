@@ -5,13 +5,13 @@
 #include <algorithm>
 #include <cmath>
 
-namespace ablaze
+namespace vae::dsp
 {
 
 namespace
 {
 constexpr int kFrameSize = Wavetable::kFrameSize;
-constexpr int kNumBins = kFrameSize / 2 + 1;   // DC .. Nyquist of a kFrameSize FFT
+constexpr int kNumBins = kFrameSize / 2 + 1; // DC .. Nyquist of a kFrameSize FFT
 
 int orderOf (int size)
 {
@@ -38,7 +38,8 @@ float formantAmplitude (float t, int h)
 } // namespace
 
 //==============================================================================
-Wavetable::Wavetable (int frames) : numFrames (frames)
+Wavetable::Wavetable (int frames)
+    : numFrames (frames)
 {
     size_t offset = 0;
     for (int level = 0; level < kNumLevels; ++level)
@@ -71,14 +72,18 @@ std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spe
     // One inverse FFT per level size. JUCE's FFT engines may scale their
     // output differently per size, so calibrate: a unit harmonic must come
     // out at the same amplitude at every size.
-    struct SizedFft { std::unique_ptr<juce::dsp::FFT> fft; float scale = 1.0f; };
+    struct SizedFft
+    {
+        std::unique_ptr<juce::dsp::FFT> fft;
+        float scale = 1.0f;
+    };
     SizedFft ffts[16];
     std::vector<float> work (2 * kFrameSize);
 
     auto unitAmplitude = [&] (juce::dsp::FFT& fft, int size)
     {
         std::fill (work.begin(), work.begin() + 2 * size, 0.0f);
-        work[3] = -1.0f;   // harmonic 1, sine phase
+        work[3] = -1.0f; // harmonic 1, sine phase
         fft.performRealOnlyInverseTransform (work.data());
         float peak = 0.0f;
         for (int i = 0; i < size; ++i)
@@ -113,9 +118,9 @@ std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spe
             const int maxHarmonic = std::min (1024 >> level, size / 2 - 1);
 
             std::fill (work.begin(), work.begin() + 2 * size, 0.0f);
-            for (int h = 1; h <= maxHarmonic; ++h)   // bin 0 (DC) always dropped
+            for (int h = 1; h <= maxHarmonic; ++h) // bin 0 (DC) always dropped
             {
-                work[static_cast<size_t> (2 * h)]     = spectrum[2 * h];
+                work[static_cast<size_t> (2 * h)] = spectrum[2 * h];
                 work[static_cast<size_t> (2 * h + 1)] = spectrum[2 * h + 1];
             }
             f.fft->performRealOnlyInverseTransform (work.data());
@@ -169,4 +174,4 @@ std::unique_ptr<Wavetable> makeFormantTable()
     return Wavetable::fromSpectra (spectra, kFrames);
 }
 
-} // namespace ablaze
+} // namespace vae::dsp
