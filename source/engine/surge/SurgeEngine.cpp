@@ -14,6 +14,7 @@ JUCE_END_IGNORE_WARNINGS_MSVC
 JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
 #include <array>
+#include <cstring>
 #include <optional>
 
 namespace vae
@@ -41,42 +42,31 @@ struct SurgeEngine::Impl
 
     std::array<float, kQuantum> quantumL {}, quantumR {};
     int quantumPos = kQuantum;
-    bool oscTypeChanged = false;
-
-    static bool isOscType (int index)
-    {
-        return index == schema::kOsc1Type || index == schema::kOsc2Type || index == schema::kOsc3Type;
-    }
-
-    /** Surge applies an osc type change lazily (loadOscalgos, inside process())
-        and then resets that osc's parameters to the new type's defaults. Apply
-        it now, before any note can spawn a voice with the new type but the old
-        type's parameter layout, and re-write the schema's osc parameters so
-        the vector still describes the patch. */
-    void settleOscTypes()
-    {
-        if (! oscTypeChanged)
-            return;
-        oscTypeChanged = false;
-        synth->loadOscalgos();
-        for (int index : { int (schema::kOsc1Shape), int (schema::kOsc1Voices), int (schema::kOsc1Detune) })
-            write (index, controls[index]);
-    }
 
     void resolveControls()
     {
+        // Schema v2 placeholder: continuous controls that map 1:1 onto a Surge
+        // parameter, by storage name. The full mapping replaces this.
+        static const std::pair<int, const char*> kDirect[] = {
+            { schema::kGlideTime, "a_portamento" },
+            { schema::kOsc1Level, "a_level_o1" }, { schema::kOsc1Pitch, "a_osc1_pitch" },
+            { schema::kOsc2Level, "a_level_o2" }, { schema::kOsc2Pitch, "a_osc2_pitch" },
+            { schema::kOsc3Level, "a_level_o3" }, { schema::kOsc3Pitch, "a_osc3_pitch" },
+            { schema::kFilter1Cutoff, "a_filter1_cutoff" }, { schema::kFilter1Resonance, "a_filter1_resonance" },
+            { schema::kFilter1Env, "a_filter1_envmod" }, { schema::kFilter1Keytrack, "a_filter1_keytrack" },
+            { schema::kFilter2Cutoff, "a_filter2_cutoff" }, { schema::kFilter2Resonance, "a_filter2_resonance" },
+            { schema::kFilter2Env, "a_filter2_envmod" }, { schema::kFilter2Keytrack, "a_filter2_keytrack" },
+            { schema::kAmpAttack, "a_env1_attack" }, { schema::kAmpDecay, "a_env1_decay" },
+            { schema::kAmpSustain, "a_env1_sustain" }, { schema::kAmpRelease, "a_env1_release" },
+            { schema::kFegAttack, "a_env2_attack" }, { schema::kFegDecay, "a_env2_decay" },
+            { schema::kFegSustain, "a_env2_sustain" }, { schema::kFegRelease, "a_env2_release" },
+            { schema::kMasterVolume, "volume" },
+        };
         ids.fill (std::nullopt);
-        char name[TXT_SIZE] {};
-        for (int i = 0; i < kMaxSynthSideIds; ++i)
-        {
-            SurgeSynthesizer::ID id;
-            if (! synth->fromSynthSideId (i, id))
-                continue;
-            synth->getParameterName (id, name);
-            for (int c = 0; c < schema::kControlCount; ++c)
-                if (! ids[(size_t) c] && juce::String (name) == schema::controls()[(size_t) c].surgeParam)
-                    ids[(size_t) c] = id;
-        }
+        for (auto* p : synth->storage.getPatch().param_ptr)
+            for (const auto& [index, storageName] : kDirect)
+                if (std::strcmp (p->get_storage_name(), storageName) == 0)
+                    ids[(size_t) index] = synth->idForParameter (p);
     }
 
     void write (int index, float value)
@@ -84,7 +74,6 @@ struct SurgeEngine::Impl
         if (const auto& id = ids[(size_t) index])
             synth->setParameter01 (*id, value, false, false);
         written[index] = value;
-        oscTypeChanged = oscTypeChanged || isOscType (index);
     }
 
     void applyMidi (const juce::MidiMessage& msg)
@@ -125,7 +114,6 @@ void SurgeEngine::prepare (double sampleRate, int)
     impl->resolveControls();
     for (int i = 0; i < schema::kControlCount; ++i)
         impl->write (i, impl->controls[i]);
-    impl->settleOscTypes();
     impl->quantumPos = kQuantum;
 }
 
@@ -143,7 +131,7 @@ void SurgeEngine::setControl (int index, float normalised)
     if (index < 0 || index >= schema::kControlCount || ! std::isfinite (normalised))
         return;
 
-    normalised = juce::jlimit (0.0f, 1.0f, normalised);
+    normalised = schema::sanitiseValue (index, normalised);
     impl->controls[index] = normalised;
     if (impl->synth != nullptr && ! juce::exactlyEqual (impl->written[index], normalised))
         impl->write (index, normalised);
@@ -166,7 +154,6 @@ void SurgeEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuf
         return;
     }
 
-    impl->settleOscTypes();
 
     auto* left = buffer.getWritePointer (0);
     auto* right = buffer.getWritePointer (1);

@@ -2,7 +2,11 @@ juce_add_console_app(vae_engine_tests PRODUCT_NAME "vae_engine_tests" VERSION 0.
 
 target_sources(vae_engine_tests PRIVATE
     EngineTests.cpp
+    LiteEngineTests.cpp
     ../common/TestMain.cpp)
+if(VAE_WITH_SURGE)
+    target_sources(vae_engine_tests PRIVATE SurgeEngineTests.cpp)
+endif()
 
 target_compile_definitions(vae_engine_tests PRIVATE
     VAE_TEST_CATEGORY="vae_engine"
