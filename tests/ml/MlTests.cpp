@@ -24,7 +24,7 @@ public:
         expect (model.load (stub).wasOk());
         expectEquals ((int) model.getInputs().size(), 1);
         expect (model.getInputs()[0].shape.back() == schema::kLatentDimensions);
-        expect (model.getOutputs()[0].shape.back() == schema::kControlCount);
+        expect (model.getOutputs()[0].shape.back() == schema::kFeatureCount);
 
         beginTest ("missing model fails cleanly");
         OnnxModel missing;

@@ -104,11 +104,11 @@ juce::Result LatentDecoder::validate()
         return juce::Result::fail ("Decoder input must end in " + juce::String (schema::kLatentDimensions)
                                    + " (latent_dimensions)");
     }
-    if (outs.empty() || ! outs.front().isFloat || lastDim (outs.front()) != schema::kControlCount)
+    if (outs.empty() || ! outs.front().isFloat || lastDim (outs.front()) != schema::kFeatureCount)
     {
         model.unload();
-        return juce::Result::fail ("Decoder output must be float and end in " + juce::String (schema::kControlCount)
-                                   + " (control count)");
+        return juce::Result::fail ("Decoder output must be float and end in " + juce::String (schema::kFeatureCount)
+                                   + " (feature count)");
     }
     return juce::Result::ok();
 }
@@ -129,13 +129,9 @@ schema::Snapshot LatentDecoder::decode (const schema::Latent& latent, juce::Stri
         const std::array<int64_t, 2> shape { 1, schema::kLatentDimensions };
         std::vector<std::vector<float>> outs;
         const auto r = model.run (latent, shape, outs);
-        if (r.wasOk() && ! outs.empty() && outs.front().size() == size_t (schema::kControlCount))
-        {
-            schema::Snapshot s;
-            std::copy (outs.front().begin(), outs.front().end(), s.values.begin());
-            s.sanitise();
-            return s;
-        }
+        if (r.wasOk() && ! outs.empty() && outs.front().size() == size_t (schema::kFeatureCount))
+            return schema::decodeFeatures (std::span<const float, schema::kFeatureCount> (outs.front().data(),
+                                                                                         schema::kFeatureCount));
         if (error != nullptr)
             *error = r.failed() ? r.getErrorMessage() : juce::String ("decoder returned the wrong size");
     }

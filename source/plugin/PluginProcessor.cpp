@@ -37,10 +37,23 @@ PluginProcessor::PluginProcessor()
         params::ParamSpec s;
         s.id = c.id;
         s.name = c.name;
-        s.kind = params::ParamKind::Float;
-        s.range = { 0.0f, 1.0f };
         s.defaultValue = c.defaultValue;
-        s.toText = [i] (float v) { return juce::String (schema::surge::describe (i, v)); };
+        switch (c.kind)
+        {
+            case schema::Kind::Continuous:
+                s.kind = params::ParamKind::Float;
+                s.range = { 0.0f, 1.0f };
+                s.toText = [i] (float v) { return juce::String (schema::surge::describe (i, v)); };
+                break;
+            case schema::Kind::Categorical:
+                s.kind = params::ParamKind::Choice;
+                for (int o = 0; o < c.numOptions; ++o)
+                    s.choices.add (c.options[o]);
+                break;
+            case schema::Kind::Toggle:
+                s.kind = params::ParamKind::Bool;
+                break;
+        }
         s.onAudioChange = [this, i] (float v)
         {
             audioControls[(size_t) i] = v;
@@ -137,7 +150,7 @@ schema::Snapshot PluginProcessor::getControls() const
 {
     schema::Snapshot s;
     for (int i = 0; i < schema::kControlCount; ++i)
-        s[i] = params.getNormalised (controlIndex[(size_t) i]);
+        s[i] = params.get (controlIndex[(size_t) i]);   // raw: 0..1, option index or 0/1
     return s;
 }
 
@@ -147,7 +160,7 @@ void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
     {
         const auto index = controlIndex[(size_t) i];
         params.beginGesture (index);
-        params.setNormalised (index, snapshot[i]);
+        params.set (index, schema::sanitiseValue (i, snapshot[i]));
         params.endGesture (index);
     }
 }
@@ -207,11 +220,12 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
     if (xml == nullptr || ! xml->hasTagName (kStateType))
         return;
 
-    // A different schema version would mean different control semantics.
-    jassert (xml->getIntAttribute (kAttrSchema, schema::kSchemaVersion) == schema::kSchemaVersion);
+    // A different schema version means different control semantics: keep the
+    // current (default) controls rather than misreading them.
+    const bool sameSchema = xml->getIntAttribute (kAttrSchema, -1) == schema::kSchemaVersion;
 
     juce::MemoryBlock paramState;
-    if (paramState.fromBase64Encoding (xml->getStringAttribute (kAttrParams)))
+    if (sameSchema && paramState.fromBase64Encoding (xml->getStringAttribute (kAttrParams)))
         params.load (paramState.getData(), (int) paramState.getSize());
 
     lastPrompt = xml->getStringAttribute (kAttrPrompt);

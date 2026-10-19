@@ -13,53 +13,114 @@ struct SectionInfo
 };
 
 constexpr SectionInfo kSections[] = {
-    { "osc1",   "Osc 1" },
-    { "osc2",   "Osc 2" },
-    { "osc3",   "Osc 3 / Noise" },
-    { "filter", "Filter 1" },
-    { "amp",    "Amp EG" },
-    { "feg",    "Filter EG" },
-    { "global", "LFO 1 / Global" },
+    { "voice",      "Voice" },
+    { "osc1",       "Osc 1" },
+    { "osc2",       "Osc 2" },
+    { "osc3",       "Osc 3" },
+    { "filters",    "Routing" },
+    { "filter1",    "Filter 1" },
+    { "filter2",    "Filter 2" },
+    { "amp_env",    "Amp Env" },
+    { "filter_env", "Filter Env" },
+    { "lfo1",       "LFO 1" },
+    { "lfo2",       "LFO 2" },
+    { "fx_dist",    "Distortion" },
+    { "fx_eq",      "EQ" },
+    { "fx_chorus",  "Chorus" },
+    { "fx_mod",     "Phaser / Flanger" },
+    { "fx_delay",   "Delay" },
+    { "fx_reverb",  "Reverb" },
+    { "global",     "Out" },
 };
 
-constexpr int kMargin = 20, kTopBarH = 76, kKeyboardH = 64, kGap = 12;
+constexpr int kMargin = 20, kTopBarH = 76, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
+
+/** Wrapping left-to-right layout of sections; returns the height used. */
+int layOutSections (juce::OwnedArray<ControlSection>& sections, juce::Rectangle<int> area, bool apply)
+{
+    int x = area.getX(), y = area.getY();
+    for (auto* section : sections)
+    {
+        const int w = section->getPreferredWidth();
+        if (x > area.getX() && x + w > area.getRight())
+        {
+            x = area.getX();
+            y += ControlSection::kHeight + kGap;
+        }
+        if (apply)
+            section->setBounds (x, y, w, ControlSection::kHeight);
+        x += w + kGap;
+    }
+    return y + ControlSection::kHeight - area.getY();
+}
 } // namespace
 
 //==============================================================================
-ControlKnob::ControlKnob (params::ParamStore& store, int controlIndex)
-    : name (schema::controls()[(size_t) controlIndex].name)
+ControlCell::ControlCell (params::ParamStore& store, int controlIndex)
+    : kind (schema::control (controlIndex).kind),
+      name (schema::control (controlIndex).name)
 {
-    slider.setSliderStyle (juce::Slider::RotaryVerticalDrag);
-    slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
-    slider.setRotaryParameters (juce::degreesToRadians (225.0f), juce::degreesToRadians (495.0f), true);
-    slider.setTooltip (juce::String (schema::controls()[(size_t) controlIndex].surgeParam));
-    slider.onDragEnd = [this] { showValue (isMouseOver (true)); };
-    slider.onValueChange = [this] { if (showing) showValue (true); };
-    slider.addMouseListener (this, false);
-    addAndMakeVisible (slider);
+    const auto& c = schema::control (controlIndex);
+    juce::String tip (c.id);
+    if (c.provisional)
+    {
+        name += "*";
+        tip += " (provisional: modulation routing pending)";
+    }
+
+    switch (kind)
+    {
+        case schema::Kind::Continuous:
+            slider.setSliderStyle (juce::Slider::RotaryVerticalDrag);
+            slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+            slider.setRotaryParameters (juce::degreesToRadians (225.0f), juce::degreesToRadians (495.0f), true);
+            slider.setTooltip (tip);
+            slider.onDragEnd = [this] { showValue (isMouseOver (true)); };
+            slider.onValueChange = [this] { if (showing) showValue (true); };
+            slider.addMouseListener (this, false);
+            addAndMakeVisible (slider);
+            sliderBinding = std::make_unique<params::SliderBinding> (store, c.id, slider);
+            break;
+        case schema::Kind::Categorical:
+            combo.setTooltip (tip);
+            addAndMakeVisible (combo);
+            comboBinding = std::make_unique<params::ComboBinding> (store, c.id, combo);
+            break;
+        case schema::Kind::Toggle:
+            toggle.setTooltip (tip);
+            addAndMakeVisible (toggle);
+            buttonBinding = std::make_unique<params::ButtonBinding> (store, c.id, toggle);
+            break;
+    }
 
     label.setJustificationType (juce::Justification::centred);
-    label.setFont (LF::labelFont (10.0f));
+    label.setFont (LF::labelFont (9.5f));
     label.setColour (juce::Label::textColourId, LF::quiet());
     label.setInterceptsMouseClicks (false, false);
+    label.setMinimumHorizontalScale (0.7f);
     label.setText (name.toUpperCase(), juce::dontSendNotification);
     addAndMakeVisible (label);
-
-    binding = std::make_unique<params::SliderBinding> (store, schema::controls()[(size_t) controlIndex].id, slider);
 }
 
-void ControlKnob::showValue (bool show)
+void ControlCell::showValue (bool show)
 {
+    if (kind != schema::Kind::Continuous)
+        return;
     showing = show;
     label.setColour (juce::Label::textColourId, show ? LF::green : LF::quiet());
     label.setText (show ? slider.getTextFromValue (slider.getValue()) : name.toUpperCase(), juce::dontSendNotification);
 }
 
-void ControlKnob::resized()
+void ControlCell::resized()
 {
     auto r = getLocalBounds();
     label.setBounds (r.removeFromBottom (16));
-    slider.setBounds (r.reduced (4));
+    switch (kind)
+    {
+        case schema::Kind::Continuous:  slider.setBounds (r.reduced (5)); break;
+        case schema::Kind::Categorical: combo.setBounds (r.withSizeKeepingCentre (r.getWidth() - 6, 22)); break;
+        case schema::Kind::Toggle:      toggle.setBounds (r.withSizeKeepingCentre (24, 24)); break;
+    }
 }
 
 //==============================================================================
@@ -67,13 +128,12 @@ ControlSection::ControlSection (params::ParamStore& store, const juce::String& t
     : title (t), number (n)
 {
     for (auto index : controls)
-        addAndMakeVisible (knobs.add (new ControlKnob (store, index)));
+        addAndMakeVisible (cells.add (new ControlCell (store, index)));
 }
 
 int ControlSection::getPreferredWidth() const
 {
-    const int columns = juce::jmax (1, (knobs.size() + kRows - 1) / kRows);
-    return columns * kCellW;
+    return juce::jmax (columns() * kCellW, 96);
 }
 
 void ControlSection::paint (juce::Graphics& g)
@@ -87,9 +147,9 @@ void ControlSection::paint (juce::Graphics& g)
 
 void ControlSection::resized()
 {
-    const int columns = juce::jmax (1, (knobs.size() + kRows - 1) / kRows);
-    for (int i = 0; i < knobs.size(); ++i)
-        knobs[i]->setBounds ((i % columns) * kCellW, kHeaderH + (i / columns) * kCellH, kCellW, kCellH);
+    const int n = columns();
+    for (int i = 0; i < cells.size(); ++i)
+        cells[i]->setBounds ((i % n) * kCellW, kHeaderH + (i / n) * kCellH, kCellW, kCellH);
 }
 
 //==============================================================================
@@ -153,13 +213,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     keyboard.setLowestVisibleKey (36);
     addAndMakeVisible (keyboard);
 
-    // Two rows of sections; width from the widest row.
-    int rowW[2] = { 0, 0 };
-    for (int i = 0; i < sections.size(); ++i)
-        rowW[i < 4 ? 0 : 1] += sections[i]->getPreferredWidth() + kGap;
-    const int width = juce::jmax (760, juce::jmax (rowW[0], rowW[1]) - kGap + 2 * kMargin);
-    const int sectionH = ControlSection::kHeaderH + ControlSection::kRows * ControlSection::kCellH;
-    setSize (width, kMargin + kTopBarH + 2 * (sectionH + kGap) + kKeyboardH + kMargin);
+    const int sectionsH = layOutSections (sections, { kMargin, 0, kEditorW - 2 * kMargin, 10000 }, false);
+    setSize (kEditorW, kMargin + kTopBarH + sectionsH + kGap + kKeyboardH + kMargin);
 }
 
 PluginEditor::~PluginEditor()
@@ -234,17 +289,7 @@ void PluginEditor::resized()
     keyboard.setBounds (r.removeFromBottom (kKeyboardH));
     r.removeFromBottom (kGap);
 
-    const int sectionH = ControlSection::kHeaderH + ControlSection::kRows * ControlSection::kCellH;
-    for (int row = 0; row < 2; ++row)
-    {
-        auto line = r.removeFromTop (sectionH);
-        r.removeFromTop (kGap);
-        for (int i = row * 4; i < juce::jmin (sections.size(), row * 4 + 4); ++i)
-        {
-            sections[i]->setBounds (line.removeFromLeft (sections[i]->getPreferredWidth()));
-            line.removeFromLeft (kGap);
-        }
-    }
+    layOutSections (sections, r, true);
 }
 
 } // namespace vae

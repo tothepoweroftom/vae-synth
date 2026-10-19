@@ -14,11 +14,12 @@
 namespace vae
 {
 
-/** One schema control: rotary + name, value shown while hovering/dragging. */
-class ControlKnob final : public juce::Component
+/** One schema control: rotary (continuous), combo box (categorical) or
+    toggle, plus its name; a knob shows its value while hovered/dragged. */
+class ControlCell final : public juce::Component
 {
 public:
-    ControlKnob (params::ParamStore&, int controlIndex);
+    ControlCell (params::ParamStore&, int controlIndex);
     void resized() override;
     void mouseEnter (const juce::MouseEvent&) override { showValue (true); }
     void mouseExit (const juce::MouseEvent&) override { showValue (slider.isMouseButtonDown()); }
@@ -26,14 +27,19 @@ public:
 private:
     void showValue (bool);
 
+    schema::Kind kind;
     juce::String name;
     juce::Label label;
     juce::Slider slider;
-    std::unique_ptr<params::SliderBinding> binding;
+    juce::ComboBox combo;
+    juce::ToggleButton toggle;
+    std::unique_ptr<params::SliderBinding> sliderBinding;
+    std::unique_ptr<params::ComboBinding> comboBinding;
+    std::unique_ptr<params::ButtonBinding> buttonBinding;
     bool showing = false;
 };
 
-/** A titled group of knobs (one schema section). */
+/** A titled group of cells (one schema section), laid out in kRows rows. */
 class ControlSection final : public juce::Component
 {
 public:
@@ -42,12 +48,15 @@ public:
     void resized() override;
     int getPreferredWidth() const;
 
-    static constexpr int kCellW = 66, kCellH = 74, kHeaderH = 30, kRows = 2;
+    static constexpr int kCellW = 64, kCellH = 66, kHeaderH = 28, kRows = 2;
+    static constexpr int kHeight = kHeaderH + kRows * kCellH;
 
 private:
+    int columns() const { return juce::jmax (1, (cells.size() + kRows - 1) / kRows); }
+
     juce::String title;
     int number;
-    juce::OwnedArray<ControlKnob> knobs;
+    juce::OwnedArray<ControlCell> cells;
 };
 
 class PluginEditor final : public juce::AudioProcessorEditor

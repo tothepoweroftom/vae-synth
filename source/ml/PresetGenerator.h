@@ -9,7 +9,9 @@
                    interface.
     LatentDecoder  latent -> schema vector. Uses an ONNX model when one is
                    loaded (input [1, latent_dimensions], output
-                   [1, control_count] in 0..1), else schema::mockDecode.
+                   [1, feature_count]: continuous/toggle values in 0..1 and
+                   per-option scores for categoricals, decoded by argmax), else
+                   schema::mockDecode.
 
   PresetGenerator runs the pipeline on a worker thread and reports back on the
   message thread.
