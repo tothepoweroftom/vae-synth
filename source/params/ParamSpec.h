@@ -50,10 +50,10 @@ struct ParamSpec
     /** Parses text to a raw value using fromText, or the kind's default parser when fromText is unset. */
     float textToValue (const juce::String& text) const;
 
-    /** Returns a copy whose range/default are completed and normalised for its kind
+    /** Returns a copy whose range/default are completed for its kind
         (Bool -> [0,1] step 1, Choice with unset range -> [0, n-1] step 1, Int -> step >= 1,
         default snapped into the range, empty name -> id). */
-    ParamSpec normalised() const;
+    ParamSpec completed() const;
 
     /** True when range is still the default-constructed value (start 0, end 1, no interval, no skew). */
     bool rangeIsUnset() const noexcept;

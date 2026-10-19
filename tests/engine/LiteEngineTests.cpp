@@ -19,25 +19,8 @@ Snapshot basePatch (const char* wave = "sine")
     return s;
 }
 
-float rmsOf (const std::vector<float>& x, size_t from, size_t to)
-{
-    double sum = 0.0;
-    to = std::min (to, x.size());
-    for (size_t i = from; i < to; ++i)
-        sum += double (x[i]) * double (x[i]);
-    return to > from ? float (std::sqrt (sum / double (to - from))) : 0.0f;
-}
-
-/** Frequency estimate from positive-going zero crossings. */
-float zeroCrossingHz (const std::vector<float>& x, size_t from, size_t to)
-{
-    int crossings = 0;
-    to = std::min (to, x.size());
-    for (size_t i = from + 1; i < to; ++i)
-        if (x[i - 1] <= 0.0f && x[i] > 0.0f)
-            ++crossings;
-    return float (crossings) * float (kRate) / float (to - from);
-}
+using testutil::rmsOf;
+using testutil::zeroCrossingHz;
 
 float correlation (const std::vector<float>& a, const std::vector<float>& b)
 {
@@ -88,7 +71,7 @@ public:
             // Envelope decays to silence (sustain 0); a second key while the first
             // is held retriggers in mono, but stays silent in legato.
             auto s = basePatch();
-            s[kAmpDecay] = 0.3f;   // ~30 ms
+            s[kAmpDecay] = fromUnitsFor (kAmpDecay, -4.0f);   // 62.5 ms
             s[kAmpSustain] = 0.0f;
             for (const char* mode : { "mono", "legato" })
             {

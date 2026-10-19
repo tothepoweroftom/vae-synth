@@ -1,6 +1,7 @@
 #include "LitePatch.h"
 
 #include <cmath>
+#include <string_view>
 
 namespace vae::lite
 {
@@ -14,6 +15,22 @@ float dbToGain (float db) { return std::pow (10.0f, db / 20.0f); }
 // Shaped-domain exponents (Surge's envelope shapes).
 constexpr float kAttackPowers[] = { 0.5f, 1.0f, 2.0f };   // convex, linear, concave
 constexpr float kDecayPowers[] = { 1.0f, 2.0f, 3.0f };    // linear, quadratic, cubic
+
+// The enums in LitePatch.h are read straight from option indices, so they must
+// mirror the option lists in schema/controls.json; these fail to compile when
+// a list changes length or its last option moves.
+constexpr bool endsWith (int control, int lastEnumValue, std::string_view lastOption)
+{
+    const auto& c = generated::kRows[control];
+    return c.numOptions == lastEnumValue + 1 && lastOption == c.options[lastEnumValue];
+}
+static_assert (endsWith (kPlayMode, int (PlayMode::Legato), "legato"));
+static_assert (endsWith (kOsc1Wave, int (Wave::Fm), "fm"));
+static_assert (endsWith (kOsc1Filter, int (Route::Filter2), "filter2"));
+static_assert (endsWith (kFilter1Type, int (FilterType::Notch), "notch"));
+static_assert (endsWith (kLfo1Shape, int (LfoShape::SmoothRandom), "smooth_random"));
+static_assert (endsWith (kLfo1Destination, int (ModDest::Pan), "pan"));
+static_assert (endsWith (kModfxType, int (ModFxType::Flanger), "flanger"));
 
 int idx (const Snapshot& s, int index) { return asIndex (index, s[index]); }
 bool on (const Snapshot& s, int index) { return s[index] >= 0.5f; }
@@ -57,9 +74,9 @@ void setLfo (LfoSettings& l, const Snapshot& s, int base)
     l.retrigger = on (s, base + 4);
     l.phase = s[base + 5];
     // The curve minimum (2^-8 s, ~4 ms) is Surge's "no fade".
-    l.fadeIn = s[base + 6] <= 1.0e-4f ? 0.0f : sc::seconds (base + 6, s[base + 6]);
-    l.dest = ModDest (idx (s, base + 7));
-    l.depth = sc::bipolar (s[base + 8]);
+    l.fadeIn = s[base + 6] <= sc::kOffAtCurveMin ? 0.0f : sc::seconds (base + 6, s[base + 6]);
+    l.route.dest = ModDest (idx (s, base + 7));
+    l.route.depth = sc::bipolar (s[base + 8]);
 }
 
 static_assert (kLfo1Rate == kLfo1Shape + 1 && kLfo1Depth == kLfo1Shape + 8, "LFO 1 control layout");
@@ -126,12 +143,12 @@ void Patch::set (int index, const Snapshot& s)
         case kChorusDepth: fx.chorusDepth = s[index]; break;
         case kChorusMix:   fx.chorusMix = s[index]; break;
 
-        case kModfxOn:       fx.modOn = on (s, index); break;
-        case kModfxType:     fx.modType = ModFxType (idx (s, index)); break;
-        case kModfxRate:     fx.modRateHz = sc::hz (index, s[index]); break;
-        case kModfxDepth:    fx.modDepth = s[index]; break;
-        case kModfxFeedback: fx.modFeedback = s[index]; break;
-        case kModfxMix:      fx.modMix = s[index]; break;
+        case kModfxOn:       fx.modfxOn = on (s, index); break;
+        case kModfxType:     fx.modfxType = ModFxType (idx (s, index)); break;
+        case kModfxRate:     fx.modfxRateHz = sc::hz (index, s[index]); break;
+        case kModfxDepth:    fx.modfxDepth = s[index]; break;
+        case kModfxFeedback: fx.modfxFeedback = s[index]; break;
+        case kModfxMix:      fx.modfxMix = s[index]; break;
 
         case kDelayOn:       fx.delayOn = on (s, index); break;
         case kDelayTime:     fx.delaySeconds = sc::seconds (index, s[index]); break;
@@ -140,7 +157,7 @@ void Patch::set (int index, const Snapshot& s)
 
         case kReverbOn:      fx.reverbOn = on (s, index); break;
         case kReverbSize:    fx.reverbSize = sc::toUnits (index, s[index]); break;
-        case kReverbDecay:   fx.reverbDecayLog2 = sc::toUnits (index, s[index]); break;
+        case kReverbDecay:   fx.reverbDecay = s[index]; break;
         case kReverbDamping: fx.reverbDamping = s[index]; break;
         case kReverbMix:     fx.reverbMix = s[index]; break;
 

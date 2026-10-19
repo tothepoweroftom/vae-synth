@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <string_view>
 
 namespace vae::schema::surge
 {
@@ -36,6 +37,26 @@ inline float normFromStep (int step, int steps)
     if (steps <= 1)
         return 0.0f;
     return 0.005f + 0.99f * float (std::clamp (step, 0, steps - 1)) / float (steps - 1);
+}
+
+/** Surge treats a curve's minimum as "off" (glide, LFO fade-in); values at or
+    below this count as the minimum. */
+inline constexpr float kOffAtCurveMin = 1.0e-4f;
+
+/** A curve of the schema's curve table by name, or nullptr. */
+constexpr const Curve* curveNamed (std::string_view name)
+{
+    for (const auto& c : generated::kCurves)
+        if (name == c.name)
+            return &c;
+    return nullptr;
+}
+
+/** Width of a named curve in its units (max - min), e.g. "cutoff" = 130 st. */
+constexpr float curveSpan (std::string_view name)
+{
+    const auto* c = curveNamed (name);
+    return c != nullptr ? c->max - c->min : 0.0f;
 }
 
 /** Continuous control value (0..1) -> its curve's units. */
@@ -69,7 +90,7 @@ inline float cutoffHz (int index, float v) { return semitonesToHz (toUnits (inde
 inline float bipolar (float v)             { return 2.0f * v - 1.0f; }
 
 /** Glide: the curve minimum means "off". */
-inline float glideSeconds (float v)       { return v <= 1.0e-4f ? 0.0f : log2Seconds (toUnits (kGlideTime, v)); }
+inline float glideSeconds (float v)       { return v <= kOffAtCurveMin ? 0.0f : log2Seconds (toUnits (kGlideTime, v)); }
 
 // Display ----------------------------------------------------------------------
 inline std::string formatNumber (float x, int decimals)
@@ -104,7 +125,7 @@ inline std::string describe (int index, float v)
     if (c.kind == Kind::Toggle)
         return v >= 0.5f ? "On" : "Off";
 
-    if (index == kGlideTime && v <= 1.0e-4f)
+    if (index == kGlideTime && v <= kOffAtCurveMin)
         return "Off";
 
     const auto* curve = curveOf (index);

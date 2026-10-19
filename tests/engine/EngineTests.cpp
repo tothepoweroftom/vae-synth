@@ -88,7 +88,7 @@ public:
 
         for (auto kind : availableEngines())
         {
-            const juce::String label (engineLabel (kind));
+            const juce::String label (createEngine (kind)->displayName());
             auto engine = createEngine (kind);
             expect (engine != nullptr);
             engine->prepare (kRate, 512);
@@ -177,7 +177,7 @@ public:
 
         for (auto kind : availableEngines())
         {
-            const juce::String label (engineLabel (kind));
+            const juce::String label (createEngine (kind)->displayName());
 
             beginTest (label + ": switching out of poly with a chord held leaves no stuck notes");
             for (const char* mode : { "mono", "legato" })

@@ -104,7 +104,7 @@ void LiteEngine::noteOn (int note)
         for (int pass = 0; chosen == nullptr && pass < 2; ++pass)
         {
             for (auto& v : voices)
-                if ((pass == 1 || v.isReleasing()) && (chosen == nullptr || v.getAge() < chosen->getAge()))
+                if ((pass == 1 || v.isReleasing()) && (chosen == nullptr || v.getStartOrder() < chosen->getStartOrder()))
                     chosen = &v;
         }
         chosen->start (patch, note, glideSource(), ++noteCounter);

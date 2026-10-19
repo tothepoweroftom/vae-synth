@@ -47,6 +47,12 @@ struct FilterSettings
     float keytrack = 0.0f;      // -1..1, 1 = 100 %
 };
 
+struct ModRoute
+{
+    ModDest dest = ModDest::None;
+    float depth = 0.0f;         // -1..1
+};
+
 struct LfoSettings
 {
     LfoShape shape = LfoShape::Sine;
@@ -56,14 +62,7 @@ struct LfoSettings
     bool retrigger = true;
     float phase = 0.0f;
     float fadeIn = 0.0f;        // seconds, 0 = none
-    ModDest dest = ModDest::None;
-    float depth = 0.0f;         // -1..1
-};
-
-struct ModRoute
-{
-    ModDest dest = ModDest::None;
-    float depth = 0.0f;         // -1..1
+    ModRoute route;
 };
 
 struct FxSettings
@@ -71,10 +70,10 @@ struct FxSettings
     bool distOn = false;     float distDriveDb = 4.0f;  float distToneHz = 440.0f;
     bool eqOn = false;       float eqLowDb = 0.0f, eqMidHz = 622.0f, eqMidDb = 0.0f, eqHighDb = 0.0f;
     bool chorusOn = false;   float chorusRateHz = 0.25f, chorusDepth = 0.3f, chorusMix = 1.0f;
-    bool modOn = false;      ModFxType modType = ModFxType::Phaser;
-    float modRateHz = 1.0f, modDepth = 0.5f, modFeedback = 0.0f, modMix = 0.5f;
+    bool modfxOn = false;      ModFxType modfxType = ModFxType::Phaser;
+    float modfxRateHz = 1.0f, modfxDepth = 0.5f, modfxFeedback = 0.0f, modfxMix = 0.5f;
     bool delayOn = false;    float delaySeconds = 0.25f, delayFeedback = 0.5f, delayMix = 0.5f;
-    bool reverbOn = false;   float reverbSize = 0.0f, reverbDecayLog2 = 0.75f, reverbDamping = 0.2f, reverbMix = 0.33f;
+    bool reverbOn = false;   float reverbSize = 0.0f, reverbDecay = 0.475f, reverbDamping = 0.2f, reverbMix = 0.33f;
 };
 
 struct Patch

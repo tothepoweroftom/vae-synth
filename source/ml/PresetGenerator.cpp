@@ -65,12 +65,6 @@ schema::Latent HashPromptEncoder::encode (const juce::String& prompt)
 //==============================================================================
 juce::Result LatentDecoder::loadModel (const juce::File& file)
 {
-    if (file == juce::File())
-    {
-        model.reset();
-        modelName = {};
-        return juce::Result::ok();
-    }
     auto candidate = std::make_unique<OnnxModel>();
     const auto loaded = candidate->load (file);
     return install (std::move (candidate), loaded, file.getFileName());

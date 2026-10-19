@@ -56,7 +56,7 @@ class LatentDecoder
 {
 public:
     /** Load an ONNX decoder. The current model stays in use unless the new one
-        loads and passes validate(). An empty file unloads (mock decoder). */
+        loads and passes validate(). */
     juce::Result loadModel (const juce::File& file);
     juce::Result loadModel (const void* data, size_t size, const juce::String& name = {});
     bool hasModel() const noexcept { return model != nullptr; }

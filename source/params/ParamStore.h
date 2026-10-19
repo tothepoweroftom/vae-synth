@@ -93,7 +93,7 @@ public:
     void endGesture (const juce::String& id);
     void endGesture (ParamIndex index);
 
-    /** Descriptor (normalised as by ParamSpec::normalised()). Throws std::out_of_range for unknown ids. */
+    /** Descriptor (completed as by ParamSpec::completed()). Throws std::out_of_range for unknown ids. */
     const ParamSpec& spec (const juce::String& id) const;
     const ParamSpec& spec (ParamIndex index) const;
 

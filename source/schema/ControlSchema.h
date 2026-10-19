@@ -112,7 +112,7 @@ struct Snapshot
         {
             const float v = values[(size_t) i];
             const float clean = sanitiseValue (i, v);
-            if (! std::isfinite (v) || v < clean || v > clean)
+            if (! std::isfinite (v) || v < clean || v > clean)   // != without -Wfloat-equal
                 return false;
         }
         return true;
@@ -172,8 +172,7 @@ inline Snapshot decodeFeatures (std::span<const float, kFeatureCount> f)
 /** Deterministic stand-in decoder with no trained model: each feature is
     0.5 * default + 0.5 * a latent-seeded value. At the zero latent, toggles and
     categoricals keep their defaults and continuous values sit halfway between
-    their default and 0.5. (v1 used the same rule on controls; v2 applies it
-    to features.) */
+    their default and 0.5. */
 inline Snapshot mockDecode (const Latent& latent)
 {
     const auto defaults = encodeFeatures (Snapshot::defaults());

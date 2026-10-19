@@ -14,11 +14,6 @@ constexpr const char* kAttrParams = "params";
 constexpr const char* kAttrModel = "decoderModel";
 constexpr const char* kAttrPrompt = "prompt";
 constexpr const char* kAttrSchema = "schemaVersion";
-
-juce::String engineName (EngineKind k)
-{
-    return k == EngineKind::Surge ? "Surge XT" : "Lite";
-}
 } // namespace
 
 PluginProcessor::PluginProcessor()
@@ -68,8 +63,8 @@ PluginProcessor::PluginProcessor()
         s.id = kEngineParamId;
         s.name = "Engine";
         s.kind = params::ParamKind::Choice;
-        for (auto kind : engineKinds)
-            s.choices.add (engineName (kind));
+        for (const auto& engine : engines)
+            s.choices.add (engine->displayName());
         // Default to the reference engine when it is built in.
         s.defaultValue = float (engineKinds.size() - 1);
         s.hostVisible = false;   // a build/setup choice, not automation; saved with the state

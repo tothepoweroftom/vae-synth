@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include <numeric>
+
 namespace vae
 {
 namespace
@@ -175,7 +177,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     };
     initButton.setTooltip ("Reset every control to the schema default");
     initButton.onClick = [this] { processor.applyControls (schema::Snapshot::defaults()); setStatus ("Init"); };
-    modelButton.setTooltip ("Load an ONNX latent decoder ([1, latent] -> [1, controls])");
+    modelButton.setTooltip ("Load an ONNX latent decoder ([1, " + juce::String (schema::kLatentDimensions) + "] -> [1, "
+                            + juce::String (schema::kFeatureCount) + "] features)");
     modelButton.onClick = [this] { chooseModel(); };
     stubButton.setTooltip ("Use the embedded stub decoder");
     stubButton.onClick = [this]
@@ -208,6 +211,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         if (! controls.isEmpty())
             addAndMakeVisible (sections.add (new ControlSection (processor.getParams(), info.title, controls, number++)));
     }
+    jassert (std::accumulate (sections.begin(), sections.end(), 0,
+                              [] (int n, const ControlSection* s) { return n + s->getNumCells(); })
+             == schema::kControlCount);   // a schema section missing from kSections hides its controls
 
     keyboard.setKeyWidth (16.0f);
     keyboard.setLowestVisibleKey (36);

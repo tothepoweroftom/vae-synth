@@ -74,7 +74,7 @@ public:
     void generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String& note)> done);
     void generateRandom (std::function<void (const juce::String& note)> done);
 
-    /** Load a decoder model (empty file = embedded stub). The model path is
+    /** Load a decoder model (default-constructed File = embedded stub). The model path is
         recorded (and saved with the state) only when the load succeeds; a
         rejected file leaves the previous decoder in use. */
     void loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done);

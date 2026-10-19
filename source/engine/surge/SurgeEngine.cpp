@@ -38,7 +38,9 @@ constexpr float kNaN = std::numeric_limits<float>::quiet_NaN();
 
 // Schema option index -> Surge integer value.
 constexpr int kPlayModes[] = { pm_poly, pm_mono, pm_mono_st };
-constexpr int kFilterTypes[] = { 0, 1, 2, 4, 5, 6, 7 };
+constexpr int kFilterTypes[] = { sst::filters::fut_none, sst::filters::fut_lp12,  sst::filters::fut_lp24,
+                                 sst::filters::fut_hp12, sst::filters::fut_hp24,  sst::filters::fut_bp12,
+                                 sst::filters::fut_notch12 };
 constexpr int kLfoShapes[] = { lt_sine, lt_tri, lt_square, lt_ramp, lt_snh, lt_noise };
 constexpr int kFilterConfigs[] = { fc_serial1, fc_dual1 };
 constexpr modsources kRouteSources[] = { ms_filtereg, ms_lfo1, ms_lfo2 };
@@ -64,31 +66,25 @@ struct FxParamMap { int control; int k; };
 struct FxUnit
 {
     int slot;
+    int fxType;   // the mod FX unit's type depends on modfx_type, see fxTypeFor
     int onControl;
     std::array<FxParamMap, 5> params;   // control < 0 = unused
 };
 constexpr FxUnit kFxUnits[] = {
-    { SurgeEngine::kDistSlot,   kDistOn,   { { { kDistDrive, 4 }, { kDistTone, 9 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },
-    { SurgeEngine::kEqSlot,     kEqOn,     { { { kEqLowGain, 0 }, { kEqMidFreq, 4 }, { kEqMidGain, 3 }, { kEqHighGain, 6 }, { -1, 0 } } } },
-    { SurgeEngine::kChorusSlot, kChorusOn, { { { kChorusRate, 1 }, { kChorusDepth, 2 }, { kChorusMix, 6 }, { -1, 0 }, { -1, 0 } } } },
-    { SurgeEngine::kModFxSlot,  kModfxOn,  { { { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },   // type-dependent, see modFxParam
-    { SurgeEngine::kDelaySlot,  kDelayOn,  { { { kDelayTime, 0 }, { kDelayTime, 1 }, { kDelayFeedback, 2 }, { kDelayMix, 10 }, { -1, 0 } } } },
-    { SurgeEngine::kReverbSlot, kReverbOn, { { { kReverbSize, 1 }, { kReverbDecay, 2 }, { kReverbDamping, 7 }, { kReverbMix, 9 }, { -1, 0 } } } },
+    { SurgeEngine::kDistSlot,   fxt_distortion, kDistOn,   { { { kDistDrive, 4 }, { kDistTone, 9 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },
+    { SurgeEngine::kEqSlot,     fxt_eq, kEqOn,     { { { kEqLowGain, 0 }, { kEqMidFreq, 4 }, { kEqMidGain, 3 }, { kEqHighGain, 6 }, { -1, 0 } } } },
+    { SurgeEngine::kChorusSlot, fxt_chorus4, kChorusOn, { { { kChorusRate, 1 }, { kChorusDepth, 2 }, { kChorusMix, 6 }, { -1, 0 }, { -1, 0 } } } },
+    { SurgeEngine::kModFxSlot,  fxt_phaser, kModfxOn,  { { { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 }, { -1, 0 } } } },   // type-dependent, see modFxParam
+    { SurgeEngine::kDelaySlot,  fxt_delay, kDelayOn,  { { { kDelayTime, 0 }, { kDelayTime, 1 }, { kDelayFeedback, 2 }, { kDelayMix, 10 }, { -1, 0 } } } },
+    { SurgeEngine::kReverbSlot, fxt_reverb2, kReverbOn, { { { kReverbSize, 1 }, { kReverbDecay, 2 }, { kReverbDamping, 7 }, { kReverbMix, 9 }, { -1, 0 } } } },
 };
 constexpr int kModFxUnit = 3;
 
 int fxTypeFor (int unit, const Snapshot& c)
 {
-    switch (unit)
-    {
-        case 0: return fxt_distortion;
-        case 1: return fxt_eq;
-        case 2: return fxt_chorus4;
-        case 3: return asIndex (kModfxType, c[kModfxType]) == 0 ? fxt_phaser : fxt_flanger;
-        case 4: return fxt_delay;
-        case 5: return fxt_reverb2;
-        default: return fxt_off;
-    }
+    if (unit == kModFxUnit)
+        return asIndex (kModfxType, c[kModfxType]) == 0 ? fxt_phaser : fxt_flanger;
+    return kFxUnits[(size_t) unit].fxType;
 }
 
 /** Phaser / flanger parameter index for a modfx control, or -1. */
@@ -181,8 +177,6 @@ struct SurgeEngine::Impl
     Snapshot written;                           // last written to Surge (NaN = never)
 
     // Scene A / global parameters, by role.
-    struct Osc { Parameter *type = nullptr, *octave = nullptr, *pitch = nullptr, *level = nullptr, *mute = nullptr, *route = nullptr; };
-    std::array<Osc, 3> osc {};
     std::unordered_map<std::string, Parameter*> byName;
     std::array<Parameter*, kControlCount> direct {};   // continuous / int controls with one Surge param
     std::array<Parameter*, 7> destinations {};         // route destination option -> param (none = null)
@@ -208,14 +202,6 @@ struct SurgeEngine::Impl
         for (auto* p : synth->storage.getPatch().param_ptr)
             if (p->scene <= 1)   // global (0) and scene A (1)
                 byName.emplace (p->get_storage_name(), p);
-
-        for (int n = 0; n < 3; ++n)
-        {
-            const auto s = std::to_string (n + 1);
-            osc[(size_t) n] = { find (("a_osc" + s + "_type").c_str()), find (("a_osc" + s + "_octave").c_str()),
-                                find (("a_osc" + s + "_pitch").c_str()), find (("a_level_o" + s).c_str()),
-                                find (("a_mute_o" + s).c_str()), find (("a_route_o" + s).c_str()) };
-        }
 
         static const std::pair<int, const char*> kDirect[] = {
             { kPlayMode, "a_polymode" }, { kGlideTime, "a_portamento" }, { kFilterRouting, "a_fb_config" },

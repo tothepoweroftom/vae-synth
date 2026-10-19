@@ -71,17 +71,14 @@ void VaeLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, i
     const auto centre = bounds.getCentre();
     const float angle = startAngle + pos * (endAngle - startAngle);
 
-    // Hairline track, green value arc, black needle. Nothing else.
+    // Hairline track, green value arc, white needle. Nothing else.
     juce::Path track;
     track.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, startAngle, endAngle, true);
     g.setColour (faint);
     g.strokePath (track, juce::PathStrokeType (2.0f));
 
-    const bool bipolar = s.getMinimum() < 0.0 && s.getMaximum() > 0.0;
-    const float from = bipolar ? startAngle + static_cast<float> (s.valueToProportionOfLength (0.0)) * (endAngle - startAngle)
-                               : startAngle;
     juce::Path value;
-    value.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, juce::jmin (from, angle), juce::jmax (from, angle), true);
+    value.addCentredArc (centre.x, centre.y, radius, radius, 0.0f, startAngle, angle, true);
     g.setColour (s.isEnabled() ? green : quiet());
     g.strokePath (value, juce::PathStrokeType (2.0f));
 
@@ -136,7 +133,7 @@ void VaeLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& lab
 
 void VaeLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool highlighted, bool down)
 {
-    // Hairline box; hover/press inverts to solid black.
+    // Hairline box; hover/press inverts to solid ink (green while pressed).
     const auto r = b.getLocalBounds().toFloat().reduced (0.5f);
     if (highlighted || down)
     {

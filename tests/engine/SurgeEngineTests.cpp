@@ -1,4 +1,4 @@
-// Surge engine specific tests (owned by the Surge backend work).
+// Surge engine specific tests.
 #include "EngineTestUtils.h"
 
 #include "engine/surge/SurgeEngine.h"
@@ -8,6 +8,15 @@
 #include <atomic>
 #include <cstdlib>
 #include <new>
+
+// Surge enum values at the pinned revision (src/common/SurgeStorage.h), so the
+// expectations below read as names. Kept independent of SurgeEngine.cpp's
+// tables on purpose: the tests check those tables.
+namespace surgeid
+{
+constexpr int oscClassic = 0, oscSine = 1, oscWavetable = 2, oscShNoise = 3, oscFm2 = 6, oscModern = 8;
+constexpr int fxDelay = 1, fxPhaser = 3, fxDistortion = 5, fxEq = 6, fxChorus = 9, fxReverb2 = 11, fxFlanger = 12;
+} // namespace surgeid
 
 // Counting operator new for the audio-thread allocation test below. Counting
 // is only on while that test processes blocks.
@@ -83,23 +92,8 @@ Spectrum spectrumOf (const std::vector<float>& x, int start)
     return s;
 }
 
-/** Zero-crossing frequency of x[from, to). */
-float zeroCrossingHz (const std::vector<float>& x, int from, int to)
-{
-    int crossings = 0;
-    for (int i = from + 1; i < to; ++i)
-        if ((x[(size_t) i - 1] < 0.0f) != (x[(size_t) i] < 0.0f))
-            ++crossings;
-    return float (crossings) * 0.5f * float (kRate) / float (to - from);
-}
-
-float rmsOf (const std::vector<float>& x, int from, int to)
-{
-    double s = 0.0;
-    for (int i = from; i < to; ++i)
-        s += double (x[(size_t) i]) * double (x[(size_t) i]);
-    return float (std::sqrt (s / double (to - from)));
-}
+using testutil::rmsOf;
+using testutil::zeroCrossingHz;
 
 std::vector<float> capture (SurgeEngine& e, const Snapshot& s, std::vector<NoteEvent> events, int samples)
 {
@@ -136,13 +130,13 @@ public:
         expectEquals (e.surgeValue ("a_lfo0_trigmode"), 1.0f);
         expectWithinAbsoluteError (e.surgeValue ("a_filter1_cutoff"), 3.0f, 1.0e-3f);
         expectWithinAbsoluteError (e.surgeValue ("volume"), -2.0257f, 1.0e-3f);
-        expectEquals (e.oscType (0), 0);                               // Classic (saw)
+        expectEquals (e.oscType (0), surgeid::oscClassic);   // saw
         expectEquals (e.oscParam (0, 0), 0.0f);
         expectEquals (e.numModRoutes(), 0);
         // The fixed chain is always loaded; *_on = 0 disables the slot.
-        const std::pair<int, int> chain[] = { { SurgeEngine::kDistSlot, 5 }, { SurgeEngine::kEqSlot, 6 },
-                                              { SurgeEngine::kChorusSlot, 9 }, { SurgeEngine::kModFxSlot, 3 },
-                                              { SurgeEngine::kDelaySlot, 1 }, { SurgeEngine::kReverbSlot, 11 } };
+        const std::pair<int, int> chain[] = { { SurgeEngine::kDistSlot, surgeid::fxDistortion }, { SurgeEngine::kEqSlot, surgeid::fxEq },
+                                              { SurgeEngine::kChorusSlot, surgeid::fxChorus }, { SurgeEngine::kModFxSlot, surgeid::fxPhaser },
+                                              { SurgeEngine::kDelaySlot, surgeid::fxDelay }, { SurgeEngine::kReverbSlot, surgeid::fxReverb2 } };
         for (const auto& [slot, type] : chain)
         {
             expectEquals (e.fxType (slot), type);
@@ -202,7 +196,8 @@ public:
         }
 
         beginTest ("osc waves select the documented Surge oscillators");
-        const int expectedType[] = { 1, 8, 0, 0, 3, 2, 6 };   // Sine, Modern, Classic, Classic, S&H Noise, Wavetable, FM2
+        const int expectedType[] = { surgeid::oscSine, surgeid::oscModern, surgeid::oscClassic, surgeid::oscClassic,
+                                     surgeid::oscShNoise, surgeid::oscWavetable, surgeid::oscFm2 };
         for (int w = 0; w < control (kOsc1Wave).numOptions; ++w)
         {
             auto s = Snapshot::defaults();
@@ -281,15 +276,14 @@ public:
         }
 
         beginTest ("FX units load, take their parameters and change the sound");
-        // Surge fx types: delay 1, phaser 3, distortion 5, EQ 6, chorus 9, reverb 2 11, flanger 12.
         struct FxCase { int on; int slot; int type; std::vector<std::pair<int, float>> set; int checkK; int checkControl; };
         const std::vector<FxCase> fxCases = {
-            { kDistOn, SurgeEngine::kDistSlot, 5, { { kDistDrive, 1.0f } }, 4, kDistDrive },
-            { kEqOn, SurgeEngine::kEqSlot, 6, { { kEqLowGain, 1.0f }, { kEqHighGain, 0.0f } }, 0, kEqLowGain },
-            { kChorusOn, SurgeEngine::kChorusSlot, 9, { { kChorusDepth, 1.0f } }, 2, kChorusDepth },
-            { kModfxOn, SurgeEngine::kModFxSlot, 3, { { kModfxDepth, 1.0f }, { kModfxFeedback, 0.8f } }, 1, kModfxFeedback },
-            { kDelayOn, SurgeEngine::kDelaySlot, 1, { { kDelayMix, 1.0f }, { kDelayTime, 0.3f } }, 1, kDelayTime },
-            { kReverbOn, SurgeEngine::kReverbSlot, 11, { { kReverbMix, 1.0f } }, 9, kReverbMix },
+            { kDistOn, SurgeEngine::kDistSlot, surgeid::fxDistortion, { { kDistDrive, 1.0f } }, 4, kDistDrive },
+            { kEqOn, SurgeEngine::kEqSlot, surgeid::fxEq, { { kEqLowGain, 1.0f }, { kEqHighGain, 0.0f } }, 0, kEqLowGain },
+            { kChorusOn, SurgeEngine::kChorusSlot, surgeid::fxChorus, { { kChorusDepth, 1.0f } }, 2, kChorusDepth },
+            { kModfxOn, SurgeEngine::kModFxSlot, surgeid::fxPhaser, { { kModfxDepth, 1.0f }, { kModfxFeedback, 0.8f } }, 1, kModfxFeedback },
+            { kDelayOn, SurgeEngine::kDelaySlot, surgeid::fxDelay, { { kDelayMix, 1.0f }, { kDelayTime, 0.3f } }, 1, kDelayTime },
+            { kReverbOn, SurgeEngine::kReverbSlot, surgeid::fxReverb2, { { kReverbMix, 1.0f } }, 9, kReverbMix },
         };
         auto base = Snapshot::defaults();
         const std::vector<NoteEvent> pluck { { 0, 60, 100 }, { 4800, 60, 0 } };
@@ -322,13 +316,13 @@ public:
             s[kModfxMix] = 0.7f;
             s[kModfxRate] = 0.6f;
             applyAndSettle (e, s);
-            expectEquals (e.fxType (SurgeEngine::kModFxSlot), 12);
+            expectEquals (e.fxType (SurgeEngine::kModFxSlot), surgeid::fxFlanger);
             expectWithinAbsoluteError (e.fxParam (SurgeEngine::kModFxSlot, 10), 0.7f, 1.0e-3f);   // mix, positive half of -1..1
             expectWithinAbsoluteError (e.fxParam (SurgeEngine::kModFxSlot, 2), surge::toUnits (kModfxRate, 0.6f), 1.0e-3f);
             s[kModfxOn] = 0.0f;
             applyAndSettle (e, s);
             expect (! e.fxEnabled (SurgeEngine::kModFxSlot));
-            expectEquals (e.fxType (SurgeEngine::kModFxSlot), 12);   // stays loaded
+            expectEquals (e.fxType (SurgeEngine::kModFxSlot), surgeid::fxFlanger);   // stays loaded
         }
 
         beginTest ("modulation routes follow the shared depth convention");
@@ -338,12 +332,12 @@ public:
             s[kLfo1Depth] = 0.75f;   // d = 0.5
             applyAndSettle (e, s);
             expectEquals (e.numModRoutes(), 1);
-            expectWithinAbsoluteError (e.modRouteDepth (1, "a_filter1_cutoff"), 0.5f * 130.0f, 1.0e-3f);
+            expectWithinAbsoluteError (e.modRouteDepth (1, "a_filter1_cutoff"), 0.5f * schema::surge::curveSpan ("cutoff"), 1.0e-3f);
 
             s[kLfo1Destination] = float (opt (kLfo1Destination, "pitch"));
             applyAndSettle (e, s);
             expect (std::isnan (e.modRouteDepth (1, "a_filter1_cutoff")), "old route cleared");
-            expectWithinAbsoluteError (e.modRouteDepth (1, "a_pitch"), 0.5f * 14.0f, 1.0e-3f);
+            expectWithinAbsoluteError (e.modRouteDepth (1, "a_pitch"), 0.5f * schema::surge::curveSpan ("pitch7"), 1.0e-3f);
             expectEquals (e.numModRoutes(), 1);
 
             s[kFegDestination] = float (opt (kFegDestination, "pan"));
@@ -352,8 +346,8 @@ public:
             s[kLfo2Depth] = 1.0f;
             applyAndSettle (e, s);
             expectEquals (e.numModRoutes(), 3);
-            expectWithinAbsoluteError (e.modRouteDepth (0, "a_pan"), -2.0f, 1.0e-3f);
-            expectWithinAbsoluteError (e.modRouteDepth (2, "a_volume"), 1.0f, 1.0e-3f);
+            expectWithinAbsoluteError (e.modRouteDepth (0, "a_pan"), -schema::surge::curveSpan ("bipolar"), 1.0e-3f);
+            expectWithinAbsoluteError (e.modRouteDepth (2, "a_volume"), schema::surge::curveSpan ("amplitude"), 1.0e-3f);
 
             s[kLfo1Destination] = s[kLfo2Destination] = s[kFegDestination] = 0.0f;
             applyAndSettle (e, s);
@@ -372,7 +366,7 @@ public:
             auto spread = [] (const std::vector<float>& x)
             {
                 float lo = 1.0e9f, hi = 0.0f;
-                for (int w = 4800; w + 480 <= 24000; w += 480)
+                for (size_t w = 4800; w + 480 <= 24000; w += 480)
                 {
                     const float r = rmsOf (x, w, w + 480);
                     lo = juce::jmin (lo, r);

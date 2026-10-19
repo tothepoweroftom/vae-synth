@@ -1,6 +1,7 @@
 #include <juce_events/juce_events.h>
 
 #include "PluginProcessor.h"
+#include "../engine/EngineTestUtils.h"
 
 namespace vae
 {
@@ -36,22 +37,6 @@ juce::MemoryBlock stateOf (PluginProcessor& p)
     return mb;
 }
 
-schema::Snapshot randomControls (juce::Random& rng)
-{
-    schema::Snapshot s;
-    for (int i = 0; i < schema::kControlCount; ++i)
-    {
-        const auto& c = schema::control (i);
-        switch (c.kind)
-        {
-            case schema::Kind::Continuous:  s[i] = rng.nextFloat(); break;
-            case schema::Kind::Toggle:      s[i] = rng.nextBool() ? 1.0f : 0.0f; break;
-            case schema::Kind::Categorical: s[i] = float (rng.nextInt (c.numOptions)); break;
-        }
-    }
-    return s;
-}
-
 struct GestureCounter final : juce::AudioProcessorListener
 {
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override {}
@@ -78,7 +63,7 @@ public:
         beginTest ("state round trip: controls, engine, prompt, model path");
         {
             PluginProcessor a;
-            const auto controls = randomControls (rng);
+            const auto controls = randomSnapshot (rng);
             a.applyControls (controls);
             a.getParams().set (PluginProcessor::kEngineParamId, float (a.getEngineKinds().size() - 1));
 
@@ -127,7 +112,7 @@ public:
         beginTest ("a different schema version keeps the default controls");
         {
             PluginProcessor a;
-            a.applyControls (randomControls (rng));
+            a.applyControls (randomSnapshot (rng));
             const auto block = stateOf (a);
             auto xml = juce::AudioProcessor::getXmlFromBinary (block.getData(), (int) block.getSize());
             expect (xml != nullptr);
@@ -146,7 +131,7 @@ public:
             PluginProcessor p;
             GestureCounter gestures;
             p.addListener (&gestures);
-            const auto controls = randomControls (rng);
+            const auto controls = randomSnapshot (rng);
             p.applyControls (controls);
             p.removeListener (&gestures);
             expectEquals (gestures.begins, schema::kControlCount);

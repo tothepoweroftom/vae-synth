@@ -22,7 +22,7 @@ bool ParamSpec::rangeIsUnset() const noexcept
         && ! range.symmetricSkew;
 }
 
-ParamSpec ParamSpec::normalised() const
+ParamSpec ParamSpec::completed() const
 {
     ParamSpec s = *this;
 

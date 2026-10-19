@@ -28,9 +28,9 @@ set(VAE_GENERATED_DIR "${CMAKE_BINARY_DIR}/generated")
 vae_generate_schema("${CMAKE_CURRENT_SOURCE_DIR}/schema/controls.json"
                     "${VAE_GENERATED_DIR}/schema/ControlSchema.generated.h")
 
-# Project code is compiled into each final target (plug-in, tests) through
-# INTERFACE sources, the same way JUCE modules are, so JUCE code is compiled
-# exactly once per binary.
+# Project code (except the vae_params static library) is compiled into each
+# final target (plug-in, tests) through INTERFACE sources, the same way JUCE
+# modules are, so JUCE code is compiled exactly once per binary.
 add_library(vae_schema INTERFACE)
 target_include_directories(vae_schema INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/source"

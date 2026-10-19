@@ -244,7 +244,7 @@ void ParamStore::build (std::vector<ParamSpec> specs,
         }
 
         const auto index = (int) entries.size();
-        auto entry = std::make_unique<Entry> (*this, index, source.normalised());
+        auto entry = std::make_unique<Entry> (*this, index, source.completed());
         const auto& s = entry->spec;
 
         if (s.hostVisible)
