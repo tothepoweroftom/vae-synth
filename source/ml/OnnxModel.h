@@ -56,6 +56,8 @@ public:
     bool isRuntimeAvailable() const { return runtime->isAvailable(); }
 
 private:
+    template <typename MakeSession>
+    juce::Result loadWith (MakeSession&& makeSession);
     juce::Result finishLoad();
 
     juce::SharedResourcePointer<OrtRuntime> runtime;

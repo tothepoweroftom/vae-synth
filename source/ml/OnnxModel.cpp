@@ -51,24 +51,18 @@ void OnnxModel::unload()
     outputs.clear();
 }
 
-juce::Result OnnxModel::load (const juce::File& file)
+template <typename MakeSession>
+juce::Result OnnxModel::loadWith (MakeSession&& makeSession)
 {
     unload();
     if (! runtime->isAvailable())
         return juce::Result::fail (runtime->getStatus());
-    if (! file.existsAsFile())
-        return juce::Result::fail ("Model not found: " + file.getFullPathName());
 
     try
     {
         session = std::make_unique<Session>();
         session->options = makeOptions();
-#if JUCE_WINDOWS
-        const auto path = file.getFullPathName().toWideCharPointer();
-#else
-        const auto path = file.getFullPathName().toRawUTF8();
-#endif
-        session->session = std::make_unique<Ort::Session> (runtime->getEnv(), path, session->options);
+        session->session = makeSession (runtime->getEnv(), session->options);
     }
     catch (const Ort::Exception& e)
     {
@@ -78,24 +72,30 @@ juce::Result OnnxModel::load (const juce::File& file)
     return finishLoad();
 }
 
-juce::Result OnnxModel::load (const void* data, size_t size)
+juce::Result OnnxModel::load (const juce::File& file)
 {
-    unload();
-    if (! runtime->isAvailable())
-        return juce::Result::fail (runtime->getStatus());
-
-    try
-    {
-        session = std::make_unique<Session>();
-        session->options = makeOptions();
-        session->session = std::make_unique<Ort::Session> (runtime->getEnv(), data, size, session->options);
-    }
-    catch (const Ort::Exception& e)
+    if (! file.existsAsFile())
     {
         unload();
-        return juce::Result::fail (juce::String ("Could not load model: ") + e.what());
+        return juce::Result::fail ("Model not found: " + file.getFullPathName());
     }
-    return finishLoad();
+
+    return loadWith ([&file] (Ort::Env& env, const Ort::SessionOptions& options)
+    {
+#if JUCE_WINDOWS
+        return std::make_unique<Ort::Session> (env, file.getFullPathName().toWideCharPointer(), options);
+#else
+        return std::make_unique<Ort::Session> (env, file.getFullPathName().toRawUTF8(), options);
+#endif
+    });
+}
+
+juce::Result OnnxModel::load (const void* data, size_t size)
+{
+    return loadWith ([data, size] (Ort::Env& env, const Ort::SessionOptions& options)
+    {
+        return std::make_unique<Ort::Session> (env, data, size, options);
+    });
 }
 
 juce::Result OnnxModel::finishLoad()

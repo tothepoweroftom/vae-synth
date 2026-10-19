@@ -286,3 +286,9 @@ Choices made where this spec is ambiguous (implementation in `source/params/`):
   final binary. The binary's own copies resolve the symbols first, so the archive copies
   are never linked in. The test target needs `JUCE_MODAL_LOOPS_PERMITTED=1` to pump the
   message loop.
+- **Concurrent writers.** When host automation and another thread write the same
+  host-visible parameter at the same moment, JUCE's listener notifications can arrive
+  in the opposite order to the writes. After storing a value from a notification, the
+  store re-reads the JUCE parameter and, if it differs (normalised, beyond 1e-6), stores
+  the parameter's final value instead (at most 8 re-reads). The store, the host and
+  `save()` then always agree once both writes have returned.

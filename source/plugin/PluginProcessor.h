@@ -74,13 +74,20 @@ public:
     void generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String& note)> done);
     void generateRandom (std::function<void (const juce::String& note)> done);
 
-    /** Load a decoder model (empty file = embedded stub). */
+    /** Load a decoder model (empty file = embedded stub). The model path is
+        recorded (and saved with the state) only when the load succeeds; a
+        rejected file leaves the previous decoder in use. */
     void loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done);
-    juce::File getDecoderModelFile() const { return decoderModelFile; }
-    juce::String getLastPrompt() const { return lastPrompt; }
+    juce::File getDecoderModelFile() const;
+    juce::String getLastPrompt() const;
+
+    /** Generator status, plus a note when the saved model file is missing. */
+    juce::String describeModel() const;
 
 private:
     void selectEngine (int choiceIndex);   // audio thread, from dispatch()
+    void requestModel (const juce::File& toLoad, const juce::File& toRecord, bool missing,
+                       std::function<void (juce::Result)> done);
 
     std::vector<EngineKind> engineKinds;
     std::vector<std::unique_ptr<SynthEngine>> engines;
@@ -94,9 +101,15 @@ private:
 
     params::ParamStore params;
     juce::MidiKeyboardState keyboardState;
-    ml::PresetGenerator generator;
-    juce::File decoderModelFile;
+
+    // Read by the host's state save on any thread; written on the message thread.
+    mutable juce::CriticalSection stateLock;
+    juce::File modelPath;          // saved with the state; may point at a missing file
+    bool modelMissing = false;     // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
+    std::atomic<uint64_t> modelRequest { 0 };   // latest loadDecoderModel / state load wins
+
+    ml::PresetGenerator generator;
     juce::Random random;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)

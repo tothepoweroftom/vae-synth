@@ -196,7 +196,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     status.setFont (LF::labelFont (10.0f));
     status.setColour (juce::Label::textColourId, LF::quiet());
     addAndMakeVisible (status);
-    setStatus (processor.getGenerator().describe());
+    setStatus (processor.describeModel());
 
     int number = 1;
     for (const auto& info : kSections)
@@ -244,7 +244,7 @@ void PluginEditor::chooseModel()
         processor.loadDecoderModel (file, [safe = juce::Component::SafePointer (this)] (juce::Result r)
         {
             if (safe != nullptr)
-                safe->setStatus (r.wasOk() ? safe->processor.getGenerator().describe() : r.getErrorMessage());
+                safe->setStatus (r.wasOk() ? safe->processor.describeModel() : r.getErrorMessage());
         });
     });
 }

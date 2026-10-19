@@ -1,5 +1,7 @@
 #include <juce_events/juce_events.h>
 
+#include <atomic>
+
 #include "ml/OnnxModel.h"
 #include "ml/PresetGenerator.h"
 
@@ -82,6 +84,54 @@ public:
         expectEquals (result.prompt, juce::String ("glassy bell"));
         logMessage ("note: " + result.note);
         expect (result.note.contains ("ONNX decoder"), result.note);
+
+        beginTest ("rejected models keep the working decoder");
+        const juce::File fixtures (VAE_ML_FIXTURES);
+        LatentDecoder keep;
+        expect (keep.loadModel (stub).wasOk());
+        for (auto fixture : { "batch2.onnx", "rank1.onnx", "missing.onnx" })
+        {
+            const auto r = keep.loadModel (fixtures.getChildFile (fixture));
+            expect (r.failed(), juce::String (fixture) + " should be rejected");
+            expect (keep.hasModel(), juce::String (fixture) + " dropped the working model");
+            expect (keep.describe().contains ("stub_decoder.onnx"), keep.describe());
+        }
+
+        beginTest ("non-finite decoder output falls back to the mock with an error");
+        LatentDecoder nanDecoder;
+        expect (nanDecoder.loadModel (fixtures.getChildFile ("nan.onnx")).wasOk());
+        juce::String nanError;
+        const auto fallback = nanDecoder.decode (l, &nanError);
+        expect (nanError.contains ("non-finite"), nanError);
+        expect (fallback.values == schema::mockDecode (l).values);
+
+        beginTest ("describe() does not wait for a running job");
+        struct BlockingEncoder final : PromptEncoder
+        {
+            std::atomic<bool>& entered;
+            std::atomic<bool>& release;
+            BlockingEncoder (std::atomic<bool>& e, std::atomic<bool>& r) : entered (e), release (r) {}
+            juce::String describe() const override { return "blocking"; }
+            schema::Latent encode (const juce::String&) override
+            {
+                entered = true;
+                while (! release.load())
+                    juce::Thread::sleep (1);
+                return {};
+            }
+        };
+        std::atomic<bool> entered { false }, release { false };
+        PresetGenerator busy;
+        busy.setPromptEncoder (std::make_unique<BlockingEncoder> (entered, release));
+        busy.generate ("x", [] (const PresetGenerator::Result&) {});
+        for (int i = 0; i < 500 && ! entered.load(); ++i)
+            juce::Thread::sleep (2);
+        expect (entered.load(), "job started");
+        const auto t0 = juce::Time::getMillisecondCounterHiRes();
+        const auto status = busy.describe();   // the job holds the decoder lock right now
+        expect (juce::Time::getMillisecondCounterHiRes() - t0 < 100.0, "describe() blocked");
+        expect (status.startsWith ("blocking"), status);
+        release = true;
     }
 };
 
