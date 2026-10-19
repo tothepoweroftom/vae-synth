@@ -12,7 +12,6 @@ namespace
 {
 constexpr int kFrameSize = Wavetable::kFrameSize;
 constexpr int kNumBins = kFrameSize / 2 + 1;   // DC .. Nyquist of a kFrameSize FFT
-constexpr float kTwoPi = juce::MathConstants<float>::twoPi;
 
 int orderOf (int size)
 {
@@ -22,74 +21,11 @@ int orderOf (int size)
     return order;
 }
 
-float frac (float x) { return x - std::floor (x); }
-
-//==============================================================================
-// Built-in table definitions.
-
-// Naive (aliased) single-cycle shapes: the FFT + per-level harmonic cut is
-// what band-limits them.
-float basicShape (int shape, float p)
-{
-    switch (shape)
-    {
-        case 0:  return std::sin (kTwoPi * p);
-        case 1:  return 1.0f - 4.0f * std::abs (p - 0.5f);
-        case 2:  return 2.0f * p - 1.0f;
-        default: return p < 0.5f ? 1.0f : -1.0f;
-    }
-}
-
-/** Time-domain definition of built-in table `table` at morph position t in [0, 1]. */
-void fillTimeDomain (int table, float t, float* out)
-{
-    for (int i = 0; i < kFrameSize; ++i)
-    {
-        const float p = static_cast<float> (i) / static_cast<float> (kFrameSize);
-        float y = 0.0f;
-
-        switch (table)
-        {
-            case 0:   // Basic: sine -> triangle -> saw -> square
-            {
-                const float x = t * 3.0f;
-                const int a = std::min (2, static_cast<int> (x));
-                const float m = x - static_cast<float> (a);
-                y = basicShape (a, p) * (1.0f - m) + basicShape (a + 1, p) * m;
-                break;
-            }
-            case 1:   // PWM: square narrowing to a 3 % pulse
-                y = p < 0.5f - 0.47f * t ? 1.0f : -1.0f;
-                break;
-
-            case 4:   // Sync: hard-synced saw, slave ratio 1 -> 8
-                y = 2.0f * frac (p * (1.0f + 7.0f * t)) - 1.0f;
-                break;
-
-            case 5:   // Fold: sine through a sine wavefolder, gain 1 -> 8
-                y = std::sin (0.5f * juce::MathConstants<float>::pi * (1.0f + 7.0f * t) * std::sin (kTwoPi * p));
-                break;
-
-            default:
-                break;
-        }
-
-        out[i] = y;
-    }
-}
-
-/** Spectral definition (harmonic amplitudes, sine phase) for additive tables. */
-float harmonicAmplitude (int table, float t, int h)
+/** Formant table (harmonic amplitudes, sine phase) at morph position t:
+    two resonant peaks sweeping up the harmonic series. */
+float formantAmplitude (float t, int h)
 {
     const float n = static_cast<float> (h);
-
-    if (table == 2)   // Harmonic: saw partials fade in one by one
-    {
-        const float top = 1.0f + 127.0f * t * t;
-        return (1.0f / n) * juce::jlimit (0.0f, 1.0f, top - n + 1.0f);
-    }
-
-    // Formant: two resonant peaks sweeping up the harmonic series
     const float c1 = 2.0f + 10.0f * t;
     const float c2 = 7.0f + 25.0f * t;
     const float w1 = 1.2f + 1.5f * t;
@@ -98,8 +34,6 @@ float harmonicAmplitude (int table, float t, int h)
     const float f2 = 0.6f * std::exp (-((n - c2) * (n - c2)) / (w2 * w2));
     return (h == 1 ? 0.35f : 0.0f) + (f1 + f2) / std::sqrt (n);
 }
-
-bool isSpectral (int table) { return table == 2 || table == 3; }
 
 } // namespace
 
@@ -127,7 +61,7 @@ int Wavetable::levelForMaxHarmonics (float maxHarmonics) noexcept
     return juce::jlimit (0, kNumLevels - 1, level);
 }
 
-std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spectra, int frames, Normalise normalise)
+std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spectra, int frames)
 {
     frames = juce::jlimit (1, kMaxFrames, frames);
     jassert (spectra.size() >= static_cast<size_t> (frames) * kNumBins * 2);
@@ -204,14 +138,9 @@ std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spe
         return peak;
     };
 
-    float globalPeak = 0.0f;
-    if (normalise == Normalise::WholeTable)
-        for (int frame = 0; frame < frames; ++frame)
-            globalPeak = std::max (globalPeak, peakOf (frame));
-
     for (int frame = 0; frame < frames; ++frame)
     {
-        const float peak = normalise == Normalise::WholeTable ? globalPeak : peakOf (frame);
+        const float peak = peakOf (frame);
         const float gain = peak > 1.0e-9f ? 1.0f / peak : 0.0f;
         for (int level = 0; level < kNumLevels; ++level)
         {
@@ -224,64 +153,20 @@ std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spe
     return table;
 }
 
-std::unique_ptr<Wavetable> Wavetable::fromFrames (const float* frames, int numFramesIn, Normalise normalise)
-{
-    numFramesIn = juce::jlimit (1, kMaxFrames, numFramesIn);
-
-    juce::dsp::FFT fft (orderOf (kFrameSize));
-    std::vector<float> spectra (static_cast<size_t> (numFramesIn) * kNumBins * 2);
-    std::vector<float> work (2 * kFrameSize);
-
-    for (int frame = 0; frame < numFramesIn; ++frame)
-    {
-        std::fill (work.begin(), work.end(), 0.0f);
-        std::copy (frames + static_cast<size_t> (frame) * kFrameSize,
-                   frames + static_cast<size_t> (frame + 1) * kFrameSize, work.begin());
-        fft.performRealOnlyForwardTransform (work.data(), true);
-        std::copy (work.begin(), work.begin() + kNumBins * 2,
-                   spectra.begin() + static_cast<std::ptrdiff_t> (static_cast<size_t> (frame) * kNumBins * 2));
-    }
-
-    return fromSpectra (spectra, numFramesIn, normalise);
-}
-
-std::unique_ptr<Wavetable> Wavetable::fromPcm16 (const int16_t* pcm, int numFramesIn)
-{
-    numFramesIn = juce::jlimit (1, kMaxFrames, numFramesIn);
-    std::vector<float> frames (static_cast<size_t> (numFramesIn) * kFrameSize);
-    for (size_t i = 0; i < frames.size(); ++i)
-        frames[i] = static_cast<float> (pcm[i]) * (1.0f / 32768.0f);
-    return fromFrames (frames.data(), numFramesIn, Normalise::WholeTable);
-}
-
 //==============================================================================
-WavetableBank::WavetableBank()
+std::unique_ptr<Wavetable> makeFormantTable()
 {
-    const int frames = kFramesPerTable;
-
-    for (int table = 0; table < kNumTables; ++table)
+    // Frames 7 and 8 of the original 16-frame table (t = 7/15, 8/15).
+    constexpr int kFirstFrame = 7, kSourceFrames = 16, kFrames = 2;
+    std::vector<float> spectra (static_cast<size_t> (kFrames) * kNumBins * 2, 0.0f);
+    for (int frame = 0; frame < kFrames; ++frame)
     {
-        if (isSpectral (table))
-        {
-            std::vector<float> spectra (static_cast<size_t> (frames) * kNumBins * 2, 0.0f);
-            for (int frame = 0; frame < frames; ++frame)
-            {
-                const float t = static_cast<float> (frame) / static_cast<float> (frames - 1);
-                float* bins = spectra.data() + static_cast<size_t> (frame) * kNumBins * 2;
-                for (int h = 1; h < kNumBins - 1; ++h)
-                    bins[2 * h + 1] = -harmonicAmplitude (table, t, h);
-            }
-            tables.push_back (Wavetable::fromSpectra (spectra, frames, Wavetable::Normalise::PerFrame));
-        }
-        else
-        {
-            std::vector<float> samples (static_cast<size_t> (frames) * kFrameSize);
-            for (int frame = 0; frame < frames; ++frame)
-                fillTimeDomain (table, static_cast<float> (frame) / static_cast<float> (frames - 1),
-                                samples.data() + static_cast<size_t> (frame) * kFrameSize);
-            tables.push_back (Wavetable::fromFrames (samples.data(), frames, Wavetable::Normalise::PerFrame));
-        }
+        const float t = static_cast<float> (kFirstFrame + frame) / static_cast<float> (kSourceFrames - 1);
+        float* bins = spectra.data() + static_cast<size_t> (frame) * kNumBins * 2;
+        for (int h = 1; h < kNumBins - 1; ++h)
+            bins[2 * h + 1] = -formantAmplitude (t, h);
     }
+    return Wavetable::fromSpectra (spectra, kFrames);
 }
 
 } // namespace ablaze

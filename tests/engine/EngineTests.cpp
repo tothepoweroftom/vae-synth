@@ -162,7 +162,108 @@ public:
     }
 };
 
+//==============================================================================
+class MidiEdgeCaseTests final : public juce::UnitTest
+{
+public:
+    MidiEdgeCaseTests() : juce::UnitTest ("Engines (MIDI edge cases)", "vae_engine") {}
+
+    void runTest() override
+    {
+        using namespace schema;
+        using testutil::Player;
+        using M = juce::MidiMessage;
+        const int second = int (kRate);
+
+        for (auto kind : availableEngines())
+        {
+            const juce::String label (engineLabel (kind));
+
+            beginTest (label + ": switching out of poly with a chord held leaves no stuck notes");
+            for (const char* mode : { "mono", "legato" })
+            {
+                auto engine = createEngine (kind);
+                engine->prepare (kRate, 512);
+                engine->setControls (Snapshot::defaults());
+                Player p (*engine);
+                p.block (256, { M::noteOn (1, 60, (juce::uint8) 100), M::noteOn (1, 64, (juce::uint8) 100),
+                                M::noteOn (1, 67, (juce::uint8) 100) });
+                p.run (4800);
+                engine->setControl (kPlayMode, float (*optionIndex (kPlayMode, mode)));
+                p.block (256, { M::noteOff (1, 60), M::noteOff (1, 64), M::noteOff (1, 67) });
+                p.run (2 * second);
+                expect (p.tailPeak (size_t (second / 2)) < 1.0e-3f,
+                        juce::String (mode) + " tail peak " + juce::String (p.tailPeak (size_t (second / 2))));
+            }
+
+            beginTest (label + ": MIDI in a 0-sample block is not lost");
+            {
+                auto engine = createEngine (kind);
+                engine->prepare (kRate, 512);
+                engine->setControls (Snapshot::defaults());
+                Player p (*engine);
+                p.block (0, { M::noteOn (1, 60, (juce::uint8) 100) });
+                p.run (9600);
+                expect (p.peak (0, p.left.size()) > 1.0e-3f, "note-on in an empty block sounds");
+                p.block (0, { M::noteOff (1, 60) });
+                p.run (2 * second);
+                expect (p.tailPeak (size_t (second / 2)) < 1.0e-3f,
+                        "note-off in an empty block releases: tail " + juce::String (p.tailPeak (size_t (second / 2))));
+                expect (p.finite);
+            }
+
+            beginTest (label + ": pitch bend moves pitch by up to 2 semitones");
+            {
+                auto engine = createEngine (kind);
+                engine->prepare (kRate, 512);
+                engine->setControls (testutil::sinePatch());
+                Player p (*engine);
+                p.block (256, { M::noteOn (1, 69, (juce::uint8) 100) });
+                p.run (9600);
+                const float f0 = p.zeroCrossingHz (p.left.size() - 4800, p.left.size(), kRate);
+                p.block (256, { M::pitchWheel (1, 16383) });
+                p.run (9600);
+                const float f1 = p.zeroCrossingHz (p.left.size() - 4800, p.left.size(), kRate);
+                logMessage ("  " + label + ": " + juce::String (f0) + " Hz -> " + juce::String (f1) + " Hz bent");
+                expectWithinAbsoluteError (f0, 440.0f, 440.0f * 0.03f);
+                expectWithinAbsoluteError (f1, 493.88f, 493.88f * 0.03f);
+            }
+
+            beginTest (label + ": sustain pedal holds released notes until pedal up");
+            {
+                auto engine = createEngine (kind);
+                engine->prepare (kRate, 512);
+                engine->setControls (Snapshot::defaults());
+                Player p (*engine);
+                p.block (256, { M::controllerEvent (1, 64, 127), M::noteOn (1, 60, (juce::uint8) 100) });
+                p.run (4800);
+                p.block (256, { M::noteOff (1, 60) });
+                p.run (second);
+                expect (p.tailPeak (4800) > 1.0e-3f, "still sounding with the pedal down: " + juce::String (p.tailPeak (4800)));
+                p.block (256, { M::controllerEvent (1, 64, 0) });
+                p.run (2 * second);
+                expect (p.tailPeak (size_t (second / 2)) < 1.0e-3f, "released on pedal up: " + juce::String (p.tailPeak (size_t (second / 2))));
+            }
+
+            beginTest (label + ": finite and in tune at 22.05 / 44.1 / 96 / 192 kHz");
+            for (double rate : { 22050.0, 44100.0, 96000.0, 192000.0 })
+            {
+                auto engine = createEngine (kind);
+                engine->prepare (rate, 512);
+                engine->setControls (testutil::sinePatch());
+                Player p (*engine);
+                p.block (256, { M::noteOn (1, 69, (juce::uint8) 100) });
+                p.run (int (rate * 0.3));
+                expect (p.finite, juce::String (rate));
+                const float hz = p.zeroCrossingHz (p.left.size() - size_t (rate * 0.1), p.left.size(), rate);
+                expectWithinAbsoluteError (hz, 440.0f, 440.0f * 0.03f, label + " at " + juce::String (rate) + " Hz");
+            }
+        }
+    }
+};
+
 static SchemaTests schemaTests;
 static EngineTests engineTests;
+static MidiEdgeCaseTests midiEdgeCaseTests;
 
 } // namespace vae

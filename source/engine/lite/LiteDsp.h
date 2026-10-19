@@ -240,10 +240,10 @@ public:
     {
         switch (wave)
         {
-            case Wave::Sine:     return analog.next (ablaze::AnalogWave::Sine, 0.5f);
-            case Wave::Triangle: return analog.next (ablaze::AnalogWave::Triangle, 0.5f);
-            case Wave::Saw:      return analog.next (ablaze::AnalogWave::Saw, 0.5f);
-            case Wave::Square:   return analog.next (ablaze::AnalogWave::Square, 0.5f);
+            case Wave::Sine:     return analog.next (ablaze::AnalogWave::Sine);
+            case Wave::Triangle: return analog.next (ablaze::AnalogWave::Triangle);
+            case Wave::Saw:      return analog.next (ablaze::AnalogWave::Saw);
+            case Wave::Square:   return analog.next (ablaze::AnalogWave::Square);
             case Wave::Noise:    return kNoiseGain * noise.next();
             case Wave::Wavetable:
             {
@@ -273,8 +273,7 @@ public:
         return 0.0f;
     }
 
-    static constexpr int kWavetableIndex = 3;          // "Formant" table of the vendored bank
-    static constexpr float kWavetablePosition = 0.5f;
+    static constexpr float kWavetablePosition = 0.5f;  // between the table's two frames
     static constexpr float kFmRatio = 2.0f;
     static constexpr float kFmIndex = 1.5f;
     static constexpr float kNoiseGain = 0.6f;

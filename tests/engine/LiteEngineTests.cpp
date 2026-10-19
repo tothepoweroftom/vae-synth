@@ -295,6 +295,43 @@ public:
                 expect (r.peak <= 4.0f);
             }
         }
+
+        beginTest ("voice stealing past 16 voices");
+        {
+            e.reset();
+            e.setControls (Snapshot::defaults());
+            testutil::Player p (e);
+            for (int n = 0; n < 20; ++n)
+                p.block (64, { juce::MidiMessage::noteOn (1, 40 + n, (juce::uint8) 100) });
+            expectEquals (e.numActiveVoices(), LiteEngine::kMaxVoices);
+            for (int n = 0; n < 20; ++n)
+                p.block (64, { juce::MidiMessage::noteOff (1, 40 + n) });
+            p.run (2 * second);
+            expectEquals (e.numActiveVoices(), 0);
+            expect (p.finite);
+        }
+
+        beginTest ("delay switched off and on again starts empty (no stale echo)");
+        {
+            e.reset();
+            auto s = Snapshot::defaults();
+            s[kDelayOn] = 1.0f;
+            s[kDelayMix] = 1.0f;
+            s[kDelayFeedback] = 0.9f;
+            s[kDelayTime] = fromUnitsFor (kDelayTime, -1.0f);   // 0.5 s
+            e.setControls (s);
+            testutil::Player p (e);
+            p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (4800);
+            p.block (256, { juce::MidiMessage::noteOff (1, 60) });
+            p.run (second);
+            expect (p.tailPeak (4800) > 1.0e-3f, "echoes ring while on");
+            e.setControl (kDelayOn, 0.0f);
+            p.run (256);
+            e.setControl (kDelayOn, 1.0f);
+            p.run (second);
+            expect (p.tailPeak (size_t (second)) < 1.0e-6f, "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
+        }
     }
 
 private:

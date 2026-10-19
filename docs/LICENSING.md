@@ -7,7 +7,7 @@ Not legal advice. Get a review before distributing binaries.
 | JUCE 8 | AGPLv3 or commercial JUCE licence | fetched |
 | ONNX Runtime | MIT | fetched; shared library shipped next to the plug-in |
 | Surge XT (`surge-common` and its libs) | GPL-3.0-or-later | fetched only with `VAE_WITH_SURGE=ON` |
-| Lite DSP (`source/engine/lite/ablaze/`) | Ablaze.WASMSynth, owner's terms | vendored from AudioFX/Ablaze.WASMSynth@947be83 with three marked edits |
+| Lite DSP (`source/engine/lite/ablaze/`) | Ablaze.WASMSynth, owner's terms | derived from AudioFX/Ablaze.WASMSynth@947be83 (oscillator, filter, noise, wavetable builder, biquad, delay line), trimmed and modified |
 | Inter font | SIL OFL 1.1 (`assets/fonts/Inter-LICENSE.txt`) | vendored |
 | Parameter store (`source/params/`) | this project | clean-room implementation from `docs/specs/parameter-manager.md` |
 

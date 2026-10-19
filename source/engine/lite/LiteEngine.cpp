@@ -1,5 +1,7 @@
 #include "LiteEngine.h"
 
+#include <algorithm>
+
 namespace vae
 {
 using lite::PlayMode;
@@ -17,11 +19,11 @@ LiteEngine::~LiteEngine() = default;
 void LiteEngine::prepare (double newSampleRate, int)
 {
     sampleRate = float (newSampleRate);
-    if (bank == nullptr)
-        bank = std::make_shared<const ablaze::WavetableBank>();
+    if (wavetable == nullptr)
+        wavetable = ablaze::makeFormantTable();
 
     for (size_t i = 0; i < voices.size(); ++i)
-        voices[i].prepare (sampleRate, bank.get(), uint32_t (0x5eed + 977 * i));
+        voices[i].prepare (sampleRate, wavetable.get(), uint32_t (0x5eed + 977 * i));
     for (size_t i = 0; i < freeLfo.size(); ++i)
         freeLfo[i].seed (uint32_t (0xf00d + i));
 
@@ -36,6 +38,8 @@ void LiteEngine::reset()
     for (auto& v : voices)
         v.kill();
     numHeld = 0;
+    sustainDown = false;
+    blockValues.pitchBendSemis = 0.0f;
     lastNoteSemis = -1.0f;
     for (size_t i = 0; i < freeLfo.size(); ++i)
         freeLfo[i].restart (patch.lfo[i].phase);
@@ -128,13 +132,23 @@ void LiteEngine::noteOff (int note)
             break;
         }
 
-    if (patch.playMode == PlayMode::Poly)
+    if (! sustainDown)
+        releaseNote (note);
+}
+
+void LiteEngine::releaseNote (int note)
+{
+    // Poly releases every voice on the note. Mono/legato also do this for
+    // voices other than voice 0, which can still be sounding from before a
+    // switch out of poly.
+    for (size_t i = patch.playMode == PlayMode::Poly ? 0 : 1; i < voices.size(); ++i)
     {
-        for (auto& v : voices)
-            if (v.isActive() && ! v.isReleasing() && v.getNote() == note)
-                v.release (patch);
-        return;
+        auto& other = voices[i];
+        if (other.isActive() && ! other.isReleasing() && other.getNote() == note)
+            other.release (patch);
     }
+    if (patch.playMode == PlayMode::Poly)
+        return;
 
     auto& v = voices[0];
     if (! v.isActive() || v.getNote() != note)
@@ -156,9 +170,29 @@ void LiteEngine::noteOff (int note)
     }
 }
 
+void LiteEngine::setSustain (bool down)
+{
+    if (down == sustainDown)
+        return;
+    sustainDown = down;
+    if (down)
+        return;
+
+    // Pedal up: release every sounding note whose key is no longer held.
+    for (auto& v : voices)
+    {
+        if (! v.isActive() || v.isReleasing())
+            continue;
+        const int note = v.getNote();
+        if (std::find (held.begin(), held.begin() + numHeld, note) == held.begin() + numHeld)
+            releaseNote (note);
+    }
+}
+
 void LiteEngine::allNotesOff()
 {
     numHeld = 0;
+    sustainDown = false;
     for (auto& v : voices)
         if (v.isActive())
             v.release (patch);
@@ -171,9 +205,9 @@ void LiteEngine::renderVoices (float* left, float* right, int numSamples)
         const int n = std::min (kControlBlock, numSamples - start);
         const float seconds = float (n) / sampleRate;
         for (size_t i = 0; i < freeLfo.size(); ++i)
-            freeLfoValues.value[i] = freeLfo[i].advance (patch.lfo[i], seconds);
+            blockValues.freeLfo[i] = freeLfo[i].advance (patch.lfo[i], seconds);
         for (auto& v : voices)
-            v.render (left + start, right + start, n, patch, freeLfoValues);
+            v.render (left + start, right + start, n, patch, blockValues);
     }
 }
 
@@ -181,8 +215,8 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
 {
     buffer.clear();
     const int numSamples = buffer.getNumSamples();
-    if (! prepared || buffer.getNumChannels() < 2 || numSamples <= 0)
-        return;
+    if (! prepared || buffer.getNumChannels() < 2)
+        return;   // a 0-sample block still runs the event loop: hosts flush MIDI that way
 
     auto* left = buffer.getWritePointer (0);
     auto* right = buffer.getWritePointer (1);
@@ -205,6 +239,12 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
             noteOff (msg.getNoteNumber());
         else if (msg.isAllNotesOff() || msg.isAllSoundOff())
             allNotesOff();
+        else if (msg.isPitchWheel())
+            blockValues.pitchBendSemis = kPitchBendRange * float (msg.getPitchWheelValue() - 8192) / 8192.0f;
+        else if (msg.isSustainPedalOn())
+            setSustain (true);
+        else if (msg.isSustainPedalOff())
+            setSustain (false);
     }
     if (position < numSamples)
         renderVoices (left + position, right + position, numSamples - position);

@@ -33,16 +33,25 @@
                    full modulator output the destination moves by
                    d x (its full Surge range): the shared routing convention.
     FX slots       A insert 1 Distortion, A2 EQ, A3 Chorus, A4 Phaser/Flanger,
-                   Global 1 Delay, Global 2 Reverb 2; *_on = type set / Off.
+                   Global 1 Delay, Global 2 Reverb 2. All six are loaded once in
+                   prepare(); *_on sets that slot's bit in Surge's fx_disable
+                   mask (and suspends the effect when it turns off, so no stale
+                   tail returns), so toggling never allocates.
 
   Osc and FX type changes are applied lazily by Surge (loadOscalgos/loadFx
   inside process()) and reset that unit's parameters to the type defaults.
   The engine applies them itself before rendering and then re-writes the
   parameters it owns, so no voice ever starts with a stale layout.
 
+  Audio-thread allocation: steady rendering, FX on/off and every continuous,
+  filter-type, envelope or LFO change allocate nothing. Inside Surge, an osc
+  wave change (loadOscalgos), a mod FX type switch (loadFx) and adding a new
+  modulation route still allocate; those are discrete patch changes.
+
   Surge renders fixed BLOCK_SIZE (32) quanta; arbitrary host blocks are served
-  from a one-quantum buffer, with MIDI applied at the quantum it falls in (up
-  to 31 samples early; no added latency).
+  from a one-quantum buffer, with MIDI applied at the quantum it falls in, so
+  an event lands within ±31 samples (one 32-sample quantum) of its offset; no
+  added latency.
 */
 
 #pragma once
@@ -85,6 +94,8 @@ public:
 
     /** Surge FX type (fxt_*) loaded in an FX slot, and its p[k] in Surge units. */
     int fxType (int slot) const;
+    /** False when the slot's fx_disable bit is set (the *_on control is off). */
+    bool fxEnabled (int slot) const;
     float fxParam (int slot, int k) const;
 
     /** Voice modulation routings in scene A: count, and the depth (Surge
