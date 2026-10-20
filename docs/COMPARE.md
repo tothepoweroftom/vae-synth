@@ -49,6 +49,9 @@ presets.
 The audio is cut into short overlapping windows (2048 samples, 512 apart),
 and each window gets a 40-band "mel" spectrum: energy per band on a pitch-like
 scale. Everything quieter than 60 dB below the loudest point is ignored.
+A render quieter than −60 dB RMS counts as silent (Surge leaves inaudible
+residue where Lite is exactly 0), and presets whose original is silent are left
+out of the distances.
 
 | column | plain words |
 |---|---|

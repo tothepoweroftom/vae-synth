@@ -103,6 +103,12 @@ function(vae_bundle_onnxruntime plugin_target)
             COMMAND ${CMAKE_COMMAND} -E make_directory "${dest}"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${VAE_ORT_RUNTIME_FILE}" "${dest}/${VAE_ORT_RUNTIME_NAME}"
             VERBATIM)
+        if(APPLE)
+            # Adding the runtime invalidates the bundle signature; hosts skip unverifiable bundles.
+            add_custom_command(TARGET ${t} POST_BUILD
+                COMMAND codesign --force --deep --sign - "$<TARGET_BUNDLE_DIR:${t}>"
+                VERBATIM)
+        endif()
     endforeach()
 endfunction()
 

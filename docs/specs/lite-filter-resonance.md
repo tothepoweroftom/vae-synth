@@ -1,6 +1,6 @@
 # Lite filter resonance — functional specification
 
-Status: clean-room spec. This document describes **required behaviour only**.
+Status: clean-room spec, implemented. This document describes **required behaviour only**.
 The implementation in `source/engine/lite/LiteDsp.h` (`FilterUnit`) must be
 written from this document and from measurements of rendered audio, without
 reading Surge XT source code (`build-surge/_deps/surge-src/` or any copy of
@@ -46,3 +46,12 @@ unless measurement shows a clear win.
   rows in "Where Lite diverges most" improve or hold.
 - Constants are documented as measured fits ("fitted to Surge renders"), not
   as Surge values.
+
+## 4. Result
+
+Damping falls with resonance as a fitted power curve and goes below zero
+near full resonance (later for the 4-pole types); extra damping proportional
+to |band|^3 bounds the ringing; output gain falls with resonance. In the
+24 dB types only the second stage self-oscillates (the first keeps damping
+>= 0.3). Full corpus, median engine gap: spectrum over time 3.52 dB (3.82
+with the previous Lite filter), loudness 1.23 dB. All tests pass.

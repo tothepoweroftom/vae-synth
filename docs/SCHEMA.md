@@ -58,7 +58,7 @@ exactly the defaults.
 | triangle | Modern osc, triangle mix only | Modern osc where triangle dominates |
 | saw | Classic, shape 0 | Classic with shape > −0.5; String / Twist / Alias (lossy) |
 | square | Classic, shape −1, width 0.5 | Classic with shape ≤ −0.5; Modern where pulse dominates |
-| noise | S&H Noise, correlation 0, sync +48 st (broadband) | S&H Noise osc |
+| noise | S&H Noise, correlation 0, sync +48 st (hold rate tracks the note) | S&H Noise osc |
 | wavetable | Wavetable osc on a fixed one-frame additive table shared with Lite (headless Surge has no factory tables) | Wavetable, Window |
 | fm | FM2 osc, M1 amount 0.3, ratio 2 (its defaults are a pure sine) | FM2, FM3 |
 
@@ -143,5 +143,9 @@ of everything that did not map exactly. A file that cannot be read is
 reported and skipped; the batch continues. Modulation sources in patches older
 than Surge revision 9 are renumbered the way Surge does on load. It uses the active scene (scene A
 unless scene B is active in single-scene mode). Split and dual scene modes use
-scene A only and are flagged. The noise mixer channel and ring modulators are
-not in the schema and are flagged when used.
+scene A only and are flagged. The noise mixer channel is not in the schema: it
+is imported into the first muted osc slot as `noise` (flagged), or flagged and
+dropped when no slot is free. Ring modulators are flagged when used. An osc
+level or amp/filter EG sustain driven by modulation gets its strongest positive
+depth added (clamped to 1, flagged), so patches that sit at 0 and are opened by
+an LFO, aftertouch or a controller do not import as silent.
