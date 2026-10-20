@@ -1,5 +1,7 @@
 # Prompt to playable presets
 
+> Historical Python prototype / export investigation. Subsequent native implementation and current status: [hackathon guide](HACKATHON-ONNX-SAME-LEARNINGS.md), [native generator](NATIVE-GENERATOR.md), [native SAME](NATIVE-SAME.md). Statements below about native work still being pending describe the earlier experiment.
+
 `tools/retrieve/prompt_presets.py` connects Stable Audio 3 Small generation to the
 existing SAME search and editable preset format. A local browser UI lets you enter
 a prompt, choose Small-SFX or Small-Music, set a seed, audition the generated reference

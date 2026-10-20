@@ -134,3 +134,5 @@ remains in the separate local prototype while its native runtime is validated.
 ### Native prompt generation
 
 The JUCE **Generate** button now supports Stable Audio 3 Small-SFX → SAME → editable presets without Python at runtime. Load **SAME bank…** and **Audio model…**, then type a prompt. See [native generator setup, validation and limitations](docs/NATIVE-GENERATOR.md). Building this route also requires Cargo for the statically linked Hugging Face tokenizer.
+
+Hackathon handoff: [ONNX, SAME and Stable Audio lessons and next steps](docs/HACKATHON-ONNX-SAME-LEARNINGS.md).

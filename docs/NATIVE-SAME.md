@@ -2,9 +2,8 @@
 
 Reference-audio retrieval now runs inside the JUCE plug-in and standalone in C++.
 Python is needed only to prepare the distributable bank/model bundle. Runtime
-inference uses the existing ONNX Runtime 1.22.0 wrapper. The generator is still the
-separate Python prototype; the editor's original **Generate** button remains the
-old latent-decoder route, not Stable Audio generation.
+inference uses the existing ONNX Runtime 1.22.0 wrapper. The prompt generator also now runs natively; see
+[Native Stable Audio generator](NATIVE-GENERATOR.md) for its setup and validation.
 
 ## Use the built standalone
 
@@ -106,8 +105,7 @@ raw tensors. It performs an extra encoding for diagnostics; it is not a latency
 benchmark. Plug-in tests cover malformed latent rejection, message-thread delivery
 and cancellation. Real-model tests are optional because model assets are not committed.
 
-Next: validate the generator components (tokenizer/text encoder, DiT, sampler and
-SAME decoder), extend the runtime's typed multi-input support as needed, then connect
-native prompt generation to this retrieval worker.
+Next steps and reusable engineering lessons are recorded in
+[the hackathon guide](HACKATHON-ONNX-SAME-LEARNINGS.md).
 
 The generator port is now implemented: see [Native Stable Audio generator](NATIVE-GENERATOR.md) for the fully local JUCE prompt-to-preset route.

@@ -11,7 +11,7 @@ Build the `VAESynth_Standalone` or `VAESynth_AU` target. Open the rebuilt standa
 3. Wait for “Stable Audio ready”, enter a prompt, and press **Generate**.
 4. Play using MIDI or the onscreen keyboard. Select another SAME match to audition its editable controls.
 
-The first model load takes roughly a minute on the development Mac. The approximately 3 GB FP32 model package stays loaded between prompts. One measured four-second generation plus search took 22.1 seconds, excluding loading, with ORT restricted to one CPU thread. This prioritizes leaving CPU capacity for the synth over maximum generation speed. Model paths currently need selecting again after restarting the plugin. The applied preset and last prompt are saved in plugin state.
+Initial loading is slow and has been reported to take longer than the earlier roughly-one-minute estimate. Stage timings and the bottleneck have not yet been established. The approximately 3 GB FP32 model package stays loaded between prompts. One measured four-second generation plus search took 22.1 seconds, excluding loading, with ORT restricted to one CPU thread. This prioritizes leaving CPU capacity for the synth over maximum generation speed. Model paths currently need selecting again after restarting the plugin. The applied preset and last prompt are saved in plugin state.
 
 Reference WAVs and prompt/seed metadata are saved under JUCE's user application-data directory in `VAE Synth/generated`. On macOS this is `~/Library/VAE Synth/generated`. **Cancel search** also cancels generation between ONNX calls and suppresses stale callbacks. An in-progress ONNX call or model load finishes before cancellation takes effect. Inference, tokenization, file access and preset search all run on the serialized worker, never the audio callback. Preset controls are applied on the message thread through the existing parameter store.
 
@@ -70,3 +70,5 @@ build-lite-au/tools/retrieve/vae_generate_artefacts/Release/vae_generate \
 ```
 
 Omit the final noise-file argument for entirely native random generation. Choose a fresh output directory for each run. CLI output includes the reference WAV and five loadable preset JSON files. Native generation is creative reference synthesis; the final playable sound is still constrained by the existing 626-preset search bank. It does not yet optimize or synthesize new parameter vectors from the reference.
+
+For the distilled lessons, evidence boundaries and prioritized next steps, see [the hackathon guide](HACKATHON-ONNX-SAME-LEARNINGS.md).

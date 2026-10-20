@@ -1,5 +1,7 @@
 # SAME-Small retrieval experiment
 
+> Historical Python prototype / export investigation. Subsequent native implementation and current status: [hackathon guide](HACKATHON-ONNX-SAME-LEARNINGS.md), [native generator](NATIVE-GENERATOR.md), [native SAME](NATIVE-SAME.md). Statements below about native work still being pending describe the earlier experiment.
+
 SAME-S now provides an alternate retrieval path, independent of the student and
 any trained synth decoder. It is an **offline Python experiment**, not yet inference
 inside the JUCE plug-in. The output is the same editable JSON preset format consumed
