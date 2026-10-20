@@ -114,6 +114,11 @@ target_link_libraries(VAESynth
 
 vae_bundle_onnxruntime(VAESynth)
 
+# --- tools ---------------------------------------------------------------------
+if(VAE_WITH_SURGE)
+    add_subdirectory(tools/compare)
+endif()
+
 # --- tests ---------------------------------------------------------------------
 if(VAE_BUILD_TESTS)
     enable_testing()
@@ -137,5 +142,10 @@ if(VAE_BUILD_TESTS)
         endif()
         add_test(NAME vae_schema_tools
                  COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_schema_tools.py" ${_vae_py_args})
+        if(VAE_WITH_SURGE)
+            add_test(NAME vae_compare_smoke
+                     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_compare.py"
+                             $<TARGET_FILE:vae_compare> "${VAE_SURGE_DIR}/resources/data/patches_factory/Templates")
+        endif()
     endif()
 endif()

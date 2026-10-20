@@ -21,7 +21,7 @@ prompt ──► PromptEncoder ──► latent[8] ──► LatentDecoder ─�
 | `schema/controls.json` | **Source of truth** for the control vector (ids, kinds, options, curves, defaults, Surge mapping notes). CMake generates `ControlSchema.generated.h` from it. |
 | `docs/SCHEMA.md` | Value encoding, model features, decoder contract, Surge render/import rules |
 | `source/schema/` | `Snapshot`, feature encode/decode, `mockDecode`, and `SurgeCurves.h` (curve units, display) |
-| `tools/` | `vae_schema.py` (Python twin of the schema) and `surge_preset_to_vector.py` (Surge `.fxp` → vectors, for the dataset sampler) |
+| `tools/` | `vae_schema.py` (Python twin of the schema), `surge_preset_to_vector.py` (Surge `.fxp` → vectors, for the dataset sampler), and `compare/` + `compare_report.py` (Lite vs Surge vs original renders, see `docs/COMPARE.md`) |
 | `source/engine/SynthEngine.h` | Backend interface + factory |
 | `source/engine/lite/` | **Lite** backend: Surge-shaped subset on the permissive DSP building blocks in `lite/dsp/` |
 | `source/engine/surge/` | **Surge XT** backend: headless `surge-common` (only with `VAE_WITH_SURGE=ON`, GPL) |
@@ -29,7 +29,7 @@ prompt ──► PromptEncoder ──► latent[8] ──► LatentDecoder ─�
 | `source/params/` | Clean-room parameter store (`ParamStore`, UI bindings), built from `docs/specs/parameter-manager.md` |
 | `source/plugin/` | `AudioProcessor`, editor, look and feel |
 | `models/` | `make_stub_decoder.py` and the committed `stub_decoder.onnx` (embedded in the plug-in) |
-| `tests/` | `vae_params_tests`, `vae_engine_tests`, `vae_ml_tests`, `vae_plugin_tests`, `vae_schema_tools`, `vae_format_check` (CTest) |
+| `tests/` | `vae_params_tests`, `vae_engine_tests`, `vae_ml_tests`, `vae_plugin_tests`, `vae_schema_tools`, `vae_format_check`, `vae_compare_smoke` (Surge builds) (CTest) |
 
 ## Build
 
@@ -46,7 +46,7 @@ Formatting (`.clang-format`, JUCE house style; `vae_format_check` in CTest
 fails on unformatted code):
 
 ```sh
-clang-format -i $(git ls-files 'source/*.h' 'source/*.cpp' 'tests/*.h' 'tests/*.cpp')
+clang-format -i $(git ls-files 'source/*.h' 'source/*.cpp' 'tests/*.h' 'tests/*.cpp' 'tools/*.h' 'tools/*.cpp')
 ```
 
 Options:
