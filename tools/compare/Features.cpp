@@ -76,14 +76,11 @@ Features analyse (const std::vector<float>& mono, double sampleRate, const Probe
     Features out;
 
     double sumSquares = 0.0;
-    float peak = 0.0f;
     for (float s : mono)
-    {
         sumSquares += double (s) * double (s);
-        peak = std::max (peak, std::abs (s));
-    }
-    out.silent = peak < 1.0e-4f;
     out.levelDb = std::max (kFloorDb, toDb (mono.empty() ? 0.0 : sumSquares / double (mono.size())));
+    // Surge leaves inaudible residue (~-70 dB) where Lite is exactly 0; both count as silent.
+    out.silent = out.levelDb < kSilentDb;
 
     juce::dsp::FFT fft (kFftOrder);
     juce::dsp::WindowingFunction<float> window ((size_t) kFftSize, juce::dsp::WindowingFunction<float>::hann, false);

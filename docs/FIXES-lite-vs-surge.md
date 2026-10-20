@@ -71,11 +71,21 @@ build-surge/tools/compare/vae_compare_artefacts/Release/vae_compare vectors.json
 python3 tools/compare_report.py compare.csv vectors.jsonl -o report.md --wav-list worst.txt
 ```
 
-Last run: medians, engine gap / schema loss.
+Medians. "Before" is the run this list came from; "after" has fixes 1-4,
+the noise part of 5, the shared wavetable and the gains below applied.
 
-| measure | engine gap | schema loss |
-|---|---|---|
-| spectrum over time | 4.9 dB | 11.4 dB |
-| brightness | 0.31 oct | 0.82 oct |
-| loudness | 4.0 dB | 8.2 dB |
-| envelope correlation | 0.95 | 0.79 |
+| measure | engine gap before | engine gap after | schema loss after |
+|---|---|---|---|
+| spectrum over time | 4.9 dB | 3.5 dB | 11.5 dB |
+| brightness | 0.31 oct | 0.15 oct | 0.79 oct |
+| loudness | 4.0 dB | 1.3 dB | 6.7 dB |
+| envelope correlation | 0.95 | 0.96 | 0.80 |
+| svec/lite silence mismatch | 222 | 36 | |
+
+Also done along the way: the noise mixer channel imports into a free osc slot
+as `noise` (≈110 presets were silent only because of it); Surge's Sine,
+Wavetable and FM2 oscs run ~6 dB above its Classic saw (Lite `kHotOscGain`);
+Lite FM index 0.68 rad matches the backend's FM2 M1 amount 0.3; Lite osc
+start phases are random like Surge's without retrigger. Still open: attack
+rank (0.46, the metric is fragile with delay/distortion tails), effects
+(distortion 7.6 dB, mod FX 5.5, delay 4.8, chorus 4.7, reverb 4.4), item 7.

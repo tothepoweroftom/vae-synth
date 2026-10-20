@@ -20,7 +20,7 @@ void LiteEngine::prepare (double newSampleRate, int)
 {
     sampleRate = float (newSampleRate);
     if (wavetable == nullptr)
-        wavetable = dsp::makeFormantTable();
+        wavetable = dsp::makeDefaultTable();
 
     for (size_t i = 0; i < voices.size(); ++i)
         voices[i].prepare (sampleRate, wavetable.get(), uint32_t (0x5eed + 977 * i));

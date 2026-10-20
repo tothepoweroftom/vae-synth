@@ -185,6 +185,26 @@ public:
             expect (tracked > 2.0f * untracked);
         }
 
+        beginTest ("high resonance self-oscillates from a near-silent input and stays finite");
+        {
+            auto s = basePatch ("noise");
+            s[kOsc1Level] = 0.02f; // ~-100 dB
+            s[kFilter1Type] = option (kFilter1Type, "hp24");
+            s[kFilter1Cutoff] = 0.6f;
+            const auto quiet = [&] (float res)
+            {
+                s[kFilter1Resonance] = res;
+                e.reset();
+                e.setControls (s);
+                return render (e, { 512 }, second, -1, second / 2);
+            };
+            const auto ringing = quiet (0.92f);
+            expect (ringing.finite);
+            expect (ringing.rms() > 1.0e-3f, "rings: " + juce::String (ringing.rms()));
+            expect (ringing.peak < 4.0f, "bounded: " + juce::String (ringing.peak));
+            expect (quiet (0.3f).rms() < 1.0e-4f, "low resonance does not ring");
+        }
+
         beginTest ("envelope curve options differ");
         {
             auto s = basePatch();

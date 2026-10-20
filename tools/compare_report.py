@@ -56,8 +56,10 @@ def num(r: dict, key: str) -> float:
 
 
 def usable(r: dict, pair: str) -> bool:
-    """Both renders of the pair exist and make sound."""
+    """Both renders of the pair exist and make sound, and the original is not silent."""
     a, b = {"os": ("orig", "svec"), "sl": ("svec", "lite"), "ol": ("orig", "lite")}[pair]
+    if r["orig_ok"] == "1" and r["orig_silent"] == "1":
+        return False
     if "orig" in (a, b) and r["orig_ok"] != "1":
         return False
     return r[f"{a}_silent"] == "0" and r[f"{b}_silent"] == "0"

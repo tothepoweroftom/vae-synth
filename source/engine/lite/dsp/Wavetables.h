@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <memory>
 #include <vector>
 
@@ -57,8 +58,17 @@ private:
     size_t levelOffset[kNumLevels] = {};
 };
 
-/** The table the Lite "wavetable" wave plays: two frames of a "Formant"
-    table (two resonant peaks on the harmonic series), read at position 0.5. */
-std::unique_ptr<Wavetable> makeFormantTable();
+/** Harmonic amplitude (sine phase) of the one-frame table the schema's
+    "wavetable" wave plays in both engines: a 1/h^0.8 spectrum with a resonant
+    hump around harmonic 5, up to harmonic kDefaultTableHarmonics. */
+inline constexpr int kDefaultTableHarmonics = 96;
+inline float defaultTableHarmonic (int h)
+{
+    const float d = (float (h) - 5.0f) / 3.0f;
+    return std::pow (float (h), -0.8f) * (1.0f + 4.0f * std::exp (-d * d));
+}
+
+/** The table the Lite "wavetable" wave plays (defaultTableHarmonic). */
+std::unique_ptr<Wavetable> makeDefaultTable();
 
 } // namespace vae::dsp

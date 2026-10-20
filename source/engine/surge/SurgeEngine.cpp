@@ -1,5 +1,6 @@
 #include "SurgeEngine.h"
 
+#include "engine/lite/dsp/Wavetables.h"
 #include "schema/SurgeCurves.h"
 
 // Surge's headers are not written for JUCE's recommended warning set.
@@ -159,39 +160,30 @@ int fxUnitOf (int control)
 
 /** Without a data path Surge has no factory wavetables and its default table
     is a single sine frame, which would make "wavetable" sound like "sine".
-    Build a fixed 8-frame additive table instead (a 1/h^0.8 spectrum with a
-    resonant hump that moves up through the frames; Morph stays at frame 0). */
+    Build the one-frame table Lite plays instead (dsp::defaultTableHarmonic). */
 void buildDefaultWavetable (Wavetable& wt)
 {
-    constexpr int frames = 8, size = 1024, harmonics = 96;
-    std::vector<float> data ((size_t) (frames * size));
-    for (int f = 0; f < frames; ++f)
+    constexpr int size = 1024;
+    std::vector<float> frame ((size_t) size);
+    float peak = 0.0f;
+    for (int i = 0; i < size; ++i)
     {
-        float* frame = data.data() + f * size;
-        const float centre = 5.0f + 4.0f * float (f);
-        float peak = 0.0f;
-        for (int i = 0; i < size; ++i)
-        {
-            const float phase = juce::MathConstants<float>::twoPi * float (i) / float (size);
-            float s = 0.0f;
-            for (int h = 1; h <= harmonics; ++h)
-            {
-                const float d = (float (h) - centre) / 3.0f;
-                s += std::pow (float (h), -0.8f) * (1.0f + 4.0f * std::exp (-d * d)) * std::sin (phase * float (h));
-            }
-            frame[i] = s;
-            peak = juce::jmax (peak, std::abs (s));
-        }
-        for (int i = 0; i < size; ++i)
-            frame[i] /= peak;
+        const float phase = juce::MathConstants<float>::twoPi * float (i) / float (size);
+        float s = 0.0f;
+        for (int h = 1; h <= vae::dsp::kDefaultTableHarmonics; ++h)
+            s += vae::dsp::defaultTableHarmonic (h) * std::sin (phase * float (h));
+        frame[(size_t) i] = s;
+        peak = juce::jmax (peak, std::abs (s));
     }
+    for (auto& s : frame)
+        s /= peak;
 
     wt_header header {};
     std::memcpy (header.tag, "vawt", 4);
     header.n_samples = size;
-    header.n_tables = frames;
+    header.n_tables = 1;
     header.flags = 0; // float data
-    wt.BuildWT (data.data(), header, false);
+    wt.BuildWT (frame.data(), header, false);
 }
 
 float unitsOf (const Parameter& p)

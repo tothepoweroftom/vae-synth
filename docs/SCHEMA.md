@@ -59,7 +59,7 @@ exactly the defaults.
 | saw | Classic, shape 0 | Classic with shape > −0.5; String / Twist / Alias (lossy) |
 | square | Classic, shape −1, width 0.5 | Classic with shape ≤ −0.5; Modern where pulse dominates |
 | noise | S&H Noise, correlation 0, sync +48 st (broadband) | S&H Noise osc |
-| wavetable | Wavetable osc on a fixed 8-frame additive table (headless Surge has no factory tables) | Wavetable, Window |
+| wavetable | Wavetable osc on a fixed one-frame additive table shared with Lite (headless Surge has no factory tables) | Wavetable, Window |
 | fm | FM2 osc, M1 amount 0.3, ratio 2 (its defaults are a pure sine) | FM2, FM3 |
 
 Classic's shape morphs square (−1) → saw (0). Surge's *Init Square*

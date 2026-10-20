@@ -21,20 +21,6 @@ int orderOf (int size)
     return order;
 }
 
-/** Formant table (harmonic amplitudes, sine phase) at morph position t:
-    two resonant peaks sweeping up the harmonic series. */
-float formantAmplitude (float t, int h)
-{
-    const float n = static_cast<float> (h);
-    const float c1 = 2.0f + 10.0f * t;
-    const float c2 = 7.0f + 25.0f * t;
-    const float w1 = 1.2f + 1.5f * t;
-    const float w2 = 2.0f + 3.0f * t;
-    const float f1 = std::exp (-((n - c1) * (n - c1)) / (w1 * w1));
-    const float f2 = 0.6f * std::exp (-((n - c2) * (n - c2)) / (w2 * w2));
-    return (h == 1 ? 0.35f : 0.0f) + (f1 + f2) / std::sqrt (n);
-}
-
 } // namespace
 
 //==============================================================================
@@ -159,19 +145,12 @@ std::unique_ptr<Wavetable> Wavetable::fromSpectra (const std::vector<float>& spe
 }
 
 //==============================================================================
-std::unique_ptr<Wavetable> makeFormantTable()
+std::unique_ptr<Wavetable> makeDefaultTable()
 {
-    // Frames 7 and 8 of the original 16-frame table (t = 7/15, 8/15).
-    constexpr int kFirstFrame = 7, kSourceFrames = 16, kFrames = 2;
-    std::vector<float> spectra (static_cast<size_t> (kFrames) * kNumBins * 2, 0.0f);
-    for (int frame = 0; frame < kFrames; ++frame)
-    {
-        const float t = static_cast<float> (kFirstFrame + frame) / static_cast<float> (kSourceFrames - 1);
-        float* bins = spectra.data() + static_cast<size_t> (frame) * kNumBins * 2;
-        for (int h = 1; h < kNumBins - 1; ++h)
-            bins[2 * h + 1] = -formantAmplitude (t, h);
-    }
-    return Wavetable::fromSpectra (spectra, kFrames);
+    std::vector<float> spectrum (kNumBins * 2, 0.0f);
+    for (int h = 1; h <= kDefaultTableHarmonics; ++h)
+        spectrum[static_cast<size_t> (2 * h + 1)] = -defaultTableHarmonic (h);
+    return Wavetable::fromSpectra (spectrum, 1);
 }
 
 } // namespace vae::dsp

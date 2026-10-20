@@ -68,9 +68,9 @@ public:
     {
         if (! amp.isActive())
         {
-            // Fresh voice: deterministic phases and clean filters.
+            // Fresh voice: seeded random phases and clean filters.
             for (auto& o : osc)
-                o.resetPhase();
+                o.randomisePhase();
             for (auto& f : filter)
                 f.reset();
             firstBlock = true;

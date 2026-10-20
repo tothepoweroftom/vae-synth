@@ -162,6 +162,16 @@ class Converter:
         self.put_units("master_volume", self.patch.get("volume", 0.0))
         return self.values, self.lossy
 
+    def modulated(self, name: str, default: float) -> float:
+        """A 0..1 level plus its strongest positive modulation: presets that sit at 0
+        and are opened by an LFO, aftertouch or controller would otherwise be silent."""
+        value = self.get(name, default)
+        depths = [d for _, d in self.patch.routes.get(self.p(name), []) if d > 0]
+        if not depths:
+            return value
+        self.lossy.append(f"{name}: modulation folded into the static level")
+        return min(1.0, value + max(depths))
+
     def voice(self) -> None:
         mode = int(self.get("polymode"))
         self.put_option("play_mode", PLAY_MODES.get(mode, "poly"))
@@ -173,14 +183,27 @@ class Converter:
         for n in (1, 2, 3):
             o = f"osc{n}"
             self.put(f"{o}_on", 0.0 if self.get(f"mute_o{n}") >= 0.5 else 1.0)
-            self.put(f"{o}_level", self.get(f"level_o{n}", 1.0))
+            self.put(f"{o}_level", self.modulated(f"level_o{n}", 1.0))
             self.put(f"{o}_octave", int(self.get(f"osc{n}_octave")) + 3)
             self.put_units(f"{o}_pitch", self.get(f"osc{n}_pitch"))
             self.put(f"{o}_filter", int(self.get(f"route_o{n}", 1)))
             self.put_option(f"{o}_wave", self.wave(n))
 
-        if self.get("mute_noise", 1.0) < 0.5 and self.get("level_noise", 0.0) > 0.0:
-            self.lossy.append("noise mixer channel ignored (not in schema)")
+        noise = self.modulated("level_noise", 0.0) if self.get("mute_noise", 1.0) < 0.5 else 0.0
+        if noise > 0.0:
+            free = [n for n in (1, 2, 3) if self.values[self.schema[f"osc{n}_on"].index] < 0.5]
+            if free:
+                # The schema has no noise channel; a muted osc slot plays it instead.
+                o = f"osc{free[0]}"
+                self.put(f"{o}_on", 1.0)
+                self.put(f"{o}_level", noise)
+                self.put(f"{o}_octave", 3)
+                self.put_units(f"{o}_pitch", 0.0)
+                self.put(f"{o}_filter", int(self.get("route_noise", 1)))
+                self.put_option(f"{o}_wave", "noise")
+                self.lossy.append(f"noise mixer channel -> {o} noise")
+            else:
+                self.lossy.append("noise mixer channel ignored (not in schema)")
         for ring in ("ring12", "ring23"):
             if self.get(f"mute_{ring}", 1.0) < 0.5:
                 self.lossy.append(f"{ring} ring modulation ignored")
@@ -244,7 +267,7 @@ class Converter:
             for stage in ("attack", "decay", "release"):
                 self.put_units(f"{prefix}_{stage}", self.get(f"{env}_{stage}", -8.0))
                 self.put(f"{prefix}_{stage}_curve", int(self.get(f"{env}_{stage}_shape", 1)))
-            self.put(f"{prefix}_sustain", self.get(f"{env}_sustain", 1.0))
+            self.put(f"{prefix}_sustain", self.modulated(f"{env}_sustain", 1.0))
 
     def lfos(self) -> None:
         for n, lfo in ((1, "lfo0"), (2, "lfo1")):

@@ -18,6 +18,7 @@ inline constexpr int kFftOrder = 11;
 inline constexpr int kFftSize = 1 << kFftOrder;
 inline constexpr int kHop = 512;
 inline constexpr float kFloorDb = -120.0f;
+inline constexpr float kSilentDb = -60.0f;
 inline constexpr float kRangeDb = 60.0f; // spectra are clamped to peak - 60 dB (residue below is inaudible)
 
 using MelVector = std::array<float, kMelBands>;
