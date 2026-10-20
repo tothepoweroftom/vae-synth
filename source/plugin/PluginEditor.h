@@ -71,15 +71,23 @@ public:
 
 private:
     void generate();
+    void chooseGenerator();
     void chooseModel();
+    void choosePreset();
+    void chooseSearchFile (bool bank);
     void setStatus (const juce::String&);
 
     PluginProcessor& processor;
     VaeLookAndFeel lookAndFeel;
 
     juce::TextEditor promptEditor;
+    juce::TextButton generatorPackageButton { "Audio model..." };
     juce::TextButton generateButton { "Generate" }, randomButton { "Random" }, initButton { "Init" },
-        modelButton { "Model..." }, stubButton { "Stub" };
+        modelButton { "Model..." }, stubButton { "Stub" }, presetButton { "Preset..." };
+    juce::TextButton bankButton { "SAME bank..." }, referenceButton { "Find from audio..." },
+        cancelSearchButton { "Cancel search" };
+    juce::ComboBox matchesBox;
+    std::vector<ml::SameSearch::Match> referenceMatches;
     juce::ComboBox engineBox;
     std::unique_ptr<params::ComboBinding> engineBinding;
     juce::Label status;

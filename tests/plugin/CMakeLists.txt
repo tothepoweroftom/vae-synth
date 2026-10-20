@@ -21,7 +21,7 @@ target_link_libraries(vae_plugin_tests PRIVATE
     VAESynthAssets
     vae_params
     vae_engine
-    vae_ml
+    vae_retrieval
     juce::juce_audio_utils
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)

@@ -57,6 +57,11 @@ target_sources(vae_ml INTERFACE
     source/ml/PresetGenerator.cpp)
 target_link_libraries(vae_ml INTERFACE vae_schema vae::onnxruntime_headers juce::juce_events)
 
+include(cmake/NativeTokenizer.cmake)
+add_library(vae_retrieval INTERFACE)
+target_sources(vae_retrieval INTERFACE source/ml/SameSearch.cpp source/ml/StableAudioGenerator.cpp)
+target_link_libraries(vae_retrieval INTERFACE vae_tokenizer vae_ml juce::juce_audio_formats juce::juce_cryptography)
+
 # --- parameter store (clean-room, docs/specs/parameter-manager.md) ------------
 add_subdirectory(source/params)
 
@@ -105,7 +110,7 @@ target_link_libraries(VAESynth
         VAESynthAssets
         vae_params
         vae_engine
-        vae_ml
+        vae_retrieval
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
@@ -118,6 +123,7 @@ vae_bundle_onnxruntime(VAESynth)
 configure_file(cmake/release-info.json.in release-info.json @ONLY)
 
 # --- tools ---------------------------------------------------------------------
+add_subdirectory(tools/retrieve)
 if(VAE_WITH_SURGE)
     add_subdirectory(tools/compare)
 endif()
@@ -139,6 +145,9 @@ if(VAE_BUILD_TESTS)
 
     find_package(Python3 COMPONENTS Interpreter)
     if(Python3_FOUND)
+        add_test(NAME vae_retrieve_smoke
+                 COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_retrieve.py"
+                         $<TARGET_FILE:vae_retrieve>)
         set(_vae_py_args "${VAE_GENERATED_DIR}/schema/ControlSchema.generated.h")
         if(VAE_WITH_SURGE)
             list(APPEND _vae_py_args "${VAE_SURGE_DIR}/resources/data/patches_factory/Templates")

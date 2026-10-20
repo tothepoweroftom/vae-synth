@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>VAE Synth · Prompt to preset</title>
+<style>
+body{font:16px system-ui;background:#f7f6f1;color:#202823;max-width:900px;margin:48px auto;padding:0 24px}h1{font-size:36px;margin-bottom:8px}p{line-height:1.6}textarea{box-sizing:border-box;width:100%;min-height:110px;font:inherit;padding:16px;border:1px solid #a7b5a9;border-radius:8px}button,select,input{font:inherit;padding:10px;border:1px solid #a7b5a9;border-radius:6px}button{background:#245540;color:white;cursor:pointer}button:disabled{opacity:.5}input{width:110px}.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}#status{padding:16px;background:#e9eee6;border-radius:8px}article{padding:20px 0;border-bottom:1px solid #ccc}audio{display:block;margin:12px 0;width:100%}a{color:#245540}small{display:block;color:#55645b;margin-top:8px}
+</style>
+<h1>Describe a sound. Play a preset.</h1>
+<p>Stable Audio Small generates a reference. SAME-Small finds five editable synth presets to audition.</p>
+<form id="form"><label for="prompt">Sound description</label>
+<textarea id="prompt" maxlength="2000" required>A single glassy metallic bell hit, bright ringing overtones, long decaying tail, isolated sound, no background music.</textarea>
+<div class="controls"><label>Model <select id="model"><option value="small-sfx">Small · sound effects</option><option value="small-music">Small · music</option></select></label><label>Seed <input id="seed" type="number" min="0" max="2147483647" value="42" required></label><button id="generate">Generate presets</button></div></form>
+<p id="status" role="status">Ready</p><main id="results"></main>
+<small>This prototype runs locally outside JUCE. Load a downloaded match JSON with Preset… in VAE Synth to play it with MIDI and edit its controls. Retrieval approximates the reference; it does not recreate every sound.</small>
+<script>
+const token='__TOKEN__';let lastJob=null;
+const el=id=>document.getElementById(id);
+function audio(parent,url){const a=document.createElement('audio');a.controls=true;a.preload='none';a.src=url;parent.append(a)}
+async function poll(){try{const r=await fetch('/status');const s=await r.json();el('status').textContent=s.message;el('generate').disabled=s.busy;
+if(s.job&&s.job!==lastJob){lastJob=s.job;el('results').replaceChildren();const h=document.createElement('h2');h.textContent='Generated reference';el('results').append(h);audio(el('results'),'/files/'+s.job+'/reference.wav');
+s.results.forEach((p,i)=>{const a=document.createElement('article');const h=document.createElement('h3');h.textContent=(i+1)+'. '+p.name;a.append(h);audio(a,'/files/'+s.job+'/matches/match-'+(i+1)+'.wav');const link=document.createElement('a');link.textContent='Download editable preset';link.href='/files/'+s.job+'/matches/match-'+(i+1)+'.json';link.download='match-'+(i+1)+'.json';a.append(link);el('results').append(a)})}}
+catch(e){el('status').textContent='Local service disconnected. Restart prompt_presets.py serve.'}}
+el('form').onsubmit=async e=>{e.preventDefault();el('generate').disabled=true;el('results').replaceChildren();lastJob=null;try{const r=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json','X-Request-Token':token},body:JSON.stringify({prompt:el('prompt').value,model:el('model').value,seed:Number(el('seed').value)})});if(!r.ok){el('status').textContent=(await r.json()).error;el('generate').disabled=false}else await poll()}catch(e){el('status').textContent=String(e);el('generate').disabled=false}};
+setInterval(poll,1500);poll();
+</script></html>

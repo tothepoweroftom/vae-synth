@@ -23,7 +23,7 @@ constexpr SectionInfo kSections[] = {
     { "fx_delay", "Delay" },   { "fx_reverb", "Reverb" }, { "global", "Out" },
 };
 
-constexpr int kMargin = 20, kTopBarH = 76, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
+constexpr int kMargin = 20, kTopBarH = 112, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
 
 /** Wrapping left-to-right layout of sections; returns the height used. */
 int layOutSections (juce::OwnedArray<ControlSection>& sections, juce::Rectangle<int> area, bool apply)
@@ -189,8 +189,33 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                                             safe->setStatus (r.wasOk() ? "Stub decoder loaded" : r.getErrorMessage());
                                     });
     };
-    for (auto* b : { &generateButton, &randomButton, &initButton, &modelButton, &stubButton })
+    presetButton.setTooltip ("Load an editable preset from reference audio retrieval");
+    presetButton.onClick = [this] { choosePreset(); };
+    for (auto* b : { &generateButton, &randomButton, &initButton, &modelButton, &stubButton, &presetButton })
         addAndMakeVisible (b);
+
+    generatorPackageButton.onClick = [this] { chooseGenerator(); };
+    addAndMakeVisible (generatorPackageButton);
+    bankButton.onClick = [this] { chooseSearchFile (true); };
+    referenceButton.onClick = [this] { chooseSearchFile (false); };
+    cancelSearchButton.onClick = [this]
+    {
+        processor.getReferenceSearch().cancel();
+        setStatus ("Search cancelled");
+    };
+    for (auto* button : { &bankButton, &referenceButton, &cancelSearchButton })
+        addAndMakeVisible (button);
+    matchesBox.setTextWhenNothingSelected ("SAME matches — select to play");
+    matchesBox.onChange = [this]
+    {
+        const int i = matchesBox.getSelectedItemIndex();
+        if (i < 0 || i >= int (referenceMatches.size()))
+            return;
+        processor.getParams().set (PluginProcessor::kEngineParamId, 0.0f); // Lite is always first
+        processor.applyControls (referenceMatches[(size_t) i].controls);
+        setStatus ("Loaded " + referenceMatches[(size_t) i].name + " — play with MIDI or the keyboard");
+    };
+    addAndMakeVisible (matchesBox);
 
     engineBox.setTooltip ("Synth engine backend");
     addAndMakeVisible (engineBox);
@@ -232,13 +257,115 @@ void PluginEditor::generate()
     const auto prompt = promptEditor.getText().trim();
     if (prompt.isEmpty())
         return;
+    processor.setLastPrompt (prompt);
     setStatus ("Generating...");
-    processor.generateFromPrompt (prompt,
-                                  [safe = juce::Component::SafePointer (this)] (const juce::String& note)
+    const auto dir =
+        juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("VAE Synth/generated");
+    const auto created = dir.createDirectory();
+    if (created.failed())
+    {
+        setStatus (created.getErrorMessage());
+        return;
+    }
+    const auto output = dir.getChildFile (juce::Uuid().toString() + ".wav");
+    processor.getReferenceSearch().generate (
+        prompt, uint32_t (juce::Random::getSystemRandom().nextInt()), output,
+        [safe = juce::Component::SafePointer (this)] (juce::Result result, std::vector<ml::SameSearch::Match> matches)
+        {
+            if (safe == nullptr)
+                return;
+            if (result.failed())
+            {
+                safe->setStatus (result.getErrorMessage());
+                return;
+            }
+            safe->referenceMatches = std::move (matches);
+            safe->matchesBox.clear (juce::dontSendNotification);
+            for (size_t i = 0; i < safe->referenceMatches.size(); ++i)
+                safe->matchesBox.addItem (juce::String (int (i) + 1) + ". " + safe->referenceMatches[i].name,
+                                          int (i) + 1);
+            safe->matchesBox.setSelectedId (1, juce::sendNotificationSync);
+        },
+        [safe = juce::Component::SafePointer (this)] (juce::String message)
+        {
+            if (safe != nullptr)
+                safe->setStatus (message);
+        });
+}
+
+void PluginEditor::chooseGenerator()
+{
+    chooser = std::make_unique<juce::FileChooser> ("Load native Stable Audio package", juce::File(), "*.json");
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [safe = juce::Component::SafePointer (this)] (const juce::FileChooser& fc)
+                          {
+                              if (safe == nullptr || fc.getResult() == juce::File())
+                                  return;
+                              safe->setStatus ("Loading Stable Audio Small...");
+                              safe->processor.getReferenceSearch().loadGenerator (
+                                  fc.getResult(),
+                                  [safe] (juce::Result result, auto)
                                   {
                                       if (safe != nullptr)
-                                          safe->setStatus (note);
+                                          safe->setStatus (result.wasOk()
+                                                               ? "Stable Audio ready — type a prompt and Generate"
+                                                               : result.getErrorMessage());
                                   });
+                          });
+}
+
+void PluginEditor::chooseSearchFile (bool bank)
+{
+    chooser = std::make_unique<juce::FileChooser> (bank ? "Load native SAME bank" : "Find presets from reference audio",
+                                                   juce::File(), bank ? "*.json" : "*.wav;*.aiff;*.flac");
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [safe = juce::Component::SafePointer (this), bank] (const juce::FileChooser& fc)
+                          {
+                              if (safe == nullptr || fc.getResult() == juce::File())
+                                  return;
+                              safe->setStatus (bank ? "Loading SAME bank..." : "Encoding reference and searching...");
+                              auto done = [safe, bank] (juce::Result result, std::vector<ml::SameSearch::Match> matches)
+                              {
+                                  if (safe == nullptr)
+                                      return;
+                                  if (result.failed())
+                                  {
+                                      safe->setStatus (result.getErrorMessage());
+                                      return;
+                                  }
+                                  if (bank)
+                                  {
+                                      safe->setStatus ("SAME ready — choose Find from audio...");
+                                      return;
+                                  }
+                                  safe->referenceMatches = std::move (matches);
+                                  safe->matchesBox.clear (juce::dontSendNotification);
+                                  for (size_t i = 0; i < safe->referenceMatches.size(); ++i)
+                                      safe->matchesBox.addItem (juce::String (int (i) + 1) + ". "
+                                                                    + safe->referenceMatches[i].name,
+                                                                int (i) + 1);
+                                  safe->setStatus ("Found " + juce::String (int (safe->referenceMatches.size()))
+                                                   + " matches — choose one to play");
+                              };
+                              if (bank)
+                                  safe->processor.getReferenceSearch().load (fc.getResult(), done);
+                              else
+                                  safe->processor.getReferenceSearch().search (fc.getResult(), done);
+                          });
+}
+
+void PluginEditor::choosePreset()
+{
+    chooser = std::make_unique<juce::FileChooser> ("Load retrieved preset", juce::File(), "*.json");
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [safe = juce::Component::SafePointer (this)] (const juce::FileChooser& fc)
+                          {
+                              if (safe == nullptr || fc.getResult() == juce::File())
+                                  return;
+                              const auto result = safe->processor.loadPresetFile (fc.getResult());
+                              safe->setStatus (result.wasOk() ? "Loaded " + fc.getResult().getFileNameWithoutExtension()
+                                                              : result.getErrorMessage());
+                          });
 }
 
 void PluginEditor::chooseModel()
@@ -286,13 +413,24 @@ void PluginEditor::resized()
 
     top.removeFromTop (6);
     auto promptRow = top.removeFromTop (28);
-    for (auto* b : { &stubButton, &modelButton, &initButton, &randomButton, &generateButton })
+    for (auto* b : { &presetButton, &stubButton, &modelButton, &initButton, &randomButton, &generateButton })
     {
         b->setBounds (promptRow.removeFromRight (b == &generateButton ? 96 : 72));
         promptRow.removeFromRight (6);
     }
     promptEditor.setBounds (promptRow);
-    status.setBounds (top.removeFromTop (16));
+    top.removeFromTop (5);
+    auto searchRow = top.removeFromTop (28);
+    generatorPackageButton.setBounds (searchRow.removeFromLeft (126));
+    searchRow.removeFromLeft (6);
+    bankButton.setBounds (searchRow.removeFromLeft (116));
+    searchRow.removeFromLeft (6);
+    referenceButton.setBounds (searchRow.removeFromLeft (145));
+    searchRow.removeFromLeft (6);
+    cancelSearchButton.setBounds (searchRow.removeFromRight (116));
+    searchRow.removeFromRight (6);
+    matchesBox.setBounds (searchRow);
+    status.setBounds (top.removeFromTop (20));
 
     keyboard.setBounds (r.removeFromBottom (kKeyboardH));
     r.removeFromBottom (kGap);

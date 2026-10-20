@@ -14,6 +14,7 @@
 
 #include "engine/SynthEngine.h"
 #include "ml/PresetGenerator.h"
+#include "ml/SameSearch.h"
 #include "params/ParamStore.h"
 
 #include <array>
@@ -59,6 +60,7 @@ public:
     //==========================================================================
     params::ParamStore& getParams() noexcept { return params; }
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+    ml::SameSearchWorker& getReferenceSearch() noexcept { return referenceSearch; }
     ml::PresetGenerator& getGenerator() noexcept { return generator; }
 
     /** Engines compiled into this build, in "engine" choice order. */
@@ -70,6 +72,9 @@ public:
     /** Apply a whole vector as one host gesture per control (message thread). */
     void applyControls (const schema::Snapshot&);
 
+    /** Load a versioned retrieval preset on the message thread; reject before changing parameters. */
+    juce::Result loadPresetFile (const juce::File&);
+
     /** Prompt -> preset. `done` (message thread) gets the result note. */
     void generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String& note)> done);
     void generateRandom (std::function<void (const juce::String& note)> done);
@@ -80,6 +85,7 @@ public:
     void loadDecoderModel (const juce::File& file, std::function<void (juce::Result)> done);
     juce::File getDecoderModelFile() const;
     juce::String getLastPrompt() const;
+    void setLastPrompt (const juce::String& prompt);
 
     /** Generator status, plus a note when the saved model file is missing. */
     juce::String describeModel() const;
@@ -110,6 +116,7 @@ private:
     std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
 
     ml::PresetGenerator generator;
+    ml::SameSearchWorker referenceSearch;
     juce::Random random;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)

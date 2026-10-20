@@ -115,10 +115,10 @@ juce::Result OnnxModel::finishLoad()
         session->outputNames.push_back (std::move (name));
     }
 
-    if (inputs.size() != 1 || ! inputs.front().isFloat)
+    if (inputs.empty() || std::any_of (inputs.begin(), inputs.end(), [] (const auto& i) { return ! i.isFloat; }))
     {
         unload();
-        return juce::Result::fail ("Expected exactly one float input tensor");
+        return juce::Result::fail ("Expected float input tensors");
     }
     return juce::Result::ok();
 }
@@ -126,15 +126,37 @@ juce::Result OnnxModel::finishLoad()
 juce::Result OnnxModel::run (std::span<const float> input, std::span<const int64_t> inputShape,
                              std::vector<std::vector<float>>& outputsOut)
 {
+    const FloatTensorView view { input, inputShape };
+    return run (std::span (&view, 1), outputsOut);
+}
+
+juce::Result OnnxModel::run (std::span<const FloatTensorView> tensors, std::vector<std::vector<float>>& outputsOut)
+{
     if (! isLoaded())
         return juce::Result::fail ("No model loaded");
+    if (tensors.size() != inputs.size())
+        return juce::Result::fail ("Input tensor count mismatch");
 
     try
     {
         const auto memory = Ort::MemoryInfo::CreateCpu (OrtArenaAllocator, OrtMemTypeDefault);
         // ORT takes a non-const pointer but does not write to inputs.
-        auto tensor = Ort::Value::CreateTensor<float> (memory, const_cast<float*> (input.data()), input.size(),
-                                                       inputShape.data(), inputShape.size());
+        std::vector<Ort::Value> values;
+        for (const auto& tensor : tensors)
+        {
+            size_t count = 1;
+            for (auto dim : tensor.shape)
+            {
+                if (dim <= 0 || size_t (dim) > tensor.data.size() / count)
+                    return juce::Result::fail ("Invalid input shape");
+                count *= size_t (dim);
+            }
+            if (count != tensor.data.size())
+                return juce::Result::fail ("Input size mismatch");
+            values.push_back (Ort::Value::CreateTensor<float> (memory, const_cast<float*> (tensor.data.data()),
+                                                               tensor.data.size(), tensor.shape.data(),
+                                                               tensor.shape.size()));
+        }
 
         std::vector<const char*> inNames, outNames;
         for (auto& n : session->inputNames)
@@ -142,8 +164,8 @@ juce::Result OnnxModel::run (std::span<const float> input, std::span<const int64
         for (auto& n : session->outputNames)
             outNames.push_back (n.c_str());
 
-        auto results = session->session->Run (Ort::RunOptions { nullptr }, inNames.data(), &tensor, 1, outNames.data(),
-                                              outNames.size());
+        auto results = session->session->Run (Ort::RunOptions { nullptr }, inNames.data(), values.data(), values.size(),
+                                              outNames.data(), outNames.size());
 
         outputsOut.clear();
         for (auto& value : results)

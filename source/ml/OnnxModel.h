@@ -29,6 +29,12 @@ struct TensorInfo
     bool isFloat = false;
 };
 
+struct FloatTensorView
+{
+    std::span<const float> data;
+    std::span<const int64_t> shape;
+};
+
 class OnnxModel
 {
 public:
@@ -49,6 +55,8 @@ public:
         in getOutputs() order. Not thread-safe per instance. */
     juce::Result run (std::span<const float> input, std::span<const int64_t> inputShape,
                       std::vector<std::vector<float>>& outputsOut);
+
+    juce::Result run (std::span<const FloatTensorView> tensors, std::vector<std::vector<float>>& outputsOut);
 
     /** Status of the shared runtime ("not found", version, ...). */
     juce::String getRuntimeStatus() const { return runtime->getStatus(); }
