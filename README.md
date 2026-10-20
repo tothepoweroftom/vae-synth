@@ -33,6 +33,10 @@ prompt ──► PromptEncoder ──► latent[8] ──► LatentDecoder ─�
 
 ## Build
 
+For local macOS/Windows Release builds, installers and local code signing, use
+`./build-mac.sh` or `.\build-windows.ps1`.
+See [Local builds and releases](docs/RELEASING.md) for packaging and signing options.
+
 Needs CMake ≥ 3.22, a C++20 compiler and network access on first configure
 (JUCE, ONNX Runtime, and Surge if enabled are fetched).
 

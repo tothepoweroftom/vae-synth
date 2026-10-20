@@ -114,6 +114,9 @@ target_link_libraries(VAESynth
 
 vae_bundle_onnxruntime(VAESynth)
 
+# Packaging reads the configured build, including local dependency overrides.
+configure_file(cmake/release-info.json.in release-info.json @ONLY)
+
 # --- tools ---------------------------------------------------------------------
 if(VAE_WITH_SURGE)
     add_subdirectory(tools/compare)
