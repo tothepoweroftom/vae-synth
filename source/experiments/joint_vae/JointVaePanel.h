@@ -46,9 +46,7 @@ public:
     const std::vector<PromptCandidate>& promptCandidates() const { return candidates; }
     int selectedCandidate() const { return selected; }
     void selectCandidate (int);
-    bool inBankMode() const { return bankMode; }
-    /** Leaves bank mode: decodes the bank z once, then the pad decodes as usual. */
-    void explore();
+    bool inBankMode() const { return bankMode; } // the selected candidate's exact codes play
     juce::String statusText() const { return status.getText(); }
     const XyPadData* padData() const { return xy.get(); }
     const JointLatent& latent() const { return z; }
@@ -79,7 +77,8 @@ private:
     void edit (std::function<void()> change); // a Lab sound edit: asks first while the sound is edited
     void resolveReplace (bool replace);
     void applyCandidate (int);
-    void showCandidates();
+    void leaveBank();           // the first sound edit after selecting a candidate decodes from its z
+    void clearPromptProgress(); // a dropped Find must not leave "Finding sounds..." behind
     void updatePromptUi();
 
     JointVaeWorker worker;
@@ -88,9 +87,11 @@ private:
     bool promptReady = false, promptLoaded = false, promptLoading = false;
     uint64_t promptEpoch = 0; // a prompt load from before the last loadPromptBundle completes into nothing
     uint64_t promptToken = 0; // a prompt result applies only while this is unchanged
+    uint64_t lastFind = 0;    // the token of the newest Find
+    bool finding = false;     // the newest Find has not called back yet
     std::vector<PromptCandidate> candidates;
     int selected = -1;
-    bool bankMode = false;        // a bank preset plays: latent sound edits wait for Explore
+    bool bankMode = false;        // the selected bank preset plays exactly, until the next sound edit
     std::vector<float> bankCodes; // the selected row's codes, exactly as stored (NaN = inactive)
     std::shared_ptr<const XyPadData> xy;
     std::shared_ptr<const KnobGroups> kg;
@@ -124,8 +125,7 @@ private:
     juce::TextEditor promptBox;
     juce::TextButton promptGo { juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x92")) };
     juce::Label experimentalTag { {}, "experimental" };
-    juce::TextButton findButton { "Find sounds" }, nudgeButton { "Word list" },
-        exploreButton { "Explore generated variations" };
+    juce::TextButton findButton { "Find sounds" }, nudgeButton { "Word list" };
     std::array<juce::TextButton, 8> chips;
     juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea, specArea, measureArea, presetArea,
         guessArea;

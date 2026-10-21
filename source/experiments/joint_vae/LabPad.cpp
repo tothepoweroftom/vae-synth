@@ -27,6 +27,12 @@ void LabPad::setPresetDots (std::vector<std::tuple<float, float, int>> d, int la
     activeLabel = label;
     repaint();
 }
+void LabPad::setHighlights (std::vector<juce::Point<float>> h, int selected)
+{
+    highlights = std::move (h);
+    selectedHighlight = selected;
+    repaint();
+}
 void LabPad::paint (juce::Graphics& g)
 {
     const auto r = getLocalBounds().toFloat();
@@ -67,6 +73,19 @@ void LabPad::paint (juce::Graphics& g)
             g.drawEllipse (d, 0.8f);
         }
     }
+    g.setFont (LF::labelFont (9.0f, true));
+    for (size_t i = 0; i < highlights.size(); ++i)
+    {
+        const auto h = juce::Rectangle<float> (14, 14).withCentre (
+            { r.getX() + highlights[i].x * r.getWidth(), r.getBottom() - highlights[i].y * r.getHeight() });
+        const bool on = (int) i == selectedHighlight;
+        g.setColour (on ? LF::accent : labWell.withAlpha (0.8f));
+        g.fillEllipse (h);
+        g.setColour (LF::accent);
+        g.drawEllipse (h, 1.5f);
+        g.setColour (on ? labWell : LF::ink);
+        g.drawText (juce::String ((int) i + 1), h, juce::Justification::centred);
+    }
     const juce::Point<float> c { r.getX() + dot.x * r.getWidth(), r.getBottom() - dot.y * r.getHeight() };
     g.setColour (labWell);
     g.fillEllipse (juce::Rectangle<float> (18, 18).withCentre (c));
@@ -90,15 +109,44 @@ void LabPad::move (juce::Point<float> p)
     if (moved)
         moved (dot);
 }
+int LabPad::highlightAt (juce::Point<float> pixel) const
+{
+    const auto r = getLocalBounds().toFloat();
+    float best = 7.0f * 7.0f;
+    int hit = -1;
+    for (size_t i = 0; i < highlights.size(); ++i)
+    {
+        const auto d = pixel.getDistanceSquaredFrom (
+            { r.getX() + highlights[i].x * r.getWidth(), r.getBottom() - highlights[i].y * r.getHeight() });
+        if (d < best)
+        {
+            best = d;
+            hit = (int) i;
+        }
+    }
+    return hit;
+}
 void LabPad::mouseDown (const juce::MouseEvent& e)
 {
     grabKeyboardFocus();
+    downOn = picked ? highlightAt (e.position) : -1;
+    if (downOn < 0)
+        move (toPad (e.position));
+}
+void LabPad::mouseDrag (const juce::MouseEvent& e)
+{
+    if (downOn >= 0 && e.getDistanceFromDragStart() < 3)
+        return;
+    downOn = -1; // a drag that started on a highlight explores like any other
     move (toPad (e.position));
 }
-void LabPad::mouseDrag (const juce::MouseEvent& e) { move (toPad (e.position)); }
 void LabPad::mouseUp (const juce::MouseEvent& e)
 {
-    if (e.getDistanceFromDragStart() < 3 && tapped)
+    if (e.getDistanceFromDragStart() >= 3)
+        return;
+    if (const auto i = std::exchange (downOn, -1); i >= 0)
+        picked (i);
+    else if (tapped)
         tapped (toPad (e.position));
 }
 bool LabPad::keyPressed (const juce::KeyPress& key)

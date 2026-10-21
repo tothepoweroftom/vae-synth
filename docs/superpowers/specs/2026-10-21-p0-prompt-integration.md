@@ -51,7 +51,7 @@ The bank patch and `decode(bank.z)` are not equivalent. Re-decoding immediately 
 
 ### Follow-up words
 
-Preserve v2's deterministic adjective nudges without applying them twice. A **Find sounds** request sends the entire prompt through the learned model and does not subsequently apply word-list adjectives. An explicit nudge action uses the existing word interpreter only; in bank mode it requires the same generated-exploration transition. Mixed or ambiguous text defaults to Find sounds. The UI must make these two actions distinguishable without introducing a second chat interface.
+Preserve v2's deterministic adjective nudges without applying them twice. A **Find sounds** request sends the entire prompt through the learned model and does not subsequently apply word-list adjectives. An explicit nudge action uses the existing word interpreter only; in bank mode it originally required the same generated-exploration transition (superseded by plan Task 20: a nudge simply explores from the selected preset). Mixed or ambiguous text defaults to Find sounds. The UI must make these two actions distinguishable without introducing a second chat interface.
 
 ## Inference and selection contract
 

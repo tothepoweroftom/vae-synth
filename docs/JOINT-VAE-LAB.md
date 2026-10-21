@@ -32,12 +32,15 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
    - **Word list** (the only action without p0) picks a label from the student's nouns and starts from
      Typical <label>; its adjectives nudge the axes. The reply says what it did and which words it ignored.
 
-   **Bank mode.** A selected bank preset plays its exact stored settings (Lite preview; Send to Surge builds the
-   same codes, no decoder). The dot sits at its z. Pad, axis-slider, Z, category and word-list edits wait until you
-   press **Explore generated variations**, which decodes that z once (the model's approximation; the sound may
-   change) and returns to normal dragging. Axis assignment, preset dots and the background still work. The knob pad
-   edits a copy of the bank settings. Selecting the preset again restores them exactly. A new prompt, any Lab edit,
-   Reset or a bundle change drops a prompt result that has not arrived yet.
+   **Matches on the pad.** Find marks its presets on the pad as numbered dots (an accent ring, 1-8, above the preset
+   dots) at their z on the current axes; they follow axis changes and stay until the next Find, Reset, a base change
+   or a bundle change. Clicking a numbered dot or its chip selects that preset: it plays its exact stored settings
+   (Lite preview; Send to Surge builds the same codes, no decoder) and the handle moves to it. Exploring is never
+   locked (there is no Explore button): the first pad, Z, axis-slider, category or word-list move decodes from that preset's z ("Exploring from
+   <name>"; the model's approximation, so the sound may change), dragging continues live, and Send to Surge then
+   sends the decoded patch. The knob pad edits a copy of the bank settings. Selecting the preset again restores them
+   exactly. A new prompt, any Lab edit, Reset or a bundle change drops a prompt result that has not arrived yet, as
+   does an open "Replace your Synth edits?" question; the status then reads "Find cancelled".
 2. **Preset.** The decoded point plays at once on Lite, once you have acted in the Lab (see limits).
 3. **Pad.** Drag the dot. X, Y and an optional Z are any of the five sound axes or the latent dimensions. The sound
    follows while you drag, without clicks.
@@ -114,7 +117,7 @@ ctest --test-dir build-default        # no Surge: checks the "needs a Surge buil
 - `VAE_PROMPT_BUNDLE`: `prompt.json` of the p0 bundle, for the prompt model parity and Lab prompt search tests.
 - `VAE_CODEC_PARITY`: an extra codec plan file to compare the native codec with, e.g. the bank's `bank-codec-parity.json`.
 - `VAE_LAB_SCREENSHOT=<file.png>`: `vae_plugin_tests` writes a snapshot of the editor there.
-- `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab in bank mode after "deep sub bass" (needs both bundles).
+- `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab with the "deep sub bass" matches highlighted (needs both bundles).
 - `VAE_SYNTH_SCREENSHOT=<file.png>`: a snapshot of the Synth view after a Lab pad move.
 
 No inference, model loading or UI logic runs in the audio callback. Surge's own patch load does, once per Send to
@@ -148,7 +151,8 @@ Surge.
   during a drag, `process()` averaged 0.02 ms (max 0.4 ms) against a 5.3 ms block budget: no blocks over budget.
   Closing the editor during a load or Find still waits for it (`shortcut:` in `PromptWorker`'s destructor; the fix is
   a process-wide or detached runner).
-- Explore is a jump, not a faithful continuation: the decoded z can sound different from the bank preset.
+- Exploring from a match is a jump, not a faithful continuation: the decoded z can sound different from the bank
+  preset.
 - Lab state is not saved in the host project.
 
 ## Try it

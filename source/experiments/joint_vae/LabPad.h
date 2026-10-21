@@ -29,6 +29,10 @@ public:
     /** `labels`: category names at their region centroids (0..1, y up). */
     void setMap (juce::Image, std::vector<std::pair<juce::String, juce::Point<float>>> labels = {});
     void setPresetDots (std::vector<std::tuple<float, float, int>>, int activeLabel);
+    /** Find's candidates (0..1, y up), numbered 1.. above the preset dots; `selected` is drawn filled. */
+    void setHighlights (std::vector<juce::Point<float>>, int selected);
+    const std::vector<juce::Point<float>>& getHighlights() const { return highlights; }
+    std::function<void (int)> picked; // a click on highlight i that did not drag
     juce::Point<float> getDot() const { return dot; }
     const juce::Image& getMap() const { return map; }
 
@@ -42,12 +46,16 @@ public:
 
 private:
     juce::Point<float> toPad (juce::Point<float> pixel) const;
+    int highlightAt (juce::Point<float> pixel) const; // nearest highlight within 7 px, else -1
     void move (juce::Point<float>);
     juce::Point<float> dot { 0.5f, 0.5f };
     juce::Image map;
     std::vector<std::pair<juce::String, juce::Point<float>>> mapLabels;
     std::vector<std::tuple<float, float, int>> dots;
     int activeLabel = -1;
+    std::vector<juce::Point<float>> highlights;
+    int selectedHighlight = -1;
+    int downOn = -1; // the highlight a press started on: it picks on release instead of moving
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LabPad)
 };
 } // namespace vae::experimental

@@ -367,6 +367,7 @@ public:
                 lab.loadPromptBundle (promptJson); // what a Lab bundle change does, before the load completes
                 pumpUntil ([] { return false; }, 2000);
                 expect (! lab.isPromptLoaded(), "the stale load did not count");
+                expect (! lab.statusText().startsWith ("Loading prompt model"), lab.statusText());
                 expect (lab.isPromptReady());
                 lab.findSounds ("deep sub bass");
                 expect (found (lab), "a fresh load and Find succeed");
@@ -467,10 +468,87 @@ public:
             }
         }
 
-        beginTest ("bank mode blocks latent edits until explore");
+        // A click on the pad at a 0..1 point (y up) that does not drag
+        const auto click = [] (experimental::LabPad& pad, juce::Point<float> p)
+        {
+            if (auto* lab = pad.getParentComponent(); lab && pad.getWidth() == 0)
+                lab->setSize (1100, 760); // the Lab tab is hidden: lay it out
+            const juce::Point<float> px { p.x * (float) pad.getWidth(), (1 - p.y) * (float) pad.getHeight() };
+            const auto now = juce::Time::getCurrentTime();
+            const juce::MouseEvent e (juce::Desktop::getInstance().getMainMouseSource(), px,
+                                      juce::ModifierKeys::leftButtonModifier, 0, 0, 0, 0, 0, &pad, &pad, now, px, now,
+                                      1, false);
+            pad.mouseDown (e);
+            pad.mouseUp (e);
+        };
+        const auto near = [] (juce::Point<float> a, juce::Point<float> b)
+        { return std::abs (a.x - b.x) < 1e-4f && std::abs (a.y - b.y) < 1e-4f; };
+        const auto progress = [] (const juce::String& s)
+        { return s.startsWith ("Loading prompt model") || s.startsWith ("Finding sounds"); };
+
+        beginTest ("find highlights candidates");
         {
             auto t = open (promptJson);
-            if (t->lab && t->lab->isPromptReady())
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                const auto check = [&] (const char* x, const char* y)
+                {
+                    const auto* ax = lab.padData()->find (x);
+                    const auto* ay = lab.padData()->find (y);
+                    const auto& c = lab.promptCandidates();
+                    const auto& h = pad->getHighlights();
+                    expectEquals ((int) h.size(), (int) c.size());
+                    for (size_t i = 0; i < c.size() && i < h.size() && ax && ay; ++i)
+                        expect (near (h[i], { axisPosition (*ax, c[i].z), axisPosition (*ay, c[i].z) }),
+                                "highlight at the bank z");
+                };
+                check ("s:brightness", "s:length");
+                lab.assignAxis (0, "s:attack"); // reprojects
+                check ("s:attack", "s:length");
+                lab.findSounds ("lush ambient pad"); // the next Find replaces them
+                expect (pumpUntil ([&] { return lab.promptCandidates()[0].category == 2; }, 30000));
+                check ("s:attack", "s:length");
+                for (auto* b : findAll<juce::TextButton> (lab))
+                    if (b->getButtonText() == "Reset")
+                        b->onClick(); // Reset clears them
+                expect (pad->getHighlights().empty() && lab.promptCandidates().empty(), "Reset clears the highlights");
+            }
+        }
+
+        beginTest ("dot click selects candidate");
+        {
+            auto t = open (promptJson);
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                expect (playing (lab, bankCodes (bassRows[0])));
+                expect (pad->getHighlights().size() > 2);
+                if (pad->getHighlights().size() > 2)
+                {
+                    const auto at = pad->getHighlights()[2];
+                    click (*pad, at);
+                    expectEquals (lab.selectedCandidate(), 2);
+                    expect (lab.inBankMode());
+                    expect (playing (lab, bankCodes (bassRows[2])), "row 2's exact codes");
+                    pumpUntil ([] { return false; }, 300);
+                    expect (same (lab.output().codes, bankCodes (bassRows[2])), "and stays");
+                    expect (near (pad->getDot(), at), "the handle moves to the dot");
+                }
+            }
+        }
+
+        beginTest ("drag explores from candidate");
+        {
+            auto t = open (promptJson);
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
                 lab.findSounds ("deep sub bass");
@@ -478,26 +556,135 @@ public:
                 const auto codes = bankCodes (bassRows[0]);
                 expect (playing (lab, codes));
                 const auto z0 = lab.latent();
-                auto* pad = findChild<experimental::LabPad> (lab);
-                expect (pad != nullptr);
-                if (pad)
+                const auto* ax = lab.padData()->find ("s:brightness");
+                const auto* ay = lab.padData()->find ("s:length");
+                const auto played = t->played;
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                expect (! lab.inBankMode(), "the first move leaves the exact preset");
+                expect (lab.latent() != z0, "the pad is not locked");
+                if (ax && ay)
                 {
-                    pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
-                    lab.assignAxis (0, "s:attack");
-                    lab.nudge ("brighter");
-                    pumpUntil ([] { return false; }, 500);
-                    expect (lab.latent() == z0, "no latent edit in bank mode");
-                    expect (same (lab.output().codes, codes), "the bank codes keep playing");
-                    expect (lab.statusText().contains ("Explore"), lab.statusText());
-                    expect (lab.inBankMode());
-                    lab.explore();
-                    expect (! lab.inBankMode());
-                    expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000),
-                            "explore decodes the bank z");
-                    expect (lab.latent() == z0, "from the bank z");
-                    pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
-                    expect (lab.latent() != z0, "then the pad edits as usual");
+                    expect (std::abs (axisPosition (*ax, lab.latent()) - axisPosition (*ax, z0)) < 1e-3f,
+                            "from the bank z");
+                    expect (std::abs (axisPosition (*ay, lab.latent()) - (axisPosition (*ay, z0) + 0.02f)) < 1e-3f);
                 }
+                expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000), "decoded, no codes");
+                expect (pumpUntil ([&] { return t->played > played; }, 5000), "it plays");
+                expectEquals (lab.statusText(), "Exploring from " + lab.promptCandidates()[0].name);
+                // Nothing else is blocked
+                const auto z1 = lab.latent();
+                lab.nudge ("brighter");
+                expect (lab.latent() != z1, "the word list edits");
+                const auto z2 = lab.latent();
+                lab.assignAxis (2, "s:noise");
+                auto* zs = [&]
+                {
+                    for (auto* c : lab.getChildren()) // the Z slider; the axis list holds the others
+                        if (auto* s = dynamic_cast<juce::Slider*> (c))
+                            return s;
+                    return (juce::Slider*) nullptr;
+                }();
+                expect (zs != nullptr && zs->isEnabled());
+                if (zs)
+                    zs->setValue (zs->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                expect (lab.latent() != z2, "Z edits");
+                expectEquals (lab.selectedCandidate(), 0, "the dot stays marked");
+            }
+        }
+
+        beginTest ("reselect restores exact codes");
+        {
+            auto t = open (promptJson);
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                const auto codes = bankCodes (bassRows[1]);
+                lab.selectCandidate (1);
+                expect (playing (lab, codes));
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::rightKey, juce::ModifierKeys::shiftModifier, 0));
+                expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000), "exploring");
+                if (pad->getHighlights().size() > 1)
+                    click (*pad, pad->getHighlights()[1]); // the dot
+                expect (lab.inBankMode());
+                expect (playing (lab, codes), "the exact codes again");
+                expect (lab.latent() == bankZ (bassRows[1]));
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::leftKey));
+                expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000), "exploring again");
+                lab.selectCandidate (1); // the chip
+                expect (playing (lab, codes), "the chip restores them too");
+            }
+        }
+
+        beginTest ("send to surge exact then decoded");
+        {
+            auto t = open (promptJson);
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                const auto codes = bankCodes (bassRows[0]);
+                expect (playing (lab, codes));
+                juce::MemoryBlock sent;
+                lab.onPatch = [&sent] (const juce::MemoryBlock& m)
+                {
+                    sent = m;
+                    return juce::Result::ok();
+                };
+                const auto send = [&]
+                {
+                    sent.reset();
+                    for (auto* b : findAll<juce::TextButton> (lab))
+                        if (b->getButtonText() == "Send to Surge")
+                            b->onClick();
+                };
+                experimental::JointVae model;
+                juce::MemoryBlock exact;
+                expect (model.load (juce::File (bundle)).wasOk());
+                expect (model.patch (codes, exact).wasOk());
+                send();
+                expect (! sent.isEmpty() && sent == exact, "the exact preset's codes");
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey, juce::ModifierKeys::shiftModifier, 0));
+                expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000));
+                pumpUntil ([] { return false; }, 300);
+                juce::MemoryBlock decoded;
+                expect (model.patch (lab.output().codes, decoded).wasOk());
+                send();
+                expect (! sent.isEmpty() && sent == decoded && sent != exact, "the decoded patch after exploring");
+            }
+        }
+
+        beginTest ("a dropped find never leaves a progress status");
+        {
+            auto t = open (promptJson);
+            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            if (pad && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                // Overtaken by a drag (cold: the load, then the find)
+                lab.findSounds ("deep sub bass");
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                expect (pumpUntil ([&] { return lab.isPromptLoaded() && ! progress (lab.statusText()); }, 30000),
+                        lab.statusText());
+                pumpUntil ([] { return false; }, 300);
+                expect (lab.promptCandidates().empty(), "dropped");
+                // Arrives while "Replace your Synth edits?" is open
+                lab.markEdited();
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                expect (lab.isAskingToReplace());
+                lab.findSounds ("deep sub bass");
+                pumpUntil ([] { return false; }, 1500);
+                expect (lab.promptCandidates().empty() && ! progress (lab.statusText()), lab.statusText());
+                lab.answerReplace (false);
+                // Its own question answered Keep editing
+                lab.findSounds ("deep sub bass");
+                expect (pumpUntil ([&] { return lab.isAskingToReplace(); }, 30000));
+                lab.answerReplace (false);
+                expect (lab.promptCandidates().empty() && ! progress (lab.statusText()), lab.statusText());
             }
         }
 
@@ -515,13 +702,13 @@ public:
                         "the newer prompt's (Pad) results");
                 // A manual edit after a prompt drops its result
                 const auto pads = lab.promptCandidates();
-                lab.explore();
                 lab.findSounds ("deep sub bass");
                 if (auto* pad = findChild<experimental::LabPad> (lab))
                     pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
                 const auto z1 = lab.latent();
                 pumpUntil ([] { return false; }, 1500);
                 expect (lab.latent() == z1 && ! lab.inBankMode(), "the drag wins");
+                expect (! progress (lab.statusText()), lab.statusText());
                 expect (lab.promptCandidates().size() == pads.size() && lab.promptCandidates()[0].row == pads[0].row);
             }
         }
