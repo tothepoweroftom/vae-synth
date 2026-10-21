@@ -389,3 +389,147 @@
 
   Note anything that differs from the page.
 - [ ] **Step 3:** Commit.
+
+---
+
+## Follow-up: p0 prompt-to-preset (Tasks 12–15)
+
+**Spec:** `docs/superpowers/specs/2026-10-21-p0-prompt-integration.md`. That spec is binding for these tasks. Start only after Tasks 1–11 pass.
+
+**Source assets:** `/Users/thomaspower/Downloads/p0/`. These are import-only, never read at runtime.
+- `text_encoder.onnx` is 501 MB.
+- `tokenizer/` holds a RoBERTa / CLAP tokenizer.
+- `prior.onnx` has outputs `category_logits`, `mix_logits`, `mu`, `logsd`.
+- `layout.json` gives prior p0, vae j48w_b05, z 32, k 8, 9 labels, and 435/85/111 features.
+- `bank.npz` holds `z[1227,32]`, `codes[1227,631]`, `category[1227]` and `feats[631]`.
+
+Facts checked by the controller:
+- The bank's `feats` are the same **set** as our bundle's features, but in a **different order**. The bank uses schema order and starts with `character`; the bundle starts with `fx/chorus/p0`. Rows must be reordered by name.
+- The bank's numeric and categorical codes contain **NaN**.
+- The bank's bool codes are **not** 0/1. Values like 3.7e-5 appear.
+
+So bank rows are not in the decoder-output format that `StudentCodec::plan` takes. Task 12 pins their meaning.
+
+### Task 12: p0 bundle: import, bank semantics, reference fixtures
+
+**Files:**
+- Create: `tools/joint_vae/export_prompt.py`
+- Create: `tools/joint_vae/prompt_reference.py`. It is the offline reference runner, using `tokenizers`, `onnxruntime` and `numpy`.
+- Output (git-ignored): `models/prompt-p0/`, containing `prompt.json`, `text_encoder.onnx`, `tokenizer.json`, `prior.onnx`, `bank.bin`, `bank.json` and `prompt-parity.json`.
+
+**Interfaces:**
+- Produces `prompt.json`:
+  - `id`, a hash of every file.
+  - `lab_bundle_id`, the installed Lab bundle id it is valid for.
+  - `prior: "p0"` and `vae: "j48w_b05"`.
+  - `labels`.
+  - `tokenizer: {max_length, pad_id: 1, bos: 0, eos: 2, padding, truncation}`, with the values actually used, as found in step 1.
+  - `embedding: {dim: 512, l2_normalise: true}`.
+  - `bank: {rows, feats_in_bundle_order: true}`.
+- `bank.bin` holds little-endian float32 values: `z[rows,32]` followed by `codes[rows,631]`, with codes in **bundle feature order** and in **`StudentCodec::plan` input format**.
+- `bank.json` holds `category[rows]` as label indices, and `name[rows]`, written as `"<Label> · <row:04d>"`.
+- `prompt-parity.json` has ≥ 12 cases. Each gives text, token ids and mask, normalised embedding, category logits, mix weights, `mu`, the selected row ids (selection rules as in the spec) and the selected codes. Include an empty string, one longer than max_length, Unicode, Bass/Lead/Pad prompts, an unsupported category (Keys), the swaps dark/bright and short/long, and one near-tie case.
+
+- [ ] **Step 1: Pin preprocessing.**
+  - Read `tokenizer_config.json`, `special_tokens_map.json` and `tokenizer.json` to establish max length, padding and truncation, then write them into `prompt.json`.
+  - Record in the task report that this reproduces **our** interpretation, not the student's golden outputs. If the folder has golden outputs, use them.
+- [ ] **Step 2: Pin bank-code semantics.**
+  - Find how the student builds bank `codes`, in `vae/pitcher/` (`joint_vae`, `inverter/data.py:full_row`, `core/codec.py`).
+  - Write the conversion to `StudentCodec::plan` input: what NaN means (unset, so the frozen value applies, or inactive), how bools threshold, and how categorical and stepped values map.
+  - Verify it: for 20 bank rows, the plan from our converted codes run through the C++ codec must equal the student's Python codec applied to the original row. Extend `tools/joint_vae/codec_parity.py` with a `--bank` mode.
+  - If the semantics can't be pinned, stop and report BLOCKED. Don't guess.
+- [ ] **Step 3: Check compatibility.**
+  - `export_prompt.py --source ~/Downloads/p0 --lab models/joint-vae-j48w_b05 --out models/prompt-p0` fails unless the feature sets are equal, the counts are 435/85/111, the labels match in order, and `layout.vae == lab config run`.
+  - It also runs the supplied `decoder.onnx` against the Lab's `decoder.onnx` on 8 fixed (z, label) inputs, comparing after argmax and threshold. Expected: identical outputs. Report the max difference on numeric values.
+  - It never copies the supplied decoder into the Lab bundle.
+- [ ] **Step 4:** Run export and reference. Expected: `prompt-parity.json` is written, and the selection is deterministic over two runs (byte-identical).
+- [ ] **Step 5:** Commit the tools only.
+
+### Task 13: Native prompt model (`PromptModel`)
+
+**Files:**
+- Create: `source/experiments/joint_vae/PromptModel.h`, `PromptModel.cpp`
+- Modify: `source/ml/tokenizer/src/lib.rs`. Add a configurable entry point and keep the existing 256 / pad 0 / float path and its callers unchanged.
+- Test: `tests/ml/PromptModelTests.cpp`
+
+**Interfaces:**
+```cpp
+struct PromptCandidate { juce::String bundleId; int row; int category; JointLatent z; std::vector<float> codes; juce::String name; };
+class PromptModel {   // worker thread only
+public:
+    juce::Result load (const juce::File& promptJson, const JointVae& lab);   // validates against lab.layout().id; keeps previous on failure
+    juce::Result find (const juce::String& text, std::vector<PromptCandidate>& out, int& category);
+};
+```
+- Behaviour:
+  - Tokenise with int64 ids and mask.
+  - Run the text encoder and L2-normalise. Fail on a non-finite or zero-norm embedding.
+  - Run the prior.
+  - The category is the argmax over logits 0–7.
+  - Softmax the mix logits and keep weights ≥ 0.02, highest first; equal weights go by component index.
+  - For each kept mean, pick the nearest unused bank row in that category by squared Euclidean distance on the raw z; equal distances go by row index.
+  - Return at most 8 rows.
+- No bank row for the category returns a failed result with the message `This bundle has no <Label> presets`, and `out` stays empty.
+- Its thread count is bounded at 2. It gets its own worker, separate from `JointVaeWorker`, so a slow prompt never blocks pad decoding.
+
+- [ ] **Step 1: Write failing tests.**
+  - `"prompt parity"`: for each `prompt-parity.json` case, the token ids and mask are equal, the embedding, logits, weights and mu are within 1e-4, and the rows and codes are exactly equal. Skip without `VAE_PROMPT_BUNDLE`.
+  - `"no bank category"`: the Keys prompt fails with the message above.
+  - `"bad bundle keeps previous"`: a wrong `lab_bundle_id` fails and the previous model still works.
+  - `"existing tokenizer unchanged"`: the existing Prompt-tab tokenizer test vectors still pass.
+- [ ] **Step 2:** Run them. Expected: FAIL.
+- [ ] **Step 3:** Implement.
+- [ ] **Step 4:** Run them. Expected: PASS. Log cold and warm `find` latency and peak RSS in the report.
+- [ ] **Step 5:** Commit.
+
+### Task 14: Wire prompt search into the Lab
+
+**Files:**
+- Modify: `JointVaePanel.{h,cpp}` and the worker or controller from Tasks 6–9
+- Test: `tests/plugin/PluginTests.cpp`
+
+**Behaviour:** as in the spec's "User flow", "Exploration after selecting a bank preset" and "Follow-up words".
+- **Two actions in the existing prompt box.**
+  - **Find sounds** runs `PromptModel::find` on the whole text, with no adjective nudges. Mixed or ambiguous text uses Find sounds.
+  - **Nudge** uses `interpretPrompt`.
+  - Return triggers Find sounds when a p0 bundle is loaded, and Nudge otherwise.
+- **The candidate list** shows up to 8 entries, labelled `Bass · 0142`. The first one is selected.
+- **Selecting a candidate:**
+  - The Lab enters bank mode: z = bank z, the category is set, `codes` = the bank row.
+  - It runs `lab({codes})` → Lite.
+  - Send to Surge uses those codes (no decoder call).
+  - The status reads `Selected a bank preset · Lite preview`.
+- **In bank mode:**
+  - Pad and axis-slider sound edits are disabled; inspection still works.
+  - The knob pad edits a copy of the bank codes.
+  - **Explore generated variations** decodes the bank z once and returns to normal v2 dragging.
+  - Re-selecting the candidate restores its exact codes.
+- **Without a p0 bundle,** the prompt box works as in Task 9. It is labelled "word list", and no Find sounds button is shown.
+- **Stale results:**
+  - Each prompt request carries a token.
+  - A newer prompt, a manual edit, a candidate selection, Reset, a bundle change or the panel being destroyed invalidates older tokens.
+  - A late result with an invalid token is dropped.
+
+- [ ] **Step 1: Write failing tests.**
+  - `"find selects fixture row"`: the Bass parity prompt gives the expected row, its codes reach `lab()`, and the dot sits at the bank z.
+  - `"alternative restores exact codes"`.
+  - `"bank mode blocks latent edits until explore"`.
+  - `"stale prompt result dropped"`: send prompt A, then prompt B, and let A finish last. The state is B's.
+  - `"no-bank category keeps sound"`.
+  - `"editor closes mid-prompt"`.
+  - Each test skips without `VAE_PROMPT_BUNDLE`.
+- [ ] **Step 2:** Run them. Expected: FAIL.
+- [ ] **Step 3:** Implement.
+- [ ] **Step 4:** Run them. Expected: PASS, and every v2 test still passes.
+- [ ] **Step 5:** Commit.
+
+### Task 15: Install, profile, musical comparison, docs
+
+**Files:**
+- Modify: `scripts/install-models.sh`, which installs `models/prompt-p0` next to the Lab bundle when it is present.
+- Modify: `docs/JOINT-VAE-LAB.md`.
+- Create: `docs/P0-PROMPT-EVAL.md`.
+
+- [ ] **Step 1: Profile.** Hold a note in the standalone and run 20 prompts, half of them while dragging. Record cold and warm latency, peak memory and audio underruns.
+- [ ] **Step 2: Compare by ear.** Use a fixed prompt set: the contrasting pairs dark/bright bass, short/long pad and soft/sharp lead, plus 6 more. Compare p0 Find sounds against the category-only and word-list starts. Render each through Lite and Surge with the existing render path. Record coverage and failures in `docs/P0-PROMPT-EVAL.md`. If the results don't support semantic claims, label the feature "experimental" in the UI and the docs.
+- [ ] **Step 3:** Update the docs: bundle contents, export order, the two prompt actions, bank mode and its limits. Then commit.
