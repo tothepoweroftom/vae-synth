@@ -24,10 +24,20 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 
 ## Workflow: prompt, preset, pad, tweak
 
-1. **Prompt.** Type a sound ("dark reese bass") in the box under the pad. The first message picks a label from the
-   student's nouns and starts from Typical <label>; its adjectives nudge the axes. A one-line reply says what it did
-   and which words it ignored. With the p0 prompt bundle installed, the start comes from the student's text model
-   instead of the word list.
+1. **Prompt.** Type a sound ("deep sub bass") in the box under the pad. Two actions share the box, chosen by the
+   switch on its left; Return runs the chosen one:
+   - **Find sounds** (the default with the p0 prompt bundle installed) sends the whole text to the student's text
+     model and lists up to 8 real presets from its bank, like `Bass · 0142`. The first is selected. No word-list
+     adjectives are applied on top.
+   - **Word list** (the only action without p0) picks a label from the student's nouns and starts from
+     Typical <label>; its adjectives nudge the axes. The reply says what it did and which words it ignored.
+
+   **Bank mode.** A selected bank preset plays its exact stored settings (Lite preview; Send to Surge builds the
+   same codes, no decoder). The dot sits at its z. Pad, axis-slider, Z, category and word-list edits wait until you
+   press **Explore generated variations**, which decodes that z once (the model's approximation; the sound may
+   change) and returns to normal dragging. Axis assignment, preset dots and the background still work. The knob pad
+   edits a copy of the bank settings. Selecting the preset again restores them exactly. A new prompt, any Lab edit,
+   Reset or a bundle change drops a prompt result that has not arrived yet.
 2. **Preset.** The decoded point plays at once on Lite, once you have acted in the Lab (see limits).
 3. **Pad.** Drag the dot. X, Y and an optional Z are any of the five sound axes or the latent dimensions. The sound
    follows while you drag, without clicks.
@@ -96,9 +106,10 @@ ctest --test-dir build-default        # no Surge: checks the "needs a Surge buil
 ```
 
 - `VAE_JOINT_BUNDLE`: Lab bundle. Without it the real-model parity sections are skipped.
-- `VAE_PROMPT_BUNDLE`: `prompt.json` of the p0 bundle, for the prompt model parity tests.
+- `VAE_PROMPT_BUNDLE`: `prompt.json` of the p0 bundle, for the prompt model parity and Lab prompt search tests.
 - `VAE_CODEC_PARITY`: an extra codec plan file to compare the native codec with, e.g. the bank's `bank-codec-parity.json`.
 - `VAE_LAB_SCREENSHOT=<file.png>`: `vae_plugin_tests` writes a snapshot of the editor there.
+- `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab in bank mode after "deep sub bass" (needs both bundles).
 - `VAE_SYNTH_SCREENSHOT=<file.png>`: a snapshot of the Synth view after a Lab pad move.
 
 No inference, model loading or UI logic runs in the audio callback. Surge's own patch load does, once per Send to
@@ -118,6 +129,13 @@ Surge.
 - `pruning.json` for `j48w_b05` is assumed identical to `j48`'s. The student has not confirmed it, and a wrong one
   would give wrong patches silently.
 - The p0 text-encoder preprocessing is our reading of the student's code; there are no student golden outputs.
+- The p0 prior only predicts Bass, Lead and Pad, and its bank holds only those. Other sounds come back as one of
+  them or, for a category with no bank presets, as "This bundle has no <label> presets"; the sound is kept and the
+  Word list can still pick a start.
+- The p0 bundle loads in about 0.5 s after the Lab bundle and adds about 625 MB of memory. A Find takes about
+  10 ms (up to 0.6 s for very long text) on its own thread, so the pad never waits. Closing the editor during a Find
+  waits for it to finish.
+- Explore is a jump, not a faithful continuation: the decoded z can sound different from the bank preset.
 - Lab state is not saved in the host project.
 
 ## Try it

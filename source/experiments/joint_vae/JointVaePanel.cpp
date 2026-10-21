@@ -20,11 +20,12 @@ void JointVaePanel::paint (juce::Graphics&) {}
 namespace
 {
 constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kPromptRowH = 26,
-              kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13;
+              kChipRowH = 22, kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13;
 // Background menu (page bgSel, latent mode): ids 1.. in this order
 const char* const mapKinds[][2] = { { "cat", "Category guess" }, { "brightness", "Brightness" }, { "length", "Length" },
                                     { "attack", "Attack" },      { "noise", "Noise" },           { "none", "None" } };
 const juce::String dotSep (juce::CharPointer_UTF8 (" \xc2\xb7 "));
+const juce::String exploreFirst ("Explore generated variations to edit this preset with the pad or the word list");
 juce::String quoted (const juce::String& name)
 {
     return juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9c")) + name
@@ -41,9 +42,17 @@ JointVaePanel::JointVaePanel()
 {
     for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
                                                              &resetButton, &dotsButton, &sendButton, &background, &pad,
-                                                             &listView, &status, &promptBox, &promptGo })
+                                                             &listView, &status, &promptBox, &promptGo, &nudgeButton })
         addAndMakeVisible (c);
     addChildComponent (zSlider);
+    addChildComponent (findButton);
+    addChildComponent (exploreButton);
+    for (size_t i = 0; i < chips.size(); ++i)
+    {
+        addChildComponent (chips[i]);
+        chips[i].onClick = [this, i] { selectCandidate ((int) i); };
+        chips[i].setTooltip ("A preset from the prompt bundle's bank; selecting it plays its exact settings");
+    }
     latentButton.setToggleState (true, juce::dontSendNotification);
     knobButton.setEnabled (false);
     latentButton.onClick = [this]
@@ -77,10 +86,29 @@ JointVaePanel::JointVaePanel()
     promptBox.setTextToShowWhenEmpty ("Describe a sound: dark bass, then brighter", LF::quiet());
     promptBox.setSelectAllWhenFocused (true);
     promptBox.onReturnKey = promptGo.onClick = [this] { submitPrompt (promptBox.getText()); };
-    promptGo.setTooltip ("Apply the prompt");
+    for (auto* b : { &findButton, &nudgeButton })
+    {
+        b->setRadioGroupId (1);
+        b->setClickingTogglesState (true);
+        b->onClick = [this] { updatePromptUi(); };
+    }
+    findButton.setTooltip ("Learned prompt search: suggests real presets from the prompt bundle");
+    nudgeButton.setTooltip ("Word list: picks a starting point and nudges it with words like darker or longer");
+    exploreButton.setTooltip ("Switch to the model's approximation of this preset, so the pad and the word list can "
+                              "edit it. The sound may change; select the preset again to get it back.");
+    exploreButton.onClick = [this] { explore(); };
+    // Installed beside the Lab bundle by scripts/install-models.sh; loads after each Lab bundle
+    promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
+    updatePromptUi();
 
     pad.moved = [this] (juce::Point<float> p)
     {
+        if (bankMode && ! knobMode)
+        {
+            setStatus (exploreFirst);
+            refresh(); // the dot stays on the bank preset
+            return;
+        }
         edit (
             [this, p]
             {
@@ -94,6 +122,11 @@ JointVaePanel::JointVaePanel()
     };
     zSlider.onValueChange = [this]
     {
+        if (bankMode && ! knobMode)
+        {
+            refresh();
+            return;
+        }
         edit (
             [this, v = (float) zSlider.getValue()]
             {
@@ -107,6 +140,8 @@ JointVaePanel::JointVaePanel()
     pad.tapped = [this] (juce::Point<float> p)
     {
         // A tap's mouse-down already moved (and may be asking): the dot jump follows that move
+        if (bankMode && ! knobMode)
+            return;
         if (pendingEdit)
             pendingEdit = [this, p, move = std::move (pendingEdit)]
             {
@@ -119,6 +154,12 @@ JointVaePanel::JointVaePanel()
     list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
     list.slid = [this] (const LatentAxis& slid, float p)
     {
+        if (bankMode)
+        {
+            setStatus (exploreFirst);
+            refresh();
+            return;
+        }
         edit (
             [this, id = slid.id, p]
             {
@@ -184,7 +225,8 @@ JointVaePanel::JointVaePanel()
         if (! outputValid || current.patch.isEmpty())
             return;
         const auto r = onPatch ? onPatch (current.patch) : juce::Result::fail ("Surge playback not connected");
-        setStatus (r.wasOk() ? "Playing the decoded point on Surge; move the pad to return to Lite."
+        setStatus (r.wasOk() ? (bankMode ? "Playing the bank preset on Surge; select it again to return to Lite."
+                                         : "Playing the decoded point on Surge; move the pad to return to Lite.")
                              : r.getErrorMessage(),
                    r.failed());
     };
@@ -210,7 +252,8 @@ void JointVaePanel::markEdited()
 void JointVaePanel::edit (std::function<void()> change)
 {
     if (pendingEdit)
-        return; // asking: further Lab edits are ignored
+        return;    // asking: further Lab edits are ignored
+    ++promptToken; // a Lab edit makes any prompt result still on its way obsolete
     if (! edited)
     {
         change();
@@ -330,14 +373,15 @@ void JointVaePanel::setKnobMode (bool knob)
     refresh();
     updateDots();
     scheduleMap();
-    resized();
+    updatePromptUi();
     if (! knob)
-        decode(); // back to the sound of the kept z
+        decode(); // back to the sound of the kept z (or the bank preset's codes)
 }
 
 void JointVaePanel::loadBundle (const juce::File& file)
 {
     setStatus ("Loading and checking joint VAE...");
+    ++promptToken;
     worker.load (file,
                  [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
                  {
@@ -362,6 +406,11 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.knobAxes[i] = i < self.kg->groups.size() ? self.kg->groups[i].name : juce::String();
                      self.current = std::move (out);
                      self.outputValid = false;
+                     // The prompt bundle is checked against this Lab bundle again
+                     self.promptReady = false;
+                     self.candidates.clear();
+                     self.bankMode = false;
+                     self.selected = -1;
                      const auto& all = self.xy->axes;
                      const auto firstDim =
                          std::find_if (all.begin(), all.end(), [] (const LatentAxis& a) { return a.kind == "dim"; });
@@ -384,7 +433,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
-                     self.resized();
+                     self.loadPromptBundle (self.promptFile);
                  });
 }
 
@@ -411,6 +460,8 @@ void JointVaePanel::loadBase (int id)
     category.setSelectedId (label + 1, juce::dontSendNotification);
     lockedTail.reset();
     lockButton.setToggleState (false, juce::dontSendNotification);
+    bankMode = false; // a new start leaves the bank preset
+    updatePromptUi();
     setStatus (message);
     syncPositions();
     refresh();
@@ -418,16 +469,160 @@ void JointVaePanel::loadBase (int id)
     decode();
 }
 
+void JointVaePanel::loadPromptBundle (const juce::File& file)
+{
+    promptFile = file;
+    ++promptToken;
+    promptReady = false;
+    candidates.clear();
+    selected = -1;
+    updatePromptUi();
+    if (! xy || ! file.existsAsFile())
+        return; // loads after the Lab bundle, which it is checked against
+    prompter.load (file, current.layout,
+                   [safe = juce::Component::SafePointer (this)] (juce::Result r)
+                   {
+                       if (! safe)
+                           return;
+                       safe->promptReady = r.wasOk();
+                       if (r.wasOk())
+                           safe->findButton.setToggleState (true, juce::dontSendNotification);
+                       else
+                           safe->setStatus ("Prompt search is off, using the word list: " + r.getErrorMessage(), true);
+                       safe->updatePromptUi();
+                   });
+}
+
+void JointVaePanel::updatePromptUi()
+{
+    findButton.setVisible (promptReady);
+    if (! promptReady)
+        nudgeButton.setToggleState (true, juce::dontSendNotification);
+    const bool find = promptReady && findButton.getToggleState();
+    promptBox.setTextToShowWhenEmpty (
+        find ? "Find sounds: describe one, like deep sub bass" : "Word list: dark bass, then brighter", LF::quiet());
+    if (! knobMode)
+        promptGo.setTooltip (find ? "Find presets for this description" : "Apply the word list");
+    exploreButton.setVisible (bankMode);
+    for (size_t i = 0; i < chips.size(); ++i)
+    {
+        chips[i].setVisible (i < candidates.size());
+        if (i < candidates.size())
+            chips[i].setButtonText (candidates[i].name);
+        chips[i].setToggleState (bankMode && (int) i == selected, juce::dontSendNotification);
+    }
+    // Bank mode: latent sound edits wait for Explore; the knob pad edits a copy of the codes
+    category.setEnabled (xy != nullptr && ! knobMode && ! bankMode);
+    pad.setEnabled (xy != nullptr && (! bankMode || knobMode));
+    zSlider.setEnabled (xy != nullptr && (! bankMode || knobMode));
+    resized();
+}
+
 void JointVaePanel::submitPrompt (const juce::String& text)
+{
+    if (promptReady && findButton.getToggleState())
+        findSounds (text);
+    else
+        nudge (text);
+}
+
+void JointVaePanel::findSounds (const juce::String& text)
+{
+    if (! xy || ! promptReady || text.trim().isEmpty())
+        return;
+    const auto token = ++promptToken;
+    setStatus ("Finding sounds...");
+    // The whole text goes to the learned model; no word-list nudges follow
+    prompter.find (
+        text,
+        [safe = juce::Component::SafePointer (this), token] (juce::Result r, int, std::vector<PromptCandidate> found)
+        {
+            if (! safe || token != safe->promptToken)
+                return; // a newer prompt, edit, selection, reset or bundle came first
+            auto& self = *safe;
+            if (r.failed() || found.empty())
+            {
+                // The playing sound is kept; no automatic word-list fallback
+                self.setStatus ((r.failed() ? r.getErrorMessage() : juce::String ("No presets found")) + dotSep
+                                    + "the Word list can still pick a starting point",
+                                true);
+                return;
+            }
+            self.edit (
+                [&self, rows = std::move (found)]
+                {
+                    self.candidates = rows;
+                    self.applyCandidate (0);
+                });
+        });
+}
+
+void JointVaePanel::selectCandidate (int i)
+{
+    if (i >= 0 && (size_t) i < candidates.size())
+        edit ([this, i] { applyCandidate (i); });
+}
+
+void JointVaePanel::applyCandidate (int i)
+{
+    // One state change: z, category and the row's exact codes (spec "User flow" 4)
+    const auto& c = candidates[(size_t) i];
+    userActed = true;
+    selected = i;
+    bankMode = true;
+    bankCodes = c.codes;
+    z = c.z;
+    category.setSelectedId (juce::jlimit (0, 8, c.category) + 1, juce::dontSendNotification);
+    lockedTail.reset();
+    lockButton.setToggleState (false, juce::dontSendNotification);
+    setStatus ("Selected a bank preset" + dotSep + "Lite preview");
+    if (knobMode)
+        setKnobMode (false); // decodes: the bank codes
+    else
+    {
+        updatePromptUi();
+        syncPositions();
+        refresh();
+        updateDots();
+        decode();
+    }
+}
+
+void JointVaePanel::explore()
+{
+    if (! bankMode)
+        return;
+    edit (
+        [this]
+        {
+            userActed = true;
+            bankMode = false;
+            setStatus ("Exploring generated variations: the model's approximation of the preset");
+            if (knobMode)
+                setKnobMode (false); // decodes the bank z
+            else
+            {
+                updatePromptUi();
+                decode();
+            }
+        });
+}
+
+void JointVaePanel::nudge (const juce::String& text)
 {
     if (! xy)
         return;
+    if (bankMode)
+    {
+        setStatus (exploreFirst);
+        return;
+    }
     const auto reply = interpretPrompt (
         text, userActed,
         *xy); // the auto-loaded base is not a chosen start (R18); the one call the text -> z search replaces
     if (! reply.start && reply.nudges.empty())
     {
-        setStatus (reply.message);
+        setStatus ("Word list" + dotSep + reply.message);
         return;
     }
     edit (
@@ -456,7 +651,7 @@ void JointVaePanel::submitPrompt (const juce::String& text)
                     z = constrain (z, held, targets);
                     syncPositions();
                 }
-            setStatus (reply.message);
+            setStatus ("Word list" + dotSep + reply.message);
             userActed = true; // R14: applying a prompt is a user action
             refresh();
             updateDots();
@@ -682,6 +877,8 @@ void JointVaePanel::decode()
     request.lockedTail = lockedTail;
     if (knobMode)
         request.codes = knobCodes;
+    else if (bankMode)
+        request.codes = bankCodes; // no decoder: the stored preset plays exactly
     worker.lab (
         std::move (request),
         [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
@@ -887,12 +1084,31 @@ void JointVaePanel::resized()
         presetArea = strip;
     }
     left.removeFromBottom (kGap);
-    promptArea = left.removeFromBottom (kPromptH); // one prompt line, then the status line
+    // One prompt line, the candidates when there are any, then the status line
+    const bool chipRow = ! candidates.empty() || bankMode;
+    promptArea = left.removeFromBottom (kPromptH + (chipRow ? kChipRowH + 4 : 0));
     auto promptRow = promptArea.removeFromTop (kPromptRowH);
+    if (findButton.isVisible())
+        findButton.setBounds (promptRow.removeFromLeft (88));
+    nudgeButton.setBounds (promptRow.removeFromLeft (76));
+    promptRow.removeFromLeft (6);
     promptGo.setBounds (promptRow.removeFromRight (kPromptRowH + 8));
     promptRow.removeFromRight (4);
     promptBox.setBounds (promptRow);
     promptArea.removeFromTop (4);
+    if (chipRow)
+    {
+        auto row = promptArea.removeFromTop (kChipRowH);
+        if (bankMode)
+        {
+            exploreButton.setBounds (row.removeFromRight (190));
+            row.removeFromRight (6);
+        }
+        const auto w = juce::jmin (88, candidates.empty() ? 0 : row.getWidth() / (int) candidates.size());
+        for (size_t i = 0; i < candidates.size() && i < chips.size(); ++i)
+            chips[i].setBounds (row.removeFromLeft (w).withTrimmedRight (4));
+        promptArea.removeFromTop (4);
+    }
     status.setBounds (promptArea);
     left.removeFromBottom (kGap);
     const bool hasZ = hasSlot (2);

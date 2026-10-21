@@ -2,6 +2,7 @@
 #include "JointVae.h"
 #include "LabAxisList.h"
 #include "LabPad.h"
+#include "PromptModel.h"
 #include "PromptWords.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -32,8 +33,20 @@ public:
     /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
     std::function<void()> onMapShown;
     bool isMapRunning() const { return worker.mapRunning(); }
-    /** The prompt box's submit handler (also driven by tests, which read the state back below). */
+    /** The prompt box's submit handler: Find sounds with a prompt bundle loaded and Find chosen, else Nudge
+        (also driven by tests, which read the state back below). */
     void submitPrompt (const juce::String&);
+    void findSounds (const juce::String&); // the learned prompt search (p0); results come back async
+    void nudge (const juce::String&);      // the word list (interpretPrompt)
+    /** The p0 prompt bundle loads after each Lab bundle; the installed one by default. */
+    void loadPromptBundle (const juce::File&);
+    bool isPromptReady() const { return promptReady; }
+    const std::vector<PromptCandidate>& promptCandidates() const { return candidates; }
+    int selectedCandidate() const { return selected; }
+    void selectCandidate (int);
+    bool inBankMode() const { return bankMode; }
+    /** Leaves bank mode: decodes the bank z once, then the pad decodes as usual. */
+    void explore();
     juce::String statusText() const { return status.getText(); }
     const XyPadData* padData() const { return xy.get(); }
     const JointLatent& latent() const { return z; }
@@ -63,8 +76,19 @@ private:
     void fillBackground();
     void edit (std::function<void()> change); // a Lab sound edit: asks first while the sound is edited
     void resolveReplace (bool replace);
+    void applyCandidate (int);
+    void showCandidates();
+    void updatePromptUi();
 
     JointVaeWorker worker;
+    PromptWorker prompter;
+    juce::File promptFile;
+    bool promptReady = false;
+    uint64_t promptToken = 0; // a prompt result applies only while this is unchanged
+    std::vector<PromptCandidate> candidates;
+    int selected = -1;
+    bool bankMode = false;        // a bank preset plays: latent sound edits wait for Explore
+    std::vector<float> bankCodes; // the selected row's codes, exactly as stored (NaN = inactive)
     std::shared_ptr<const XyPadData> xy;
     std::shared_ptr<const KnobGroups> kg;
     JointVaeWorker::Output current;
@@ -96,6 +120,9 @@ private:
     juce::Label status;
     juce::TextEditor promptBox;
     juce::TextButton promptGo { juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x92")) };
+    juce::TextButton findButton { "Find sounds" }, nudgeButton { "Word list" },
+        exploreButton { "Explore generated variations" };
+    std::array<juce::TextButton, 8> chips;
     juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea, specArea, measureArea, presetArea,
         guessArea;
     juce::Image spec; // frames x 64 expected spectrogram of `current`

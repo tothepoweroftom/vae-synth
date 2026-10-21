@@ -22,7 +22,8 @@ class PromptModel
 public:
     PromptModel();
     ~PromptModel();
-    juce::Result load (const juce::File& promptJson, const JointVae& lab); // validates against lab.layout().id
+    juce::Result load (const juce::File& promptJson, const JointLayout& lab); // validates against lab.id and names
+    juce::Result load (const juce::File& promptJson, const JointVae& lab) { return load (promptJson, lab.layout()); }
     juce::Result find (const juce::String& text, std::vector<PromptCandidate>& out, int& category);
 
     /** Means with weight >= minWeight, highest first (ties: component index); each takes the nearest unused row of
@@ -44,5 +45,26 @@ private:
                        Trace* trace);
     struct Model;
     std::unique_ptr<Model> model;
+};
+
+// The Lab's prompt search on its own thread (ruling R17), so a slow prompt never delays pad decoding.
+// Latest request wins; callbacks run on the message thread.
+class PromptWorker
+{
+public:
+    using Found = std::function<void (juce::Result, int category, std::vector<PromptCandidate>)>;
+    ~PromptWorker();
+    /** A newer load replaces a queued one; a failed load keeps the previous model. */
+    void load (juce::File promptJson, JointLayout lab, std::function<void (juce::Result)>);
+    void find (juce::String text, Found);
+
+private:
+    struct State
+    {
+        PromptModel model;
+        std::atomic<uint64_t> request { 0 }, loads { 0 };
+    };
+    std::shared_ptr<State> state = std::make_shared<State>();
+    juce::ThreadPool pool { juce::ThreadPoolOptions {}.withThreadName ("vae-prompt").withNumberOfThreads (1) };
 };
 } // namespace vae::experimental

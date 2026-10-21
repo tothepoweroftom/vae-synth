@@ -41,6 +41,21 @@ void settleModel (PluginProcessor& p)
     pumpUntil ([&] { return done; });
 }
 
+/** Every descendant of type T, depth first. */
+template <typename T>
+std::vector<T*> findAll (juce::Component& parent)
+{
+    std::vector<T*> all;
+    for (auto* child : parent.getChildren())
+    {
+        if (auto* hit = dynamic_cast<T*> (child))
+            all.push_back (hit);
+        for (auto* hit : findAll<T> (*child))
+            all.push_back (hit);
+    }
+    return all;
+}
+
 juce::MemoryBlock stateOf (PluginProcessor& p)
 {
     juce::MemoryBlock mb;
@@ -246,6 +261,296 @@ public:
         : juce::UnitTest ("Plug-in processor", "vae_plugin")
     {
     }
+
+#if VAE_WITH_SURGE
+    /** Task 14: p0 prompt search in the Lab. Needs VAE_JOINT_BUNDLE and VAE_PROMPT_BUNDLE. */
+    void runPromptTests()
+    {
+        const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");
+        const auto promptJson = juce::File (juce::SystemStats::getEnvironmentVariable ("VAE_PROMPT_BUNDLE", ""));
+        if (bundle.isEmpty() || ! promptJson.existsAsFile())
+        {
+            logMessage ("Set VAE_JOINT_BUNDLE and VAE_PROMPT_BUNDLE to run the prompt search tests.");
+            return;
+        }
+        // The fixture's rows; z and codes from bank.bin, the stored source of truth
+        const auto meta = juce::JSON::parse (promptJson);
+        const int rows = meta["bank"]["rows"], numCodes = meta["bank"]["codes"];
+        juce::MemoryBlock bank;
+        promptJson.getSiblingFile ("bank.bin").loadFileAsData (bank);
+        const auto* bankF = static_cast<const float*> (bank.getData());
+        const auto bankZ = [&] (int row)
+        {
+            experimental::JointLatent z {};
+            std::copy_n (bankF + row * 32, 32, z.begin());
+            return z;
+        };
+        const auto bankCodes = [&] (int row)
+        {
+            const auto* c = bankF + rows * 32 + row * numCodes;
+            return std::vector<float> (c, c + numCodes);
+        };
+        const auto same = [] (const std::vector<float>& a, const std::vector<float>& b)
+        {
+            if (a.size() != b.size())
+                return false;
+            for (size_t i = 0; i < a.size(); ++i)
+                if (std::isnan (a[i]) ? ! std::isnan (b[i]) : ! juce::exactlyEqual (a[i], b[i]))
+                    return false;
+            return true;
+        };
+        std::vector<int> bassRows;
+        const auto parity = juce::JSON::parse (promptJson.getSiblingFile ("prompt-parity.json"));
+        for (const auto& c : *parity["cases"].getArray())
+            if (c["name"].toString() == "bass")
+                for (const auto& r : *c["rows"].getArray())
+                    bassRows.push_back ((int) r);
+        expect (bassRows.size() > 2, "fixture bass rows");
+        if (bassRows.size() <= 2)
+            return;
+
+        struct Lab
+        {
+            std::unique_ptr<PluginProcessor> processor = std::make_unique<PluginProcessor>();
+            std::unique_ptr<juce::AudioProcessorEditor> editor;
+            experimental::JointVaePanel* lab = nullptr;
+            int played = 0;
+        };
+        // A panel with both bundles loaded; `prompt` replaces the fixture prompt bundle
+        const auto open = [&] (const juce::File& prompt)
+        {
+            auto t = std::make_unique<Lab>();
+            settleModel (*t->processor);
+            t->editor.reset (t->processor->createEditor());
+            t->lab = findChild<experimental::JointVaePanel> (*t->editor);
+            expect (t->lab != nullptr);
+            if (t->lab == nullptr)
+                return t;
+            t->lab->onLite = [p = t.get()] (const schema::Snapshot&) { ++p->played; };
+            bool shown = false;
+            t->lab->onMapShown = [&shown] { shown = true; };
+            t->lab->loadBundle (juce::File (bundle));
+            expect (pumpUntil ([&] { return shown; }, 60000), "Lab bundle loaded");
+            t->lab->onMapShown = nullptr;
+            t->lab->loadPromptBundle (prompt);
+            expect (pumpUntil ([&] { return t->lab->isPromptReady(); }, 60000), "prompt bundle loaded");
+            return t;
+        };
+        const auto found = [] (experimental::JointVaePanel& lab)
+        { return pumpUntil ([&] { return ! lab.promptCandidates().empty(); }, 30000); };
+        // The lab() result for the current request has arrived when the output codes match
+        const auto playing = [&] (experimental::JointVaePanel& lab, const std::vector<float>& codes)
+        { return pumpUntil ([&] { return same (lab.output().codes, codes); }, 30000); };
+
+        beginTest ("find selects fixture row");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                const auto& c = lab.promptCandidates();
+                expectEquals ((int) c.size(), (int) bassRows.size());
+                for (size_t i = 0; i < c.size() && i < bassRows.size(); ++i)
+                    expectEquals (c[i].row, bassRows[i]);
+                expectEquals (lab.selectedCandidate(), 0);
+                expect (lab.inBankMode());
+                expect (playing (lab, bankCodes (bassRows[0])), "the bank row's codes reach lab()");
+                expect (pumpUntil ([&] { return t->played > 0; }, 5000), "it plays on Lite");
+                expect (lab.latent() == bankZ (bassRows[0]), "the dot sits at the bank z");
+                if (auto* pad = findChild<experimental::LabPad> (lab); pad && lab.padData())
+                {
+                    const auto* x = lab.padData()->find ("s:brightness");
+                    expect (x != nullptr && std::abs (pad->getDot().x - axisPosition (*x, lab.latent())) < 1e-4f);
+                }
+                expectEquals (lab.statusText(),
+                              juce::String (juce::CharPointer_UTF8 ("Selected a bank preset \xc2\xb7 Lite preview")));
+                expect (c[0].name.startsWith ("Bass"), c[0].name);
+                if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_BANK_SCREENSHOT", "");
+                    shot.isNotEmpty())
+                {
+                    for (auto* child : t->editor->getChildren())
+                        if (auto* b = dynamic_cast<juce::TextButton*> (child); b && b->getButtonText() == "VAE Lab")
+                            b->onClick();
+                    pumpUntil ([] { return false; }, 500);
+                    if (auto stream = juce::File (shot).createOutputStream())
+                        juce::PNGImageFormat().writeImageToStream (
+                            t->editor->createComponentSnapshot (t->editor->getLocalBounds()), *stream);
+                }
+            }
+        }
+
+        beginTest ("alternative restores exact codes");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                lab.selectCandidate (2);
+                expect (playing (lab, bankCodes (bassRows[2])), "row 2's codes");
+                expect (lab.latent() == bankZ (bassRows[2]));
+                // Send to Surge gets the codec's patch of those codes: no decoder
+                juce::MemoryBlock sent;
+                lab.onPatch = [&sent] (const juce::MemoryBlock& m)
+                {
+                    sent = m;
+                    return juce::Result::ok();
+                };
+                for (auto* b : findAll<juce::TextButton> (lab))
+                    if (b->getButtonText() == "Send to Surge")
+                        b->onClick();
+                experimental::JointVae model;
+                juce::MemoryBlock expected;
+                expect (model.load (juce::File (bundle)).wasOk());
+                expect (model.patch (bankCodes (bassRows[2]), expected).wasOk());
+                expect (! sent.isEmpty() && sent == expected, "Send to Surge plays the bank codes");
+                // A knob-pad edit changes a copy; selecting the row again restores it exactly
+                auto* knob = [&]
+                {
+                    for (auto* b : findAll<juce::TextButton> (lab))
+                        if (b->getButtonText() == "Knob pad")
+                            return b;
+                    return (juce::TextButton*) nullptr;
+                }();
+                auto* pad = findChild<experimental::LabPad> (lab);
+                expect (knob != nullptr && pad != nullptr);
+                if (knob && pad)
+                {
+                    knob->onClick();
+                    for (int i = 0; i < 10; ++i)
+                        pad->keyPressed (
+                            juce::KeyPress (juce::KeyPress::rightKey, juce::ModifierKeys::shiftModifier, 0));
+                    expect (pumpUntil ([&] { return ! same (lab.output().codes, bankCodes (bassRows[2])); }, 30000),
+                            "the knob pad edits the codes");
+                    lab.selectCandidate (1);
+                    lab.selectCandidate (2);
+                    expect (playing (lab, bankCodes (bassRows[2])), "row 2 restored exactly");
+                    pumpUntil ([] { return false; }, 300);
+                    expect (same (lab.output().codes, bankCodes (bassRows[2])), "and stays");
+                    expect (lab.inBankMode());
+                }
+            }
+        }
+
+        beginTest ("bank mode blocks latent edits until explore");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "candidates");
+                const auto codes = bankCodes (bassRows[0]);
+                expect (playing (lab, codes));
+                const auto z0 = lab.latent();
+                auto* pad = findChild<experimental::LabPad> (lab);
+                expect (pad != nullptr);
+                if (pad)
+                {
+                    pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                    lab.assignAxis (0, "s:attack");
+                    lab.nudge ("brighter");
+                    pumpUntil ([] { return false; }, 500);
+                    expect (lab.latent() == z0, "no latent edit in bank mode");
+                    expect (same (lab.output().codes, codes), "the bank codes keep playing");
+                    expect (lab.statusText().contains ("Explore"), lab.statusText());
+                    expect (lab.inBankMode());
+                    lab.explore();
+                    expect (! lab.inBankMode());
+                    expect (pumpUntil ([&] { return ! same (lab.output().codes, codes); }, 30000),
+                            "explore decodes the bank z");
+                    expect (lab.latent() == z0, "from the bank z");
+                    pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                    expect (lab.latent() != z0, "then the pad edits as usual");
+                }
+            }
+        }
+
+        beginTest ("stale prompt result dropped");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");
+                lab.findSounds ("lush ambient pad");
+                expect (found (lab), "candidates");
+                pumpUntil ([] { return false; }, 1500);
+                expect (! lab.promptCandidates().empty() && lab.promptCandidates()[0].category == 2,
+                        "the newer prompt's (Pad) results");
+                // A manual edit after a prompt drops its result
+                const auto pads = lab.promptCandidates();
+                lab.explore();
+                lab.findSounds ("deep sub bass");
+                if (auto* pad = findChild<experimental::LabPad> (lab))
+                    pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                const auto z1 = lab.latent();
+                pumpUntil ([] { return false; }, 1500);
+                expect (lab.latent() == z1 && ! lab.inBankMode(), "the drag wins");
+                expect (lab.promptCandidates().size() == pads.size() && lab.promptCandidates()[0].row == pads[0].row);
+            }
+        }
+
+        beginTest ("no-bank category keeps sound");
+        {
+            // The fixture bundle with every Bass row relabelled Keys: "deep sub bass" (Bass) has no bank rows
+            const auto dir = juce::File::createTempFile ("vae_prompt_nobank");
+            dir.createDirectory();
+            for (auto name : { "text_encoder.onnx", "prior.onnx", "tokenizer.json", "bank.bin", "prompt.json" })
+                expect (promptJson.getSiblingFile (name).createSymbolicLink (dir.getChildFile (name), true));
+            auto bankJson = juce::JSON::parse (promptJson.getSiblingFile ("bank.json"));
+            if (auto* cats = bankJson["category"].getArray())
+                for (auto& c : *cats)
+                    if ((int) c == 0)
+                        c = 3;
+            expect (dir.getChildFile ("bank.json").replaceWithText (juce::JSON::toString (bankJson)));
+            auto t = open (dir.getChildFile ("prompt.json"));
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.nudge ("pad"); // a chosen start, so something plays
+                expect (pumpUntil ([&] { return t->played > 0; }, 30000));
+                pumpUntil ([] { return false; }, 300);
+                const auto z0 = lab.latent();
+                const auto codes = lab.output().codes;
+                const auto played = t->played;
+                lab.findSounds ("deep sub bass");
+                expect (pumpUntil ([&] { return lab.statusText().contains ("no Bass presets"); }, 30000),
+                        lab.statusText());
+                pumpUntil ([] { return false; }, 300);
+                expect (lab.latent() == z0 && same (lab.output().codes, codes), "the sound is kept");
+                expectEquals (t->played, played);
+                expect (lab.promptCandidates().empty() && ! lab.inBankMode());
+                expect (lab.statusText().contains ("Word list"), lab.statusText());
+            }
+            t.reset();
+            dir.deleteRecursively();
+        }
+
+        beginTest ("editor closes mid-prompt");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                const auto before = t->played;
+                juce::String longText;
+                for (int i = 0; i < 200; ++i)
+                    longText << "warm evolving analog pad ";
+                t->lab->findSounds (longText);
+                pumpUntil ([] { return false; }, 50); // the job is running
+                const auto t0 = juce::Time::getMillisecondCounter();
+                t->editor.reset();
+                logMessage ("closing mid-prompt took " + juce::String (juce::Time::getMillisecondCounter() - t0)
+                            + " ms");
+                pumpUntil ([] { return false; }, 1000);
+                expectEquals (t->played, before); // nothing reached the deleted panel
+            }
+        }
+    }
+#endif
 
     void runTest() override
     {
@@ -732,16 +1037,16 @@ public:
                     const auto typical = axisPosition (*brightness, xy->typical.at ("Bass"));
                     // "zorp" has nothing usable: no change, no sound
                     const auto z0 = lab->latent();
-                    lab->submitPrompt ("zorp");
+                    lab->nudge ("zorp");
                     pumpUntil ([] { return false; }, 300);
                     expect (lab->latent() == z0);
                     expect (lab->statusText().contains ("Nothing to change"), lab->statusText());
                     expectEquals (played, 0);
-                    lab->submitPrompt ("dark bass");
+                    lab->nudge ("dark bass");
                     expectEquals (category->getText(), juce::String ("Bass"));
                     expect (lab->statusText().contains ("Bass"), lab->statusText());
                     expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical - 0.1f, 1e-3f);
-                    lab->submitPrompt ("brighter");
+                    lab->nudge ("brighter");
                     expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical, 1e-3f);
                     expect (pumpUntil ([&] { return played > 0; }, 30000), "a prompt plays");
                 }
@@ -793,7 +1098,7 @@ public:
             run (
                 [&] (experimental::JointVaePanel& lab)
                 {
-                    lab.submitPrompt ("something dark");
+                    lab.nudge ("something dark");
                     expect (unknown (lab), "category Unknown");
                     expect (lab.statusText().contains ("no sound type found"), lab.statusText());
                     darkPos = bright (lab);
@@ -801,7 +1106,7 @@ public:
             run (
                 [&] (experimental::JointVaePanel& lab)
                 {
-                    lab.submitPrompt ("brighter");
+                    lab.nudge ("brighter");
                     expect (unknown (lab), "category Unknown");
                     expect (lab.statusText().contains ("no sound type found"), lab.statusText());
                     brightPos = bright (lab);
@@ -813,7 +1118,7 @@ public:
                     if (auto* pad = findChild<experimental::LabPad> (lab))
                         pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
                     movedBefore = bright (lab);
-                    lab.submitPrompt ("brighter");
+                    lab.nudge ("brighter");
                     expect (! lab.statusText().contains ("no sound type found"), lab.statusText());
                     expectWithinAbsoluteError (bright (lab), movedBefore + 0.1f, 1e-3f);
                 });
@@ -861,6 +1166,7 @@ public:
         }
         else
             logMessage ("Set VAE_JOINT_BUNDLE to run \"editor closes mid-map\".");
+        runPromptTests();
 #else
         logMessage ("VAE Lab bundle tests (\"editor closes mid-map\") need a Surge build.");
 #endif

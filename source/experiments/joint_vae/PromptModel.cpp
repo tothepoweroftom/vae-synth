@@ -51,7 +51,7 @@ struct PromptModel::Model
 PromptModel::PromptModel() = default;
 PromptModel::~PromptModel() = default;
 
-juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
+juce::Result PromptModel::load (const juce::File& file, const JointLayout& lab)
 {
     auto fail = [] (const juce::String& m) { return juce::Result::fail ("Prompt bundle: " + m); };
     juce::var meta;
@@ -60,9 +60,9 @@ juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
         || (int) meta["version"] != 1)
         return fail ("select a pitcher.prompt version 1 prompt.json");
     const auto labId = meta["lab_bundle_id"].toString();
-    if (labId != lab.layout().id)
-        return fail ("made for Lab bundle " + labId + ", but "
-                     + (lab.layout().id.isEmpty() ? juce::String ("none") : lab.layout().id) + " is loaded");
+    if (labId != lab.id)
+        return fail ("made for Lab bundle " + labId + ", but " + (lab.id.isEmpty() ? juce::String ("none") : lab.id)
+                     + " is loaded");
 
     auto m = std::make_unique<Model>();
     m->id = meta["id"].toString();
@@ -72,7 +72,7 @@ juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
         return fail ("prompt.json needs an id and \"features\" and \"labels\" arrays");
     for (const auto& f : *features)
         m->features.add (f.toString());
-    if (m->features != lab.layout().names)
+    if (m->features != lab.names)
         return fail ("feature order differs from the Lab bundle");
     for (const auto& l : *labels)
         m->labels.add (l.toString());
@@ -252,5 +252,53 @@ std::vector<int> PromptModel::select (std::span<const float> weights, std::span<
         rows.push_back (nearest);
     }
     return rows;
+}
+
+PromptWorker::~PromptWorker()
+{
+    ++state->request;
+    ++state->loads;
+    pool.removeAllJobs (true, -1); // shortcut: waits for a running inference (<= ~0.6 s); ONNX runs cannot be cut short
+}
+
+void PromptWorker::load (juce::File file, JointLayout lab, std::function<void (juce::Result)> callback)
+{
+    auto shared = state;
+    ++shared->request; // results from the previous bundle are obsolete
+    const auto id = ++shared->loads;
+    pool.addJob (
+        [shared, id, file, lab = std::move (lab), completion = std::move (callback)]
+        {
+            if (id != shared->loads.load())
+                return;
+            const auto result = shared->model.load (file, lab);
+            juce::MessageManager::callAsync (
+                [shared, id, result, completion]
+                {
+                    if (id == shared->loads.load() && completion)
+                        completion (result);
+                });
+        });
+}
+
+void PromptWorker::find (juce::String text, Found callback)
+{
+    auto shared = state;
+    const auto id = ++shared->request;
+    pool.addJob (
+        [shared, id, text, completion = std::move (callback)]
+        {
+            if (id != shared->request.load())
+                return;
+            std::vector<PromptCandidate> found;
+            int category = -1;
+            const auto result = shared->model.find (text, found, category);
+            juce::MessageManager::callAsync (
+                [shared, id, result, category, found = std::move (found), completion]
+                {
+                    if (id == shared->request.load() && completion)
+                        completion (result, category, found);
+                });
+        });
 }
 } // namespace vae::experimental

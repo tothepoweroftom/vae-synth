@@ -513,8 +513,9 @@ void JointVaeWorker::lab (LabRequest request, Callback cb)
             out.latent = req.z;
             if (req.codes)
             {
+                // NaN = inactive (bank presets), as the codec reads it
                 if (req.codes->size() != n
-                    || ! std::all_of (req.codes->begin(), req.codes->end(), [] (float v) { return std::isfinite (v); }))
+                    || std::any_of (req.codes->begin(), req.codes->end(), [] (float v) { return std::isinf (v); }))
                     return juce::Result::fail ("Codes do not match the bundle layout");
                 out.codes = *req.codes;
             }
