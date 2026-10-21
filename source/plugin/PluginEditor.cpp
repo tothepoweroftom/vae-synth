@@ -225,6 +225,29 @@ void XYPad::mouseDrag (const juce::MouseEvent& e)
 }
 
 //==============================================================================
+void Spinner::timerCallback()
+{
+    const bool now = busy();
+    if (now)
+        angle += 0.25f;
+    if (now || now != spinning)
+        repaint();
+    spinning = now;
+}
+
+void Spinner::paint (juce::Graphics& g)
+{
+    if (! spinning)
+        return;
+    const auto r = getLocalBounds().toFloat().reduced (2.0f);
+    juce::Path arc;
+    arc.addCentredArc (r.getCentreX(), r.getCentreY(), r.getWidth() * 0.5f, r.getHeight() * 0.5f, angle, 0.0f,
+                       juce::MathConstants<float>::pi * 1.5f, true);
+    g.setColour (LF::accent);
+    g.strokePath (arc, juce::PathStrokeType (2.0f));
+}
+
+//==============================================================================
 PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (p)
     , processor (p)
@@ -308,6 +331,18 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     status.setColour (juce::Label::textColourId, LF::quiet());
     addAndMakeVisible (status);
     setStatus (processor.describeModel());
+    addAndMakeVisible (spinner);
+    processor.getReferenceSearch().preload (
+        [safe = juce::Component::SafePointer (this)] (juce::Result r, auto)
+        {
+            if (safe != nullptr)
+                safe->setStatus (r.wasOk() ? "Models ready — type a prompt and Generate" : r.getErrorMessage());
+        },
+        [safe = juce::Component::SafePointer (this)] (juce::String message)
+        {
+            if (safe != nullptr)
+                safe->setStatus (message);
+        });
 
     for (auto* b : { &synthViewButton, &promptViewButton })
     {
@@ -530,6 +565,8 @@ void PluginEditor::resized()
     header.removeFromRight (12);
     initButton.setBounds (header.removeFromRight (72));
     header.removeFromRight (16);
+    spinner.setBounds (header.removeFromLeft (24));
+    header.removeFromLeft (8);
     status.setBounds (header);
 
     keyboard.setBounds (r.removeFromBottom (kKeyboardH));

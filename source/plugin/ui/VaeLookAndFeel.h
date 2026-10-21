@@ -16,7 +16,7 @@ class VaeLookAndFeel final : public juce::LookAndFeel_V4
 public:
     VaeLookAndFeel();
 
-    static inline const juce::Colour paper { 0xff121212 };
+    static inline const juce::Colour paper { 0xff151515 };
     static inline const juce::Colour ink { 0xffffffff };
     static inline const juce::Colour accent { 0xffffff07 };
     static inline const juce::Colour faint { 0xff333333 };        // knob tracks, guide lines

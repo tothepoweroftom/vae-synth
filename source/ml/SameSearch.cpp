@@ -146,7 +146,7 @@ juce::Result SameSearch::load (const juce::File& file)
         || modelName.contains ("\\") || modelName == "..")
         return juce::Result::fail ("Model must be a filename beside the bank");
     const auto modelFile = file.getSiblingFile (modelName);
-    if (! modelFile.existsAsFile() || juce::SHA256 (modelFile).toHexString() != bank["model_sha256"].toString())
+    if (! matchesSha256 (modelFile, bank["model_sha256"].toString()))
         return juce::Result::fail ("SAME model hash mismatch");
     auto* rows = bank["entries"].getArray();
     if (! rows || rows->isEmpty() || rows->size() > 20000)
@@ -183,7 +183,7 @@ juce::Result SameSearch::load (const juce::File& file)
         next.push_back (entry);
     }
     auto candidate = std::make_unique<OnnxModel>();
-    auto result = candidate->load (modelFile);
+    auto result = candidate->load (modelFile, { 1, bank["model_sha256"].toString() });
     if (result.failed())
         return result;
     const auto& in = candidate->getInputs();
@@ -254,12 +254,55 @@ void SameSearchWorker::load (const juce::File& file, Callback done) { submit (fi
 void SameSearchWorker::search (const juce::File& file, Callback done) { submit (file, false, std::move (done)); }
 void SameSearchWorker::submit (juce::File file, bool loading, Callback done)
 {
-    enqueue ([file, loading] (State& s, uint64_t, std::vector<SameSearch::Match>& matches)
-             { return loading ? s.search.load (file) : s.search.search (file, matches); }, std::move (done));
+    enqueue (
+        [file, loading] (State& s, uint64_t, std::vector<SameSearch::Match>& matches)
+        {
+            if (loading)
+                return s.search.load (file);
+            if (auto r = loadInstalled (s, false, {}); r.failed())
+                return r;
+            return s.search.search (file, matches);
+        },
+        std::move (done));
 }
 void SameSearchWorker::loadGenerator (const juce::File& file, Callback done)
 {
     enqueue ([file] (State& s, uint64_t, auto&) { return s.generator.load (file); }, std::move (done));
+}
+SameSearchWorker::Notify SameSearchWorker::notifier (std::shared_ptr<State> shared, uint64_t id, Notify progress)
+{
+    return [shared, id, progress] (juce::String message)
+    {
+        juce::MessageManager::callAsync (
+            [shared, id, progress, message]
+            {
+                if (id == shared->request.load() && progress)
+                    progress (message);
+            });
+    };
+}
+juce::Result SameSearchWorker::loadInstalled (State& s, bool withGenerator, const Notify& notify)
+{
+    if (! s.search.isLoaded())
+    {
+        if (notify)
+            notify ("Loading SAME bank...");
+        if (auto r = s.search.load (installedModels ("same/native-bank.json")); r.failed())
+            return juce::Result::fail ("Install models or choose a SAME bank: " + r.getErrorMessage());
+    }
+    if (withGenerator && ! s.generator.isLoaded())
+    {
+        if (notify)
+            notify ("Loading Stable Audio (can take minutes)...");
+        if (auto r = s.generator.load (installedModels ("generator/generator.json")); r.failed())
+            return juce::Result::fail ("Install models or choose an audio model: " + r.getErrorMessage());
+    }
+    return juce::Result::ok();
+}
+void SameSearchWorker::preload (Callback done, Notify progress)
+{
+    enqueue ([progress, shared = state] (State& s, uint64_t id, auto&)
+             { return loadInstalled (s, true, notifier (shared, id, progress)); }, std::move (done));
 }
 void SameSearchWorker::generate (const juce::String& prompt, uint32_t seed, const juce::File& output, Callback done,
                                  std::function<void (juce::String)> progress)
@@ -267,18 +310,10 @@ void SameSearchWorker::generate (const juce::String& prompt, uint32_t seed, cons
     enqueue (
         [prompt, seed, output, progress, shared = state] (State& s, uint64_t id, auto& matches)
         {
-            if (! s.search.isLoaded())
-                return juce::Result::fail ("Load a SAME bank before generating");
             auto cancelled = [&s, id] { return id != s.request.load(); };
-            auto notify = [shared, id, progress] (juce::String message)
-            {
-                juce::MessageManager::callAsync (
-                    [shared, id, progress, message]
-                    {
-                        if (id == shared->request.load() && progress)
-                            progress (message);
-                    });
-            };
+            auto notify = notifier (shared, id, progress);
+            if (auto r = loadInstalled (s, true, notify); r.failed())
+                return r;
             auto result = s.generator.generate (prompt, seed, output, cancelled, notify);
             if (result.failed() || cancelled())
                 return result;
@@ -296,7 +331,9 @@ void SameSearchWorker::enqueue (Work work, Callback done)
             if (id != shared->request.load())
                 return;
             std::vector<SameSearch::Match> matches;
+            ++shared->busy;
             auto result = work (*shared, id, matches);
+            --shared->busy;
             juce::MessageManager::callAsync (
                 [shared, id, done, result, matches = std::move (matches)]
                 {

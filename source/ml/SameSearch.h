@@ -9,6 +9,12 @@
 
 namespace vae::ml
 {
+// Where scripts/install-models.sh puts the assets; loaded on first use unless a picker chose others.
+inline juce::File installedModels (const char* relative)
+{
+    return appDataDir().getChildFile ("models").getChildFile (relative);
+}
+
 // All methods allocate and must run off the audio thread.
 class SameSearch
 {
@@ -50,7 +56,10 @@ public:
     void loadGenerator (const juce::File&, Callback);
     void generate (const juce::String&, uint32_t seed, const juce::File& output, Callback,
                    std::function<void (juce::String)> progress = {});
+    /** Load the installed bank and generator (no-op for what is already loaded). */
+    void preload (Callback, std::function<void (juce::String)> progress);
     void cancel() { ++state->request; }
+    bool isBusy() const noexcept { return state->busy.load() > 0; }
 
 private:
     struct State
@@ -58,7 +67,11 @@ private:
         SameSearch search;
         StableAudioGenerator generator;
         std::atomic<uint64_t> request { 0 };
+        std::atomic<int> busy { 0 };
     };
+    using Notify = std::function<void (juce::String)>;
+    static Notify notifier (std::shared_ptr<State>, uint64_t id, Notify progress);
+    static juce::Result loadInstalled (State&, bool withGenerator, const Notify&);
     void submit (juce::File, bool loadBank, Callback);
     using Work = std::function<juce::Result (State&, uint64_t, std::vector<SameSearch::Match>&)>;
     void enqueue (Work, Callback);

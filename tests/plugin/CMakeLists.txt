@@ -28,3 +28,5 @@ target_link_libraries(vae_plugin_tests PRIVATE
 
 vae_copy_onnxruntime_next_to(vae_plugin_tests)
 add_test(NAME vae_plugin_tests COMMAND vae_plugin_tests)
+# Keep tests away from the user's installed models and caches.
+set_tests_properties(vae_plugin_tests PROPERTIES ENVIRONMENT "VAE_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/appdata")

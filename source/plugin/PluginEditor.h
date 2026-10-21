@@ -89,6 +89,26 @@ private:
     juce::Point<float> pos { 0.5f, 0.5f }; // normalised, y down
 };
 
+/** Rotating arc while `busy` returns true; draws nothing otherwise. */
+class Spinner final
+    : public juce::Component
+    , private juce::Timer
+{
+public:
+    explicit Spinner (std::function<bool()> isBusy)
+        : busy (std::move (isBusy))
+    {
+        startTimerHz (30);
+    }
+    void paint (juce::Graphics&) override;
+
+private:
+    void timerCallback() override;
+    std::function<bool()> busy;
+    float angle = 0.0f;
+    bool spinning = false;
+};
+
 class PluginEditor final : public juce::AudioProcessorEditor
 {
 public:
@@ -122,6 +142,7 @@ private:
     juce::ComboBox engineBox;
     std::unique_ptr<params::ComboBinding> engineBinding;
     juce::Label status;
+    Spinner spinner { [this] { return processor.getReferenceSearch().isBusy(); } };
     std::unique_ptr<juce::FileChooser> chooser;
 
     juce::TextButton synthViewButton { "Synth" }, promptViewButton { "Prompt" };

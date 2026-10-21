@@ -80,7 +80,7 @@ No model work was added to `processBlock`. Keep future inference optimizations o
 
 These are small local tests, not broad model-quality, real-time-load or cross-platform benchmarks. The generator comparisons use FP32 text encoding; they do not establish bit-identical results with the earlier BF16-text Python prototype.
 
-ORT uses one inference thread to limit contention with audio. The generator package is approximately 3 GB and stays loaded between prompts. The earlier “about a minute” startup estimate was too optimistic as user guidance: **slow loading remains an open issue**. A process snapshot showed CPU activity, but that alone does not identify the loading stage or prove forward progress.
+The generator package is approximately 3 GB and stays loaded between prompts. Update (21 October): a profile showed loading dominated by re-hashing the package and re-optimizing each graph on every load. Hash results and ORT's optimized graphs are now cached per machine, so warm loads take about 3 s (first load about 60 s). Generator sessions now use up to four non-spinning threads, cutting generation plus search to about 6 s; CPU contention with a busy DAW during generation is not yet measured.
 
 ## Prioritized next steps
 

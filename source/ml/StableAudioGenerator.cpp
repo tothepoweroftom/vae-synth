@@ -11,6 +11,23 @@ extern "C"
 }
 namespace vae::ml
 {
+bool matchesSha256 (const juce::File& file, const juce::String& expectedHex)
+{
+    // Guards against corrupt or swapped files, not deliberate tampering (mtime can be forged).
+    if (! isSha256Hex (expectedHex) || ! file.existsAsFile())
+        return false;
+    const auto stamp = appDataDir().getChildFile ("cache/verified/" + expectedHex);
+    const auto identity = file.getFullPathName() + "|" + juce::String (file.getSize()) + "|"
+                          + juce::String (file.getLastModificationTime().toMilliseconds());
+    if (stamp.loadFileAsString() == identity)
+        return true;
+    if (juce::SHA256 (file).toHexString() != expectedHex)
+        return false;
+    if (stamp.getParentDirectory().createDirectory().wasOk())
+        stamp.replaceWithText (identity);
+    return true;
+}
+
 StableAudioGenerator::~StableAudioGenerator() { vae_tokenizer_free (tokenizer); }
 juce::Result StableAudioGenerator::tokenize (void* t, const juce::String& prompt, std::array<float, 256>& ids,
                                              std::array<float, 256>& mask)
@@ -30,7 +47,7 @@ juce::Result StableAudioGenerator::load (const juce::File& manifest)
     for (const auto* name : { "text.onnx", "dit.onnx", "decoder.onnx", "tokenizer.json" })
     {
         const auto file = root.getChildFile (name);
-        if (! file.existsAsFile() || juce::SHA256 (file).toHexString() != data["sha256"][name].toString())
+        if (! matchesSha256 (file, data["sha256"][name].toString()))
             return juce::Result::fail (juce::String ("Missing or corrupt generator file: ") + name);
     }
     auto* times = data["schedule"].getArray();
@@ -50,7 +67,10 @@ juce::Result StableAudioGenerator::load (const juce::File& manifest)
     for (const auto& item :
          { std::pair { tx.get(), "text.onnx" }, { di.get(), "dit.onnx" }, { de.get(), "decoder.onnx" } })
     {
-        auto result = item.first->load (root.getChildFile (item.second));
+        // A few threads: generation is otherwise ~20 s on one core.
+        const int threads = juce::jlimit (1, 4, juce::SystemStats::getNumPhysicalCpus() / 2);
+        auto result =
+            item.first->load (root.getChildFile (item.second), { threads, data["sha256"][item.second].toString() });
         if (result.failed())
             return result;
     }
