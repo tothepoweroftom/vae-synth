@@ -9,3 +9,4 @@ source/ml/tokenizer/target/
 
 # Exported student model bundles (rebuild from private training artifacts).
 /models/joint-vae-*/
+/models/prompt-*/
