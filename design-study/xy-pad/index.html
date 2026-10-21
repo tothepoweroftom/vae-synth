@@ -45,18 +45,8 @@
   </div>
 
   <main>
-    <aside class="chat-panel" aria-label="Sound conversation">
-      <div class="chat-heading"><h2>Chat</h2><button id="clear-chat" type="button" aria-label="Clear conversation" title="Clear conversation">↺</button></div>
-      <div id="chat-log" class="chat-log" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions">
-        <div class="chat-message assistant"><span class="chat-speaker">VAE</span><p>What would you like to play?</p><p class="chat-secondary">Start with a sound, then explore it on the pad.</p></div>
-      </div>
-      <div class="chat-suggestions" aria-label="Prompt ideas"><button type="button" data-prompt="A warm, slow pad">Warm pad ↗</button><button type="button" data-prompt="A deep reese bass">Deep bass ↗</button><button type="button" data-prompt="A bright pluck">Bright pluck ↗</button></div>
-      <form id="chat-form" class="chat-composer">
-        <label class="sr-only" for="chat-prompt">Describe a sound</label>
-        <textarea id="chat-prompt" rows="3" maxlength="1000" placeholder="Describe a sound…"></textarea>
-        <div class="composer-footer"><span>Enter to send</span><button id="send-chat" type="submit" aria-label="Send prompt" disabled>↑</button></div>
-      </form>
-      <p class="chat-demo-note">Local demo · category matching only</p>
+    <aside class="category-panel" aria-label="Current sound category matches">
+      <div class="category-matches"><div class="probs" id="probs"></div></div>
     </aside>
     <section class="panel" aria-label="XY or XYZ pad">
       <div class="pad-view-bar"><div class="seg" role="group" aria-label="Pad view"><button id="view-xy" type="button" aria-pressed="true">XY</button><button id="view-xyz" type="button" aria-pressed="false">XYZ</button><button id="view-orbit" type="button" aria-pressed="false">Orbit</button></div><span id="xyz-help" hidden>Drag XY · Shift-drag depth</span></div>
@@ -74,6 +64,12 @@
         <span class="mono">Z</span><input type="range" id="z" min="0" max="1000" value="500" aria-label="Third axis">
         <span class="zname" id="zname"></span>
       </div>
+      <form id="chat-form" class="prompt-composer">
+        <label class="sr-only" for="chat-prompt">Describe a sound</label>
+        <input id="chat-prompt" type="text" maxlength="1000" placeholder="Describe a sound…" autocomplete="off" aria-describedby="prompt-status">
+        <button id="send-chat" type="submit" aria-label="Apply prompt" disabled>↑</button>
+      </form>
+      <p id="prompt-status" class="prompt-status" role="status">Local demo · category matching only</p>
       <details class="map-options"><summary>Map options</summary><div class="checks">
         <label for="bg">Background</label><select id="bg"></select>
         <label><input type="checkbox" id="showdots" checked> Preset dots</label>
@@ -95,7 +91,6 @@
 
   <div class="audition"><div><strong>C3 — C4</strong><span class="eyebrow">Keys A–K</span></div><div class="keys" id="keys" aria-label="Keyboard C3 to C4 (computer keys A to K)"></div><p><span>Approximate browser sound</span></p></div>
   <details class="inspector"><summary>Sound details</summary>      <div class="readouts">
-        <div class="probs" id="probs" aria-live="polite"></div>
         <div class="knobs" id="knobs"></div>
       </div>
       <p class="hint" id="hint"></p>

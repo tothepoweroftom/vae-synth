@@ -35,11 +35,11 @@ The study strip switches between Precision, Brutalist, Swiss Modern, Industrial 
 
 Syntax checks passed; Swiss Modern and the shared controls were confirmed loaded in Safari. The subsequent screenshot/style-switch inspection timed out.
 
-## Chat column
+## Prompt and category feedback
 
-The desktop workspace now has three columns: Chat, XY, Axes. Chat has a scrollable session history, prompt suggestions, a multiline composer (Enter sends, Shift+Enter adds a line), and a clear-conversation action. Style switching preserves the conversation and applies matching chat controls in all five skins. At narrower widths the axes sit below the pad; on phones the columns stack.
+The desktop workspace has three columns: category matches on the left, the pad in the centre, and axes on the right. The student's category forest outputs appear as eight percentage bars in the dedicated left panel, with the highest-scoring category highlighted. They update through the original `predict(state.vals)` path when the sound changes; these are classifier estimates, not measured audio similarity or the category selected in the toolbar.
 
-`chat.js` implements a local category-matching demo, not an LLM or text-to-latent model. Recognised nouns select the corresponding category at the current latent point; sending from Knob mode switches to Latent mode. Descriptive words and follow-up edits are not applied, and responses state that limitation. No prompts are transmitted or persisted. Suggestions populate the composer for review before sending.
+A single prompt input with a submit button sits directly beneath the pad in the centre column. Enter submits, the text stays editable, and a short inline status replaces conversation history. `chat.js` still implements local noun/category matching only; adjectives are not interpreted. No prompts are transmitted or persisted. All five styles and all three pad views share this layout.
 
 ## XYZ pad variant
 

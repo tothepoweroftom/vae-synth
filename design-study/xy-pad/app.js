@@ -626,7 +626,7 @@ function specCanvas() {
 }
 function drawReadouts() {
   const p = predict(state.vals), top = argmax(p);
-  document.getElementById("probs").innerHTML = `<div class="eyebrow">Category guess at the dot</div>` + L.map((l, c) =>
+  document.getElementById("probs").innerHTML = `<div class="match-heading"><span>Category match</span><strong>Closest: ${L[top]} · ${Math.round(p[top] * 100)}%</strong></div>` + L.map((l, c) =>
     `<div class="prob${c === top ? " top" : ""}"><span class="name">${l}</span><span class="bar"><i style="width:${(p[c] * 100).toFixed(1)}%;background:${COL[c]}"></i></span><span class="pct">${Math.round(p[c] * 100)}%</span></div>`).join("");
   const kn = document.getElementById("knobs");
   if (isLat() && lat.out) {
