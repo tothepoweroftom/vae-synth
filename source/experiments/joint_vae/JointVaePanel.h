@@ -25,8 +25,9 @@ public:
     /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
     std::function<void()> onMapShown;
     bool isMapRunning() const { return worker.mapRunning(); }
-    /** Runs a prompt as if typed and submitted; the test hooks read the result back. */
+    /** The prompt box's submit handler (also driven by tests, which read the state back below). */
     void submitPrompt (const juce::String&);
+    juce::String statusText() const { return status.getText(); }
     const XyPadData* padData() const { return xy.get(); }
     const JointLatent& latent() const { return z; }
 #endif

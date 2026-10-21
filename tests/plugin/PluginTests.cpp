@@ -267,15 +267,88 @@ public:
                     lab->submitPrompt ("zorp");
                     pumpUntil ([] { return false; }, 300);
                     expect (lab->latent() == z0);
+                    expect (lab->statusText().contains ("Nothing to change"), lab->statusText());
                     expectEquals (played, 0);
                     lab->submitPrompt ("dark bass");
                     expectEquals (category->getText(), juce::String ("Bass"));
+                    expect (lab->statusText().contains ("Bass"), lab->statusText());
                     expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical - 0.1f, 1e-3f);
                     lab->submitPrompt ("brighter");
                     expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical, 1e-3f);
                     expect (pumpUntil ([&] { return played > 0; }, 30000), "a prompt plays");
                 }
             }
+        }
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("prompt first message falls back to the Unknown start until the user acts");
+            // A fresh panel with the bundle; returns brightness position after the given steps
+            const auto run = [&] (const std::function<void (experimental::JointVaePanel&)>& steps)
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+                auto* lab = findChild<experimental::JointVaePanel> (*editor);
+                bool ready = false;
+                if (lab)
+                {
+                    lab->onMapShown = [&ready] { ready = true; };
+                    lab->loadBundle (juce::File (bundle));
+                }
+                expect (lab != nullptr && pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                if (lab && ready)
+                    steps (*lab);
+            };
+            const auto bright = [] (experimental::JointVaePanel& lab)
+            { return axisPosition (*lab.padData()->find ("s:brightness"), lab.latent()); };
+            const auto unknown = [&] (experimental::JointVaePanel& lab)
+            {
+                auto* box = [&]
+                {
+                    juce::ComboBox* found = nullptr;
+                    std::function<void (juce::Component&)> f = [&] (juce::Component& c)
+                    {
+                        for (auto* ch : c.getChildren())
+                        {
+                            if (auto* b = dynamic_cast<juce::ComboBox*> (ch); b && b->getItemText (0) == "Bass")
+                                found = b;
+                            f (*ch);
+                        }
+                    };
+                    f (lab);
+                    return found;
+                }();
+                return box != nullptr && box->getSelectedId() == 9;
+            };
+            float darkPos = 0, brightPos = 0, movedBefore = 0;
+            run (
+                [&] (experimental::JointVaePanel& lab)
+                {
+                    lab.submitPrompt ("something dark");
+                    expect (unknown (lab), "category Unknown");
+                    expect (lab.statusText().contains ("no sound type found"), lab.statusText());
+                    darkPos = bright (lab);
+                });
+            run (
+                [&] (experimental::JointVaePanel& lab)
+                {
+                    lab.submitPrompt ("brighter");
+                    expect (unknown (lab), "category Unknown");
+                    expect (lab.statusText().contains ("no sound type found"), lab.statusText());
+                    brightPos = bright (lab);
+                });
+            expectWithinAbsoluteError (brightPos - darkPos, 0.2f, 1e-3f);
+            run (
+                [&] (experimental::JointVaePanel& lab)
+                {
+                    if (auto* pad = findChild<experimental::LabPad> (lab))
+                        pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                    movedBefore = bright (lab);
+                    lab.submitPrompt ("brighter");
+                    expect (! lab.statusText().contains ("no sound type found"), lab.statusText());
+                    expectWithinAbsoluteError (bright (lab), movedBefore + 0.1f, 1e-3f);
+                });
         }
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())

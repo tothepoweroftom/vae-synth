@@ -241,7 +241,9 @@ void JointVaePanel::submitPrompt (const juce::String& text)
 {
     if (! xy)
         return;
-    const auto reply = interpretPrompt (text, true, *xy); // the one call the text -> z search replaces
+    const auto reply = interpretPrompt (
+        text, userActed,
+        *xy); // the auto-loaded base is not a chosen start (R18); the one call the text -> z search replaces
     if (reply.start)
     {
         // Loads like a base; Lock is untouched
