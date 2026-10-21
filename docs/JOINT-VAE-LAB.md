@@ -17,15 +17,27 @@ is unchanged.
 - Inspect all 631 decoded features and export/import a latent point as JSON.
 - A failed model replacement preserves the previous model. Inference errors
   never substitute the old mock decoder.
+- **Full Surge playback** (`VAE_WITH_SURGE=ON` builds). Every decoded point becomes
+  a complete Surge patch: `StudentCodec` (port of the student's `full_row` +
+  `codec.decode`) turns the 631 codes into a write plan, `SurgePatchBuilder` (port
+  of `SurgeIO.write_plan`) executes it on a private headless Surge loaded with the
+  `Init Saw` template and factory wavetables, and the patch data goes to the Surge
+  engine, which is selected. All Surge features the student models are kept: 12 osc
+  types, 32 wavetables, 16 FX slots, filter models, flags and the 95 routings.
+- Loading a retrieval preset or generating from the Prompt tab returns the Surge
+  engine to the 93-control schema. While a VAE patch plays, the Synth tab's knobs
+  do not reach Surge.
 
 ## Not connected yet
 
-This is an inference inspector, **not yet text-to-preset playback**. The shared
-keyboard still plays the existing synth. The generated codes are not converted
-to its smaller control schema. Full playback requires the student's codec/write
-plan semantics, Surge template and wavetable assets, and a safe engine handover.
 Text → audio → sound-code preprocessing is not implemented in the native tab.
-The sound-code input must use the matching PCA, not SAME embeddings.
+The sound-code input must use the matching PCA, not SAME embeddings. Builds
+without Surge decode and show the codes but cannot play them.
+
+The handover uses Surge's own patch queue (`enqueuePatchForLoad`): Surge loads the
+patch on the audio thread at the next block, as Surge XT does. That load parses
+and allocates, so a decode can glitch audio for one block. It happens on mouse
+release only, not while dragging.
 
 The tab's session lasts while the editor is open; export a point before closing
 it. It is not included in host project state yet. Importing a point restores it
@@ -58,6 +70,8 @@ sound; use it only to check the import path.
 booleans, categorical argmax indices, then stepped knobs converted back to 0–1.
 The current checkpoint has N=631. Frozen/omitted features remain in
 `pruning.json`; the decoder output alone is not a complete Surge write plan.
+`StudentCodec` restores them (mode codes; "reference" features keep the template's
+value) before planning.
 
 `sound_encoder.onnx`: float inputs `sound[1,48]`, `category[1,9]`; float output
 `latent[1,32]` (posterior mean). Categories: Bass, Lead, Pad, Keys, Pluck, Synth,
@@ -82,7 +96,23 @@ VAE_JOINT_BUNDLE="$PWD/models/joint-vae-j48/bundle.json" \
   ctest --test-dir build -R 'vae_ml_tests|vae_plugin_tests' --output-on-failure
 ```
 
+With `VAE_WITH_SURGE=ON`, also write the Python codec's plans into the bundle first
+(standard library only); the tests compare the native codec with them exactly and
+build Surge patches from them:
+
+```sh
+python3 tools/joint_vae/codec_parity.py --bundle models/joint-vae-j48
+cmake -S . -B build-surge -G Ninja -DCMAKE_BUILD_TYPE=Release -DVAE_WITH_SURGE=ON
+cmake --build build-surge
+VAE_JOINT_BUNDLE="$PWD/models/joint-vae-j48/bundle.json" ctest --test-dir build-surge
+```
+
 No inference, model loading, or experiment UI logic runs in the audio callback.
+The Surge patch load itself does (see above).
+
+Surge's factory data (template, wavetables) is read from the build tree
+(`VAE_SURGE_DATA_DIR`, the fetched Surge checkout). A shipped build needs it
+installed next to the models.
 
 ## Agent handoff — 2026-10-21
 
@@ -180,7 +210,9 @@ output/export version.
    saved PCA and global scale. Compare intermediate arrays against Python;
    generic library defaults and SAME features are not interchangeable. Determine
    how generated clip pitch/onset handling should align with the training note.
-2. **Full generated-patch representation and writer.** Follow
+2. ✅ **Full generated-patch representation and writer** (`StudentCodec`,
+   `SurgePatchBuilder`; plans match the Python codec exactly on all 36 parity
+   cases). Original notes: Follow
    `joint_vae/data.py:JSpec.to_row` → `inverter/data.py:full_row` →
    `core/codec.py:decode` → `core/surge_io.py:write_plan`. Restore frozen values,
    honor inactive/type-dependent blocks, oscillator/filter choices, flags,
@@ -188,7 +220,9 @@ output/export version.
    truncate these codes into the existing 93-control schema and call it faithful.
    Inspect the pruning template reference and obtain/locate the actual template
    and wavetable resources; those assets were not validated in this milestone.
-3. **Surge playback and real-time handover.** The existing Surge backend still
+3. ✅ **Surge playback and handover**, via Surge's own patch queue rather than a
+   lock-free swap (see "Not connected yet"). Still open: compare renders with the
+   student's writer (needs their patched surgepy). Original notes: The existing Surge backend still
    targets the smaller schema/fixed FX chain. Extend it or introduce an isolated
    full-patch backend. Its current header notes allocation on some oscillator,
    FX and routing changes: do not apply arbitrary patch construction in the audio

@@ -5,6 +5,15 @@
 
 #include <juce_dsp/juce_dsp.h>
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wfloat-equal", "-Wpedantic", "-Wshadow", "-Wconversion",
+                                     "-Wfloat-conversion", "-Wold-style-cast", "-Wzero-as-null-pointer-constant",
+                                     "-Wunused-parameter", "-Wswitch-enum", "-Wimplicit-int-float-conversion",
+                                     "-Wshorten-64-to-32", "-Wextra-semi", "-Wcast-align", "-Wunused-value",
+                                     "-Wunused-variable", "-Wunused-local-typedefs", "-Wstrict-aliasing",
+                                     "-Wsign-compare")
+#include "SurgeSynthesizer.h"
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+
 #include <atomic>
 #include <cstdlib>
 #include <new>
@@ -500,6 +509,47 @@ public:
             }
             expect (a.fxEnabled (SurgeEngine::kReverbSlot));
             expect (! a.fxEnabled (SurgeEngine::kDistSlot));
+        }
+
+        beginTest ("full patch data plays, ignores schema writes, then the schema vector returns");
+        {
+            struct Layer final : SurgeSynthesizer::PluginLayer
+            {
+                void surgeParameterUpdated (const SurgeSynthesizer::ID&, float) override {}
+                void surgeMacroUpdated (long, float) override {}
+            } layer;
+            juce::MemoryBlock sine;
+            {
+                auto s = std::make_unique<SurgeSynthesizer> (&layer, VAE_SURGE_DATA_DIR); // too big for the stack
+                expect (s->loadPatchByPath (VAE_SURGE_DATA_DIR "/patches_factory/Templates/Init Sine.fxp", -1,
+                                            "Init Sine"));
+                void* data = nullptr;
+                const auto size = s->saveRaw (&data);
+                sine.replaceAll (data, size);
+            }
+            SurgeEngine a;
+            a.prepare (kRate, 256);
+            applyAndSettle (a, Snapshot::defaults());
+            juce::AudioBuffer<float> b (2, 256);
+            juce::MidiBuffer noMidi;
+            a.loadPatchData (sine);
+            a.process (b, noMidi);
+            expect (a.hasPatchData());
+            expectEquals (a.oscType (0), surgeid::oscSine);
+            a.setControl (kOsc1Wave, float (opt (kOsc1Wave, "square")));
+            a.process (b, noMidi);
+            expectEquals (a.oscType (0), surgeid::oscSine);
+
+            a.prepare (kRate, 256); // survives a re-prepare
+            a.process (b, noMidi);
+            expectEquals (a.oscType (0), surgeid::oscSine);
+
+            a.useSchemaControls();
+            a.process (b, noMidi);
+            expect (! a.hasPatchData());
+            expectEquals (a.oscType (0), surgeid::oscClassic); // the square written while the patch played
+            expectEquals (a.oscParam (0, 0), -1.0f);
+            expectEquals (a.fxType (SurgeEngine::kReverbSlot), surgeid::fxReverb2);
         }
     }
 };

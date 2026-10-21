@@ -4,7 +4,12 @@ target_sources(vae_ml_tests PRIVATE
     MlTests.cpp
     JointVaeTests.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/StudentCodec.cpp
     ../common/TestMain.cpp)
+if(VAE_WITH_SURGE)
+    target_sources(vae_ml_tests PRIVATE ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/SurgePatchBuilder.cpp)
+    target_link_libraries(vae_ml_tests PRIVATE vae::surge)
+endif()
 
 target_compile_definitions(vae_ml_tests PRIVATE
     VAE_TEST_CATEGORY="vae_ml"

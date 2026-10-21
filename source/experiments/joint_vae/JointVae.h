@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StudentCodec.h"
+#include "SurgePatchBuilder.h"
 #include "ml/OnnxModel.h"
 #include <array>
 #include <atomic>
@@ -27,6 +29,8 @@ public:
     juce::Result load (const juce::File& manifest);
     juce::Result decode (const JointLatent&, int category, std::vector<float>& codes);
     juce::Result encode (const SoundCode&, int category, JointLatent&);
+    /** Decoded codes -> full Surge patch data (student codec + template). Needs a VAE_WITH_SURGE build. */
+    juce::Result patch (const std::vector<float>& codes, juce::MemoryBlock&);
     const JointLayout& layout() const { return metadata; }
     static juce::Result slice (const JointLatent& anchor, int xDim, int yDim, float x, float y, float radius,
                                JointLatent& result);
@@ -34,6 +38,10 @@ public:
 private:
     JointLayout metadata;
     std::unique_ptr<ml::OnnxModel> decoder, encoder;
+    StudentCodec codec;
+#if VAE_WITH_SURGE
+    std::unique_ptr<SurgePatchBuilder> builder; // created on first use: loads Surge's data folder
+#endif
 };
 
 // Owns model lifetime on a serial worker. UI callbacks run on the message thread.
@@ -46,6 +54,8 @@ public:
         JointLayout layout;
         JointLatent latent {};
         std::vector<float> codes;
+        juce::MemoryBlock patch; // empty when patchResult failed
+        juce::Result patchResult = juce::Result::ok();
     };
     using Callback = std::function<void (juce::Result, Output)>;
     ~JointVaeWorker();

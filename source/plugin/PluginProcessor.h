@@ -69,6 +69,10 @@ public:
     /** Current schema vector as the host sees it (message thread). */
     schema::Snapshot getControls() const;
 
+    /** Play a full Surge patch (joint VAE experiment) on the Surge engine and select it
+        (message thread). The next applyControls returns that engine to the schema vector. */
+    juce::Result loadSurgePatch (const juce::MemoryBlock& patch);
+
     /** Apply a whole vector as one host gesture per control (message thread). */
     void applyControls (const schema::Snapshot&);
 

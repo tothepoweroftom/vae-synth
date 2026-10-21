@@ -34,6 +34,11 @@ set(SURGE_BUILD_FX OFF CACHE BOOL "" FORCE)
 set(SURGE_BUILD_CLAP OFF CACHE BOOL "" FORCE)
 set(SURGE_BUILD_PYTHON_BINDINGS OFF CACHE BOOL "" FORCE)
 
+# surge-common has Objective-C++ sources on macOS.
+if(APPLE)
+    enable_language(OBJCXX)
+endif()
+
 add_subdirectory("${VAE_SURGE_DIR}" "${CMAKE_BINARY_DIR}/_deps/surge-build" EXCLUDE_FROM_ALL)
 
 # Surge's common/CMakeLists.txt assumes it is the top-level project and refers
@@ -54,7 +59,13 @@ endforeach()
 add_library(vae_surge INTERFACE)
 add_library(vae::surge ALIAS vae_surge)
 target_link_libraries(vae_surge INTERFACE surge::surge-common)
-target_compile_definitions(vae_surge INTERFACE VAE_WITH_SURGE=1)
+target_compile_definitions(vae_surge INTERFACE VAE_WITH_SURGE=1
+    VAE_SURGE_DATA_DIR="${VAE_SURGE_DIR}/resources/data") # factory template + wavetables (joint VAE)
+# Apple's compact unwind encodes at most three personality routines; C++, Objective-C, LuaJIT
+# (Surge) and Rust (native tokenizer) make four. Fall back to DWARF unwind tables.
+if(APPLE)
+    target_link_options(vae_surge INTERFACE -Wl,-no_compact_unwind)
+endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i.86" AND NOT MSVC)
     target_compile_options(vae_surge INTERFACE -msse4.1)
 endif()

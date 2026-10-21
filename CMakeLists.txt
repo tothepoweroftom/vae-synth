@@ -66,8 +66,13 @@ target_link_libraries(vae_retrieval INTERFACE vae_tokenizer vae_ml juce::juce_au
 add_library(vae_joint_experiment INTERFACE)
 target_sources(vae_joint_experiment INTERFACE
     source/experiments/joint_vae/JointVae.cpp
-    source/experiments/joint_vae/JointVaePanel.cpp)
+    source/experiments/joint_vae/JointVaePanel.cpp
+    source/experiments/joint_vae/StudentCodec.cpp)
 target_link_libraries(vae_joint_experiment INTERFACE vae_ml juce::juce_gui_basics)
+if(VAE_WITH_SURGE)
+    target_sources(vae_joint_experiment INTERFACE source/experiments/joint_vae/SurgePatchBuilder.cpp)
+    target_link_libraries(vae_joint_experiment INTERFACE vae::surge)
+endif()
 
 # --- parameter store (clean-room, docs/specs/parameter-manager.md) ------------
 add_subdirectory(source/params)

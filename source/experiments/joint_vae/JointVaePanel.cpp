@@ -36,10 +36,9 @@ JointVaePanel::JointVaePanel()
 {
     title.setText ("Joint VAE - latent explorer", juce::dontSendNotification);
     title.setFont (juce::FontOptions (20));
-    description.setText (
-        "Explore the student's trained decoder separately from SAME retrieval. "
-        "This tab currently inspects parameters; text-to-audio encoding and full Surge playback are not connected.",
-        juce::dontSendNotification);
+    description.setText ("Explore the student's trained decoder separately from SAME retrieval. "
+                         "Each decoded point plays as a full Surge patch; text-to-audio encoding is not connected.",
+                         juce::dontSendNotification);
     description.setMinimumHorizontalScale (1.0f);
     axisLabel.setText ("X dimension                 Y dimension                 Radius (latent units)",
                        juce::dontSendNotification);
@@ -67,7 +66,8 @@ JointVaePanel::JointVaePanel()
     values.setText (
         "Load bundle.json exported by tools/joint_vae/export_bundle.py.\n\n"
         "The pad is a local 2D slice through a 32D latent. Its axes have no assigned perceptual meaning.\n\n"
-        "Release the pad to decode. The shared keyboard still plays the existing synth, not these outputs.");
+        "Release the pad to decode. The keyboard then plays the decoded Surge patch; loading a preset or "
+        "generating from a prompt returns the synth to its own controls.");
     loadButton.onClick = [this] { chooseBundle(); };
     importButton.onClick = [this] { importPoint(); };
     exportButton.onClick = [this] { exportPoint(); };
@@ -183,8 +183,11 @@ void JointVaePanel::showOutput (JointVaeWorker::Output out)
     for (int i = 0; i < current.layout.names.size(); ++i)
         text += current.layout.names[i] + " = " + juce::String (current.codes[(size_t) i], 5) + "\n";
     values.setText (text, false);
-    setStatus (current.layout.id + " - " + juce::String (current.layout.names.size())
-               + " decoded parameters - playback not connected");
+    auto playback = current.patchResult;
+    if (playback.wasOk())
+        playback = onPatch ? onPatch (current.patch) : juce::Result::fail ("playback not connected");
+    setStatus (current.layout.id + " - " + juce::String (current.layout.names.size()) + " decoded parameters - "
+               + (playback.wasOk() ? juce::String ("playing on Surge") : playback.getErrorMessage()));
 }
 void JointVaePanel::importPoint()
 {

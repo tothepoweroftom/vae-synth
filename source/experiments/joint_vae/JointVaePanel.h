@@ -4,12 +4,14 @@
 
 namespace vae::experimental
 {
-// Experimental inference inspector. Does not write the existing synth's controls.
+// Experimental latent explorer. Decoded points play as full Surge patches through onPatch.
 class JointVaePanel final : public juce::Component
 {
 public:
     JointVaePanel();
     void resized() override;
+    /** Plays a decoded full Surge patch (set by the editor; message thread). */
+    std::function<juce::Result (const juce::MemoryBlock&)> onPatch;
 
 private:
     class Pad final : public juce::Component

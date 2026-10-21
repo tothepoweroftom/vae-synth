@@ -4,6 +4,9 @@
 #include "BinaryData.h"
 #include "PluginEditor.h"
 #include "schema/SurgeCurves.h"
+#if VAE_WITH_SURGE
+#include "engine/surge/SurgeEngine.h"
+#endif
 
 namespace vae
 {
@@ -175,8 +178,29 @@ juce::Result PluginProcessor::loadPresetFile (const juce::File& file)
     return juce::Result::ok();
 }
 
+juce::Result PluginProcessor::loadSurgePatch (const juce::MemoryBlock& patch)
+{
+#if VAE_WITH_SURGE
+    const auto kind = std::find (engineKinds.begin(), engineKinds.end(), EngineKind::Surge);
+    if (kind != engineKinds.end())
+    {
+        const auto index = std::distance (engineKinds.begin(), kind);
+        static_cast<SurgeEngine&> (*engines[(size_t) index]).loadPatchData (patch);
+        params.set (kEngineParamId, float (index));
+        return juce::Result::ok();
+    }
+#endif
+    juce::ignoreUnused (patch);
+    return juce::Result::fail ("Full Surge patches need a build with VAE_WITH_SURGE=ON");
+}
+
 void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 {
+#if VAE_WITH_SURGE
+    for (auto& e : engines)
+        if (e->kind() == EngineKind::Surge)
+            static_cast<SurgeEngine&> (*e).useSchemaControls();
+#endif
     for (int i = 0; i < schema::kControlCount; ++i)
     {
         const auto index = controlIndex[(size_t) i];

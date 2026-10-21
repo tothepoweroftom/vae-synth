@@ -95,6 +95,9 @@ juce::Result JointVae::load (const juce::File& file)
         return r;
     if (auto r = enc->load (file.getSiblingFile ("sound_encoder.onnx")); r.failed())
         return r;
+    StudentCodec nextCodec;
+    if (auto r = StudentCodec::load (file.getParentDirectory(), nextCodec); r.failed())
+        return r;
     if (auto r = validate (*enc, true, 32); r.failed())
         return r;
     // Exercise both models before replacing a working bundle.
@@ -106,12 +109,30 @@ juce::Result JointVae::load (const juce::File& file)
     metadata = std::move (next);
     decoder = std::move (dec);
     encoder = std::move (enc);
+    codec = std::move (nextCodec);
     return juce::Result::ok();
 }
 
 juce::Result JointVae::decode (const JointLatent& latent, int category, std::vector<float>& codes)
 {
     return run (decoder.get(), latent, category, metadata.names.size(), codes);
+}
+
+juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock& output)
+{
+    StudentPlan plan;
+    if (auto r = codec.plan (metadata.names, codes, plan); r.failed())
+        return r;
+#if VAE_WITH_SURGE
+    if (builder == nullptr)
+        // shortcut: Surge's factory data from the build tree (template + wavetables); install it
+        // next to the models before shipping
+        builder = std::make_unique<SurgePatchBuilder> (juce::File (VAE_SURGE_DATA_DIR));
+    return builder->build (plan, output);
+#else
+    juce::ignoreUnused (output);
+    return juce::Result::fail ("Full Surge patches need a build with VAE_WITH_SURGE=ON");
+#endif
 }
 
 juce::Result JointVae::encode (const SoundCode& sound, int category, JointLatent& latent)
@@ -176,7 +197,10 @@ void JointVaeWorker::decode (JointLatent z, int category, Callback cb)
         [z, category] (JointVae& model, Output& out)
         {
             out.latent = z;
-            return model.decode (z, category, out.codes);
+            if (auto r = model.decode (z, category, out.codes); r.failed())
+                return r;
+            out.patchResult = model.patch (out.codes, out.patch);
+            return juce::Result::ok();
         },
         std::move (cb));
 }
@@ -187,7 +211,10 @@ void JointVaeWorker::encode (SoundCode sound, int category, Callback cb)
         {
             if (auto r = model.encode (sound, category, out.latent); r.failed())
                 return r;
-            return model.decode (out.latent, category, out.codes);
+            if (auto r = model.decode (out.latent, category, out.codes); r.failed())
+                return r;
+            out.patchResult = model.patch (out.codes, out.patch);
+            return juce::Result::ok();
         },
         std::move (cb));
 }
