@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "experiments/joint_vae/LabPad.h"
 #include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
 #if VAE_WITH_SURGE
@@ -40,6 +41,20 @@ juce::MemoryBlock stateOf (PluginProcessor& p)
     juce::MemoryBlock mb;
     p.getStateInformation (mb);
     return mb;
+}
+
+/** Depth-first search for the first descendant of type T. */
+template <typename T>
+T* findChild (juce::Component& parent)
+{
+    for (auto* child : parent.getChildren())
+    {
+        if (auto* hit = dynamic_cast<T*> (child))
+            return hit;
+        if (auto* hit = findChild<T> (*child))
+            return hit;
+    }
+    return nullptr;
 }
 
 struct GestureCounter final : juce::AudioProcessorListener
@@ -96,6 +111,65 @@ public:
                 labButton->onClick();
                 expect (lab->isVisible());
                 expect (! lab->getBounds().isEmpty());
+                synthButton->onClick();
+                expect (! lab->isVisible());
+            }
+            const auto after = processor.getControls();
+            for (int i = 0; i < schema::kControlCount; ++i)
+                expectEquals (after[i], before[i]);
+        }
+
+        beginTest ("VAE Lab v2 layout");
+        {
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            juce::TextButton* labButton = nullptr;
+            for (auto* child : editor->getChildren())
+                if (auto* button = dynamic_cast<juce::TextButton*> (child);
+                    button && button->getButtonText() == "VAE Lab")
+                    labButton = button;
+            expect (lab != nullptr && labButton != nullptr);
+            if (lab && labButton)
+            {
+                labButton->onClick();
+                auto* pad = findChild<experimental::LabPad> (*lab);
+                auto* list = findChild<juce::Viewport> (*lab);
+#if VAE_WITH_SURGE
+                expect (pad != nullptr && list != nullptr);
+                if (pad && list)
+                {
+                    const auto p = lab->getLocalArea (pad, pad->getLocalBounds());
+                    const auto l = lab->getLocalArea (list, list->getLocalBounds());
+                    expect (p.getWidth() >= 0.6 * lab->getWidth(), "pad width " + juce::String (p.getWidth()));
+                    expect (p.getHeight() >= 0.55 * lab->getHeight(), "pad height " + juce::String (p.getHeight()));
+                    expect (l.getX() >= p.getRight() && ! l.intersects (p));
+                    expect (l.getHeight() >= p.getHeight());
+                    const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");
+                    if (bundle.isNotEmpty())
+                    {
+                        int played = 0;
+                        auto play = lab->onLite;
+                        lab->onLite = [&] (const schema::Snapshot& s)
+                        {
+                            ++played;
+                            if (play)
+                                play (s);
+                        };
+                        lab->loadBundle (juce::File (bundle));
+                        expect (pumpUntil ([&] { return played > 0; }, 30000), "first decode plays on Lite");
+                        expect (list->getViewedComponent()->getNumChildComponents() > 30, "axis rows");
+                        expect (list->getViewedComponent()->getWidth() <= list->getMaximumVisibleWidth(),
+                                "rows clear the scroll bar: " + juce::String (list->getViewedComponent()->getWidth())
+                                    + " > " + juce::String (list->getMaximumVisibleWidth()));
+                    }
+                }
+#else
+                expect (pad == nullptr && list == nullptr);
+                auto* note = findChild<juce::Label> (*lab);
+                expect (note != nullptr && note->getText() == "VAE Lab needs a Surge build");
+#endif
                 auto image = editor->createComponentSnapshot (editor->getLocalBounds());
                 expect (image.isValid());
                 const auto screenshot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_SCREENSHOT", "");
@@ -105,12 +179,7 @@ public:
                     if (stream)
                         juce::PNGImageFormat().writeImageToStream (image, *stream);
                 }
-                synthButton->onClick();
-                expect (! lab->isVisible());
             }
-            const auto after = processor.getControls();
-            for (int i = 0; i < schema::kControlCount; ++i)
-                expectEquals (after[i], before[i]);
         }
 
         beginTest ("SAME invalid latents and cancelled worker callbacks");

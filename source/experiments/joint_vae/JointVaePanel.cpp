@@ -1,339 +1,385 @@
 #include "JointVaePanel.h"
 #include "plugin/ui/VaeLookAndFeel.h"
-#include <cmath>
-#include <random>
 
 namespace vae::experimental
 {
 using LF = VaeLookAndFeel;
 
-void JointVaePanel::Pad::paint (juce::Graphics& g)
-{
-    auto r = getLocalBounds().toFloat().reduced (8);
-    g.setColour (LF::faint);
-    g.drawHorizontalLine ((int) r.getCentreY(), r.getX(), r.getRight());
-    g.drawVerticalLine ((int) r.getCentreX(), r.getY(), r.getBottom());
-    g.setColour (LF::ink);
-    g.drawRect (r);
-    g.drawText ("Anchor", (int) r.getCentreX() + 8, (int) r.getCentreY() + 8, 80, 20, juce::Justification::centredLeft);
-    auto point = juce::Point<float> (r.getCentreX() + position.x * r.getWidth() / 2,
-                                     r.getCentreY() - position.y * r.getHeight() / 2);
-    g.setColour (LF::accent);
-    g.fillEllipse (juce::Rectangle<float> (12, 12).withCentre (point));
-}
-void JointVaePanel::Pad::mouseDrag (const juce::MouseEvent& e)
-{
-    auto r = getLocalBounds().toFloat().reduced (8);
-    if (r.isEmpty())
-        return;
-    position = { juce::jlimit (-1.0f, 1.0f, 2 * (e.position.x - r.getCentreX()) / r.getWidth()),
-                 juce::jlimit (-1.0f, 1.0f, 2 * (r.getCentreY() - e.position.y) / r.getHeight()) };
-    repaint();
-    if (moved)
-        moved();
-}
+#if ! VAE_WITH_SURGE
 JointVaePanel::JointVaePanel()
 {
-    title.setText ("Joint VAE - latent explorer", juce::dontSendNotification);
-    title.setFont (juce::FontOptions (20));
-    description.setText ("Explore the student's trained decoder separately from SAME retrieval. "
-                         "Each decoded point plays as a full Surge patch; text-to-audio encoding is not connected.",
-                         juce::dontSendNotification);
-    description.setMinimumHorizontalScale (1.0f);
-    axisLabel.setText ("X dimension                 Y dimension                 Radius (latent units)",
-                       juce::dontSendNotification);
-    for (auto* c : std::initializer_list<juce::Component*> {
-             &title, &description, &axisLabel, &status, &loadButton, &importButton, &randomButton, &resetButton,
-             &exportButton, &category, &xAxis, &yAxis, &radius, &pad, &values, &prompt, &promptButton })
+    note.setText ("VAE Lab needs a Surge build", juce::dontSendNotification);
+    note.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (note);
+}
+void JointVaePanel::loadBundle (const juce::File&) {}
+void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
+void JointVaePanel::paint (juce::Graphics&) {}
+#else
+namespace
+{
+constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kXLabelH = 18, kZRowH = 24,
+              kYLabelW = 18;
+}
+
+JointVaePanel::JointVaePanel()
+{
+    for (auto* c :
+         std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
+                                                   &resetButton, &dotsButton, &sendButton, &pad, &listView, &status })
         addAndMakeVisible (c);
-    prompt.setTextToShowWhenEmpty ("Describe a sound, e.g. \"dark reese bass\" (label demo: only the noun counts)",
-                                   juce::Colours::grey);
-    prompt.onReturnKey = [this] { fromPrompt(); };
-    promptButton.onClick = [this] { fromPrompt(); };
+    addChildComponent (zSlider);
+    latentButton.setToggleState (true, juce::dontSendNotification);
+    knobButton.setEnabled (false); // shortcut: knob pad arrives with Task 10
     for (int i = 0; i < 9; ++i)
         category.addItem (jointLabels[i], i + 1);
-    category.setSelectedId (1, juce::dontSendNotification);
-    for (int i = 0; i < 32; ++i)
+    category.setTooltip ("Category the decoder is conditioned on");
+    base.setTooltip ("Start from");
+    lockButton.setTooltip ("Keep oscillator types, effects and other switches fixed while dragging");
+    dotsButton.setTooltip ("Real presets as dots (colour = category)");
+    dotsButton.setClickingTogglesState (true);
+    listView.setViewedComponent (&list, false);
+    listView.setScrollBarsShown (true, false);
+    zSlider.setRange (0.0, 1.0, 0.001);
+    zSlider.setSliderStyle (juce::Slider::LinearHorizontal);
+    zSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+    status.setFont (LF::labelFont (10.0f));
+    status.setColour (juce::Label::textColourId, LF::quiet());
+    status.setJustificationType (juce::Justification::topLeft);
+
+    pad.moved = [this] (juce::Point<float> p)
     {
-        xAxis.addItem ("z" + juce::String (i + 1), i + 1);
-        yAxis.addItem ("z" + juce::String (i + 1), i + 1);
-    }
-    xAxis.setSelectedId (1, juce::dontSendNotification);
-    yAxis.setSelectedId (2, juce::dontSendNotification);
-    radius.setRange (0.0, 3.0, 0.05);
-    radius.setValue (1.0, juce::dontSendNotification);
-    radius.setSliderStyle (juce::Slider::LinearHorizontal);
-    radius.setTextBoxStyle (juce::Slider::TextBoxRight, false, 50, 24);
-    values.setMultiLine (true);
-    values.setReadOnly (true);
-    values.setFont (juce::FontOptions (12));
-    values.setText (
-        "Loads models/joint-vae/bundle.json from the app data folder (scripts/install-models.sh), or pick one.\n\n"
-        "The pad is a local 2D slice through a 32D latent. Its axes have no assigned perceptual meaning.\n\n"
-        "Release the pad to decode. The keyboard then plays the decoded Surge patch; loading a preset or "
-        "generating from a prompt returns the synth to its own controls.");
-    loadButton.onClick = [this] { chooseBundle(); };
-    importButton.onClick = [this] { importPoint(); };
-    exportButton.onClick = [this] { exportPoint(); };
-    resetButton.onClick = [this]
-    {
-        centre();
+        pos[0] = p.x;
+        pos[1] = p.y;
+        applyPositions();
+        refresh();
         decode();
     };
-    category.onChange = [this] { decode(); };
-    xAxis.onChange = yAxis.onChange = [this]
+    zSlider.onValueChange = [this]
     {
-        centre();
+        pos[2] = (float) zSlider.getValue();
+        applyPositions();
+        refresh();
         decode();
     };
-    radius.onValueChange = [this] { decode(); };
-    pad.released = [this] { decode(); };
-    pad.moved = [this]
+    list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
+    list.slid = [this] (const LatentAxis& axis, float p)
     {
-        worker.cancel();
-        outputValid = false;
-        exportButton.setEnabled (false);
-    };
-    randomButton.onClick = [this]
-    {
-        std::mt19937 rng ((uint32_t) juce::Random::getSystemRandom().nextInt());
-        std::normal_distribution<float> normal;
-        for (auto& value : anchor)
-            value = normal (rng);
-        centre();
+        // Move along this axis and keep the pad's axes where they are (page latItem input)
+        std::vector<const LatentAxis*> held { &axis };
+        std::vector<float> targets { axisTarget (axis, p) };
+        for (int i = 0; i < 3; ++i)
+            if (auto* a = axisOn (i); a && a != &axis)
+            {
+                held.push_back (a);
+                targets.push_back (axisTarget (*a, pos[(size_t) i]));
+            }
+        z = constrain (z, held, targets);
+        syncPositions();
+        refresh (&axis);
         decode();
     };
-    enableActions (false);
-    // Installed by scripts/install-models.sh, like the Prompt tab's models; the button overrides it
+    base.onChange = [this] { loadBase (base.getSelectedId()); };
+    resetButton.onClick = [this] { loadBase (base.getSelectedId()); };
+    category.onChange = [this]
+    {
+        updateDots();
+        decode();
+    };
+    lockButton.onClick = [this]
+    {
+        if (lockedTail)
+            lockedTail.reset();
+        else if (outputValid && current.layout.numNumeric > 0
+                 && (size_t) current.layout.numNumeric <= current.codes.size())
+            lockedTail.emplace (current.codes.begin() + current.layout.numNumeric, current.codes.end());
+        lockButton.setToggleState (lockedTail.has_value(), juce::dontSendNotification);
+        decode();
+    };
+    dotsButton.onClick = [this] { updateDots(); };
+    sendButton.onClick = [this]
+    {
+        if (! outputValid || current.patch.isEmpty())
+            return;
+        const auto r = onPatch ? onPatch (current.patch) : juce::Result::fail ("Surge playback not connected");
+        setStatus (r.wasOk() ? "Playing the decoded point on Surge; move the pad to return to Lite."
+                             : r.getErrorMessage());
+    };
+    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton,
+                                                             &sendButton, &pad, &zSlider })
+        c->setEnabled (false);
+
+    // Installed by scripts/install-models.sh, like the Prompt tab's models
     if (const auto installed = ml::appDataDir().getChildFile ("models/joint-vae/bundle.json"); installed.existsAsFile())
         loadBundle (installed);
     else
-        setStatus ("No VAE bundle installed: run scripts/install-models.sh, or Load VAE bundle...");
+        setStatus ("No VAE bundle installed: run scripts/install-models.sh");
 }
-void JointVaePanel::fromPrompt()
+
+void JointVaePanel::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
+
+const LatentAxis* JointVaePanel::axisOn (int slot) const
 {
-    if (! loaded)
-        return;
-    const auto match = JointVae::labelFor (prompt.getText());
-    // z = 0: the label's typical sound; Random anchor then gives variations within the label
-    category.setSelectedId (match.category + 1, juce::dontSendNotification);
-    anchor = {};
-    centre();
-    decode();
-    promptNote = match.noun.isEmpty() ? "no label noun found -> Unknown - "
-                                      : "\"" + match.noun + "\" -> " + jointLabels[match.category] + " - ";
+    return xy && axes[(size_t) slot].isNotEmpty() ? xy->find (axes[(size_t) slot]) : nullptr;
 }
-void JointVaePanel::setStatus (juce::String text) { status.setText (text, juce::dontSendNotification); }
-void JointVaePanel::centre()
-{
-    pad.position = {};
-    pad.repaint();
-}
-void JointVaePanel::enableActions (bool enable)
-{
-    for (auto* c : std::initializer_list<juce::Component*> { &importButton, &randomButton, &resetButton, &category,
-                                                             &xAxis, &yAxis, &radius, &pad, &prompt, &promptButton })
-        c->setEnabled (enable);
-    exportButton.setEnabled (enable && outputValid);
-}
-void JointVaePanel::chooseBundle()
-{
-    chooser = std::make_unique<juce::FileChooser> ("Load joint VAE bundle.json", juce::File(), "*.json");
-    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-                          [safe = juce::Component::SafePointer (this)] (const juce::FileChooser& fc)
-                          {
-                              if (safe && fc.getResult() != juce::File())
-                                  safe->loadBundle (fc.getResult());
-                          });
-}
+
 void JointVaePanel::loadBundle (const juce::File& file)
 {
-    enableActions (false);
-    loadButton.setEnabled (false);
     setStatus ("Loading and checking joint VAE...");
     worker.load (file,
-                 [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output output)
+                 [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
                  {
                      if (! safe)
                          return;
-                     safe->loadButton.setEnabled (true);
-                     if (r.failed())
+                     if (r.failed() || ! out.xypad || out.xypad->axes.size() < 2)
                      {
-                         safe->enableActions (safe->loaded);
-                         safe->setStatus (r.getErrorMessage());
+                         safe->setStatus (r.failed() ? r.getErrorMessage() : "Bundle has no pad axes");
                          return;
                      }
-                     safe->loaded = true;
-                     safe->current = std::move (output);
-                     safe->anchor = {};
-                     safe->centre();
-                     safe->enableActions (true);
-                     safe->decode();
+                     auto& self = *safe;
+                     self.xy = out.xypad;
+                     self.current = std::move (out);
+                     self.outputValid = false;
+                     const auto& all = self.xy->axes;
+                     const auto firstDim =
+                         std::find_if (all.begin(), all.end(), [] (const LatentAxis& a) { return a.kind == "dim"; });
+                     self.axes = { self.xy->find ("s:brightness") ? "s:brightness" : all[0].id,
+                                   self.xy->find ("s:length") ? "s:length" : all[1].id,
+                                   firstDim != all.end() ? firstDim->id : juce::String() };
+                     if (self.axes[2] == self.axes[0] || self.axes[2] == self.axes[1])
+                         self.axes[2] = {};
+                     self.list.setAxes (all);
+                     self.base.clear (juce::dontSendNotification);
+                     for (int i = 0; i < 8; ++i)
+                         if (self.xy->typical.count (jointLabels[i]) != 0)
+                             self.base.addItem (juce::String ("Typical ") + jointLabels[i], i + 1);
+                     if (! self.xy->presetZ.empty())
+                         self.base.addItem ("Random real preset", kRandomBase);
+                     for (auto* c : std::initializer_list<juce::Component*> {
+                              &self.base, &self.category, &self.lockButton, &self.resetButton, &self.dotsButton,
+                              &self.pad, &self.zSlider })
+                         c->setEnabled (true);
+                     self.base.setSelectedItemIndex (0, juce::dontSendNotification);
+                     self.loadBase (self.base.getSelectedId());
+                     self.resized();
                  });
 }
+
+void JointVaePanel::loadBase (int id)
+{
+    if (! xy || id == 0)
+        return;
+    juce::String message;
+    int label = 8;
+    if (id == kRandomBase && ! xy->presetZ.empty())
+    {
+        const auto k = (size_t) juce::Random::getSystemRandom().nextInt ((int) xy->presetZ.size());
+        z = xy->presetZ[k];
+        label = juce::jlimit (0, 8, xy->presetLabel[k]);
+        const auto name = (int) k < xy->presetName.size() && xy->presetName[(int) k].isNotEmpty()
+                              ? xy->presetName[(int) k]
+                              : "preset " + juce::String (k);
+        message = juce::String (juce::CharPointer_UTF8 ("Started from \xe2\x80\x9c")) + name
+                  + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9d (")) + jointLabels[label] + ").";
+    }
+    else if (auto it = xy->typical.find (jointLabels[juce::jlimit (1, 9, id) - 1]); it != xy->typical.end())
+    {
+        z = it->second;
+        label = id - 1;
+    }
+    else
+        return;
+    category.setSelectedId (label + 1, juce::dontSendNotification);
+    lockedTail.reset();
+    lockButton.setToggleState (false, juce::dontSendNotification);
+    setStatus (message);
+    syncPositions();
+    refresh();
+    updateDots();
+    decode();
+}
+
+void JointVaePanel::assign (int slot, const juce::String& id)
+{
+    // Page assign(): swap when the axis is on another slot; Z again clears Z. X and Y never go empty.
+    auto next = axes;
+    if (next[(size_t) slot] == id)
+    {
+        if (slot != 2)
+            return;
+        next[2] = {};
+    }
+    else
+    {
+        for (size_t o = 0; o < 3; ++o)
+            if ((int) o != slot && next[o] == id)
+                next[o] = next[(size_t) slot];
+        next[(size_t) slot] = id;
+    }
+    if (next[0].isEmpty() || next[1].isEmpty())
+        return;
+    axes = next;
+    syncPositions();
+    refresh();
+    updateDots();
+    resized();
+}
+
+void JointVaePanel::syncPositions()
+{
+    for (int i = 0; i < 3; ++i)
+        if (auto* a = axisOn (i))
+            pos[(size_t) i] = axisPosition (*a, z);
+}
+
+void JointVaePanel::applyPositions()
+{
+    std::vector<const LatentAxis*> held;
+    std::vector<float> targets;
+    for (int i = 0; i < 3; ++i)
+        if (auto* a = axisOn (i))
+        {
+            held.push_back (a);
+            targets.push_back (axisTarget (*a, pos[(size_t) i]));
+        }
+    z = constrain (z, held, targets);
+}
+
+void JointVaePanel::refresh (const LatentAxis* dragged)
+{
+    pad.setDot ({ pos[0], pos[1] });
+    zSlider.setValue (juce::jlimit (0.0f, 1.0f, pos[2]), juce::dontSendNotification);
+    list.setAssigned (axes);
+    list.setPositions (z, dragged);
+    repaint();
+}
+
+void JointVaePanel::updateDots()
+{
+    std::vector<std::tuple<float, float, int>> dots;
+    auto *ax = axisOn (0), *ay = axisOn (1);
+    if (dotsButton.getToggleState() && ax && ay)
+        for (size_t i = 0; i < xy->presetZ.size(); ++i)
+            dots.emplace_back (axisPosition (*ax, xy->presetZ[i]), axisPosition (*ay, xy->presetZ[i]),
+                               xy->presetLabel[i]);
+    pad.setPresetDots (std::move (dots), category.getSelectedId() - 1);
+}
+
 void JointVaePanel::decode()
 {
-    if (! loaded)
+    if (! xy)
         return;
-    worker.cancel();
-    outputValid = false;
-    promptNote = {};
-    exportButton.setEnabled (false);
-    JointLatent point;
-    if (auto r = JointVae::slice (anchor, xAxis.getSelectedId() - 1, yAxis.getSelectedId() - 1, pad.position.x,
-                                  pad.position.y, (float) radius.getValue(), point);
-        r.failed())
-    {
-        setStatus (r.getErrorMessage());
-        return;
-    }
-    setStatus ("Decoding...");
-    worker.decode (point, category.getSelectedId() - 1,
-                   [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
-                   {
-                       if (! safe)
-                           return;
-                       if (r.failed())
-                           safe->setStatus (r.getErrorMessage());
-                       else
-                           safe->showOutput (std::move (out));
-                   });
-}
-void JointVaePanel::showOutput (JointVaeWorker::Output out)
-{
-    current = std::move (out);
-    outputValid = true;
-    exportButton.setEnabled (true);
-    juce::String text;
-    for (int i = 0; i < current.layout.names.size(); ++i)
-        text += current.layout.names[i] + " = " + juce::String (current.codes[(size_t) i], 5) + "\n";
-    values.setText (text, false);
-    auto playback = current.patchResult;
-    if (playback.wasOk())
-        playback = onPatch ? onPatch (current.patch) : juce::Result::fail ("playback not connected");
-    setStatus (promptNote + current.layout.id + " - " + juce::String (current.layout.names.size())
-               + " decoded parameters - "
-               + (playback.wasOk() ? juce::String ("playing on Surge") : playback.getErrorMessage()));
-}
-void JointVaePanel::importPoint()
-{
-    chooser = std::make_unique<juce::FileChooser> ("Import a matching bundle's sound code or latent point",
-                                                   juce::File(), "*.json");
-    chooser->launchAsync (
-        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [safe = juce::Component::SafePointer (this)] (const juce::FileChooser& fc)
-        {
-            if (! safe || fc.getResult() == juce::File())
-                return;
-            auto data = juce::JSON::parse (fc.getResult());
-            const bool sound = data.hasProperty ("sound");
-            auto* array = data[sound ? "sound" : "latent"].getArray();
-            const auto cat = data["category"];
-            if (data["bundle_id"].toString() != safe->current.layout.id || ! cat.isInt() || (int) cat < 0
-                || (int) cat >= 9 || array == nullptr || array->size() != (sound ? 48 : 32))
-            {
-                safe->setStatus ("Expected matching bundle_id, category 0-8, and sound[48] or latent[32].");
-                return;
-            }
-            for (const auto& v : *array)
-                if (! (v.isDouble() || v.isInt() || v.isInt64()) || ! std::isfinite ((float) v))
+    LabRequest request;
+    request.z = z;
+    request.category = category.getSelectedId() - 1;
+    request.lockedTail = lockedTail;
+    worker.lab (std::move (request),
+                [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
                 {
-                    safe->setStatus ("Input must contain finite numbers.");
-                    return;
-                }
-            safe->category.setSelectedId ((int) cat + 1, juce::dontSendNotification);
-            safe->centre();
-            if (! sound)
-            {
-                for (int i = 0; i < 32; ++i)
-                    safe->anchor[(size_t) i] = (float) (*array)[i];
-                safe->decode();
-                return;
-            }
-            SoundCode code;
-            for (int i = 0; i < 48; ++i)
-                code[(size_t) i] = (float) (*array)[i];
-            safe->outputValid = false;
-            safe->enableActions (false);
-            safe->loadButton.setEnabled (false);
-            safe->setStatus ("Encoding sound code...");
-            safe->worker.encode (code, (int) cat,
-                                 [safe] (juce::Result r, JointVaeWorker::Output out)
-                                 {
-                                     if (! safe)
-                                         return;
-                                     safe->loadButton.setEnabled (true);
-                                     safe->enableActions (true);
-                                     if (r.failed())
-                                         safe->setStatus (r.getErrorMessage());
-                                     else
-                                     {
-                                         safe->anchor = out.latent;
-                                         safe->showOutput (std::move (out));
-                                     }
-                                 });
-        });
+                    if (! safe)
+                        return;
+                    if (r.failed())
+                    {
+                        safe->setStatus (r.getErrorMessage());
+                        return;
+                    }
+                    safe->current = std::move (out);
+                    safe->outputValid = true;
+                    const bool playable = safe->current.patchResult.wasOk();
+                    safe->sendButton.setEnabled (playable);
+                    if (! playable)
+                        safe->setStatus (safe->current.patchResult.getErrorMessage());
+                    else if (safe->onLite)
+                        safe->onLite (safe->current.lite);
+                });
 }
-void JointVaePanel::exportPoint()
+
+void JointVaePanel::paint (juce::Graphics& g)
 {
-    if (! outputValid)
-        return;
-    auto* object = new juce::DynamicObject();
-    juce::var data (object);
-    object->setProperty ("bundle_id", current.layout.id);
-    object->setProperty ("category", category.getSelectedId() - 1);
-    juce::Array<juce::var> latent, codes, names;
-    for (auto v : current.latent)
-        latent.add (v);
-    for (auto v : current.codes)
-        codes.add (v);
-    for (auto& name : current.layout.names)
-        names.add (name);
-    object->setProperty ("latent", latent);
-    object->setProperty ("codes", codes);
-    object->setProperty ("features", names);
-    chooser =
-        std::make_unique<juce::FileChooser> ("Export decoded point (not a plug-in preset)", juce::File(), "*.json");
-    chooser->launchAsync (
-        juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
-            | juce::FileBrowserComponent::warnAboutOverwriting,
-        [safe = juce::Component::SafePointer (this), data] (const juce::FileChooser& fc)
-        {
-            if (! safe || fc.getResult() == juce::File())
-                return;
-            safe->setStatus (fc.getResult().withFileExtension ("json").replaceWithText (juce::JSON::toString (data))
-                                 ? "Decoded point exported."
-                                 : "Could not save decoded point.");
-        });
+    const auto name = [this] (int slot)
+    {
+        auto* a = axisOn (slot);
+        return a ? a->name : juce::String();
+    };
+    g.setFont (LF::labelFont (10.0f));
+    if (auto* ax = axisOn (0))
+    {
+        g.setColour (LF::quiet());
+        g.drawText (ax->low, xLabelArea, juce::Justification::centredLeft);
+        g.drawText (ax->high, xLabelArea, juce::Justification::centredRight);
+        g.setColour (LF::ink);
+        g.drawText ("X " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (0), xLabelArea,
+                    juce::Justification::centred);
+    }
+    if (auto* ay = axisOn (1); ay && ! yLabelArea.isEmpty())
+    {
+        // Rotated a quarter turn: reads bottom to top, low end at the bottom
+        juce::Graphics::ScopedSaveState save (g);
+        const auto c = yLabelArea.getCentre().toFloat();
+        g.addTransform (juce::AffineTransform::rotation (-juce::MathConstants<float>::halfPi, c.x, c.y));
+        const auto r = juce::Rectangle<int> (yLabelArea.getHeight(), yLabelArea.getWidth()).withCentre (c.toInt());
+        g.setColour (LF::quiet());
+        g.drawText (ay->low, r, juce::Justification::centredLeft);
+        g.drawText (ay->high, r, juce::Justification::centredRight);
+        g.setColour (LF::ink);
+        g.drawText ("Y " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (1), r,
+                    juce::Justification::centred);
+    }
+    if (zSlider.isVisible())
+    {
+        g.setColour (LF::ink);
+        g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (2), zLabelArea,
+                          juce::Justification::centredLeft, 1, 0.7f);
+    }
+    // Reserved for the readout strip (Task 8)
+    g.setColour (LF::faint);
+    g.drawRoundedRectangle (readoutArea.toFloat().reduced (0.5f), 5, 1);
+    g.setColour (LF::quiet());
+    g.setFont (LF::labelFont (9.5f, true));
+    g.drawText ("EXPECTED SOUND", readoutArea.reduced (8), juce::Justification::topLeft);
 }
+
 void JointVaePanel::resized()
 {
     auto r = getLocalBounds();
-    title.setBounds (r.removeFromTop (30));
-    description.setBounds (r.removeFromTop (48));
-    auto buttons = r.removeFromTop (28);
-    loadButton.setBounds (buttons.removeFromLeft (180));
-    importButton.setBounds (buttons.removeFromLeft (210));
-    randomButton.setBounds (buttons.removeFromLeft (140));
-    resetButton.setBounds (buttons.removeFromLeft (80));
-    category.setBounds (buttons.removeFromLeft (140));
-    exportButton.setBounds (buttons);
-    r.removeFromTop (8);
-    auto promptRow = r.removeFromTop (28);
-    promptButton.setBounds (promptRow.removeFromRight (160));
-    prompt.setBounds (promptRow.withTrimmedRight (8));
-    r.removeFromTop (8);
-    status.setBounds (r.removeFromBottom (28));
-    auto left = r.removeFromLeft (r.getWidth() / 2);
-    left.removeFromRight (16);
-    axisLabel.setBounds (left.removeFromTop (24));
-    auto axes = left.removeFromTop (28);
-    xAxis.setBounds (axes.removeFromLeft (120));
-    axes.removeFromLeft (12);
-    yAxis.setBounds (axes.removeFromLeft (120));
-    axes.removeFromLeft (12);
-    radius.setBounds (axes);
-    pad.setBounds (left.reduced (0, 12));
-    values.setBounds (r);
+    auto bar = r.removeFromTop (kToolbarH);
+    r.removeFromTop (kGap);
+    const auto put = [&bar] (juce::Component& c, int w)
+    {
+        c.setBounds (bar.removeFromLeft (w));
+        bar.removeFromLeft (6);
+    };
+    put (latentButton, 92);
+    put (knobButton, 84);
+    bar.removeFromLeft (10);
+    put (base, 200);
+    put (category, 120);
+    put (lockButton, 124);
+    put (resetButton, 64);
+    put (dotsButton, 104);
+    put (sendButton, 120);
+
+    auto left = r.removeFromLeft (r.getWidth() * 2 / 3);
+    left.removeFromRight (12);
+    listView.setBounds (r);
+    list.layOut (listView.getWidth() - listView.getScrollBarThickness()); // rows never sit under the scroll bar
+
+    readoutArea = left.removeFromBottom (kReadoutH);
+    left.removeFromBottom (kGap);
+    promptArea = left.removeFromBottom (kPromptH); // Task 9's log and prompt; the status line until then
+    status.setBounds (promptArea);
+    left.removeFromBottom (kGap);
+    const bool hasZ = axisOn (2) != nullptr;
+    zSlider.setVisible (hasZ);
+    if (hasZ)
+    {
+        auto row = left.removeFromBottom (kZRowH).withTrimmedLeft (kYLabelW);
+        zLabelArea = row.removeFromLeft (row.getWidth() / 3);
+        zSlider.setBounds (row);
+    }
+    xLabelArea = left.removeFromBottom (kXLabelH).withTrimmedLeft (kYLabelW);
+    yLabelArea = left.removeFromLeft (kYLabelW);
+    pad.setBounds (left);
 }
+#endif
 } // namespace vae::experimental

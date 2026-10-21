@@ -85,8 +85,9 @@ public:
         juce::Result patchResult = juce::Result::ok();
         schema::Snapshot lite = schema::Snapshot::defaults(); // from `patch`; defaults when patchResult failed
         SoundCode sound {};
-        std::vector<float> mel;   // melFromSound (frames x 64 dB)
-        std::vector<float> knobs; // KnobGroups::names order; NaN when the plan writes no Value for it
+        std::vector<float> mel;                 // melFromSound (frames x 64 dB)
+        std::vector<float> knobs;               // KnobGroups::names order; NaN when the plan writes no Value for it
+        std::shared_ptr<const XyPadData> xypad; // set by a successful load, for the UI
     };
     using Callback = std::function<void (juce::Result, Output)>;
     ~JointVaeWorker();

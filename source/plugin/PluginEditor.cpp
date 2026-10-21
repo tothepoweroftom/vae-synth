@@ -355,6 +355,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     jointVaeViewButton.onClick = [this] { showView (View::jointVae); };
     addChildComponent (jointVaePanel);
     jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch) { return processor.loadSurgePatch (patch); };
+    jointVaePanel.onLite = [this] (const schema::Snapshot& lite) { processor.playLiteControls (lite); };
 
     // shortcut: the pad drives latent dims 0 and 1 with the rest at 0; add per-axis dim pickers if wanted.
     xyPad.onMove = [this] (float x, float y)

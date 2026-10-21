@@ -67,6 +67,8 @@ add_library(vae_joint_experiment INTERFACE)
 target_sources(vae_joint_experiment INTERFACE
     source/experiments/joint_vae/JointVae.cpp
     source/experiments/joint_vae/JointVaePanel.cpp
+    source/experiments/joint_vae/LabPad.cpp
+    source/experiments/joint_vae/LabAxisList.cpp
     source/experiments/joint_vae/StudentCodec.cpp
     source/experiments/joint_vae/LiteTranslation.cpp
     source/experiments/joint_vae/XyPad.cpp

@@ -1,57 +1,59 @@
 #pragma once
 #include "JointVae.h"
+#include "LabAxisList.h"
+#include "LabPad.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace vae::experimental
 {
-// Experimental latent explorer. Decoded points play as full Surge patches through onPatch.
+// VAE Lab v2: the student's XY-pad page (vae/pitcher/xypad/page_v2.template.html) as a native screen.
+// Every move decodes on the worker; results play on Lite through onLite, Send to Surge plays onPatch.
 class JointVaePanel final : public juce::Component
 {
 public:
     JointVaePanel();
     void resized() override;
+    void paint (juce::Graphics&) override;
+    /** Plays a decoded point on the Lite engine (set by the editor; message thread). */
+    std::function<void (const schema::Snapshot&)> onLite;
     /** Plays a decoded full Surge patch (set by the editor; message thread). */
     std::function<juce::Result (const juce::MemoryBlock&)> onPatch;
+    /** The installed bundle loads on construction; tests load another one. */
+    void loadBundle (const juce::File&);
 
 private:
-    class Pad final : public juce::Component
-    {
-    public:
-        juce::Point<float> position {};
-        std::function<void()> released, moved;
-        void paint (juce::Graphics&) override;
-        void mouseDown (const juce::MouseEvent& e) override { mouseDrag (e); }
-        void mouseDrag (const juce::MouseEvent&) override;
-        void mouseUp (const juce::MouseEvent&) override
-        {
-            if (released)
-                released();
-        }
-    } pad;
-    void chooseBundle();
-    void loadBundle (const juce::File&);
-    void importPoint();
-    void exportPoint();
+#if VAE_WITH_SURGE
+    void loadBase (int index);
+    void assign (int slot, const juce::String& id);
+    void syncPositions();  // page latSyncPos
+    void applyPositions(); // page latApplyPos
     void decode();
-    void showOutput (JointVaeWorker::Output);
-    void enableActions (bool);
-    void setStatus (juce::String);
-    void centre();
-    void fromPrompt();
+    void refresh (const LatentAxis* dragged = nullptr);
+    void updateDots();
+    void setStatus (const juce::String&);
+    const LatentAxis* axisOn (int slot) const;
 
     JointVaeWorker worker;
-    JointLatent anchor {};
+    std::shared_ptr<const XyPadData> xy;
     JointVaeWorker::Output current;
-    bool loaded = false, outputValid = false;
-    juce::TextButton loadButton { "Load VAE bundle..." }, importButton { "Import sound / latent..." },
-        randomButton { "Random anchor" }, resetButton { "Centre" }, exportButton { "Export decoded point..." };
-    juce::ComboBox category, xAxis, yAxis;
-    juce::Slider radius;
-    juce::Label title, description, status, axisLabel;
-    juce::String promptNote; // which noun picked the label, shown with the decode that follows
-    juce::TextEditor values, prompt;
-    juce::TextButton promptButton { "Sound from label" };
-    std::unique_ptr<juce::FileChooser> chooser;
+    bool outputValid = false;
+    JointLatent z {};
+    std::array<juce::String, 3> axes;
+    std::array<float, 3> pos { 0.5f, 0.5f, 0.5f };
+    std::optional<std::vector<float>> lockedTail;
+
+    juce::TextButton latentButton { "Latent pad" }, knobButton { "Knob pad" }, lockButton { "Lock structure" },
+        resetButton { "Reset" }, dotsButton { "Preset dots" }, sendButton { "Send to Surge" };
+    juce::ComboBox base, category;
+    LabPad pad;
+    juce::Slider zSlider;
+    juce::Viewport listView;
+    LabAxisList list;
+    juce::Label status;
+    juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea;
+#else
+    juce::Label note;
+#endif
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JointVaePanel)
 };
 } // namespace vae::experimental

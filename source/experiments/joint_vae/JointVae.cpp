@@ -292,7 +292,15 @@ void JointVaeWorker::submit (Work work, Callback callback)
 
 void JointVaeWorker::load (juce::File file, Callback cb)
 {
-    submit ([file] (JointVae& model, Output&) { return model.load (file); }, std::move (cb));
+    submit (
+        [file] (JointVae& model, Output& out)
+        {
+            auto r = model.load (file);
+            if (r.wasOk())
+                out.xypad = std::make_shared<const XyPadData> (model.xypad());
+            return r;
+        },
+        std::move (cb));
 }
 void JointVaeWorker::decode (JointLatent z, int category, Callback cb)
 {
