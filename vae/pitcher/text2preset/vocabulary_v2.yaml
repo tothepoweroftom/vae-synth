@@ -1,0 +1,259 @@
+# Prompt vocabulary for the text -> preset dataset (TEXT2PRESET_PLAN.md, section 2).
+# Edit freely: the generator (pitcher/text2preset/prompts.py) reads only this file.
+#
+# Every value has an id (stored as a tag with each prompt) and surface forms (near-synonyms):
+#   adj    forms placed before the noun   ("dark", "gritty")
+#   with   phrases placed after the noun  ("with a slow attack", "that slowly evolves")
+# The first adj form is the canonical one; Stable Audio prompts use it 70% of the time.
+# held_out: forms that never appear in train/val texts, only in the unseen-words test texts.
+#
+# ---------------------------------------------------------------------------------------------------
+# v2 (2026-10-15) — revised against preset-browser tag systems (NKS "Character" tags, Arturia Analog
+# Lab "Characteristics", Vital categories, Surge XT factory folders), sample-library tags (Sample Focus,
+# Splice), timbre-semantics research (luminance-texture-mass model; Hayes & Saitis' MuffWiggler-mined
+# descriptors with extra clean / plucky / raw factors; Audio Commons timbral models) and forum usage
+# (KVR, Gearspace). Lines marked "v2:" changed. Main changes:
+#   * NEW slots: stereo (split off body:wide), mood (emotional words — fuzzy, sample sparingly)
+#   * NEW values: brightness:piercing, body:nasal/full/deep/big, grit:rough, length:decaying,
+#     movement:phasing/gated/pitch_drop/rising/formant, colour:digital/glassy/saw/pwm/sync/resonant/
+#     organic, many styles
+#   * Surface-form collisions removed (one word -> one value), see the change notes inline
+#   * Nouns no longer contain slot adjectives (no "soft pad", "squelchy acid bass", "dubstep bass")
+#   * BUG fixed: Pluck avoided movement:swelling, which did not exist
+#   * LEAK fixed: held-out "crunchy" also appeared in train via "crunchy lo-fi"
+# CHECK: prompts.py must accept new slot names (stereo, mood) and globally unique value ids.
+# v2.1 (2026-10-15, after review): stereo slot REMOVED (CLAP fingerprints are taken from a mono mix,
+#   so width can't be learned; width becomes a direct UI control instead); "chord stab" dropped
+#   (contradicts "single note"); colour:noisy opposite -> null; per-noun avoid lists added where a
+#   noun contains a slot word ({forms: [...], avoid: [...]}, supported by prompts.py).
+# ---------------------------------------------------------------------------------------------------
+
+# v2 NOTE: C3 is ~131 Hz. "sub bass" / "808" prompts rendered at C3 will not sound sub-like.
+# Consider a per-category note (e.g. Bass at C2 or C1) or drop "sub" nouns.
+suffix: "single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody"
+
+# --- categories (our 8 folder labels): weight = share of prompts; nouns = synonym groups ----------
+# v2 rule: nouns name a sound TYPE only; character words live in slots, so tags stay unambiguous.
+categories:
+  Bass:
+    weight: 1.0
+    nouns:
+      bass: [bass, synth bass, bass sound]
+      sub_bass: [sub bass, sub]                          # v2: "deep sub" removed (deep is a slot value)
+      reese: [reese bass, reese]
+      neuro_bass: [neuro bass, neurofunk bass]           # v2: new — reese descendant, very common in DnB
+      acid_bass: [acid bass, 303-style bass, TB-303-style bass]   # v2: "squelchy" moved to colour:resonant
+      fm_bass: {forms: [FM bass, DX-style bass], avoid: [colour:analog, colour:organic, colour:fm]}   # v2: "digital" moved to colour:digital; v2.1: avoid
+      wobble_bass: [wobble bass, LFO bass]               # v2: "dubstep bass" removed (style:dubstep)
+      bass_808: ["808", 808 bass, 808-style bass]    # quoted: bare 808 parses as an int          # v2: new — most-named bass type; see C3 note
+    prefer: [brightness:dark, body:fat, body:deep, grit:gritty, length:short, colour:detuned]
+    avoid: [brightness:airy, attack:slow, movement:shimmering]
+  Lead:
+    weight: 1.0
+    nouns:
+      lead: [lead, synth lead, lead synth]
+      saw_lead: {forms: [saw lead, sawtooth lead], avoid: [colour:saw, colour:square, colour:sine, colour:pwm]}   # v2.1: avoid
+      square_lead: {forms: [square lead, square-wave lead], avoid: [colour:saw, colour:square, colour:sine, colour:sync]}   # v2: "chiptune lead" removed (colour:square); v2.1: avoid
+      solo_lead: [solo lead, mono lead]
+      sync_lead: {forms: [sync lead, hard-sync lead], avoid: [colour:sync, colour:sine]}   # v2: new — classic subtractive lead type; v2.1: avoid
+      whistle_lead: [whistle lead, G-funk-style lead]    # v2: new — the sine/whistle lead
+      screech_lead: [screech lead, screamer lead]        # v2: new — big-room / hardstyle / rave
+    prefer: [brightness:bright, brightness:piercing, grit:gritty, colour:detuned, colour:sync, movement:vibrato, attack:snappy]
+    avoid: [attack:slow]
+  Pad:
+    weight: 1.2
+    nouns:
+      pad: [pad, synth pad, pad sound]
+      string_pad: [string pad, string-like pad]
+      choir_pad: [choir pad, vocal pad, synth choir]
+      # v2: warm_pad [analog pad, soft pad] removed — both words are slot values (colour:analog,
+      #     grit:soft) and produced contradictory combos such as "cold soft pad".
+    prefer: [attack:slow, length:sustained, movement:evolving, brightness:warm, colour:pwm]
+    avoid: [attack:percussive, length:short, movement:pitch_drop]
+  Keys:
+    weight: 1.0
+    nouns:
+      keys: [keys, keyboard sound, synth keys]
+      epiano: [electric piano, e-piano, Rhodes-style piano, Wurlitzer-style piano]
+      organ: [organ, synth organ, drawbar organ, house organ]
+      clav: [clavinet, clav]
+    prefer: [attack:snappy, brightness:warm, colour:fm, movement:chorus_motion, movement:phasing, length:decaying]
+    avoid: [attack:slow, movement:wobble]
+  Pluck:
+    weight: 1.0
+    nouns:
+      pluck: [pluck, synth pluck, plucked synth]
+      bell: [bell, bell tone, synth bell]
+      mallet: [mallet, mallet sound, marimba-like pluck, vibraphone-like synth]
+      harp_pluck: [harp-like pluck, plucked string synth]
+      music_box: [music-box-like pluck, kalimba-like pluck]     # v2: new
+    prefer: [length:short, length:decaying, attack:percussive, brightness:bright, colour:fm, colour:metallic]
+    avoid: [length:sustained, attack:slow]               # v2: movement:swelling removed (did not exist)
+  Synth:
+    weight: 1.2
+    nouns:
+      synth: [synth, synth tone, synthesizer sound]
+      poly: [poly synth, polysynth]
+      stab: [synth stab, stab]                           # v2.1: "chord stab" dropped (single note)
+      hoover: [hoover, hoover synth]
+      brass_synth: [brass synth, synth brass]
+    prefer: [colour:analog, colour:detuned, colour:pwm, grit:gritty, attack:punchy]
+    avoid: []
+  Atmosphere:
+    weight: 1.3
+    nouns:
+      atmosphere: [atmosphere, atmospheric sound, ambience]
+      drone: [drone, drone tone]
+      soundscape: [soundscape, sound texture, texture]   # v2: "ambient texture" -> style:ambient collision
+      noise_atmo: [wind-like texture, noise bed]         # v2: "noisy atmosphere" -> colour:noisy collision
+      riser: [riser, uplifter, riser sweep]              # v2: new — NKS/Vital/Sample Focus all have FX/risers
+      sweep: [sweep, noise sweep, whoosh]                # v2: new
+    prefer: [attack:slow, length:sustained, movement:evolving, movement:shimmering, brightness:dark, colour:noisy, mood:eerie, mood:spacey]
+    avoid: [attack:percussive, length:short, attack:snappy]
+  Orchestral:
+    weight: 0.8
+    nouns:
+      strings: [strings, string ensemble, synth strings]
+      brass: [brass, brass section, horn]
+      orch_hit: [orchestral hit, orchestra stab]
+      solo_string: [cello-like synth, violin-like synth]
+      woodwind_synth: [flute-like synth, woodwind-like synth]   # v2: new — near-miss of OOR "flute"
+    prefer: [attack:slow, length:sustained, brightness:warm, style:cinematic, mood:epic]
+    avoid: [colour:lofi, colour:square, grit:gritty]
+
+# --- no-category prompts: character only -----------------------------------------------------------
+generic_nouns: [sound, synth sound, tone, patch, texture]
+
+# --- out of range (test only): sounds a synth can at best approximate --------------------------------
+# (good: several are deliberate near-misses of in-range nouns — choir/choir pad, church bells/bell,
+#  flute/flute-like synth, acoustic piano/electric piano)
+out_of_range_nouns: [nylon guitar, acoustic piano, choir, solo violin, flute, snare drum, human voice, saxophone, church bells, kick drum]
+
+# --- descriptor slots: values with forms; opposite = the value at the other end of the axis --------
+slots:
+  brightness:                                            # LTM "luminance"
+    dark: {adj: [dark, muffled, murky, dull], with: [with a dark tone, with the highs rolled off], opposite: bright}
+    warm: {adj: [warm, mellow, round], with: [with a warm tone], opposite: cold}
+    bright: {adj: [bright, crisp, brilliant], with: [with a bright top end], opposite: dark}
+    airy: {adj: [airy, breathy, wispy], with: [with lots of air], opposite: dark}   # v2: glassy -> colour:glassy
+    cold: {adj: [cold, sterile, icy], with: [with a cold digital tone], opposite: warm}
+    # v2: new. "sharp" moved here from attack: research and sample-library definitions treat it as
+    #     a spectral (piercing, 3-10 kHz) word, not an envelope word.
+    piercing: {adj: [piercing, cutting, sharp, shrill, screechy], with: [with a piercing top end, that cuts through the mix], opposite: warm}
+  body:                                                  # LTM "mass"
+    thin: {adj: [thin, small, tinny], with: [with a thin body], opposite: full}   # v2: narrow -> stereo:mono
+    hollow: {adj: [hollow, scooped], with: [with a hollow tone, with scooped mids], opposite: full}
+    # v2: new. "nasal"/"reedy" were under hollow, but nasal/honky = a midrange BUMP while hollow =
+    #     recessed mids; they are near-opposites in EQ terms.
+    nasal: {adj: [nasal, honky, reedy], with: [with a nasal, honky midrange], opposite: null}
+    fat: {adj: [fat, thick, heavy, chunky], with: [with a fat, thick body], opposite: thin}
+    full: {adj: [full, rich, full-bodied], with: [with a full, rich body], opposite: thin}              # v2: new
+    deep: {adj: [deep, weighty, booming], with: [with a deep low end, with lots of low end], opposite: thin}   # v2: new
+    big: {adj: [big, huge, massive, enormous], with: [that sounds enormous], opposite: thin}            # v2: new (was mixed into wide/fat)
+  # v2.1: stereo slot removed (was: wide [wide, stereo, lush, spread-out] / mono [mono, narrow, centered,
+  #   focused]). CLAP sees a mono mix, so width can't be learned from fingerprints; handle width as a
+  #   UI control (unison spread, chorus, width parameter) after generation.
+  grit:                                                  # LTM "texture" + hardness
+    clean: {adj: [clean, pure, smooth, clear], with: [with a clean tone], opposite: gritty}
+    gritty: {adj: [gritty, distorted, dirty, crunchy, saturated, overdriven], with: [with heavy distortion, with some grit, with some saturation], opposite: clean}
+    rough: {adj: [raw, rough, coarse], with: [with a raw, unpolished edge], opposite: clean}            # v2: new ("raw" factor)
+    aggressive: {adj: [aggressive, harsh, hard, angry, snarling, biting], with: [with an aggressive bite], opposite: soft}
+    soft: {adj: [soft, gentle, delicate], with: [with a soft character], opposite: aggressive}
+    buzzy: {adj: [buzzy, raspy, fizzy], with: [with a buzzy edge], opposite: clean}
+  attack:
+    slow: {adj: [slow-attack, swelling], with: [with a slow attack, that slowly fades in, that swells in], opposite: snappy}   # v2: "fading-in" dropped (unidiomatic)
+    snappy: {adj: [snappy, clicky, instant], with: [with a sharp attack, with a snappy start, with a click at the start], opposite: slow}
+    punchy: {adj: [punchy, tight], with: [with a punchy attack], opposite: slow}
+    percussive: {adj: [percussive, plucky, plinky], with: [with a percussive hit], opposite: slow}
+  length:
+    short: {adj: [short, staccato, quick], with: [with a quick decay, that dies away fast], opposite: sustained}
+    sustained: {adj: [sustained, long, held], with: [that sustains, with a long sustain], opposite: short}
+    long_release: {adj: [lingering, trailing, long-release], with: [with a long release, with a long fading tail], opposite: short}   # v2: "long-tail" dropped
+    decaying: {adj: [decaying, fading], with: [that slowly decays, with a natural decay], opposite: sustained}   # v2: new — bell/piano-style mid decay
+  movement:
+    static: {adj: [static, steady, stable], with: [without movement], opposite: evolving}
+    evolving: {adj: [evolving, morphing, shifting], with: [that slowly evolves, that keeps changing], opposite: static}
+    opening: {adj: [opening, filter-swept], with: [with a slowly opening filter, with a filter sweep], opposite: static}
+    wobble: {adj: [wobbling, wobbly], with: [with a wobbling filter, with an LFO wobble], opposite: static}   # v2: "wub-wub" dropped
+    vibrato: {adj: [vibrato, wavering], with: [with vibrato, with gentle pitch modulation], opposite: static}  # v2: "pitch wobble" collided with wobble
+    pulsing: {adj: [pulsing, throbbing, rhythmic], with: [with a pulsing rhythm, that pulses, with tremolo], opposite: static}
+    shimmering: {adj: [shimmering, sparkling, twinkling], with: [with a shimmering top], opposite: static}
+    chorus_motion: {adj: [chorused, swirling], with: [with chorus, with a swirling chorus], opposite: static}
+    phasing: {adj: [phasing, phasey, flanged, jet-like], with: [with a phaser, with a flanger sweep], opposite: static}              # v2: new
+    gated: {adj: [gated, stuttering, choppy], with: [with a rhythmic volume gate, that stutters], opposite: static}                 # v2: new
+    pitch_drop: {adj: [zappy, pitch-dropping, laser-like], with: [with a pitch drop, with a downward pitch sweep], opposite: rising} # v2: new
+    rising: {adj: [rising, pitch-rising, ascending], with: [with a rising pitch, that sweeps upward], opposite: pitch_drop}          # v2: new
+    formant: {adj: [growling, talking, vowel-like], with: [with a moving vowel formant, that talks, with a growl], opposite: static} # v2: new
+  colour:                                                # synthesis method / waveform / character
+    detuned: {adj: [detuned, unison, supersaw], with: [with detuned oscillators, with lots of unison], opposite: null}
+    fm: {adj: [FM, DX7-style], with: [with an FM character], opposite: analog}       # v2: "digital" moved to its own value
+    digital: {adj: [digital, wavetable], with: [with a digital edge, with a wavetable character], opposite: analog}   # v2: new
+    analog: {adj: [analog, vintage, analog-style], with: [with an analog feel, with slight analog drift], opposite: digital}   # v2: "warm analog" dropped (duplicate of warm)
+    metallic: {adj: [metallic, clangy, bell-like, ringing, inharmonic], with: [with a metallic ring], opposite: null}
+    glassy: {adj: [glassy, crystalline, glass-like], with: [with a glassy tone, with a glass-like sheen], opposite: null}   # v2: moved from airy
+    lofi: {adj: [lo-fi, bitcrushed, degraded, tape-like], with: [with a bitcrushed edge, like an old tape], opposite: null}   # v2: "crunchy lo-fi" dropped (held-out leak)
+    noisy: {adj: [noisy, hissy], with: [with a layer of noise], opposite: null}      # v2: "breathy noise" dropped (collided with airy); v2.1: opposite was grit:clean (other slot)
+    square: {adj: [square-wave, chiptune, 8-bit, pulse-wave], with: [with a square-wave tone], opposite: null}
+    sine: {adj: [sine, sine-wave], with: [with a sine-like tone], opposite: null}    # v2: "pure sine" collided with clean:pure
+    saw: {adj: [saw, sawtooth, saw-wave], with: [with a sawtooth tone], opposite: null}             # v2: new
+    pwm: {adj: [PWM, pulse-width-modulated], with: [with pulse-width modulation], opposite: null}  # v2: new
+    sync: {adj: [sync, synced, oscillator-sync], with: [with hard sync], opposite: null}           # v2: new
+    resonant: {adj: [resonant, squelchy, peaky], with: [with a resonant filter, with lots of resonance], opposite: null}   # v2: new — biggest gap
+    organic: {adj: [organic, natural, acoustic-like], with: [with an organic, natural character], opposite: digital}       # v2: new
+  style:
+    eighties: {adj: [80s, retro], with: [like an 80s synth], opposite: null}
+    nineties: {adj: [90s, rave, old-school rave], with: [like a 90s rave synth], opposite: null}   # v2: new
+    trance: {adj: [trance], with: [like in trance music], opposite: null}
+    dubstep: {adj: [dubstep], with: [like in dubstep], opposite: null}
+    dnb: {adj: [drum and bass, DnB, neurofunk], with: [like in drum and bass], opposite: null}     # v2: new
+    house: {adj: [house], with: [like in house music], opposite: null}                             # v2: new
+    techno: {adj: [techno, industrial], with: [like in techno], opposite: null}
+    synthwave: {adj: [synthwave], with: [like in synthwave], opposite: null}
+    future_bass: {adj: [future bass], with: [like in future bass], opposite: null}                 # v2: new
+    trap: {adj: [trap, hip-hop], with: [like in trap], opposite: null}                             # v2: new
+    hyperpop: {adj: [hyperpop], with: [like in hyperpop], opposite: null}                          # v2: new
+    funk: {adj: [funky, disco], with: [like an old funk synth], opposite: null}                    # v2: new
+    ambient: {adj: [ambient, chillout], with: [for an ambient track], opposite: null}              # v2: cinematic split off
+    cinematic: {adj: [cinematic, film-score], with: [like a movie soundtrack], opposite: null}     # v2: new (split)
+    scifi: {adj: [sci-fi, futuristic], with: [like a sci-fi soundtrack], opposite: null}           # v2: new
+  # v2: new slot. Mood words are what most library/browser tags and pack descriptions use, so users
+  #     will type them. Their mapping to parameters is loose — sample in a minority of prompts
+  #     (e.g. <= 20%) and report results on mood prompts separately.
+  #     Avoid "dark" here: it is already brightness:dark.
+  mood:
+    dreamy: {adj: [dreamy, ethereal, floaty, heavenly], with: [with a dreamy feel], opposite: null}
+    eerie: {adj: [eerie, ominous, haunting, menacing, sinister], with: [with an eerie, ominous feel], opposite: null}
+    melancholic: {adj: [melancholic, sad, nostalgic, bittersweet], with: [with a melancholic feel], opposite: uplifting}
+    uplifting: {adj: [uplifting, euphoric, happy], with: [with an uplifting feel], opposite: melancholic}
+    epic: {adj: [epic, powerful, majestic], with: [that sounds epic], opposite: null}
+    calm: {adj: [calm, peaceful, soothing], with: [with a calm feel], opposite: energetic}
+    energetic: {adj: [energetic, hype, driving], with: [with lots of energy], opposite: calm}
+    playful: {adj: [playful, bouncy, quirky, cute], with: [with a playful feel], opposite: null}
+    spacey: {adj: [spacey, cosmic, otherworldly], with: [that sounds like outer space], opposite: null}
+
+# forms never used in train/val (only in the unseen-words test texts)
+# v2: original ten kept (crunchy leak fixed); one per new value added. Every value keeps >= 1 train form.
+held_out: [murky, crunchy, snarling, throbbing, reedy, twinkling, lingering, raspy, icy,
+           shrill, chunky, weighty, coarse, phasey, choppy, crystalline, ethereal, sinister]
+
+# v2 suggestion (NOT read by the generator — copy into the test-text builder if useful):
+#   metaphor probes: forum words whose meaning producers themselves disagree on. Test-only, to see
+#   whether the model degrades gracefully: [plastic, rubbery, woolly, creamy, juicy, glossy, liquid,
+#   silky, wooden, velvety]
+#   space/FX words: users will type these but the suffix forces dry audio. Either strip them at
+#   inference or test robustness: [reverby, wet, washed-out, spacious, with lots of reverb, with delay]
+#   negations: [not too bright, without distortion, less harsh] — hard for text encoders; test only.
+
+# sentence templates for user texts ({desc} = adjectives + noun; {with} = one 'with' phrase)
+sentence_templates:
+  - "a {desc}"
+  - "a {desc} {with}"
+  - "I want a {desc}"
+  - "give me a {desc} {with}"
+  - "something like a {desc}"
+  - "{desc} {with}"
+  - "make a {desc} sound"
+  - "looking for a {desc} {with}"
+  - "I need a {desc} {with}"          # v2
+  - "can you make a {desc}"           # v2
+  - "{desc}"                          # v2: bare tag-style query, as typed into preset browsers

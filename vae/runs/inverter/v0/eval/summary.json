@@ -1,0 +1,135 @@
+{
+ "run": "v0",
+ "n_candidates": 16,
+ "n_presets": 344,
+ "switch_accuracy": {
+  "scene/osc/0/type": 0.640625,
+  "scene/filterunit/0/model": 0.23546511627906977,
+  "scene/filterblock_configuration": 0.5145348837209303,
+  "scene/wsunit/type": 0.5872093023255814
+ },
+ "val": {
+  "oracle": {
+   "same_character": 0.9759036144578314,
+   "median_db": 2.4308196705318954
+  },
+  "inverter_top": {
+   "same_character": 0.060240963855421686,
+   "median_db": 14.42542700789436
+  },
+  "inverter_best": {
+   "same_character": 0.18072289156626506,
+   "median_db": 9.289731737547218
+  },
+  "retrieval": {
+   "same_character": 0.6506024096385542,
+   "median_db": 6.060178037164461
+  },
+  "combined": {
+   "same_character": 0.6506024096385542,
+   "median_db": 6.060178037164461
+  }
+ },
+ "test": {
+  "oracle": {
+   "same_character": 0.9550561797752809,
+   "median_db": 2.069204072748787
+  },
+  "inverter_top": {
+   "same_character": 0.028089887640449437,
+   "median_db": 14.672146357683518
+  },
+  "inverter_best": {
+   "same_character": 0.1404494382022472,
+   "median_db": 9.438142207876322
+  },
+  "retrieval": {
+   "same_character": 0.6460674157303371,
+   "median_db": 6.062434187174633
+  },
+  "combined": {
+   "same_character": 0.6629213483146067,
+   "median_db": 5.998295486882408
+  }
+ },
+ "all": {
+  "oracle": {
+   "same_character": 0.9651162790697675,
+   "median_db": 2.2526384339171956
+  },
+  "inverter_top": {
+   "same_character": 0.0436046511627907,
+   "median_db": 14.541175742600263
+  },
+  "inverter_best": {
+   "same_character": 0.15988372093023256,
+   "median_db": 9.389357001891032
+  },
+  "retrieval": {
+   "same_character": 0.6482558139534884,
+   "median_db": 6.062434187174633
+  },
+  "combined": {
+   "same_character": 0.6569767441860465,
+   "median_db": 6.041188726926777
+  }
+ },
+ "by_label_test_same_character": {
+  "Atmosphere": {
+   "oracle": 1.0,
+   "inverter_top": 0.083,
+   "inverter_best": 0.167,
+   "retrieval": 0.583,
+   "combined": 0.583
+  },
+  "Bass": {
+   "oracle": 0.97,
+   "inverter_top": 0.091,
+   "inverter_best": 0.273,
+   "retrieval": 0.727,
+   "combined": 0.818
+  },
+  "Keys": {
+   "oracle": 0.955,
+   "inverter_top": 0.0,
+   "inverter_best": 0.091,
+   "retrieval": 0.636,
+   "combined": 0.636
+  },
+  "Lead": {
+   "oracle": 0.947,
+   "inverter_top": 0.0,
+   "inverter_best": 0.132,
+   "retrieval": 0.711,
+   "combined": 0.711
+  },
+  "Orchestral": {
+   "oracle": 1.0,
+   "inverter_top": 0.083,
+   "inverter_best": 0.25,
+   "retrieval": 0.833,
+   "combined": 0.833
+  },
+  "Pad": {
+   "oracle": 0.833,
+   "inverter_top": 0.0,
+   "inverter_best": 0.042,
+   "retrieval": 0.667,
+   "combined": 0.667
+  },
+  "Pluck": {
+   "oracle": 1.0,
+   "inverter_top": 0.0,
+   "inverter_best": 0.0,
+   "retrieval": 0.238,
+   "combined": 0.238
+  },
+  "Synth": {
+   "oracle": 1.0,
+   "inverter_top": 0.0,
+   "inverter_best": 0.188,
+   "retrieval": 0.75,
+   "combined": 0.75
+  }
+ }
+}

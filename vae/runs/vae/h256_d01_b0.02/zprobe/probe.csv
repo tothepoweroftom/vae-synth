@@ -1,0 +1,66 @@
+features,target,model,score
+label,brightness,linear,0.056749606900799
+label,brightness,boosted,0.056745630228205335
+label,attack,linear,0.39406294299530054
+label,attack,boosted,0.3940601775327164
+label,decay,linear,0.013651258113248077
+label,decay,boosted,0.009084375326975258
+label,length,linear,0.16041937950723784
+label,length,boosted,0.15863074494106855
+label,noisiness,linear,0.048366553989374506
+label,noisiness,boosted,0.048697827236773406
+label,percussive,linear,-0.040992117339595735
+label,percussive,boosted,-0.04881766655138353
+z,brightness,linear,0.04792149083490027
+z,brightness,boosted,0.08495114870940812
+z,attack,linear,0.09623475989622765
+z,attack,boosted,0.16532989080838023
+z,decay,linear,0.004504725537034404
+z,decay,boosted,-0.12315600560508311
+z,length,linear,0.2802456911974506
+z,length,boosted,0.32522642753364517
+z,noisiness,linear,0.032972128166063985
+z,noisiness,boosted,0.08144894019576465
+z,percussive,linear,0.007613650493170199
+z,percussive,boosted,-0.11354738251013119
+z,category,linear,0.3488372093023256
+z,category,boosted,0.36627906976744184
+z active (12),brightness,linear,0.04792149083490027
+z active (12),brightness,boosted,0.08495114870940812
+z active (12),attack,linear,0.09623475989622765
+z active (12),attack,boosted,0.16532989080838023
+z active (12),decay,linear,0.004504725537034404
+z active (12),decay,boosted,-0.12315600560508311
+z active (12),length,linear,0.2802456911974506
+z active (12),length,boosted,0.32522642753364517
+z active (12),noisiness,linear,0.032972128166063985
+z active (12),noisiness,boosted,0.08144894019576465
+z active (12),percussive,linear,0.007613650493170199
+z active (12),percussive,boosted,-0.11354738251013119
+z active (12),category,linear,0.3488372093023256
+z active (12),category,boosted,0.36627906976744184
+z + label,brightness,linear,0.0803689971902326
+z + label,brightness,boosted,0.12203357571586504
+z + label,attack,linear,0.4353723552840736
+z + label,attack,boosted,0.4501110045610087
+z + label,decay,linear,0.049062739821225
+z + label,decay,boosted,-0.04975013836522013
+z + label,length,linear,0.3743168151785151
+z + label,length,boosted,0.41361430941523214
+z + label,noisiness,linear,0.06469746454831804
+z + label,noisiness,boosted,0.09997792087730606
+z + label,percussive,linear,-0.03387972465286193
+z + label,percussive,boosted,-0.07869860558381103
+params,brightness,linear,0.18151844015584429
+params,brightness,boosted,0.21351980626958633
+params,attack,linear,0.4766599502430592
+params,attack,boosted,0.5886626700356306
+params,decay,linear,0.31354017992970284
+params,decay,boosted,0.7126155272486497
+params,length,linear,0.6281383477094242
+params,length,boosted,0.870234344827388
+params,noisiness,linear,0.26857610625069883
+params,noisiness,boosted,0.33844794350923657
+params,percussive,linear,0.11064608695820155
+params,percussive,boosted,0.2860165823192463
+params,category,linear,0.5058139534883721

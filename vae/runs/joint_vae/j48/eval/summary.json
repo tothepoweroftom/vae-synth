@@ -1,0 +1,244 @@
+{
+ "run": "j48",
+ "n_candidates": 16,
+ "zprobe_best_r2": {
+  "label": {
+   "brightness": 0.057,
+   "attack": 0.394,
+   "decay": 0.014,
+   "length": 0.16,
+   "noisiness": 0.049,
+   "percussive": -0.041,
+   "category": NaN
+  },
+  "z from both": {
+   "brightness": 0.687,
+   "attack": 0.338,
+   "decay": 0.655,
+   "length": 0.884,
+   "noisiness": 0.807,
+   "percussive": 0.071,
+   "category": 0.349
+  },
+  "z from params": {
+   "brightness": 0.26,
+   "attack": 0.253,
+   "decay": 0.272,
+   "length": 0.658,
+   "noisiness": 0.35,
+   "percussive": 0.044,
+   "category": 0.331
+  },
+  "z from params + label": {
+   "brightness": 0.25,
+   "attack": 0.46,
+   "decay": 0.313,
+   "length": 0.66,
+   "noisiness": 0.354,
+   "percussive": 0.029,
+   "category": NaN
+  },
+  "z from sound": {
+   "brightness": 0.719,
+   "attack": 0.375,
+   "decay": 0.775,
+   "length": 0.887,
+   "noisiness": 0.79,
+   "percussive": 0.087,
+   "category": 0.445
+  },
+  "old VAE: z + label": {
+   "brightness": 0.088,
+   "attack": 0.439,
+   "decay": 0.058,
+   "length": 0.395,
+   "noisiness": 0.104,
+   "percussive": -0.037,
+   "category": NaN
+  },
+  "old VAE: params": {
+   "brightness": 0.214,
+   "attack": 0.589,
+   "decay": 0.713,
+   "length": 0.87,
+   "noisiness": 0.338,
+   "percussive": 0.286,
+   "category": 0.506
+  }
+ },
+ "switch_accuracy": {
+  "0/type": 0.534375,
+  "0/model": 0.18023255813953487,
+  "scene/filterblock_configuration": 0.4418604651162791,
+  "wsunit/type": 0.5726744186046512
+ },
+ "val": {
+  "oracle": {
+   "same_character": 0.9759036144578314,
+   "median_db": 2.430819670531895
+  },
+  "inverter_v0": {
+   "same_character": 0.18072289156626506,
+   "median_db": 9.289731737547218
+  },
+  "joint_top": {
+   "same_character": 0.04216867469879518,
+   "median_db": 13.193346837882455
+  },
+  "joint_post": {
+   "same_character": 0.13855421686746988,
+   "median_db": 10.339441119504759
+  },
+  "joint_best": {
+   "same_character": 0.1746987951807229,
+   "median_db": 9.219018880821565
+  },
+  "retrieval": {
+   "same_character": 0.6506024096385542,
+   "median_db": 6.060178037164461
+  },
+  "joint_or_retrieval": {
+   "same_character": 0.6506024096385542,
+   "median_db": 6.0489924471995735
+  }
+ },
+ "test": {
+  "oracle": {
+   "same_character": 0.9550561797752809,
+   "median_db": 2.069204072748787
+  },
+  "inverter_v0": {
+   "same_character": 0.1404494382022472,
+   "median_db": 9.438142207876322
+  },
+  "joint_top": {
+   "same_character": 0.016853932584269662,
+   "median_db": 12.890191667327155
+  },
+  "joint_post": {
+   "same_character": 0.08426966292134831,
+   "median_db": 10.382171003040119
+  },
+  "joint_best": {
+   "same_character": 0.12359550561797752,
+   "median_db": 9.08798280001635
+  },
+  "retrieval": {
+   "same_character": 0.6460674157303371,
+   "median_db": 6.062434187174633
+  },
+  "joint_or_retrieval": {
+   "same_character": 0.651685393258427,
+   "median_db": 6.064011424982665
+  }
+ },
+ "all": {
+  "oracle": {
+   "same_character": 0.9651162790697675,
+   "median_db": 2.2526384339171956
+  },
+  "inverter_v0": {
+   "same_character": 0.15988372093023256,
+   "median_db": 9.389357001891032
+  },
+  "joint_top": {
+   "same_character": 0.029069767441860465,
+   "median_db": 12.942283937977109
+  },
+  "joint_post": {
+   "same_character": 0.11046511627906977,
+   "median_db": 10.367024942397194
+  },
+  "joint_best": {
+   "same_character": 0.14825581395348839,
+   "median_db": 9.128673878305523
+  },
+  "retrieval": {
+   "same_character": 0.6482558139534884,
+   "median_db": 6.062434187174633
+  },
+  "joint_or_retrieval": {
+   "same_character": 0.6511627906976745,
+   "median_db": 6.0591872083285825
+  }
+ },
+ "by_label_test_same_character": {
+  "Atmosphere": {
+   "oracle": 1.0,
+   "inverter_v0": 0.167,
+   "joint_top": 0.0,
+   "joint_post": 0.0,
+   "joint_best": 0.0,
+   "retrieval": 0.583,
+   "joint_or_retrieval": 0.583
+  },
+  "Bass": {
+   "oracle": 0.97,
+   "inverter_v0": 0.273,
+   "joint_top": 0.03,
+   "joint_post": 0.182,
+   "joint_best": 0.212,
+   "retrieval": 0.727,
+   "joint_or_retrieval": 0.758
+  },
+  "Keys": {
+   "oracle": 0.955,
+   "inverter_v0": 0.091,
+   "joint_top": 0.045,
+   "joint_post": 0.045,
+   "joint_best": 0.091,
+   "retrieval": 0.636,
+   "joint_or_retrieval": 0.636
+  },
+  "Lead": {
+   "oracle": 0.947,
+   "inverter_v0": 0.132,
+   "joint_top": 0.0,
+   "joint_post": 0.053,
+   "joint_best": 0.132,
+   "retrieval": 0.711,
+   "joint_or_retrieval": 0.711
+  },
+  "Orchestral": {
+   "oracle": 1.0,
+   "inverter_v0": 0.25,
+   "joint_top": 0.0,
+   "joint_post": 0.167,
+   "joint_best": 0.167,
+   "retrieval": 0.833,
+   "joint_or_retrieval": 0.833
+  },
+  "Pad": {
+   "oracle": 0.833,
+   "inverter_v0": 0.042,
+   "joint_top": 0.0,
+   "joint_post": 0.042,
+   "joint_best": 0.042,
+   "retrieval": 0.667,
+   "joint_or_retrieval": 0.667
+  },
+  "Pluck": {
+   "oracle": 1.0,
+   "inverter_v0": 0.0,
+   "joint_top": 0.0,
+   "joint_post": 0.048,
+   "joint_best": 0.048,
+   "retrieval": 0.238,
+   "joint_or_retrieval": 0.238
+  },
+  "Synth": {
+   "oracle": 1.0,
+   "inverter_v0": 0.188,
+   "joint_top": 0.062,
+   "joint_post": 0.125,
+   "joint_best": 0.25,
+   "retrieval": 0.75,
+   "joint_or_retrieval": 0.75
+  }
+ },
+ "best_candidate_counts": {
+  "mean (0)": 7,
+  "posterior draws (1-7)": 142,
+  "sampled switches (8-15)": 195
+ }
+}

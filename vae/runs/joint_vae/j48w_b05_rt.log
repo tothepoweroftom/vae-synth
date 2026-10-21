@@ -1,0 +1,70 @@
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+344 val + test presets; same character = <= 6.7 dB (decoded preset, other seed, vs the original)
+  oracle               same character 97%  median 2.3 dB  90th 4.4 dB  silent 0
+  old_vae              same character 0%  median nan dB  90th nan dB  silent 344
+  joint_params         same character 1%  median 16.5 dB  90th 27.6 dB  silent 1
+  joint_both           same character 3%  median 15.1 dB  90th 24.8 dB  silent 0
+  joint_params_best8   same character 4%  median 14.3 dB  90th 22.8 dB  silent 0
+Atmosphere   1.000      0.0         0.000       0.000               0.045
+Bass         0.968      0.0         0.032       0.095               0.079
+Keys         0.977      0.0         0.000       0.000               0.000
+Lead         0.972      0.0         0.014       0.042               0.056
+Orchestral   1.000      0.0         0.000       0.000               0.043
+Pad          0.872      0.0         0.021       0.021               0.021
+Pluck        0.976      0.0         0.000       0.024               0.049
+Synth        1.000      0.0         0.000       0.000               0.000
+written: /Users/matthijsvork/Documents/Pitcher/runs/joint_vae/j48w_b05/roundtrip
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+truth         2.26       0.97
+all          16.67       0.01
+knobs        15.98       0.02
+routes        7.26       0.47
+bools         2.95       0.81
+cats          7.23       0.44
+stepped       3.07       0.84
+categoricals with the lowest accuracy (params -> z -> params):
+  fx/reverb2/placement        11 0.454545
+scene/osc/0/classic/p6        33 0.484848
+   scene/osc/1/sine/p6        11 0.545455
+scene/osc/1/classic/p6        24 0.583333
+bool accuracy (active): 0.956 | cat accuracy (active, mean): 0.774
+active routes: truth 2.6627906976744184 decoded 19.86046511627907

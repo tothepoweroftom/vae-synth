@@ -1,0 +1,512 @@
+<title>Pitcher XY Pad</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a hardware-style control surface. Pad on the left, ranked group list on the right; stacks on phones. */
+:root {
+  --bg: #e9ebee; --panel: #f6f7f8; --well: #ffffff; --ink: #15181d; --muted: #5a616c; --line: #d2d6dc;
+  --accent: #0d5c6b; --accent-ink: #ffffff; --accent-soft: #d5e7ea; --dot-ring: #15181d;
+  --c0: #2a78d6; --c1: #eb6834; --c2: #1baf7a; --c3: #eda100; --c4: #e87ba4; --c5: #008300; --c6: #6250d6; --c7: #e34948;
+  --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --map-alpha: 0.30;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111317; --panel: #191c21; --well: #0c0e11; --ink: #eceef1; --muted: #9aa2ae; --line: #2b3038;
+  --accent: #58b6c6; --accent-ink: #071417; --accent-soft: #16343a; --dot-ring: #eceef1;
+  --c0: #3987e5; --c1: #d95926; --c2: #199e70; --c3: #c98500; --c4: #d55181; --c5: #008300; --c6: #9085e9; --c7: #e66767;
+  --map-alpha: 0.36; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111317; --panel: #191c21; --well: #0c0e11; --ink: #eceef1; --muted: #9aa2ae; --line: #2b3038;
+  --accent: #58b6c6; --accent-ink: #071417; --accent-soft: #16343a; --dot-ring: #eceef1;
+  --c0: #3987e5; --c1: #d95926; --c2: #199e70; --c3: #c98500; --c4: #d55181; --c5: #008300; --c6: #9085e9; --c7: #e66767;
+  --map-alpha: 0.36; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: 0.01em; margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; }
+h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 6px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.field { display: flex; gap: 8px; align-items: center; }
+.field label { font-size: 12px; color: var(--muted); }
+select, input[type="search"] { font: inherit; color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible, canvas:focus-visible, .key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { border: 1px solid var(--line); background: var(--well); color: var(--ink); border-radius: 6px; padding: 5px 10px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 18px; align-items: start; }
+@media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+
+/* pad */
+.padwrap { display: grid; grid-template-columns: 22px minmax(0, 1fr); grid-template-rows: auto auto; gap: 6px; }
+.yaxis { writing-mode: vertical-rl; transform: rotate(180deg); display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.yaxis b, .xaxis b { font-family: var(--display); font-weight: 600; color: var(--ink); font-size: 13px; letter-spacing: 0.02em; }
+.xaxis { grid-column: 2; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-family: var(--mono); gap: 8px; }
+.padbox { position: relative; aspect-ratio: 1 / 1; max-width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--well); touch-action: none; }
+canvas#pad { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.zrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 12px; }
+.zrow input { width: 100%; accent-color: var(--accent); }
+.zrow .zname { font-family: var(--display); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+.checks { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.checks label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.readouts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 560px) { .readouts { grid-template-columns: minmax(0, 1fr); } }
+.probs { display: grid; gap: 5px; }
+.prob { display: grid; grid-template-columns: 78px minmax(0, 1fr) 40px; align-items: center; gap: 8px; font-size: 12px; }
+.prob .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.prob .bar i { display: block; height: 100%; border-radius: 4px; }
+.prob .pct { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.prob.top .name { font-weight: 600; }
+.knobs { display: grid; gap: 4px; font-size: 12px; }
+.knobs .row { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.knobs .ax { font-family: var(--mono); font-weight: 500; color: var(--accent); }
+.knobs .k { overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.knobs .v { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hint { font-size: 12px; color: var(--muted); }
+
+/* keyboard */
+.keys { display: flex; gap: 3px; flex-wrap: wrap; user-select: none; -webkit-user-select: none; }
+.key { width: 30px; height: 46px; border-radius: 0 0 5px 5px; border: 1px solid var(--line); background: var(--well); color: var(--muted);
+  font-family: var(--mono); font-size: 10px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; touch-action: none; }
+.key.black { background: var(--ink); color: var(--bg); height: 34px; border-color: var(--ink); }
+.key.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* list */
+.listhead { display: grid; gap: 6px; }
+.list { display: grid; gap: 0; max-height: 820px; overflow-y: auto; border-top: 1px solid var(--line); margin: 0 -16px -16px; }
+.g { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.g:hover { background: var(--well); }
+.g.assigned { background: var(--accent-soft); }
+.g .rank { font-family: var(--mono); font-size: 11px; color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.g .nm { font-weight: 600; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.g .sec { font-size: 11px; color: var(--muted); font-weight: 400; }
+.g .desc { font-size: 12px; color: var(--muted); grid-column: 2; }
+.g .meter { grid-column: 2; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.g .meter .track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.g .meter .track i { display: block; height: 100%; background: var(--ink); border-radius: 3px; }
+.g .meter .track i.unclear { background: var(--muted); opacity: 0.5; }
+.g .meter .num { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.g .tags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 10.5px; font-family: var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.axbtns { display: flex; gap: 4px; grid-row: 1 / span 2; grid-column: 3; }
+.axbtn { width: 28px; height: 26px; border-radius: 5px; border: 1px solid var(--line); background: var(--well); color: var(--ink); font-family: var(--mono); font-weight: 500; font-size: 12px; }
+.axbtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); }
+.notes li b { color: var(--ink); font-weight: 600; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pitcher · plugin concept · XY pad</div>
+    <h1>Pitcher XY Pad</h1>
+    <p class="lede">Two continuous controls on a pad, one on an optional third slider. Pick any group from the list on the right and put it on X, Y or Z. The list is ranked by how strongly each group decides the sound's category in 1,719 real Surge presets. The coloured map behind the pad shows which category the sound leans towards at every point.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="field"><label for="base">Start from</label>
+      <select id="base"></select></div>
+    <button class="btn" id="reset" type="button">Reset to start</button>
+    <button class="btn primary" id="sound" type="button" aria-pressed="false">Sound on</button>
+    <div class="keys" id="keys" aria-label="Keyboard C3 to C4 (computer keys A to K)"></div>
+  </div>
+
+  <main>
+    <section class="panel" aria-label="XY pad">
+      <div class="padwrap">
+        <div class="yaxis" id="yaxis"></div>
+        <div class="padbox"><canvas id="pad" tabindex="0" aria-label="XY pad: drag, or use the arrow keys"></canvas></div>
+        <div class="xaxis" id="xaxis"></div>
+      </div>
+      <div class="zrow" id="zrow">
+        <span class="mono">Z</span><input type="range" id="z" min="0" max="1000" value="500" aria-label="Third axis">
+        <span class="zname" id="zname"></span>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="showmap" checked> category map</label>
+        <label><input type="checkbox" id="showdots" checked> real presets as dots</label>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="readouts">
+        <div class="probs" id="probs" aria-live="polite"></div>
+        <div class="knobs" id="knobs"></div>
+      </div>
+      <p class="hint" id="hint"></p>
+    </section>
+
+    <aside class="panel" aria-label="Groups">
+      <div class="listhead">
+        <h2>Groups</h2>
+        <p class="hint">Ranked by how much the category guess drops when the group is scrambled (balanced accuracy, 8 categories). A grey bar means the effect is within the noise.</p>
+        <input type="search" id="filter" placeholder="Filter, e.g. filter, reverb, LFO" aria-label="Filter groups">
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+  </main>
+
+  <section class="panel notes" aria-label="Notes">
+    <div>
+      <h2>How this was made</h2>
+      <ul id="method"></ul>
+    </div>
+    <div>
+      <h2>For the C++ version</h2>
+      <ul>
+        <li><b>Axis value 0–1 → knobs.</b> Each knob in the group moves between its own 5th and 95th percentile in real presets, in the direction given by its sign. The pad never reaches settings presets don't use.</li>
+        <li><b>Groups are fixed lists of knobs.</b> They're loaded from a table (name, knobs, signs, ranges), so the ranking and grouping can be updated without code changes.</li>
+        <li><b>Only continuous knobs.</b> Switches and choices (oscillator type, filter type, play mode) stay as normal controls next to the pad.</li>
+        <li><b>The category map is optional.</b> It needs a small classifier (here 60 decision trees, about 1 MB) evaluated on a grid when an axis changes.</li>
+        <li><b>The sound here is a rough browser synth</b>, not Surge: it shows that moving the dot changes the sound, nothing more.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script type="application/json" id="data">/*DATA*/null</script>
+<script>
+(() => {
+const D = JSON.parse(document.getElementById("data").textContent);
+const L = D.labels, NL = L.length;
+const KI = Object.fromEntries(D.knobs.map((k, i) => [k.name, i]));
+const NK = D.knobs.length;
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let COL = [];
+const readColors = () => { COL = L.map((_, i) => cssVar(`--c${i}`)); };
+readColors();
+
+// ---------- knob <-> group math ----------
+const unitOf = (ki, code) => { const k = D.knobs[ki], s = k.p95 - k.p5 || 1e-6; return Math.min(1, Math.max(0, (code - k.p5) / s)); };
+const codeOf = (ki, u) => { const k = D.knobs[ki]; return k.p5 + u * (k.p95 - k.p5); };
+function groupPos(g, vals) {           // mean unit position of the group's active knobs (sign-aligned)
+  let s = 0, n = 0;
+  for (const name of g.knobs) { const i = KI[name], v = vals[i]; if (v == null || Number.isNaN(v)) continue;
+    const u = unitOf(i, v); s += g.signs[name] > 0 ? u : 1 - u; n++; }
+  return n ? s / n : null;
+}
+function setGroup(g, u, vals) {
+  for (const name of g.knobs) { const i = KI[name]; vals[i] = codeOf(i, g.signs[name] > 0 ? u : 1 - u); }
+}
+const nat = (name, vals) => { const i = KI[name], v = vals[i]; if (v == null || Number.isNaN(v)) return null; const [lo, hi] = D.knobs[i].natural_range; return lo + v * (hi - lo); };
+
+// ---------- forest ----------
+const T = D.forest.trees;
+function predict(vals) {
+  const p = new Float64Array(NL);
+  for (const t of T) { let n = 0; while (t.l[n] !== -1) { const x = vals[t.f[n]]; n = ((x == null || Number.isNaN(x)) ? -1 : x) <= t.t[n] ? t.l[n] : t.r[n]; }
+    const v = t.v[n]; for (let c = 0; c < NL; c++) p[c] += v[c]; }
+  for (let c = 0; c < NL; c++) p[c] /= T.length;
+  return p;
+}
+
+// ---------- presets and starting points ----------
+const PV = D.presets.values, PL = D.presets.label;
+function baseFor(label) {             // per-knob median of the category (knob left inactive if inactive in most of its presets)
+  const rows = PV.filter((_, i) => label < 0 || PL[i] === label);
+  const out = new Array(NK).fill(NaN);
+  for (let k = 0; k < NK; k++) { const xs = rows.map(r => r[k]).filter(v => v != null).sort((a, b) => a - b);
+    if (xs.length >= rows.length * 0.5) out[k] = xs[Math.floor(xs.length / 2)]; }
+  return out;
+}
+const BASES = [{ name: "Typical preset (all categories)", vals: baseFor(-1) }, ...L.map((l, i) => ({ name: `Typical ${l}`, vals: baseFor(i) }))];
+
+// ---------- state ----------
+const ranked = D.groups;
+const byName = Object.fromEntries(ranked.map(g => [g.name, g]));
+const state = { base: 0, vals: BASES[0].vals.slice(), axes: { x: ranked[0].name, y: ranked[1].name, z: ranked[2].name }, pos: { x: 0.5, y: 0.5, z: 0.5 } };
+try { const s = JSON.parse(localStorage.getItem("xypad-axes") || "null"); if (s && byName[s.x] && byName[s.y]) state.axes = { x: s.x, y: s.y, z: byName[s.z] ? s.z : null }; } catch (e) {}
+
+function syncPosFromVals() {
+  for (const a of ["x", "y", "z"]) { const g = byName[state.axes[a]]; if (!g) continue; const p = groupPos(g, state.vals); state.pos[a] = p == null ? 0.5 : p; }
+}
+function applyPos() { for (const a of ["x", "y", "z"]) { const g = byName[state.axes[a]]; if (g) setGroup(g, state.pos[a], state.vals); } }
+
+// ---------- UI: base select, legend ----------
+const baseSel = document.getElementById("base");
+BASES.forEach((b, i) => { const o = document.createElement("option"); o.value = i; o.textContent = b.name; baseSel.appendChild(o); });
+baseSel.addEventListener("change", () => { state.base = +baseSel.value; state.vals = BASES[state.base].vals.slice(); syncPosFromVals(); mapDirty = true; render(); });
+document.getElementById("reset").addEventListener("click", () => { state.vals = BASES[state.base].vals.slice(); syncPosFromVals(); mapDirty = true; render(); });
+const legend = document.getElementById("legend");
+function drawLegend() { legend.innerHTML = L.map((l, i) => `<span><i class="sw" style="background:${COL[i]}"></i>${l}</span>`).join(""); }
+
+// ---------- list ----------
+const list = document.getElementById("list"), filt = document.getElementById("filter");
+const AUDIBLE = new Set(["Amp attack", "Amp decay", "Amp sustain", "Amp release", "Filter env attack", "Filter env decay", "Filter env sustain", "Filter env release",
+  "Cutoff", "Resonance", "Filter env amount", "Filter keytrack", "Drive", "Glide", "Drift", "Osc 2/3 detune", "Osc 1 level", "Osc 2/3 level", "Noise level",
+  "Classic shape", "Sub mix", "Unison detune", "LFO 1 rate", "LFO 1 amount", "Reverb size / decay", "Reverb mix", "Delay time", "Delay feedback", "Delay mix", "Volume"]);
+const maxImp = Math.max(...ranked.map(g => g.importance));
+function drawList() {
+  const q = filt.value.trim().toLowerCase();
+  list.innerHTML = "";
+  ranked.forEach((g, r) => {
+    if (q && !(g.name + " " + g.section + " " + g.desc + " " + g.knobs.join(" ")).toLowerCase().includes(q)) return;
+    const on = Object.entries(state.axes).filter(([, n]) => n === g.name).map(([a]) => a);
+    const clear = g.importance > 2 * g.se;
+    const w = Math.max(0, g.importance) / maxImp * 100;
+    const el = document.createElement("div");
+    el.className = "g" + (on.length ? " assigned" : "");
+    el.innerHTML = `<div class="rank">${r + 1}</div>
+      <div class="nm">${g.name}<span class="sec">${g.section}</span></div>
+      <div class="axbtns">${["x", "y", "z"].map(a => `<button class="axbtn" type="button" data-a="${a}" aria-pressed="${on.includes(a)}" aria-label="Put ${g.name} on ${a.toUpperCase()}">${a.toUpperCase()}</button>`).join("")}</div>
+      <div class="desc">${g.desc}</div>
+      <div class="meter"><div class="track"><i class="${clear ? "" : "unclear"}" style="width:${w.toFixed(1)}%"></i></div>
+        <span class="num">${g.importance >= 0 ? "+" : ""}${(g.importance * 100).toFixed(1)} pts</span></div>
+      <div class="tags"><span class="tag">${g.knobs.length} knob${g.knobs.length > 1 ? "s" : ""}</span>
+        ${g.mean_abs_rho != null ? `<span class="tag">move together: |ρ| ${g.mean_abs_rho.toFixed(2)}</span>` : ""}
+        <span class="tag">in ${Math.round(g.active * 100)}% of presets</span>
+        ${AUDIBLE.has(g.name) ? "" : `<span class="tag">no preview sound</span>`}</div>`;
+    el.querySelectorAll(".axbtn").forEach(b => b.addEventListener("click", () => assign(b.dataset.a, g.name)));
+    list.appendChild(el);
+  });
+}
+filt.addEventListener("input", drawList);
+function assign(a, name) {
+  if (state.axes[a] === name) { if (a === "z") state.axes.z = null; else return; }
+  else { for (const o of ["x", "y", "z"]) if (o !== a && state.axes[o] === name) state.axes[o] = state.axes[a]; state.axes[a] = name; }
+  if (!state.axes.x || !state.axes.y) return;
+  try { localStorage.setItem("xypad-axes", JSON.stringify(state.axes)); } catch (e) {}
+  syncPosFromVals(); mapDirty = true; render();
+}
+
+// ---------- pad ----------
+const cv = document.getElementById("pad"), ctx = cv.getContext("2d");
+const GRID = 40;
+let mapDirty = true, mapImg = null, dotsCache = null;
+function resize() { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); render(); }
+function computeMap() {
+  const gx = byName[state.axes.x], gy = byName[state.axes.y];
+  const vals = state.vals.slice(), cells = new Uint8Array(GRID * GRID), conf = new Float32Array(GRID * GRID);
+  for (let j = 0; j < GRID; j++) for (let i = 0; i < GRID; i++) {
+    setGroup(gx, (i + 0.5) / GRID, vals); setGroup(gy, 1 - (j + 0.5) / GRID, vals);
+    const p = predict(vals); let b = 0; for (let c = 1; c < NL; c++) if (p[c] > p[b]) b = c;
+    cells[j * GRID + i] = b; conf[j * GRID + i] = p[b];
+  }
+  mapImg = { cells, conf };
+  const xs = PV.map(r => groupPos(gx, r)), ys = PV.map(r => groupPos(gy, r));
+  dotsCache = PV.map((_, i) => (xs[i] == null || ys[i] == null) ? null : [xs[i], ys[i], PL[i]]).filter(Boolean);
+  mapDirty = false;
+}
+function hexA(hex, a) { const h = hex.replace("#", ""); const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function drawPad() {
+  if (mapDirty) computeMap();
+  const W = cv.width, H = cv.height, dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, W, H);
+  const alpha = parseFloat(cssVar("--map-alpha")) || 0.3;
+  if (document.getElementById("showmap").checked) {
+    const cw = W / GRID, ch = H / GRID;
+    for (let j = 0; j < GRID; j++) for (let i = 0; i < GRID; i++) {
+      const k = j * GRID + i; ctx.fillStyle = hexA(COL[mapImg.cells[k]], alpha * (0.45 + 0.9 * mapImg.conf[k]));
+      ctx.fillRect(Math.floor(i * cw), Math.floor(j * ch), Math.ceil(cw), Math.ceil(ch)); }
+    // label the largest region of each category
+    const cnt = new Array(NL).fill(0), sx = new Array(NL).fill(0), sy = new Array(NL).fill(0);
+    mapImg.cells.forEach((c, k) => { cnt[c]++; sx[c] += k % GRID; sy[c] += Math.floor(k / GRID); });
+    ctx.font = `600 ${12 * dpr}px ${cssVar("--display").split(",")[0]}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (let c = 0; c < NL; c++) if (cnt[c] > GRID * GRID * 0.04) {
+      const x = (sx[c] / cnt[c] + 0.5) * W / GRID, y = (sy[c] / cnt[c] + 0.5) * H / GRID;
+      ctx.fillStyle = cssVar("--ink"); ctx.globalAlpha = 0.75; ctx.fillText(L[c], x, y); ctx.globalAlpha = 1; }
+  }
+  // grid
+  ctx.strokeStyle = cssVar("--line"); ctx.lineWidth = 1;
+  for (let q = 1; q < 4; q++) { ctx.beginPath(); ctx.moveTo(W * q / 4, 0); ctx.lineTo(W * q / 4, H); ctx.moveTo(0, H * q / 4); ctx.lineTo(W, H * q / 4); ctx.stroke(); }
+  if (document.getElementById("showdots").checked && dotsCache) {
+    for (const [x, y, l] of dotsCache) { ctx.fillStyle = hexA(COL[l], 0.75); ctx.beginPath(); ctx.arc(x * W, (1 - y) * H, 2.2 * dpr, 0, 6.283); ctx.fill(); }
+  }
+  // cursor
+  const cx = state.pos.x * W, cy = (1 - state.pos.y) * H;
+  ctx.strokeStyle = cssVar("--dot-ring"); ctx.lineWidth = 2 * dpr; ctx.fillStyle = cssVar("--well");
+  ctx.beginPath(); ctx.arc(cx, cy, 9 * dpr, 0, 6.283); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, 2.5 * dpr, 0, 6.283); ctx.fillStyle = cssVar("--dot-ring"); ctx.fill();
+}
+let dragging = false;
+function padSet(e) { const r = cv.getBoundingClientRect();
+  state.pos.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); state.pos.y = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+  applyPos(); render(false); }
+cv.addEventListener("pointerdown", e => { dragging = true; cv.setPointerCapture(e.pointerId); padSet(e); });
+cv.addEventListener("pointermove", e => { if (dragging) padSet(e); });
+cv.addEventListener("pointerup", () => { dragging = false; });
+cv.addEventListener("keydown", e => { const d = e.shiftKey ? 0.1 : 0.02, m = { ArrowLeft: ["x", -d], ArrowRight: ["x", d], ArrowUp: ["y", d], ArrowDown: ["y", -d] }[e.key];
+  if (!m) return; e.preventDefault(); state.pos[m[0]] = Math.min(1, Math.max(0, state.pos[m[0]] + m[1])); applyPos(); render(false); });
+const z = document.getElementById("z");
+z.addEventListener("input", () => { state.pos.z = z.value / 1000; applyPos(); mapDirty = true; render(false); });
+document.getElementById("showmap").addEventListener("change", () => render(false));
+document.getElementById("showdots").addEventListener("change", () => render(false));
+
+// ---------- readouts ----------
+function fmt(name, vals) {
+  const i = KI[name], k = D.knobs[i], v = vals[i]; if (v == null || Number.isNaN(v)) return "off";
+  const x = nat(name, vals), t = k.ctrltype;
+  if (t.startsWith("ct_envtime") || t === "ct_portatime") return (2 ** x < 1 ? `${Math.round(2 ** x * 1000)} ms` : `${(2 ** x).toFixed(2)} s`);
+  if (t === "ct_reverbtime") return `${(2 ** x).toFixed(2)} s`;
+  if (t.startsWith("ct_lforate")) return `${(2 ** x).toFixed(2)} Hz`;
+  if (t.startsWith("ct_freq_audible")) return `${Math.round(440 * 2 ** (x / 12))} Hz`;
+  if (t.startsWith("ct_pitch") || t === "ct_freq_mod") return `${x >= 0 ? "+" : ""}${x.toFixed(1)} st`;
+  if (t.startsWith("ct_decibel")) return `${x >= 0 ? "+" : ""}${x.toFixed(1)} dB`;
+  if (t.includes("bipolar")) return `${x >= 0 ? "+" : ""}${Math.round(x * 100)}%`;
+  return `${Math.round(v * 100)}%`;
+}
+function drawAxes() {
+  const ax = byName[state.axes.x], ay = byName[state.axes.y], az = byName[state.axes.z];
+  document.getElementById("xaxis").innerHTML = `<span>low</span><b>X · ${ax.name}</b><span>high</span>`;
+  document.getElementById("yaxis").innerHTML = `<span>low</span><b>Y · ${ay.name}</b><span>high</span>`;
+  document.getElementById("zrow").hidden = !az;
+  if (az) { document.getElementById("zname").textContent = az.name; z.value = Math.round(state.pos.z * 1000); }
+}
+function drawReadouts() {
+  const p = predict(state.vals); let top = 0; for (let c = 1; c < NL; c++) if (p[c] > p[top]) top = c;
+  document.getElementById("probs").innerHTML = `<div class="eyebrow">Category guess at the dot</div>` + L.map((l, c) =>
+    `<div class="prob${c === top ? " top" : ""}"><span class="name">${l}</span><span class="bar"><i style="width:${(p[c] * 100).toFixed(1)}%;background:${COL[c]}"></i></span><span class="pct">${Math.round(p[c] * 100)}%</span></div>`).join("");
+  const rows = [];
+  for (const a of ["x", "y", "z"]) { const g = byName[state.axes[a]]; if (!g) continue;
+    for (const n of g.knobs) rows.push(`<div class="row"><span class="ax">${a.toUpperCase()}</span><span class="k">${n.replace("scene/", "")}</span><span class="v">${fmt(n, state.vals)}</span></div>`); }
+  document.getElementById("knobs").innerHTML = `<div class="eyebrow">Knobs moved by the axes</div>` + rows.join("");
+}
+function render(full = true) {
+  if (full) { drawAxes(); drawList(); }
+  drawPad(); drawReadouts(); synthUpdate();
+}
+
+document.getElementById("method").innerHTML = [
+  `<b>${D.n_presets.toLocaleString()} cleaned Surge presets</b>, ${NK} continuous knobs that are active in at least 25% of them (no switches, choices, stepped knobs or modulation depths).`,
+  `<b>Ranking:</b> a random forest guesses the category from the knobs (${Math.round(D.rf_acc * 100)}% balanced accuracy, chance 12.5%). Scrambling one group at a time shows how much the guess depends on it.`,
+  `<b>Grouping:</b> knobs hardly move together in real presets (only 3% of knob pairs have |ρ| ≥ 0.3; ${D.n_clusters} small correlated clusters, several by chance). So groups are by function: the same job on several units, such as the cutoff of both filters.`,
+  `<b>Category map:</b> a smaller forest (60 trees, ${Math.round(D.page_acc * 100)}% balanced accuracy on unseen sound packs), evaluated on a 40 × 40 grid with all other knobs at the starting point. The category also depends on switches (play mode, oscillator and filter types), which stay fixed here, so read the map as a tendency.`,
+].map(s => `<li>${s}</li>`).join("");
+
+// ---------- rough preview synth (Web Audio) ----------
+let AC = null, S = null, curNote = null, soundOn = false;
+function makeSynth() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  const o = (type) => { const n = AC.createOscillator(); n.type = type; n.start(); return n; };
+  const gain = (v = 0) => { const g = AC.createGain(); g.gain.value = v; return g; };
+  const tri = o("triangle"), saw = o("sawtooth"), sq = o("square"), sub = o("square"), saw2 = o("sawtooth"), uA = o("sawtooth"), uB = o("sawtooth");
+  const gTri = gain(), gSaw = gain(), gSq = gain(), gSub = gain(), gO2 = gain(), gU = gain(), osc1 = gain(1), mix = gain(1);
+  const nb = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  const noise = AC.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start(); const gN = gain();
+  tri.connect(gTri); saw.connect(gSaw); sq.connect(gSq); [gTri, gSaw, gSq].forEach(g => g.connect(osc1));
+  const gO1 = gain(1); osc1.connect(gO1); gO1.connect(mix); sub.connect(gSub); gSub.connect(mix); saw2.connect(gO2); gO2.connect(mix);
+  uA.connect(gU); uB.connect(gU); gU.connect(mix); noise.connect(gN); gN.connect(mix);
+  const shaper = AC.createWaveShaper(); shaper.oversample = "2x"; mix.connect(shaper);
+  const filt = AC.createBiquadFilter(); filt.type = "lowpass"; shaper.connect(filt);
+  const amp = gain(0); filt.connect(amp);
+  const dry = gain(1), out = gain(0.5); amp.connect(dry); dry.connect(out);
+  const dl = AC.createDelay(2.5), dfb = gain(0), dwet = gain(0); amp.connect(dl); dl.connect(dfb); dfb.connect(dl); dl.connect(dwet); dwet.connect(out);
+  const conv = AC.createConvolver(), rwet = gain(0); amp.connect(conv); conv.connect(rwet); rwet.connect(out);
+  out.connect(AC.destination);
+  const lfo = o("sine"), lfoG = gain(0); lfo.connect(lfoG);
+  const drift = AC.createBufferSource(); const db = AC.createBuffer(1, AC.sampleRate * 8, AC.sampleRate), dd = db.getChannelData(0);
+  let w = 0; for (let i = 0; i < dd.length; i++) { w += (Math.random() * 2 - 1) * 0.002; w *= 0.9995; dd[i] = w; } drift.buffer = db; drift.loop = true; drift.start();
+  const driftG = gain(0); drift.connect(driftG);
+  const pitched = [tri, saw, sq, sub, saw2, uA, uB];
+  pitched.forEach(n => { lfoG.connect(n.detune); driftG.connect(n.detune); });
+  S = { tri, saw, sq, sub, saw2, uA, uB, gTri, gSaw, gSq, gSub, gO1, gO2, gU, gN, shaper, filt, amp, dl, dfb, dwet, conv, rwet, lfo, lfoG, driftG, out, pitched, revLen: 0 };
+}
+const lin = (v, d = 0) => (v == null ? d : v);
+function P() {                         // current knob values -> preview parameters
+  const v = state.vals, n = (k, d) => lin(nat(k, v), d), c = (k, d) => { const i = KI[k]; const x = v[i]; return x == null || Number.isNaN(x) ? d : x; };
+  const env = (k, d) => 2 ** n(k, d);
+  return {
+    aA: env("scene/adsr/0/a", -8), aD: env("scene/adsr/0/d", -2), aS: c("scene/adsr/0/s", 1), aR: env("scene/adsr/0/r", -2),
+    fA: env("scene/adsr/1/a", -8), fD: env("scene/adsr/1/d", -2), fS: c("scene/adsr/1/s", 1), fR: env("scene/adsr/1/r", -2),
+    cutoff: n("scene/filterunit/0/cutoff", 3), res: c("scene/filterunit/0/resonance", 0), envmod: n("scene/filterunit/0/envmod", 0), kt: n("scene/filterunit/0/keytrack", 0),
+    shape: n("scene/osc/0/classic/p0", 0), subm: c("scene/osc/0/classic/p3", 0), uni: c("scene/osc/0/classic/p5", 0),
+    o1: c("scene/level_o1", 1), o2: c("scene/level_o2", 0), det: n("scene/osc/1/pitch", 0), noise: c("scene/level_noise", 0) * (c("scene/level_noise", 0) > 0.05 ? 1 : 0),
+    drive: n("scene/wsunit/drive", 0), glide: c("scene/portamento", 0) > 0.01 ? 2 ** n("scene/portamento", -8) : 0, drift: c("scene/drift", 0),
+    lfoHz: 2 ** n("scene/lfo/0/rate", 1), lfoAmt: c("scene/lfo/0/magnitude", 0),
+    revT: v[KI["fx/reverb/p3"]] == null || Number.isNaN(v[KI["fx/reverb/p3"]]) ? 0 : 2 ** n("fx/reverb/p3", 0) * (0.5 + c("fx/reverb/p2", 0.5)),
+    revMix: Number.isNaN(v[KI["fx/reverb/p9"]]) || v[KI["fx/reverb/p9"]] == null ? 0 : c("fx/reverb/p9", 0) * 0.6,
+    dT: Number.isNaN(v[KI["fx/delay/p0"]]) || v[KI["fx/delay/p0"]] == null ? 0 : Math.min(2, 2 ** n("fx/delay/p0", -2)),
+    dFb: c("fx/delay/p2", 0) * 0.85, dMix: Number.isNaN(v[KI["fx/delay/p10"]]) || v[KI["fx/delay/p10"]] == null ? 0 : c("fx/delay/p10", 0) * 0.5,
+    vol: c("scene/volume", 1),
+  };
+}
+function shaperCurve(db) { const k = Math.max(0, db + 6) / 6, N = 1024, cur = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const x = i / (N - 1) * 2 - 1; cur[i] = k < 0.05 ? x : Math.tanh(x * (1 + k * 2)) / Math.tanh(1 + k * 2); } return cur; }
+function reverbIR(sec) { const len = Math.max(1, Math.floor(AC.sampleRate * Math.min(6, Math.max(0.1, sec)))), b = AC.createBuffer(2, len, AC.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5); } return b; }
+let lastDrive = null;
+function synthUpdate() {
+  if (!S) return;
+  const p = P(), t = AC.currentTime, sm = 0.03;
+  const sh = Math.max(-1, Math.min(1, p.shape));
+  S.gTri.gain.setTargetAtTime(Math.max(0, -sh) * 0.9, t, sm); S.gSaw.gain.setTargetAtTime((1 - Math.abs(sh)) * 0.6, t, sm); S.gSq.gain.setTargetAtTime(Math.max(0, sh) * 0.45, t, sm);
+  S.gO1.gain.setTargetAtTime(p.o1 ** 2, t, sm); S.gSub.gain.setTargetAtTime(p.subm * 0.4 * p.o1 ** 2, t, sm);
+  S.gO2.gain.setTargetAtTime(p.o2 ** 2 * 0.5, t, sm); S.saw2.detune.setTargetAtTime(p.det * 100, t, sm);
+  S.gU.gain.setTargetAtTime(p.uni > 0.02 ? 0.3 * p.o1 ** 2 : 0, t, sm); S.uA.detune.setTargetAtTime(p.uni * 60, t, sm); S.uB.detune.setTargetAtTime(-p.uni * 60, t, sm);
+  S.gN.gain.setTargetAtTime(p.noise ** 2 * 0.35, t, sm);
+  if (lastDrive === null || Math.abs(lastDrive - p.drive) > 0.5) { S.shaper.curve = shaperCurve(p.drive); lastDrive = p.drive; }
+  S.filt.Q.setTargetAtTime(0.7 + p.res ** 2 * 18, t, sm);
+  S.lfo.frequency.setTargetAtTime(Math.min(30, p.lfoHz), t, sm); S.lfoG.gain.setTargetAtTime(p.lfoAmt * 35, t, sm); S.driftG.gain.setTargetAtTime(p.drift * 2500, t, sm);
+  S.dl.delayTime.setTargetAtTime(Math.max(0.01, p.dT), t, 0.08); S.dfb.gain.setTargetAtTime(p.dT ? p.dFb : 0, t, sm); S.dwet.gain.setTargetAtTime(p.dT ? p.dMix : 0, t, sm);
+  if (p.revT && Math.abs(S.revLen - p.revT) > 0.25) { S.conv.buffer = reverbIR(p.revT); S.revLen = p.revT; }
+  S.rwet.gain.setTargetAtTime(p.revT ? p.revMix : 0, t, sm);
+  S.out.gain.setTargetAtTime(0.45 * p.vol, t, sm);
+  if (curNote != null) setCutoffStatic(p);
+}
+const hz = (m) => 440 * 2 ** ((m - 69) / 12);
+const cutHz = (p, note, envSemis) => Math.min(18000, Math.max(30, 440 * 2 ** ((p.cutoff + p.kt * (note - 60) + envSemis) / 12)));
+function setCutoffStatic(p) { const t = AC.currentTime; S.filt.frequency.setTargetAtTime(cutHz(p, curNote, p.envmod * p.fS), t, 0.05); }
+function noteOn(m) {
+  if (!S) return; const p = P(), t = AC.currentTime + 0.005, f = hz(m);
+  for (const n of S.pitched) { const mult = n === S.sub ? 0.5 : 1; n.frequency.cancelScheduledValues(t);
+    if (p.glide && curNote != null) { n.frequency.setValueAtTime(n.frequency.value, t); n.frequency.exponentialRampToValueAtTime(f * mult, t + p.glide); } else n.frequency.setValueAtTime(f * mult, t); }
+  const g = S.amp.gain; g.cancelScheduledValues(t); g.setValueAtTime(Math.max(0.0001, g.value), t); g.linearRampToValueAtTime(1, t + p.aA); g.setTargetAtTime(p.aS, t + p.aA, p.aD / 3);
+  const fr = S.filt.frequency; fr.cancelScheduledValues(t); fr.setValueAtTime(cutHz(p, m, 0), t);
+  fr.exponentialRampToValueAtTime(cutHz(p, m, p.envmod), t + p.fA); fr.setTargetAtTime(cutHz(p, m, p.envmod * p.fS), t + p.fA, p.fD / 3);
+  curNote = m;
+}
+function noteOff() {
+  if (!S || curNote == null) return; const p = P(), t = AC.currentTime;
+  S.amp.gain.cancelScheduledValues(t); S.amp.gain.setValueAtTime(S.amp.gain.value, t); S.amp.gain.setTargetAtTime(0, t, p.aR / 4);
+  S.filt.frequency.cancelScheduledValues(t); S.filt.frequency.setValueAtTime(S.filt.frequency.value, t); S.filt.frequency.setTargetAtTime(cutHz(p, curNote, 0), t, p.fR / 4);
+  curNote = null;
+}
+const soundBtn = document.getElementById("sound");
+soundBtn.addEventListener("click", async () => {
+  if (!AC) makeSynth();
+  soundOn = !soundOn; soundBtn.setAttribute("aria-pressed", soundOn); soundBtn.textContent = soundOn ? "Sound off" : "Sound on";
+  if (soundOn) { await AC.resume(); synthUpdate(); } else { noteOff(); AC.suspend(); }
+});
+// keyboard C3..C4
+const keysEl = document.getElementById("keys"), PCK = "awsedftgyhujk";
+for (let m = 48; m <= 60; m++) {
+  const b = document.createElement("div"); const black = [1, 3, 6, 8, 10].includes(m % 12);
+  b.className = "key" + (black ? " black" : ""); b.tabIndex = 0; b.textContent = m === 48 ? "C3" : m === 60 ? "C4" : PCK[m - 48].toUpperCase();
+  b.dataset.m = m; b.setAttribute("role", "button"); b.setAttribute("aria-label", `Note ${m}`);
+  const on = async (e) => { e.preventDefault(); if (!soundOn) soundBtn.click(); if (AC.state !== "running") await AC.resume(); noteOn(m); b.classList.add("on"); };
+  const off = () => { if (curNote === m) noteOff(); b.classList.remove("on"); };
+  b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off);
+  keysEl.appendChild(b);
+}
+const held = new Set();
+window.addEventListener("keydown", (e) => { if (e.target.matches("input,select") || e.repeat) return; const i = PCK.indexOf(e.key.toLowerCase()); if (i < 0) return;
+  const k = keysEl.children[i]; held.add(i); k.dispatchEvent(new PointerEvent("pointerdown")); });
+window.addEventListener("keyup", (e) => { const i = PCK.indexOf(e.key.toLowerCase()); if (i < 0) return; held.delete(i);
+  const k = keysEl.children[i]; k.classList.remove("on"); if (curNote === 48 + i) noteOff(); });
+
+document.getElementById("hint").textContent = "Turn the sound on and hold a key (or A–K on your computer keyboard) while dragging the dot. Glide is heard when you play a second key while holding the first.";
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); drawLegend(); render(); });
+new MutationObserver(() => { readColors(); drawLegend(); render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+syncPosFromVals(); drawLegend();
+new ResizeObserver(resize).observe(cv);
+render();
+})();
+</script>

@@ -1,0 +1,94 @@
+{
+ "run": "j48w_b05",
+ "old": "",
+ "n": 344,
+ "threshold_db": 6.7,
+ "oracle": {
+  "same_character": 0.9651162790697675,
+  "median_db": 2.2526384339171956,
+  "p90_db": 4.413514583997462,
+  "silent": 0
+ },
+ "old_vae": {
+  "same_character": 0.0,
+  "median_db": NaN,
+  "p90_db": NaN,
+  "silent": 344
+ },
+ "joint_params": {
+  "same_character": 0.011627906976744186,
+  "median_db": 16.506252444407195,
+  "p90_db": 27.565011707553655,
+  "silent": 1
+ },
+ "joint_both": {
+  "same_character": 0.03197674418604651,
+  "median_db": 15.123885853839496,
+  "p90_db": 24.822652160552842,
+  "silent": 0
+ },
+ "joint_params_best8": {
+  "same_character": 0.040697674418604654,
+  "median_db": 14.261246108963485,
+  "p90_db": 22.78778287683663,
+  "silent": 0
+ },
+ "by_label_same_character": {
+  "Atmosphere": {
+   "oracle": 1.0,
+   "old_vae": 0.0,
+   "joint_params": 0.0,
+   "joint_both": 0.0,
+   "joint_params_best8": 0.045
+  },
+  "Bass": {
+   "oracle": 0.968,
+   "old_vae": 0.0,
+   "joint_params": 0.032,
+   "joint_both": 0.095,
+   "joint_params_best8": 0.079
+  },
+  "Keys": {
+   "oracle": 0.977,
+   "old_vae": 0.0,
+   "joint_params": 0.0,
+   "joint_both": 0.0,
+   "joint_params_best8": 0.0
+  },
+  "Lead": {
+   "oracle": 0.972,
+   "old_vae": 0.0,
+   "joint_params": 0.014,
+   "joint_both": 0.042,
+   "joint_params_best8": 0.056
+  },
+  "Orchestral": {
+   "oracle": 1.0,
+   "old_vae": 0.0,
+   "joint_params": 0.0,
+   "joint_both": 0.0,
+   "joint_params_best8": 0.043
+  },
+  "Pad": {
+   "oracle": 0.872,
+   "old_vae": 0.0,
+   "joint_params": 0.021,
+   "joint_both": 0.021,
+   "joint_params_best8": 0.021
+  },
+  "Pluck": {
+   "oracle": 0.976,
+   "old_vae": 0.0,
+   "joint_params": 0.0,
+   "joint_both": 0.024,
+   "joint_params_best8": 0.049
+  },
+  "Synth": {
+   "oracle": 1.0,
+   "old_vae": 0.0,
+   "joint_params": 0.0,
+   "joint_both": 0.0,
+   "joint_params_best8": 0.0
+  }
+ }
+}

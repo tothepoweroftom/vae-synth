@@ -1,0 +1,7 @@
+{
+ "knobs": 40,
+ "median_unevenness": 0.12215980793613723,
+ "knobs_uneven_over_0_2": 8,
+ "knobs_change_mostly_in_bottom_half": 2,
+ "knobs_change_mostly_in_top_half": 6
+}

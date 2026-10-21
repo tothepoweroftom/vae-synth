@@ -1,0 +1,18 @@
+{
+ "pca_components_90pct": 151,
+ "pc1": 0.0730728879570961,
+ "pc2": 0.06449208408594131,
+ "dropped1_in_top_25_50_100": [
+  0,
+  9,
+  21
+ ],
+ "dropped1_pca_share": 0.18687960505485535,
+ "neighbour_overlap_feature_space": 0.6635778122762722,
+ "neighbour_overlap_umap": 0.3166475282943065,
+ "neighbour_overlap_random": 0.005287688046308736,
+ "rf_balanced_acc_val": {
+  "all features": 0.5469279695479385,
+  "1%-kept": 0.5502233333115687
+ }
+}

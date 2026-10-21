@@ -1,0 +1,34 @@
+  200/1857, 17s
+  400/1857, 33s
+  600/1857, 71s
+  800/1857, 107s
+  1000/1857, 125s
+  1200/1857, 150s
+  1400/1857, 170s
+  1600/1857, 188s
+  1800/1857, 211s
+
+1857 presets in 218s
+
+A1 exactness: 430733 written items, 0 mismatches, in 0 presets
+  plan warnings: 0 presets
+
+A2 sound: distance original vs rebuilt: median 3.6861, 90th pct 10.4097; original vs re-render (randomness): median 3.1412, 90th pct 7.3986
+  transparent (rebuilt <= max(1.0, 1.5 x re-render)): 80.0%
+  transparent share by FX layout changed: {'mean': {False: 0.845, True: 0.606}, 'size': {False: 1512, True: 345}}
+  transparent share by excluded FX (Airwindows etc.) present: {'mean': {False: 0.801, True: 0.0}, 'size': {False: 1856, True: 1}}
+  transparent share without excluded FX and scene A: 80.1% of 1856
+  transparent share by active scene: {'mean': {0: 0.8}, 'size': {0: 1857}}
+  transparent share by label: {'Atmosphere': 0.756, 'Bass': 0.816, 'Keys': 0.7, 'Lead': 0.849, 'Orchestral': 0.686, 'Pad': 0.827, 'Pluck': 0.782, 'Synth': 0.879}
+  level change rebuilt vs original (dB): median 0.00, 5th pct -5.12, 95th pct 5.29
+ preset_id      label              name  d_rebuilt  d_rerender  rms_diff_db excluded_fx  active_scene
+      1571 Orchestral       Lo-Fi Horns     38.306       2.675       19.030                         0
+       971      Pluck      8-Bit Guitar     37.578       7.733       -7.615                         0
+       811 Orchestral             Flute     36.336       0.596      -42.658                         0
+      1090       Lead     Gameboy Alias     35.788       0.228       -2.470                         0
+      1092       Lead     JP8K Supersaw     34.948       2.448        3.351                         0
+       762 Orchestral    Bowed Psaltery     32.390       3.242       17.018                         0
+       229        Pad           Dispell     31.117       8.988       26.977                         0
+      1150       Lead              Joke     30.545       1.385      -24.228                         0
+      1031 Orchestral Mellotron Violins     30.050       3.227      -29.487                         0
+       837       Lead Hi, Vince Clarke!     29.822       0.145     -211.106                         0

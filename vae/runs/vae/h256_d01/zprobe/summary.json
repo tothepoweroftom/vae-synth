@@ -1,0 +1,79 @@
+{
+ "run": "h256_d01",
+ "n_train": 1375,
+ "n_eval": 344,
+ "silent_share": 0.0,
+ "best": {
+  "label": {
+   "attack": 0.3941,
+   "brightness": 0.0567,
+   "category": NaN,
+   "decay": 0.0137,
+   "length": 0.1604,
+   "noisiness": 0.0487,
+   "percussive": -0.041
+  },
+  "params": {
+   "attack": 0.5887,
+   "brightness": 0.2135,
+   "category": 0.5058,
+   "decay": 0.7126,
+   "length": 0.8702,
+   "noisiness": 0.3384,
+   "percussive": 0.286
+  },
+  "z": {
+   "attack": 0.1516,
+   "brightness": 0.0421,
+   "category": 0.3314,
+   "decay": 0.0108,
+   "length": 0.3413,
+   "noisiness": 0.0456,
+   "percussive": -0.0044
+  },
+  "z + label": {
+   "attack": 0.439,
+   "brightness": 0.088,
+   "category": NaN,
+   "decay": 0.0584,
+   "length": 0.3948,
+   "noisiness": 0.1039,
+   "percussive": -0.0372
+  },
+  "z active (6)": {
+   "attack": 0.1214,
+   "brightness": 0.0762,
+   "category": 0.3169,
+   "decay": -0.0026,
+   "length": 0.3083,
+   "noisiness": 0.0689,
+   "percussive": 0.0033
+  }
+ },
+ "references": {
+  "decoded": {
+   "attack": 0.0193,
+   "brightness": -0.2899,
+   "decay": -0.1245,
+   "length": 0.3636,
+   "noisiness": -0.4186,
+   "percussive": -0.8151
+  },
+  "seed_to_seed": {
+   "attack": 0.834,
+   "brightness": 0.9332,
+   "decay": 0.9142,
+   "length": 0.9957,
+   "noisiness": 0.9684,
+   "percussive": 0.7931
+  }
+ },
+ "active_dims": [
+  1,
+  2,
+  3,
+  7,
+  9,
+  10
+ ]
+}

@@ -1,0 +1,65 @@
+{
+ "text": "dark bass sound",
+ "presets": [
+  {
+   "file": "1_Bass_bass.fxp",
+   "score": 1.2679176330566406,
+   "text_sim": 0.8452997207641602,
+   "audio_text_sim": 0.4226178824901581,
+   "paraphrase": "dark pulsing bass sound",
+   "prompt_id": 9,
+   "clip": "9_s3.flac",
+   "noun": "bass",
+   "category": "Bass",
+   "match_db": 6.274519180720383,
+   "octave_shift": -1,
+   "source": "retrieval",
+   "fxp_check_db": 2.2105114239230388e-06
+  },
+  {
+   "file": "2_Bass_sub_bass.fxp",
+   "score": 1.2246942520141602,
+   "text_sim": 0.7554881572723389,
+   "audio_text_sim": 0.4692060947418213,
+   "paraphrase": "buzzy dark sub",
+   "prompt_id": 12,
+   "clip": "12_s3.flac",
+   "noun": "sub_bass",
+   "category": "Bass",
+   "match_db": 6.542064282718121,
+   "octave_shift": -1,
+   "source": "retrieval",
+   "fxp_check_db": 0.12137231310428177
+  },
+  {
+   "file": "3_Bass_bass.fxp",
+   "score": 1.221205711364746,
+   "text_sim": 0.7985877394676208,
+   "audio_text_sim": 0.42261791229248047,
+   "paraphrase": "synth bass that pulses",
+   "prompt_id": 19,
+   "clip": "19_s3.flac",
+   "noun": "bass",
+   "category": "Bass",
+   "match_db": 5.936118329660855,
+   "octave_shift": -1,
+   "source": "retrieval",
+   "fxp_check_db": 2.2105114239230388e-06
+  },
+  {
+   "file": "4_Bass_bass.fxp",
+   "score": 1.2150365114212036,
+   "text_sim": 0.7594213485717773,
+   "audio_text_sim": 0.45561516284942627,
+   "paraphrase": "a bass sound",
+   "prompt_id": 10,
+   "clip": "10_s1.flac",
+   "noun": "bass",
+   "category": "Bass",
+   "match_db": 5.8727581941867655,
+   "octave_shift": 0,
+   "source": "retrieval",
+   "fxp_check_db": 1.8866076239224139
+  }
+ ]
+}

@@ -1,0 +1,96 @@
+{
+ "name": "pilot_small-music",
+ "clips": 2000,
+ "prompts": 500,
+ "kept": 0.9715,
+ "flags": {
+  "silent": 0.0,
+  "multi_note": 0.0285,
+  "rhythmic": 0.0,
+  "off_pitch": 0.0395,
+  "chord_like": 0.011,
+  "cut_off": 0.0215,
+  "clipped": 0.025
+ },
+ "flags_surge_controls": {
+  "silent": 0.0,
+  "multi_note": 0.056666666666666664,
+  "rhythmic": 0.0,
+  "off_pitch": 0.10666666666666667,
+  "chord_like": 0.05,
+  "cut_off": 0.0,
+  "clipped": 0.0
+ },
+ "thresholds": {
+  "perc": 0.40406059801578426,
+  "onsets": 8.019999999999982,
+  "fit": 0.2854729090719138,
+  "n_descriptions": 500
+ },
+ "pitch": {
+  "tonal": 0.9985,
+  "within1_of_C3": 0.32248372558838256,
+  "within1_of_any_C": 0.9604406609914873,
+  "median_semis_from_c3": 11.998308205032714,
+  "surge_within1_of_C3": 0.3466666666666667,
+  "surge_within1_of_any_C": 0.8933333333333333
+ },
+ "category": {
+  "n": 1616,
+  "balanced": 0.22997178217625927,
+  "balanced_aligned": 0.3452239094468686,
+  "recall_aligned": {
+   "Bass": 0.5714285714285714,
+   "Lead": 0.358974358974359,
+   "Pad": 0.7445887445887446,
+   "Keys": 0.1958762886597938,
+   "Pluck": 0.45698924731182794,
+   "Synth": 0.18614718614718614,
+   "Atmosphere": 0.08438818565400844,
+   "Orchestral": 0.16339869281045752
+  },
+  "surge_val_reference": 0.519067355503114,
+  "recall": {
+   "Bass": 0.14285714285714285,
+   "Lead": 0.010256410256410256,
+   "Pad": 0.645021645021645,
+   "Keys": 0.6494845360824743,
+   "Pluck": 0.04838709677419355,
+   "Synth": 0.10822510822510822,
+   "Atmosphere": 0.05907172995780591,
+   "Orchestral": 0.17647058823529413
+  },
+  "tagged_share": {
+   "Bass": 0.017326732673267328,
+   "Lead": 0.004331683168316832,
+   "Pad": 0.1875,
+   "Keys": 0.5587871287128713,
+   "Pluck": 0.0655940594059406,
+   "Synth": 0.08353960396039604,
+   "Atmosphere": 0.026608910891089108,
+   "Orchestral": 0.05631188118811881
+  }
+ },
+ "text": {
+  "median_rank": 139.0,
+  "n_descriptions": 500,
+  "top10pct": 0.2552753474009264,
+  "by_kind": {
+   "generic": 300.0,
+   "main": 127.0,
+   "out_of_range": 108.0
+  }
+ },
+ "domain": {
+  "mean_cos": 0.44254666566848755
+ },
+ "reach": {
+  "median": 0.656647801399231,
+  "median_aligned": 0.7986129522323608,
+  "surge_ref_median": 0.8754174709320068,
+  "above_ref_p10": 0.008749356664951106
+ },
+ "seeds": {
+  "median": 0.8212551772594452
+ }
+}

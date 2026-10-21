@@ -1,0 +1,65 @@
+{
+ "text": "quick aggressive guitar-like pluck",
+ "presets": [
+  {
+   "file": "1_Pluck_pluck.fxp",
+   "score": 1.0827656984329224,
+   "text_sim": 0.886865496635437,
+   "audio_text_sim": 0.19590020179748535,
+   "paraphrase": "pluck, bright, fading",
+   "prompt_id": 242,
+   "clip": "242_s1.flac",
+   "noun": "pluck",
+   "category": "Pluck",
+   "match_db": 7.245097846589123,
+   "octave_shift": 1,
+   "source": "retrieval",
+   "fxp_check_db": 0.0
+  },
+  {
+   "file": "2_Pluck_music_box.fxp",
+   "score": 1.0799957513809204,
+   "text_sim": 0.9005750417709351,
+   "audio_text_sim": 0.17942066490650177,
+   "paraphrase": "hollow music-box-like pluck",
+   "prompt_id": 219,
+   "clip": "219_s2.flac",
+   "noun": "music_box",
+   "category": "Pluck",
+   "match_db": 6.6514816760398,
+   "octave_shift": 2,
+   "source": "retrieval",
+   "fxp_check_db": 1.2703939116292633
+  },
+  {
+   "file": "3_Pluck_harp_pluck.fxp",
+   "score": 1.0488474369049072,
+   "text_sim": 0.9069805145263672,
+   "audio_text_sim": 0.14186689257621765,
+   "paraphrase": "harp-like pluck, snappy",
+   "prompt_id": 226,
+   "clip": "226_s1.flac",
+   "noun": "harp_pluck",
+   "category": "Pluck",
+   "match_db": 7.157915949495425,
+   "octave_shift": 1,
+   "source": "retrieval",
+   "fxp_check_db": 1.5866801276808433
+  },
+  {
+   "file": "4_open_sound.fxp",
+   "score": 1.0384944677352905,
+   "text_sim": 0.8895454406738281,
+   "audio_text_sim": 0.1489490270614624,
+   "paraphrase": "sound, thick, wobbly",
+   "prompt_id": 464,
+   "clip": "464_s3.flac",
+   "noun": "sound",
+   "category": "open",
+   "match_db": 5.4574734102985385,
+   "octave_shift": 0,
+   "source": "retrieval",
+   "fxp_check_db": 0.0
+  }
+ ]
+}

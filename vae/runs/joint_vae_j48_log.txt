@@ -1,0 +1,67 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/joint_vae/train.py", line 22, in <module>
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+data: 49460 train rows (1375 human), 961 synthetic val, 166 human val; 435 num, 85 bool, 111 cat (20 stepped knobs); loaded in 3s
+epoch   1 | train params 49.2 sound 11.2 kl 16.5 | human: invert 54.2 hear 18.9 both 43.8/3.7 | syn: invert 49.3 hear 20.8 | 13s *
+epoch   2 | train params 39.0 sound 7.6 kl 20.6 | human: invert 53.9 hear 18.1 both 41.4/3.1 | syn: invert 47.2 hear 18.0 | 14s *
+epoch   3 | train params 35.4 sound 6.8 kl 22.4 | human: invert 53.6 hear 18.8 both 39.6/3.0 | syn: invert 46.7 hear 17.5 | 12s
+epoch   4 | train params 32.8 sound 6.4 kl 23.4 | human: invert 53.2 hear 16.9 both 39.4/2.8 | syn: invert 45.7 hear 16.1 | 14s *
+epoch   5 | train params 31.0 sound 6.1 kl 23.9 | human: invert 53.2 hear 16.1 both 39.6/2.8 | syn: invert 45.3 hear 17.0 | 16s *
+epoch   6 | train params 29.6 sound 6.1 kl 24.3 | human: invert 54.1 hear 14.9 both 39.2/2.7 | syn: invert 45.3 hear 15.4 | 16s *
+epoch   7 | train params 28.6 sound 6.0 kl 24.3 | human: invert 53.2 hear 17.4 both 39.1/2.8 | syn: invert 44.6 hear 14.8 | 16s
+epoch   8 | train params 27.8 sound 5.8 kl 24.4 | human: invert 53.4 hear 18.5 both 39.1/3.1 | syn: invert 44.5 hear 15.3 | 14s
+epoch   9 | train params 27.0 sound 5.7 kl 24.6 | human: invert 53.8 hear 14.3 both 39.0/2.8 | syn: invert 44.2 hear 15.6 | 13s *
+epoch  10 | train params 26.4 sound 5.8 kl 24.5 | human: invert 53.4 hear 16.8 both 38.8/2.9 | syn: invert 44.0 hear 14.4 | 14s
+epoch  11 | train params 25.8 sound 5.6 kl 24.6 | human: invert 53.1 hear 18.2 both 38.5/2.9 | syn: invert 43.8 hear 14.4 | 12s
+epoch  12 | train params 25.2 sound 5.7 kl 24.6 | human: invert 53.3 hear 15.0 both 38.6/2.8 | syn: invert 43.7 hear 13.5 | 12s
+epoch  13 | train params 24.9 sound 5.6 kl 24.5 | human: invert 53.0 hear 14.2 both 38.8/2.9 | syn: invert 43.4 hear 13.6 | 13s *
+epoch  14 | train params 24.5 sound 5.5 kl 24.4 | human: invert 53.0 hear 16.6 both 38.7/2.9 | syn: invert 43.4 hear 13.6 | 12s
+epoch  15 | train params 24.2 sound 5.5 kl 24.3 | human: invert 53.6 hear 14.3 both 38.7/2.8 | syn: invert 43.2 hear 13.3 | 11s
+epoch  16 | train params 24.0 sound 5.4 kl 24.1 | human: invert 53.8 hear 16.9 both 38.8/3.0 | syn: invert 43.3 hear 13.5 | 12s
+epoch  17 | train params 23.8 sound 5.4 kl 24.0 | human: invert 53.8 hear 16.2 both 39.0/2.9 | syn: invert 43.0 hear 13.5 | 12s
+epoch  18 | train params 23.5 sound 5.4 kl 23.8 | human: invert 53.4 hear 17.5 both 39.0/3.0 | syn: invert 42.6 hear 13.9 | 12s
+epoch  19 | train params 23.4 sound 5.4 kl 23.6 | human: invert 53.7 hear 16.3 both 39.7/2.8 | syn: invert 42.8 hear 13.3 | 12s
+epoch  20 | train params 23.2 sound 5.4 kl 23.4 | human: invert 53.8 hear 17.0 both 38.7/2.9 | syn: invert 42.8 hear 13.2 | 11s
+epoch  21 | train params 23.0 sound 5.4 kl 23.3 | human: invert 53.5 hear 16.0 both 39.2/3.0 | syn: invert 42.6 hear 12.9 | 12s
+epoch  22 | train params 22.9 sound 5.4 kl 23.2 | human: invert 54.0 hear 16.8 both 39.7/3.1 | syn: invert 42.5 hear 13.4 | 13s
+epoch  23 | train params 22.6 sound 5.3 kl 23.3 | human: invert 54.0 hear 17.0 both 39.0/3.1 | syn: invert 42.1 hear 13.0 | 11s
+epoch  24 | train params 22.5 sound 5.3 kl 23.3 | human: invert 53.3 hear 16.2 both 39.6/3.1 | syn: invert 42.1 hear 12.8 | 11s
+epoch  25 | train params 22.4 sound 5.2 kl 23.3 | human: invert 54.0 hear 17.2 both 39.9/2.9 | syn: invert 42.1 hear 12.9 | 12s
+epoch  26 | train params 22.4 sound 5.2 kl 23.3 | human: invert 54.2 hear 16.6 both 40.0/3.0 | syn: invert 42.1 hear 12.5 | 12s
+epoch  27 | train params 22.2 sound 5.2 kl 23.4 | human: invert 53.9 hear 16.9 both 39.7/2.9 | syn: invert 42.0 hear 13.1 | 11s
+epoch  28 | train params 22.0 sound 5.2 kl 23.4 | human: invert 54.6 hear 16.2 both 39.8/3.0 | syn: invert 41.9 hear 12.4 | 12s
+epoch  29 | train params 22.0 sound 5.1 kl 23.3 | human: invert 54.6 hear 15.7 both 39.6/2.9 | syn: invert 41.9 hear 12.6 | 13s
+epoch  30 | train params 21.8 sound 5.1 kl 23.4 | human: invert 54.9 hear 16.3 both 39.3/2.9 | syn: invert 41.8 hear 12.6 | 12s
+epoch  31 | train params 21.7 sound 5.1 kl 23.4 | human: invert 55.6 hear 16.4 both 40.0/2.9 | syn: invert 41.9 hear 12.3 | 12s
+epoch  32 | train params 21.5 sound 5.1 kl 23.4 | human: invert 54.1 hear 16.8 both 39.9/3.0 | syn: invert 41.5 hear 12.4 | 11s
+epoch  33 | train params 21.5 sound 5.0 kl 23.5 | human: invert 54.3 hear 16.8 both 40.3/2.9 | syn: invert 41.5 hear 12.5 | 12s
+epoch  34 | train params 21.3 sound 5.0 kl 23.5 | human: invert 54.5 hear 15.4 both 40.5/2.9 | syn: invert 41.6 hear 12.4 | 12s
+epoch  35 | train params 21.3 sound 4.9 kl 23.5 | human: invert 53.9 hear 14.7 both 40.5/2.7 | syn: invert 41.6 hear 12.5 | 13s
+epoch  36 | train params 21.3 sound 5.0 kl 23.5 | human: invert 54.2 hear 16.0 both 40.6/2.9 | syn: invert 41.5 hear 12.2 | 13s
+epoch  37 | train params 21.1 sound 4.8 kl 23.5 | human: invert 54.7 hear 15.5 both 40.7/2.8 | syn: invert 41.2 hear 12.2 | 13s
+epoch  38 | train params 20.8 sound 4.9 kl 23.6 | human: invert 54.9 hear 15.2 both 40.3/2.8 | syn: invert 41.4 hear 12.1 | 15s
+early stop: no improvement for 25 epochs
+best epoch 13, human-val score 67.18; model: /Users/matthijsvork/Documents/Pitcher/runs/joint_vae/j48/model.pt

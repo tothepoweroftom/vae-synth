@@ -1,0 +1,35 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+344 val + test presets; same character = <= 6.7 dB (decoded preset, other seed, vs the original)
+Atmosphere   1.000      0.0         0.000       0.000               0.000
+Bass         0.968      0.0         0.016       0.095               0.063
+Keys         0.977      0.0         0.000       0.000               0.000
+Lead         0.972      0.0         0.028       0.014               0.042
+Orchestral   1.000      0.0         0.000       0.087               0.087
+Pad          0.872      0.0         0.000       0.000               0.021
+Pluck        0.976      0.0         0.000       0.000               0.000
+Synth        1.000      0.0         0.000       0.000               0.000
+written: /Users/matthijsvork/Documents/Pitcher/runs/joint_vae/j48w/roundtrip
+
+
+
+    from .functional import *  # noqa: F403
+    import torch.nn.functional as F
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+    from pitcher.inverter.data import full_row

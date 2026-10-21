@@ -1,0 +1,20 @@
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),

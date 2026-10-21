@@ -1,0 +1,307 @@
+{
+ "name": "pilot",
+ "n_rows": 51375,
+ "recall_k10_vs_k200": 0.86,
+ "invalid": {
+  "human": 0.0,
+  "layered": 0.0424,
+  "perturb": 0.0126,
+  "vae": 0.0002
+ },
+ "hot": {
+  "human": 0.0095,
+  "layered": 0.1453,
+  "perturb": 0.0478,
+  "vae": 0.0088
+ },
+ "tail_capped": {
+  "human": 0.2109,
+  "layered": 0.2535,
+  "perturb": 0.2582,
+  "vae": 0.1096
+ },
+ "coverage_by_source": {
+  "human": {
+   "n": 1375,
+   "new": 0.757,
+   "nn_median_db": 8.103
+  },
+  "layered": {
+   "n": 14364,
+   "new": 0.551,
+   "nn_median_db": 6.939
+  },
+  "perturb": {
+   "n": 24684,
+   "new": 0.291,
+   "nn_median_db": 5.579
+  },
+  "vae": {
+   "n": 9998,
+   "new": 0.193,
+   "nn_median_db": 5.404
+  }
+ },
+ "coverage_by_strength": {
+  "large": {
+   "n": 7295,
+   "new": 0.486,
+   "nn_median_db": 6.635
+  },
+  "medium": {
+   "n": 9928,
+   "new": 0.298,
+   "nn_median_db": 5.776
+  },
+  "small": {
+   "n": 7461,
+   "new": 0.09,
+   "nn_median_db": 3.886
+  }
+ },
+ "coverage_by_source_label": {
+  "human/Atmosphere": {
+   "n": 96,
+   "new": 0.927,
+   "nn_median_db": 8.888
+  },
+  "human/Bass": {
+   "n": 258,
+   "new": 0.651,
+   "nn_median_db": 7.411
+  },
+  "human/Keys": {
+   "n": 158,
+   "new": 0.892,
+   "nn_median_db": 8.693
+  },
+  "human/Lead": {
+   "n": 289,
+   "new": 0.678,
+   "nn_median_db": 7.471
+  },
+  "human/Orchestral": {
+   "n": 80,
+   "new": 0.738,
+   "nn_median_db": 8.109
+  },
+  "human/Pad": {
+   "n": 194,
+   "new": 0.835,
+   "nn_median_db": 8.661
+  },
+  "human/Pluck": {
+   "n": 166,
+   "new": 0.861,
+   "nn_median_db": 9.216
+  },
+  "human/Synth": {
+   "n": 134,
+   "new": 0.619,
+   "nn_median_db": 7.087
+  },
+  "layered/Atmosphere": {
+   "n": 1830,
+   "new": 0.601,
+   "nn_median_db": 7.16
+  },
+  "layered/Bass": {
+   "n": 1820,
+   "new": 0.537,
+   "nn_median_db": 6.906
+  },
+  "layered/Keys": {
+   "n": 1791,
+   "new": 0.559,
+   "nn_median_db": 6.989
+  },
+  "layered/Lead": {
+   "n": 1807,
+   "new": 0.51,
+   "nn_median_db": 6.73
+  },
+  "layered/Orchestral": {
+   "n": 1786,
+   "new": 0.535,
+   "nn_median_db": 6.844
+  },
+  "layered/Pad": {
+   "n": 1788,
+   "new": 0.575,
+   "nn_median_db": 7.119
+  },
+  "layered/Pluck": {
+   "n": 1752,
+   "new": 0.584,
+   "nn_median_db": 7.124
+  },
+  "layered/Synth": {
+   "n": 1790,
+   "new": 0.507,
+   "nn_median_db": 6.721
+  },
+  "perturb/Atmosphere": {
+   "n": 3111,
+   "new": 0.309,
+   "nn_median_db": 5.628
+  },
+  "perturb/Bass": {
+   "n": 3096,
+   "new": 0.267,
+   "nn_median_db": 5.385
+  },
+  "perturb/Keys": {
+   "n": 3088,
+   "new": 0.361,
+   "nn_median_db": 5.958
+  },
+  "perturb/Lead": {
+   "n": 3100,
+   "new": 0.253,
+   "nn_median_db": 5.471
+  },
+  "perturb/Orchestral": {
+   "n": 3057,
+   "new": 0.224,
+   "nn_median_db": 5.252
+  },
+  "perturb/Pad": {
+   "n": 3084,
+   "new": 0.331,
+   "nn_median_db": 5.863
+  },
+  "perturb/Pluck": {
+   "n": 3065,
+   "new": 0.36,
+   "nn_median_db": 5.904
+  },
+  "perturb/Synth": {
+   "n": 3083,
+   "new": 0.221,
+   "nn_median_db": 5.222
+  },
+  "vae/Atmosphere": {
+   "n": 1250,
+   "new": 0.302,
+   "nn_median_db": 6.109
+  },
+  "vae/Bass": {
+   "n": 1250,
+   "new": 0.109,
+   "nn_median_db": 4.93
+  },
+  "vae/Keys": {
+   "n": 1250,
+   "new": 0.288,
+   "nn_median_db": 5.835
+  },
+  "vae/Lead": {
+   "n": 1250,
+   "new": 0.102,
+   "nn_median_db": 5.078
+  },
+  "vae/Orchestral": {
+   "n": 1249,
+   "new": 0.163,
+   "nn_median_db": 5.401
+  },
+  "vae/Pad": {
+   "n": 1250,
+   "new": 0.224,
+   "nn_median_db": 5.64
+  },
+  "vae/Pluck": {
+   "n": 1249,
+   "new": 0.267,
+   "nn_median_db": 5.557
+  },
+  "vae/Synth": {
+   "n": 1250,
+   "new": 0.089,
+   "nn_median_db": 4.756
+  }
+ },
+ "coverage_curve": {
+  "layered": [
+   0.747,
+   0.652,
+   0.658,
+   0.617,
+   0.633,
+   0.583,
+   0.578,
+   0.52,
+   0.562,
+   0.56,
+   0.576,
+   0.505,
+   0.525,
+   0.541,
+   0.5,
+   0.517,
+   0.555,
+   0.463,
+   0.51,
+   0.514,
+   0.51,
+   0.475,
+   0.438,
+   0.499,
+   0.511
+  ],
+  "perturb": [
+   0.483,
+   0.404,
+   0.368,
+   0.35,
+   0.335,
+   0.305,
+   0.316,
+   0.325,
+   0.266,
+   0.279,
+   0.3,
+   0.27,
+   0.283,
+   0.286,
+   0.237,
+   0.263,
+   0.246,
+   0.26,
+   0.238,
+   0.241,
+   0.271,
+   0.219,
+   0.248,
+   0.228,
+   0.212
+  ],
+  "vae": [
+   0.441,
+   0.292,
+   0.292,
+   0.25,
+   0.222,
+   0.235,
+   0.188,
+   0.17,
+   0.194,
+   0.174,
+   0.193,
+   0.187,
+   0.169,
+   0.169,
+   0.159,
+   0.149,
+   0.167,
+   0.159,
+   0.168,
+   0.139,
+   0.143,
+   0.141,
+   0.138,
+   0.12,
+   0.133
+  ]
+ }
+}

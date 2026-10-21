@@ -1,0 +1,144 @@
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  clip mels: 1/25 tasks, 6s, ETA 151s
+  clip mels: 2/25 tasks, 6s, ETA 72s
+  clip mels: 3/25 tasks, 6s, ETA 46s
+  clip mels: 4/25 tasks, 6s, ETA 33s
+  clip mels: 5/25 tasks, 7s, ETA 29s
+  clip mels: 6/25 tasks, 7s, ETA 23s
+  clip mels: 7/25 tasks, 7s, ETA 19s
+  clip mels: 8/25 tasks, 7s, ETA 15s
+  clip mels: 9/25 tasks, 8s, ETA 15s
+  clip mels: 10/25 tasks, 8s, ETA 12s
+  clip mels: 11/25 tasks, 8s, ETA 10s
+  clip mels: 12/25 tasks, 8s, ETA 9s
+  clip mels: 13/25 tasks, 9s, ETA 8s
+  clip mels: 14/25 tasks, 9s, ETA 7s
+  clip mels: 15/25 tasks, 9s, ETA 6s
+  clip mels: 16/25 tasks, 9s, ETA 5s
+  clip mels: 17/25 tasks, 10s, ETA 5s
+  clip mels: 18/25 tasks, 10s, ETA 4s
+  clip mels: 19/25 tasks, 10s, ETA 3s
+  clip mels: 20/25 tasks, 10s, ETA 3s
+  clip mels: 21/25 tasks, 11s, ETA 2s
+  clip mels: 22/25 tasks, 11s, ETA 2s
+  clip mels: 23/25 tasks, 11s, ETA 1s
+  clip mels: 24/25 tasks, 11s, ETA 0s
+  clip mels: 25/25 tasks, 12s, ETA 0s
+500 clips cleaned in 12s
+
+
+
+
+
+
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  match: 25/500 tasks, 23s, ETA 446s
+  match: 50/500 tasks, 43s, ETA 388s
+  match: 75/500 tasks, 62s, ETA 351s
+  match: 100/500 tasks, 85s, ETA 341s
+  match: 125/500 tasks, 106s, ETA 317s
+  match: 150/500 tasks, 121s, ETA 283s
+  match: 175/500 tasks, 139s, ETA 258s
+  match: 200/500 tasks, 156s, ETA 234s
+  match: 225/500 tasks, 177s, ETA 217s
+  match: 250/500 tasks, 195s, ETA 195s
+  match: 275/500 tasks, 213s, ETA 174s
+  match: 300/500 tasks, 230s, ETA 153s
+  match: 325/500 tasks, 251s, ETA 135s
+  match: 350/500 tasks, 268s, ETA 115s
+  match: 375/500 tasks, 285s, ETA 95s
+  match: 400/500 tasks, 301s, ETA 75s
+  match: 425/500 tasks, 318s, ETA 56s
+  match: 450/500 tasks, 334s, ETA 37s
+  match: 475/500 tasks, 349s, ETA 18s
+  match: 500/500 tasks, 366s, ETA 0s
+
+
+
+
+
+
+
+
+
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  octave check: 25/500 tasks, 5s, ETA 97s
+  octave check: 50/500 tasks, 6s, ETA 55s
+  octave check: 75/500 tasks, 7s, ETA 40s
+  octave check: 100/500 tasks, 8s, ETA 33s
+  octave check: 125/500 tasks, 9s, ETA 27s
+  octave check: 150/500 tasks, 10s, ETA 24s
+  octave check: 175/500 tasks, 11s, ETA 20s
+  octave check: 200/500 tasks, 12s, ETA 18s
+  octave check: 225/500 tasks, 13s, ETA 16s
+  octave check: 250/500 tasks, 14s, ETA 14s
+  octave check: 275/500 tasks, 15s, ETA 12s
+  octave check: 300/500 tasks, 16s, ETA 11s
+  octave check: 325/500 tasks, 17s, ETA 9s
+  octave check: 350/500 tasks, 18s, ETA 8s
+  octave check: 375/500 tasks, 19s, ETA 6s
+  octave check: 400/500 tasks, 20s, ETA 5s
+  octave check: 425/500 tasks, 21s, ETA 4s
+  octave check: 450/500 tasks, 22s, ETA 2s
+  octave check: 475/500 tasks, 23s, ETA 1s
+  octave check: 500/500 tasks, 24s, ETA 0s
+{
+ "n": 500,
+ "threshold_db": 7.3,
+ "kept": 0.702,
+ "n_kept": 351,
+ "median_match_db": 6.679928761185575,
+ "median_inverter_db": 10.339475352907318,
+ "median_retrieval_db": 6.725049204007461,
+ "median_after_reset_db": 6.679928761185575,
+ "source": {
+  "retrieval": 482,
+  "inverter": 18
+ },
+ "kept_by_category": {
+  "Bass": 0.702
+ },
+ "kept_by_octave": {
+  "-2": 0.5,
+  "-1": 0.797,
+  "0": 0.716,
+  "1": 0.522,
+  "2": 0.192
+ }
+}
+total 797s; written: /Users/matthijsvork/Documents/Pitcher/data/text2preset/main_small-music/matched.parquet
+total 804 s
