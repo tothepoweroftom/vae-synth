@@ -392,10 +392,18 @@ public:
                                 mapFired = true;
                                 mapOk = res.wasOk();
                             });
+                const auto started = juce::Time::getMillisecondCounter() + 5000;
+                while (! worker.mapRunning() && juce::Time::getMillisecondCounter() < started)
+                    juce::Thread::sleep (1);
+                expect (worker.mapRunning(), "the map job started before the lab request");
+                const auto t0 = juce::Time::getMillisecondCounterHiRes();
                 worker.lab (a, [&] (juce::Result res, JointVaeWorker::Output) { labDone = res; });
                 const auto deadline = juce::Time::getMillisecondCounter() + 20000;
                 while (! labDone && juce::Time::getMillisecondCounter() < deadline)
                     juce::MessageManager::getInstance()->runDispatchLoopUntil (1);
+                const auto labMs = juce::Time::getMillisecondCounterHiRes() - t0;
+                logMessage ("lab result " + juce::String (labMs, 1) + " ms after cancelling a running category map");
+                expect (labMs < 300, "the lab result does not wait for the map: " + juce::String (labMs, 0) + " ms");
                 juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
                 expect (labDone.has_value() && labDone->wasOk(), "lab result after a cancelled map");
                 expect (! mapFired || ! mapOk, "map was cancelled");

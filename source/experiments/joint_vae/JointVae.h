@@ -126,12 +126,15 @@ public:
     void lab (LabRequest, Callback);
     /** The pad's background map. Cancelled by any newer request; never cancels one. */
     void map (MapRequest, std::function<void (juce::Result, MapResult)>);
+    /** True while a map job is computing on the worker (for tests). */
+    bool mapRunning() const { return state->mapRunning.load(); }
 
 private:
     struct State
     {
         JointVae model;
         std::atomic<uint64_t> request { 0 }, mapRequest { 0 };
+        std::atomic<bool> mapRunning { false };
     };
     using Work = std::function<juce::Result (JointVae&, Output&)>;
     void submit (Work, Callback);

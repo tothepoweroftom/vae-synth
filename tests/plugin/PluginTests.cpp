@@ -225,6 +225,8 @@ public:
                 expect (pumpUntil ([&] { return played > 0; }, 30000), "a pad move plays");
             }
         }
+        else
+            logMessage ("Set VAE_JOINT_BUNDLE to run the VAE Lab bundle tests.");
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {
@@ -235,16 +237,41 @@ public:
             auto* lab = findChild<experimental::JointVaePanel> (*editor);
             auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
             expect (pad != nullptr);
-            if (pad)
+            juce::ComboBox* background = nullptr;
+            std::function<void (juce::Component&)> find = [&] (juce::Component& c)
             {
+                for (auto* child : c.getChildren())
+                {
+                    if (auto* box = dynamic_cast<juce::ComboBox*> (child);
+                        box && box->getItemText (0) == "Category guess")
+                        background = box;
+                    find (*child);
+                }
+            };
+            if (lab)
+                find (*lab);
+            expect (background != nullptr);
+            if (pad && background)
+            {
+                int shown = 0;
+                lab->onMapShown = [&shown] { ++shown; };
                 lab->loadBundle (juce::File (bundle));
-                expect (pumpUntil ([&] { return pad->getMap().isValid(); }, 60000), "the first map arrives");
-                pad->keyPressed (juce::KeyPress (juce::KeyPress::rightKey));
-                pumpUntil ([] { return false; }, 170); // the map timer fires: a map is on the worker
+                expect (pumpUntil ([&] { return shown > 0; }, 60000), "the first map arrives");
+                // The category map is the slow one (~0.8 s): it is surely computing at the reset
+                background->setSelectedId (1, juce::sendNotificationSync);
+                expect (pumpUntil ([&] { return lab->isMapRunning(); }, 5000), "a category map is computing");
+                const int before = shown;
+                const auto t0 = juce::Time::getMillisecondCounter();
                 editor.reset();
+                expect (juce::Time::getMillisecondCounter() - t0 < 300, "closing does not wait for the whole map");
                 pumpUntil ([] { return false; }, 500);
+                expectEquals (shown, before); // no map result reached the deleted panel
             }
         }
+        else
+            logMessage ("Set VAE_JOINT_BUNDLE to run \"editor closes mid-map\".");
+#else
+        logMessage ("VAE Lab bundle tests (\"editor closes mid-map\") need a Surge build.");
 #endif
 
         beginTest ("SAME invalid latents and cancelled worker callbacks");

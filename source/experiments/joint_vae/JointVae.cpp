@@ -523,7 +523,9 @@ void JointVaeWorker::map (MapRequest request, std::function<void (juce::Result, 
             if (stale())
                 return;
             MapResult out;
+            shared->mapRunning = true;
             auto result = computeMap (shared->model, req, out, stale);
+            shared->mapRunning = false;
             if (stale())
                 return;
             juce::MessageManager::callAsync (

@@ -20,6 +20,11 @@ public:
     std::function<juce::Result (const juce::MemoryBlock&)> onPatch;
     /** The installed bundle loads on construction; tests load another one. */
     void loadBundle (const juce::File&);
+#if VAE_WITH_SURGE
+    /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
+    std::function<void()> onMapShown;
+    bool isMapRunning() const { return worker.mapRunning(); }
+#endif
 
 private:
 #if VAE_WITH_SURGE
@@ -43,6 +48,7 @@ private:
     bool outputValid = false;
     bool userActed = false; // results play only after the user acts in the Lab (ruling R14)
     bool errorShown = false;
+    bool mapError = false; // the status line shows a map failure
     JointLatent z {};
     std::array<juce::String, 3> axes;
     std::array<float, 3> pos { 0.5f, 0.5f, 0.5f };

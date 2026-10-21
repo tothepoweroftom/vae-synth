@@ -149,6 +149,7 @@ JointVaePanel::JointVaePanel()
 void JointVaePanel::setStatus (const juce::String& text, bool error)
 {
     errorShown = error;
+    mapError = false;
     status.setText (text, juce::dontSendNotification);
 }
 
@@ -351,8 +352,11 @@ void JointVaePanel::requestMap()
                     if (r.failed())
                     {
                         safe->setStatus (r.getErrorMessage(), true);
+                        safe->mapError = true;
                         return;
                     }
+                    if (std::exchange (safe->mapError, false) && safe->errorShown)
+                        safe->setStatus ({});
                     // Page drawPad: one pixel per cell, scaled up smoothly by the pad
                     const int n = m.n;
                     juce::Image image;
@@ -389,6 +393,8 @@ void JointVaePanel::requestMap()
                                     0.03f + 0.72f * juce::jlimit (0.0f, 1.0f, (m.val[(size_t) k] - m.lo) / span)));
                     }
                     safe->pad.setMap (image, std::move (labels));
+                    if (safe->onMapShown)
+                        safe->onMapShown();
                 });
 }
 
