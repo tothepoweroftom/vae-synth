@@ -44,7 +44,9 @@ JointVaePanel::JointVaePanel()
         addAndMakeVisible (c);
     addChildComponent (zSlider);
     latentButton.setToggleState (true, juce::dontSendNotification);
-    knobButton.setEnabled (false); // shortcut: knob pad arrives with Task 10
+    knobButton.setEnabled (false);
+    latentButton.onClick = [this] { setKnobMode (false); };
+    knobButton.onClick = [this] { setKnobMode (true); };
     for (int i = 0; i < 9; ++i)
         category.addItem (jointLabels[i], i + 1);
     category.setTooltip ("Category the decoder is conditioned on");
@@ -162,7 +164,69 @@ void JointVaePanel::setStatus (const juce::String& text, bool error)
 
 const LatentAxis* JointVaePanel::axisOn (int slot) const
 {
-    return xy && axes[(size_t) slot].isNotEmpty() ? xy->find (axes[(size_t) slot]) : nullptr;
+    return xy && ! knobMode && axes[(size_t) slot].isNotEmpty() ? xy->find (axes[(size_t) slot]) : nullptr;
+}
+
+int JointVaePanel::groupOn (int slot) const
+{
+    if (kg)
+        for (size_t g = 0; g < kg->groups.size(); ++g)
+            if (kg->groups[g].name == axes[(size_t) slot])
+                return (int) g;
+    return -1;
+}
+
+void JointVaePanel::fillBackground()
+{
+    background.clear (juce::dontSendNotification);
+    if (knobMode)
+    {
+        background.addItem ("Category guess", 1);
+        background.addItem ("None", 2);
+        background.setSelectedId (1, juce::dontSendNotification);
+        return;
+    }
+    for (int i = 0; i < 6; ++i)
+        background.addItem (mapKinds[i][1], i + 1);
+    background.setSelectedId (latBackground, juce::dontSendNotification);
+}
+
+void JointVaePanel::setKnobMode (bool knob)
+{
+    if (! xy || ! kg || knob == knobMode)
+        return;
+    if (knob && (! outputValid || current.knobs.size() != (size_t) kg->names.size()))
+        return;
+    if (knob)
+    {
+        latBackground = background.getSelectedId();
+        latAxes = axes;
+        knobVals = current.knobs;
+        knobCodes = current.codes;
+        axes = knobAxes;
+    }
+    else
+    {
+        knobAxes = axes;
+        axes = latAxes;
+    }
+    knobMode = knob;
+    latentButton.setToggleState (! knob, juce::dontSendNotification);
+    knobButton.setToggleState (knob, juce::dontSendNotification);
+    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton })
+        c->setEnabled (! knob);
+    fillBackground();
+    if (knob)
+        list.setGroups (*kg);
+    else
+        list.setAxes (xy->axes);
+    syncPositions();
+    refresh();
+    updateDots();
+    scheduleMap();
+    resized();
+    if (! knob)
+        decode(); // back to the sound of the kept z
 }
 
 void JointVaePanel::loadBundle (const juce::File& file)
@@ -180,6 +244,16 @@ void JointVaePanel::loadBundle (const juce::File& file)
                      }
                      auto& self = *safe;
                      self.xy = out.xypad;
+                     self.kg = out.knobGroups;
+                     if (self.knobMode) // a new bundle starts on the latent pad
+                     {
+                         self.knobMode = false;
+                         self.latentButton.setToggleState (true, juce::dontSendNotification);
+                         self.knobButton.setToggleState (false, juce::dontSendNotification);
+                         self.fillBackground();
+                     }
+                     for (size_t i = 0; i < 3; ++i)
+                         self.knobAxes[i] = i < self.kg->groups.size() ? self.kg->groups[i].name : juce::String();
                      self.current = std::move (out);
                      self.outputValid = false;
                      const auto& all = self.xy->axes;
@@ -199,7 +273,8 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.base.addItem ("Random real preset", kRandomBase);
                      for (auto* c : std::initializer_list<juce::Component*> {
                               &self.base, &self.category, &self.lockButton, &self.resetButton, &self.dotsButton,
-                              &self.background, &self.pad, &self.zSlider, &self.promptBox, &self.promptGo })
+                              &self.background, &self.pad, &self.zSlider, &self.promptBox, &self.promptGo,
+                              &self.knobButton })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
@@ -305,6 +380,16 @@ void JointVaePanel::assign (int slot, const juce::String& id)
 
 void JointVaePanel::syncPositions()
 {
+    if (knobMode)
+    {
+        for (int i = 0; i < 3; ++i)
+            if (const auto g = groupOn (i); g >= 0)
+                if (const auto p = kg->position (g, knobVals); ! std::isnan (p))
+                    pos[(size_t) i] = p;
+                else
+                    pos[(size_t) i] = 0.5f;
+        return;
+    }
     for (int i = 0; i < 3; ++i)
         if (auto* a = axisOn (i))
             pos[(size_t) i] = axisPosition (*a, z);
@@ -312,6 +397,20 @@ void JointVaePanel::syncPositions()
 
 void JointVaePanel::applyPositions()
 {
+    if (knobMode)
+    {
+        // Page applyPos, then the group's knobs into the numeric codes by feature name
+        for (int i = 0; i < 3; ++i)
+            if (const auto g = groupOn (i); g >= 0)
+            {
+                kg->set (g, pos[(size_t) i], knobVals);
+                for (const auto k : kg->groups[(size_t) g].knob)
+                    if (const auto c = current.layout.names.indexOf (kg->names[k]);
+                        c >= 0 && (size_t) c < knobCodes.size())
+                        knobCodes[(size_t) c] = knobVals[(size_t) k];
+            }
+        return;
+    }
     std::vector<const LatentAxis*> held;
     std::vector<float> targets;
     for (int i = 0; i < 3; ++i)
@@ -328,13 +427,19 @@ void JointVaePanel::refresh (const LatentAxis* dragged)
     pad.setDot ({ pos[0], pos[1] });
     zSlider.setValue (juce::jlimit (0.0f, 1.0f, pos[2]), juce::dontSendNotification);
     list.setAssigned (axes);
-    list.setPositions (z, dragged);
+    if (! knobMode)
+        list.setPositions (z, dragged);
     repaint();
 }
 
 void JointVaePanel::updateDots()
 {
     std::vector<std::tuple<float, float, int>> dots;
+    if (knobMode) // shortcut: no preset dots on the knob pad (the bundle holds no knob values per preset)
+    {
+        pad.setPresetDots ({}, -1);
+        return;
+    }
     auto *ax = axisOn (0), *ay = axisOn (1);
     if (dotsButton.getToggleState() && ax && ay)
         for (size_t i = 0; i < xy->presetZ.size(); ++i)
@@ -389,6 +494,13 @@ void JointVaePanel::requestMap()
             request.axisIds.push_back (axes[(size_t) i]);
     request.zPos = pos[2];
     request.kind = mapKinds[juce::jlimit (0, 5, background.getSelectedId() - 1)][0];
+    if (knobMode)
+    {
+        request.kind = background.getSelectedId() == 2 ? "none" : "cat";
+        request.knobs = knobVals;
+        request.groupX = groupOn (0);
+        request.groupY = groupOn (1);
+    }
     request.lockedTail = lockedTail;
     worker.map (std::move (request),
                 [safe = juce::Component::SafePointer (this)] (juce::Result r, MapResult m)
@@ -453,6 +565,8 @@ void JointVaePanel::decode()
     request.z = z;
     request.category = category.getSelectedId() - 1;
     request.lockedTail = lockedTail;
+    if (knobMode)
+        request.codes = knobCodes;
     worker.lab (
         std::move (request),
         [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
@@ -498,22 +612,28 @@ void JointVaePanel::decode()
 
 void JointVaePanel::paint (juce::Graphics& g)
 {
-    const auto name = [this] (int slot)
+    struct Label
     {
+        juce::String name, low, high;
+    };
+    const auto label = [this] (int slot) -> Label
+    {
+        if (knobMode)
+            return groupOn (slot) >= 0 ? Label { kg->groups[(size_t) groupOn (slot)].name, "low", "high" } : Label();
         auto* a = axisOn (slot);
-        return a ? a->name : juce::String();
+        return a ? Label { a->name, a->low, a->high } : Label();
     };
     g.setFont (LF::labelFont (10.0f));
-    if (auto* ax = axisOn (0))
+    if (const auto ax = label (0); ax.name.isNotEmpty())
     {
         g.setColour (LF::quiet());
-        g.drawText (ax->low, xLabelArea, juce::Justification::centredLeft);
-        g.drawText (ax->high, xLabelArea, juce::Justification::centredRight);
+        g.drawText (ax.low, xLabelArea, juce::Justification::centredLeft);
+        g.drawText (ax.high, xLabelArea, juce::Justification::centredRight);
         g.setColour (LF::ink);
-        g.drawText ("X " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (0), xLabelArea,
+        g.drawText ("X " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + ax.name, xLabelArea,
                     juce::Justification::centred);
     }
-    if (auto* ay = axisOn (1); ay && ! yLabelArea.isEmpty())
+    if (const auto ay = label (1); ay.name.isNotEmpty() && ! yLabelArea.isEmpty())
     {
         // Rotated a quarter turn: reads bottom to top, low end at the bottom
         juce::Graphics::ScopedSaveState save (g);
@@ -521,16 +641,16 @@ void JointVaePanel::paint (juce::Graphics& g)
         g.addTransform (juce::AffineTransform::rotation (-juce::MathConstants<float>::halfPi, c.x, c.y));
         const auto r = juce::Rectangle<int> (yLabelArea.getHeight(), yLabelArea.getWidth()).withCentre (c.toInt());
         g.setColour (LF::quiet());
-        g.drawText (ay->low, r, juce::Justification::centredLeft);
-        g.drawText (ay->high, r, juce::Justification::centredRight);
+        g.drawText (ay.low, r, juce::Justification::centredLeft);
+        g.drawText (ay.high, r, juce::Justification::centredRight);
         g.setColour (LF::ink);
-        g.drawText ("Y " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (1), r,
+        g.drawText ("Y " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + ay.name, r,
                     juce::Justification::centred);
     }
     if (zSlider.isVisible())
     {
         g.setColour (LF::ink);
-        g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (2), zLabelArea,
+        g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + label (2).name, zLabelArea,
                           juce::Justification::centredLeft, 1, 0.7f);
     }
     paintReadouts (g);
@@ -660,7 +780,7 @@ void JointVaePanel::resized()
     promptArea.removeFromTop (4);
     status.setBounds (promptArea);
     left.removeFromBottom (kGap);
-    const bool hasZ = axisOn (2) != nullptr;
+    const bool hasZ = hasSlot (2);
     zSlider.setVisible (hasZ);
     if (hasZ)
     {

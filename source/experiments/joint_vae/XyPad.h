@@ -2,6 +2,7 @@
 
 #include <array>
 #include <juce_core/juce_core.h>
+#include <limits>
 #include <map>
 #include <span>
 #include <utility>
@@ -18,7 +19,9 @@ inline constexpr const char* jointLabels[] = { "Bass",  "Lead",       "Pad",    
 // Port of the student's XY-pad page maths (vae/pitcher/xypad/page_v2.template.html). Engine-free.
 struct LatentAxis
 {
-    juce::String id, kind /* "sound"|"dim" */, name, low, high, desc, key;
+    juce::String id, kind /* "sound"|"dim"|"group" */, name, low, high, desc, key;
+    juce::String tags;    // "group" rows: the tag line (knob count, |rho|, share of presets)
+    bool unclear = false; // "group" rows: importance within 2 se, drawn grey
     JointLatent u {};
     float mean = 0, sd = 1, impact = 0;
     bool minor = false;
@@ -84,9 +87,11 @@ struct KnobGroups
 {
     struct Group
     {
-        juce::String name;
+        juce::String name, section, desc;
         std::vector<int> knob;
         std::vector<float> sign;
+        float importance = 0, se = 0, active = 0;
+        float meanAbsRho = std::numeric_limits<float>::quiet_NaN(); // NaN when the file has null
     };
     juce::StringArray names; // knobs.knobs[].name: student feature names
     std::vector<float> p5, p95;

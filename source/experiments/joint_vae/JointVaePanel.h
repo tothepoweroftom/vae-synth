@@ -30,6 +30,8 @@ public:
     juce::String statusText() const { return status.getText(); }
     const XyPadData* padData() const { return xy.get(); }
     const JointLatent& latent() const { return z; }
+    const JointVaeWorker::Output& output() const { return current; }
+    const KnobGroups* knobGroups() const { return kg.get(); }
 #endif
 
 private:
@@ -47,9 +49,14 @@ private:
     void paintReadouts (juce::Graphics&);
     void setStatus (const juce::String&, bool error = false);
     const LatentAxis* axisOn (int slot) const;
+    int groupOn (int slot) const; // knob pad: group index on the slot, -1 when none
+    bool hasSlot (int slot) const { return knobMode ? groupOn (slot) >= 0 : axisOn (slot) != nullptr; }
+    void setKnobMode (bool); // page mode switch: the decoded codes stay, the other pad's edits are dropped
+    void fillBackground();
 
     JointVaeWorker worker;
     std::shared_ptr<const XyPadData> xy;
+    std::shared_ptr<const KnobGroups> kg;
     JointVaeWorker::Output current;
     bool outputValid = false;
     bool userActed = false; // results play only after the user acts in the Lab (ruling R14)
@@ -59,6 +66,11 @@ private:
     std::array<juce::String, 3> axes;
     std::array<float, 3> pos { 0.5f, 0.5f, 0.5f };
     std::optional<std::vector<float>> lockedTail;
+    // Knob pad: flat 2D pad over the 61 knob groups (ruling R16). `axes` then holds group names.
+    bool knobMode = false;
+    std::array<juce::String, 3> latAxes, knobAxes;
+    std::vector<float> knobVals, knobCodes; // the 123 knob values and the codes they are written into
+    int latBackground = 2;
 
     juce::TextButton latentButton { "Latent pad" }, knobButton { "Knob pad" }, lockButton { "Lock structure" },
         resetButton { "Reset" }, dotsButton { "Preset dots" }, sendButton { "Send to Surge" };

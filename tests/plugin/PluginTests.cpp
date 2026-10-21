@@ -230,6 +230,73 @@ public:
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {
+            beginTest ("knob pad moves only its group");
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
+            juce::TextButton *knobButton = nullptr, *latentButton = nullptr;
+            std::function<void (juce::Component&)> find = [&] (juce::Component& c)
+            {
+                for (auto* child : c.getChildren())
+                {
+                    if (auto* b = dynamic_cast<juce::TextButton*> (child); b && b->getButtonText() == "Knob pad")
+                        knobButton = b;
+                    else if (b && b->getButtonText() == "Latent pad")
+                        latentButton = b;
+                    find (*child);
+                }
+            };
+            if (lab)
+                find (*lab);
+            expect (pad != nullptr && knobButton != nullptr && latentButton != nullptr);
+            if (pad && knobButton && latentButton)
+            {
+                bool ready = false;
+                lab->onMapShown = [&ready] { ready = true; };
+                lab->loadBundle (juce::File (bundle));
+                expect (pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                const auto before = lab->output().codes;
+                const auto z0 = lab->latent();
+                expect (knobButton->isEnabled(), "knob pad is available");
+                if (knobButton->isEnabled())
+                {
+                    knobButton->onClick();
+                    ready = false;
+                    expect (pumpUntil ([&] { return ready; }, 60000), "knob map shown");
+                    expect (lab->output().codes == before, "switching keeps the decoded codes");
+                    pad->moved ({ 1.0f, 0.5f });
+                    const auto* kg = lab->knobGroups();
+                    expect (kg != nullptr && kg->groups.size() == 61);
+                    if (kg)
+                    {
+                        const auto& names = lab->output().layout.names;
+                        std::vector<float> expected = before;
+                        for (int g = 0; g < 2; ++g)
+                        {
+                            auto knobs = std::vector<float> (kg->names.size(), 0.0f);
+                            kg->set (g, g == 0 ? 1.0f : 0.5f, knobs);
+                            for (int k : kg->groups[(size_t) g].knob)
+                                if (const auto i = names.indexOf (kg->names[k]); i >= 0)
+                                    expected[(size_t) i] = knobs[(size_t) k];
+                        }
+                        const auto& g0 = kg->groups[0];
+                        expect (pumpUntil ([&] { return lab->output().codes == expected; }, 30000),
+                                "only groups X and Y change");
+                        for (size_t k = 0; k < g0.knob.size(); ++k)
+                            expectWithinAbsoluteError (
+                                lab->output().codes[(size_t) names.indexOf (kg->names[g0.knob[k]])],
+                                g0.sign[k] > 0 ? kg->p95[(size_t) g0.knob[k]] : kg->p5[(size_t) g0.knob[k]], 1e-5f);
+                    }
+                    latentButton->onClick();
+                    expect (lab->latent() == z0, "back on the latent pad, z is kept");
+                }
+            }
+        }
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
             beginTest ("prompt starts and nudges");
             PluginProcessor processor;
             settleModel (processor);

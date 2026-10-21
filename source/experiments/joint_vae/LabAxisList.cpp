@@ -34,12 +34,13 @@ LabAxisList::Row::Row (const LatentAxis& a, int r, float maxImp)
     slider.setSliderStyle (juce::Slider::LinearHorizontal);
     slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
     slider.setTitle (axis.name);
-    addAndMakeVisible (slider);
+    addChildComponent (slider);
+    slider.setVisible (axis.kind != "group");
 }
 int LabAxisList::Row::heightFor (int width) const
 {
     const auto desc = (int) std::ceil (descLayout (axis.desc, width - 2 * kPad).getHeight());
-    return kPad + 20 + 4 + desc + 4 + 14 + 4 + 20 + kPad;
+    return kPad + 20 + 4 + desc + 4 + 14 + 4 + (axis.kind == "group" ? 0 : 20) + kPad;
 }
 void LabAxisList::Row::resized()
 {
@@ -67,7 +68,8 @@ void LabAxisList::Row::paint (juce::Graphics& g)
     g.drawText (juce::String (rank), top.removeFromLeft (22), juce::Justification::centredLeft);
     g.setColour (LF::ink);
     g.setFont (LF::labelFont (11.0f, true));
-    g.drawFittedText (axis.name, top, juce::Justification::centredLeft, 1, 0.8f);
+    g.drawFittedText (axis.name + (axis.kind == "group" ? "   " + axis.key : juce::String()), top,
+                      juce::Justification::centredLeft, 1, 0.8f);
     r.removeFromTop (4);
 
     auto layout = descLayout (axis.desc, r.getWidth());
@@ -77,16 +79,16 @@ void LabAxisList::Row::paint (juce::Graphics& g)
     auto tags = r.removeFromTop (14);
     g.setFont (LF::labelFont (9.5f));
     juce::String text;
-    if (axis.kind == "dim")
+    if (axis.kind != "sound")
     {
         auto meter = tags.removeFromLeft (60).withSizeKeepingCentre (60, 4).toFloat();
         g.setColour (LF::faint);
         g.fillRoundedRectangle (meter, 2);
-        g.setColour (axis.minor ? LF::quiet() : LF::ink);
+        g.setColour (axis.minor || axis.unclear ? LF::quiet() : LF::ink);
         g.fillRoundedRectangle (meter.withWidth (meter.getWidth() * juce::jlimit (0.0f, 1.0f, axis.impact / maxImpact)),
                                 2);
         tags.removeFromLeft (6);
-        text = juce::String (axis.impact, 1) + " dB";
+        text = axis.kind == "group" ? axis.tags : juce::String (axis.impact, 1) + " dB";
         for (size_t i = 0; i < axis.sections.size() && i < 3; ++i)
             text += "   " + axis.sections[i].first + " "
                     + juce::String (juce::roundToInt (axis.sections[i].second * 100)) + "%";
@@ -97,6 +99,8 @@ void LabAxisList::Row::paint (juce::Graphics& g)
     g.drawFittedText (text, tags, juce::Justification::centredLeft, 1, 0.8f);
     r.removeFromTop (4);
 
+    if (axis.kind == "group")
+        return;
     auto ends = r.removeFromBottom (20);
     g.setFont (LF::labelFont (9.5f));
     g.drawFittedText (axis.low, ends.removeFromLeft (60), juce::Justification::centredLeft, 1, 0.7f);
@@ -106,10 +110,12 @@ void LabAxisList::Row::paint (juce::Graphics& g)
 void LabAxisList::setAxes (const std::vector<LatentAxis>& axes)
 {
     rows.clear();
+    if (&axes != &groupAxes)
+        groupAxes.clear();
     float maxImpact = 1e-6f;
     int minor = 0;
     for (const auto& a : axes)
-        if (a.kind == "dim")
+        if (a.kind != "sound")
         {
             maxImpact = juce::jmax (maxImpact, a.impact);
             minor += a.minor ? 1 : 0;
@@ -117,7 +123,7 @@ void LabAxisList::setAxes (const std::vector<LatentAxis>& axes)
     int sound = 0, dim = 0;
     for (const auto& a : axes)
     {
-        auto* row = rows.add (new Row (a, a.kind == "dim" ? ++dim : ++sound, maxImpact));
+        auto* row = rows.add (new Row (a, a.kind != "sound" ? ++dim : ++sound, maxImpact));
         for (int i = 0; i < 3; ++i)
             row->slot[i].onClick = [this, i, &a]
             {
@@ -140,6 +146,28 @@ void LabAxisList::setAxes (const std::vector<LatentAxis>& axes)
     };
     addChildComponent (moreButton);
     moreButton.setVisible (minor > 0);
+}
+void LabAxisList::setGroups (const KnobGroups& kg)
+{
+    groupAxes.clear();
+    for (const auto& g : kg.groups)
+    {
+        LatentAxis a;
+        a.id = a.name = g.name;
+        a.kind = "group";
+        a.key = g.section;
+        a.desc = g.desc;
+        a.impact = g.importance * 100.0f;
+        a.unclear = g.importance <= 2 * g.se;
+        a.tags = (g.importance >= 0 ? "+" : "") + juce::String (a.impact, 1) + " pts   " + juce::String (g.knob.size())
+                 + (g.knob.size() == 1 ? " knob" : " knobs");
+        if (std::isfinite (g.meanAbsRho))
+            a.tags +=
+                "   |" + juce::String (juce::CharPointer_UTF8 ("\xcf\x81")) + "| " + juce::String (g.meanAbsRho, 2);
+        a.tags += "   in " + juce::String (juce::roundToInt (g.active * 100)) + "% of presets";
+        groupAxes.push_back (std::move (a));
+    }
+    setAxes (groupAxes);
 }
 void LabAxisList::setAssigned (const std::array<juce::String, 3>& ids)
 {
@@ -177,7 +205,7 @@ void LabAxisList::layOut (int width)
             place (row);
         }
     for (auto* row : rows)
-        if (row->axis.kind == "dim" && ! row->axis.minor)
+        if (row->axis.kind != "sound" && ! row->axis.minor)
         {
             if (dimHeaderY < 0)
             {
@@ -205,7 +233,8 @@ void LabAxisList::paint (juce::Graphics& g)
 {
     g.setColour (LF::quiet());
     g.setFont (LF::labelFont (10.0f, true));
-    for (auto [y, text] : { std::pair { soundHeaderY, "SOUND AXES" }, std::pair { dimHeaderY, "LATENT DIMENSIONS" } })
+    const char* dimTitle = groupAxes.empty() ? "LATENT DIMENSIONS" : "KNOB GROUPS";
+    for (auto [y, text] : { std::pair { soundHeaderY, "SOUND AXES" }, std::pair { dimHeaderY, dimTitle } })
         if (y >= 0)
             g.drawText (text, kPad, y, getWidth() - 2 * kPad, kHeaderH, juce::Justification::bottomLeft);
 }

@@ -12,6 +12,8 @@ class LabAxisList final : public juce::Component
 public:
     /** `axes` must outlive the list (the panel keeps the bundle's XyPadData). */
     void setAxes (const std::vector<LatentAxis>& axes);
+    /** The knob pad's rows: one per group in file order, ids are group names, sliders hidden. */
+    void setGroups (const KnobGroups&);
     /** Ids on X, Y, Z (Z may be empty). */
     void setAssigned (const std::array<juce::String, 3>&);
     /** Slider positions from z, except the row being dragged. */
@@ -37,6 +39,7 @@ private:
         void resized() override;
     };
     juce::OwnedArray<Row> rows;
+    std::vector<LatentAxis> groupAxes; // what the group rows point at
     juce::TextButton moreButton;
     bool showMinor = false;
     int soundHeaderY = -1, dimHeaderY = -1;

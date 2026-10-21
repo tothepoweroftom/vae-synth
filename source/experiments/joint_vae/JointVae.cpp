@@ -152,6 +152,30 @@ std::vector<std::pair<juce::String, juce::String>> presetRows (const StudentPlan
 
 juce::Result computeMap (JointVae& model, const MapRequest& req, MapResult& out, const std::function<bool()>& stale)
 {
+    if (req.groupX >= 0)
+    {
+        const auto& kg = model.knobGroups();
+        const auto groups = (int) kg.groups.size();
+        if (req.groupX >= groups || req.groupY < 0 || req.groupY >= groups
+            || req.knobs.size() != (size_t) kg.names.size())
+            return juce::Result::fail ("Bad knob pad map request");
+        if (req.kind == "none")
+            return juce::Result::ok();
+        auto vals = req.knobs;
+        for (int j = 0; j < out.n; ++j)
+            for (int i = 0; i < out.n; ++i)
+            {
+                if (stale())
+                    return juce::Result::fail ("Map cancelled");
+                kg.set (req.groupX, ((float) i + 0.5f) / (float) out.n, vals);
+                kg.set (req.groupY, 1.0f - ((float) j + 0.5f) / (float) out.n, vals);
+                const auto p = model.forest().predict (vals);
+                const auto best = std::max_element (p.begin(), p.end());
+                out.cells.push_back ((int) (best - p.begin()));
+                out.conf.push_back (*best);
+            }
+        return juce::Result::ok();
+    }
     std::vector<const LatentAxis*> axes;
     for (const auto& id : req.axisIds)
         if (const auto* a = model.xypad().find (id))
@@ -445,7 +469,10 @@ void JointVaeWorker::load (juce::File file, Callback cb)
         {
             auto r = model.load (file);
             if (r.wasOk())
+            {
                 out.xypad = std::make_shared<const XyPadData> (model.xypad());
+                out.knobGroups = std::make_shared<const KnobGroups> (model.knobGroups());
+            }
             return r;
         },
         std::move (cb));

@@ -78,6 +78,9 @@ struct MapRequest
     JointLatent z {};
     int category = 8;
     std::vector<juce::String> axisIds; // X, Y and optionally Z
+    /** Knob pad (groupX >= 0): the forest over `knobs` (123 values) with groups X and Y swept; no decoder. */
+    std::vector<float> knobs;
+    int groupX = -1, groupY = -1;
     float zPos = 0.5f;
     juce::String kind /* cat|brightness|length|attack|noise|none */;
     std::optional<std::vector<float>> lockedTail;
@@ -109,7 +112,8 @@ public:
         std::vector<float> mel;                 // melFromSound (frames x 64 dB)
         std::vector<float> knobs;               // KnobGroups::names order; NaN when the plan writes no Value for it
         std::shared_ptr<const XyPadData> xypad; // set by a successful load, for the UI
-        std::array<float, 8> guess {};          // CategoryForest::predict (knobs)
+        std::shared_ptr<const KnobGroups> knobGroups;              // likewise
+        std::array<float, 8> guess {};                             // CategoryForest::predict (knobs)
         std::vector<std::pair<juce::String, juce::String>> preset; // page "Decoded preset" rows
     };
     using Callback = std::function<void (juce::Result, Output)>;

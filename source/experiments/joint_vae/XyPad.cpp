@@ -596,6 +596,13 @@ juce::Result KnobGroups::load (const juce::var& knobs, KnobGroups& out)
     {
         Group g;
         g.name = v["name"].toString();
+        g.section = v["section"].toString();
+        g.desc = v["desc"].toString();
+        g.importance = (float) (double) v["importance"];
+        g.se = (float) (double) v["se"];
+        g.active = (float) (double) v["active"];
+        if (isNum (v["mean_abs_rho"]))
+            g.meanAbsRho = (float) (double) v["mean_abs_rho"];
         auto* names = v["knobs"].getArray();
         if (names == nullptr)
             return juce::Result::fail ("xypad.json: bad group");
