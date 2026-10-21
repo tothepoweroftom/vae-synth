@@ -49,6 +49,9 @@ public:
     /** Voices currently sounding (for tests). */
     int numActiveVoices() const noexcept;
 
+    /** The smoothed value in effect right now (for tests). */
+    float currentControl (int index) const noexcept { return controls[index]; }
+
 private:
     void noteOn (int note);
     void noteOff (int note);
@@ -57,9 +60,27 @@ private:
     void allNotesOff();
     void renderVoices (float* left, float* right, int numSamples);
     float glideSource() const noexcept;
+    void snapControls();
+    void smoothControls (int numSamples);
+    void applyDiscrete();
 
     std::shared_ptr<const dsp::Wavetable> wavetable;
+    // `controls` are the values in effect (smoothed); `targets` what was set.
     schema::Snapshot controls = schema::Snapshot::defaults();
+    schema::Snapshot targets = schema::Snapshot::defaults();
+    float smoothCoeff = 1.0f; // one-pole step per kControlBlock
+    float smoothRate = 0.0f;  // -1 / (tau * sampleRate)
+    // Toggle/Categorical changes duck the output: Down -> Hold (swap) -> Up.
+    enum class Duck
+    {
+        Idle,
+        Down,
+        Hold,
+        Up
+    };
+    Duck duck = Duck::Idle;
+    float duckGain = 1.0f;
+    float duckStep = 1.0f;
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;
     lite::FxRack fx;

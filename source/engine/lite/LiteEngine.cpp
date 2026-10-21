@@ -11,6 +11,9 @@ namespace
 // Output guard: an extreme patch (e.g. +48 dB EQ boost into heavy resonance)
 // can get very loud; clamp to +12 dBFS rather than hand the host anything wilder.
 constexpr float kOutputLimit = 4.0f;
+constexpr float kSmoothTau = 0.020f;   // seconds, continuous controls
+constexpr float kDuckSeconds = 0.005f; // each way, discrete controls
+constexpr float kSnapDelta = 1.0e-4f;
 } // namespace
 
 LiteEngine::LiteEngine() = default;
@@ -28,7 +31,10 @@ void LiteEngine::prepare (double newSampleRate, int)
         freeLfo[i].seed (uint32_t (0xf00d + i));
 
     fx.prepare (newSampleRate);
-    patch.setAll (controls);
+    smoothRate = -1.0f / (kSmoothTau * sampleRate);
+    smoothCoeff = 1.0f - std::exp (smoothRate * float (kControlBlock));
+    duckStep = 1.0f / (kDuckSeconds * sampleRate);
+    snapControls();
     prepared = true;
     reset();
 }
@@ -44,6 +50,39 @@ void LiteEngine::reset()
     for (size_t i = 0; i < freeLfo.size(); ++i)
         freeLfo[i].restart (patch.lfo[i].phase);
     fx.reset();
+    snapControls();
+}
+
+void LiteEngine::snapControls()
+{
+    controls = targets;
+    patch.setAll (controls);
+    duck = Duck::Idle;
+    duckGain = 1.0f;
+}
+
+void LiteEngine::applyDiscrete()
+{
+    for (int i = 0; i < schema::kControlCount; ++i)
+        if (schema::control (i).kind != schema::Kind::Continuous && controls[i] != targets[i])
+        {
+            controls[i] = targets[i];
+            patch.set (i, controls);
+        }
+}
+
+// One-pole toward the targets, once per control block; only moving controls cost a patch.set.
+void LiteEngine::smoothControls (int numSamples)
+{
+    const float a = numSamples == kControlBlock ? smoothCoeff : 1.0f - std::exp (smoothRate * float (numSamples));
+    for (int i = 0; i < schema::kControlCount; ++i)
+    {
+        if (schema::control (i).kind != schema::Kind::Continuous || controls[i] == targets[i])
+            continue;
+        const float d = targets[i] - controls[i];
+        controls[i] = std::abs (d) < kSnapDelta ? targets[i] : controls[i] + d * a;
+        patch.set (i, controls);
+    }
 }
 
 void LiteEngine::setControl (int index, float value)
@@ -52,11 +91,17 @@ void LiteEngine::setControl (int index, float value)
         return;
 
     value = schema::sanitiseValue (index, value);
-    if (juce::exactlyEqual (controls[index], value))
+    if (juce::exactlyEqual (targets[index], value))
         return;
 
-    controls[index] = value;
-    patch.set (index, controls);
+    targets[index] = value;
+    if (numActiveVoices() == 0) // nothing to click or glide: apply at once
+    {
+        controls[index] = value;
+        patch.set (index, controls);
+    }
+    else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down && duck != Duck::Hold)
+        duck = Duck::Down;
 }
 
 int LiteEngine::numActiveVoices() const noexcept
@@ -202,6 +247,7 @@ void LiteEngine::renderVoices (float* left, float* right, int numSamples)
     {
         const int n = std::min (kControlBlock, numSamples - start);
         const float seconds = float (n) / sampleRate;
+        smoothControls (n);
         for (size_t i = 0; i < freeLfo.size(); ++i)
             blockValues.freeLfo[i] = freeLfo[i].advance (patch.lfo[i], seconds);
         for (auto& v : voices)
@@ -252,10 +298,29 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
     float check = 0.0f;
     for (int i = 0; i < numSamples; ++i)
     {
-        left[i] = std::clamp (left[i] * patch.masterGain, -kOutputLimit, kOutputLimit);
-        right[i] = std::clamp (right[i] * patch.masterGain, -kOutputLimit, kOutputLimit);
+        if (duck == Duck::Down)
+        {
+            duckGain = std::max (0.0f, duckGain - duckStep);
+            if (duckGain == 0.0f)
+                duck = Duck::Hold;
+        }
+        else if (duck == Duck::Up)
+        {
+            duckGain = std::min (1.0f, duckGain + duckStep);
+            if (duckGain == 1.0f)
+                duck = Duck::Idle;
+        }
+        const float g = patch.masterGain * duckGain;
+        left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
+        right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);
         check += left[i] + right[i];
     }
+    if (duck == Duck::Hold) // silent now: swap the discrete controls, ramp up next block
+    {
+        applyDiscrete();
+        duck = Duck::Up;
+    }
+
     if (! dsp::isFiniteBits (check))
     {
         // Should be unreachable; recover instead of recirculating NaN in FX tails.

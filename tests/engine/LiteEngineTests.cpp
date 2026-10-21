@@ -349,6 +349,65 @@ public:
             expect (p.tailPeak (size_t (second)) < 1.0e-6f,
                     "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
         }
+
+        beginTest ("cutoff change glides");
+        {
+            e.reset();
+            auto s = Snapshot::defaults();
+            s[kFilter1Type] = option (kFilter1Type, "lp24");
+            s[kFilter1Cutoff] = 0.2f;
+            e.setControls (s);
+            testutil::Player p (e);
+            p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (4800);
+            e.setControl (kFilter1Cutoff, 0.8f);
+            p.run (240); // 5 ms
+            const float mid = e.currentControl (kFilter1Cutoff);
+            expect (mid > 0.2f && mid < 0.8f, "mid-glide " + juce::String (mid));
+            p.run (int (0.15 * kRate));
+            expectWithinAbsoluteError (e.currentControl (kFilter1Cutoff), 0.8f, 1.0e-3f);
+        }
+
+        beginTest ("discrete change does not click");
+        {
+            e.reset();
+            e.setControls (Snapshot::defaults());
+            testutil::Player p (e);
+            p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (9600 - 256);
+            e.setControl (kOsc1Wave, option (kOsc1Wave, "square"));
+            p.run (9600);
+            auto maxStep = [&] (size_t from, size_t to)
+            {
+                float m = 0.0f;
+                for (size_t i = from + 1; i < to; ++i)
+                    m = juce::jmax (m, std::abs (p.left[i] - p.left[i - 1]));
+                return m;
+            };
+            const float before = maxStep (4800, 9600), around = maxStep (9600 - 480, 9600 + 480);
+            expect (before > 0.0f && around <= 1.5f * before,
+                    "around " + juce::String (around) + " vs " + juce::String (before));
+        }
+
+        beginTest ("fresh render unchanged by smoothing");
+        {
+            auto s = Snapshot::defaults();
+            for (int i = 0; i < kControlCount; ++i)
+                if (control (i).kind == Kind::Continuous)
+                    s[i] = 0.25f + 0.5f * float ((i * 37) % 11) / 10.0f;
+            std::vector<float> a, b;
+            LiteEngine x, y;
+            x.prepare (kRate, 512);
+            for (int i = 0; i < kControlCount; ++i)
+                x.setControl (i, s[i]);
+            renderEvents (x, { 64 }, second, { { 0, 60, 100 } }, 0, &a);
+            for (int i = 0; i < kControlCount; ++i)
+                y.setControl (i, s[i]);
+            y.prepare (kRate, 512);
+            renderEvents (y, { 64 }, second, { { 0, 60, 100 } }, 0, &b);
+            expect (a == b, "bit-identical");
+            expect (rmsOf (a, 0, a.size()) > 0.0f);
+        }
     }
 
 private:
