@@ -145,6 +145,7 @@ configure_file(cmake/release-info.json.in release-info.json @ONLY)
 add_subdirectory(tools/retrieve)
 if(VAE_WITH_SURGE)
     add_subdirectory(tools/compare)
+    add_subdirectory(tools/p0_eval)
 endif()
 
 # --- tests ---------------------------------------------------------------------

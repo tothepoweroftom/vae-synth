@@ -26,7 +26,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 
 1. **Prompt.** Type a sound ("deep sub bass") in the box under the pad. Two actions share the box, chosen by the
    switch on its left; Return runs the chosen one:
-   - **Find sounds** (the default with the p0 prompt bundle installed) sends the whole text to the student's text
+   - **Find sounds** (experimental; the default with the p0 prompt bundle installed) sends the whole text to the student's text
      model and lists up to 8 real presets from its bank, like `Bass · 0142`. The first is selected. No word-list
      adjectives are applied on top.
    - **Word list** (the only action without p0) picks a label from the student's nouns and starts from
@@ -76,7 +76,12 @@ Lab bundle contents: `bundle.json` (id fingerprints everything below), `config.j
 latent dimensions, per-label means, preset z, knobs, category forest), plus reference data for the tests
 (`parity.json`, `codec-parity.json`, `xypad-parity.json`, `example-sound.json`).
 Prompt bundle (`models/prompt-p0`): `prompt.json`, `text_encoder.onnx` (501 MB), `prior.onnx`, `tokenizer.json`,
-`bank.json` / `bank.bin` (1,227 real presets in Lab feature order), and parity files.
+`bank.json` / `bank.bin` (1,227 real presets in Lab feature order), and parity files. It is installed by
+`scripts/install-models.sh` to `.../models/prompt-p0/` and must match the Lab bundle's id.
+
+The prompt model is **lazy** (R20): opening the editor only checks that the bundle is installed and shows Find (with
+an "experimental" tag); the model loads on the first Find, which shows "Loading prompt model..." and then runs. A
+failed load turns Find off with the reason and leaves the Word list.
 
 ### Export order
 
@@ -132,9 +137,17 @@ Surge.
 - The p0 prior only predicts Bass, Lead and Pad, and its bank holds only those. Other sounds come back as one of
   them or, for a category with no bank presets, as "This bundle has no <label> presets"; the sound is kept and the
   Word list can still pick a start.
-- The p0 bundle loads in about 0.5 s after the Lab bundle and adds about 625 MB of memory. A Find takes about
-  10 ms (up to 0.6 s for very long text) on its own thread, so the pad never waits. Closing the editor during a Find
-  waits for it to finish.
+- **Find is experimental.** The first candidate for each contrasting pair (dark/bright bass, short/long pad,
+  soft/sharp lead) is the same bank row, so the learned search has not shown that it follows adjectives. It is
+  labelled "experimental" in the UI and here until listening notes in `docs/P0-PROMPT-EVAL.md` support semantic claims.
+- p0 cost (measured headless with `vae_p0_eval`, Apple Silicon, Release): the model loads on the first Find in about
+  0.5 s and takes about 1.0 GB of resident memory per editor that has searched (not the 625 MB first estimated). With
+  no Find, an editor's Lab models take about 70 MB. Two editors that both loaded p0 held about 1.98 GB; two without
+  it about 103 MB. A warm Find takes about 12 ms (up to 25 ms while a Lab drag runs; up to 0.6 s for very long text)
+  on its own thread; the cold Find, with the load, about 0.5 s. With a held note rendering on Lite and 10 of 20 Finds
+  during a drag, `process()` averaged 0.02 ms (max 0.4 ms) against a 5.3 ms block budget: no blocks over budget.
+  Closing the editor during a load or Find still waits for it (`shortcut:` in `PromptWorker`'s destructor; the fix is
+  a process-wide or detached runner).
 - Explore is a jump, not a faithful continuation: the decoded z can sound different from the bank preset.
 - Lab state is not saved in the host project.
 
@@ -154,3 +167,15 @@ VAE Lab, hold a note, and check each line. Note anything that differs.
 - [ ] Close and reopen the editor: your sound is unchanged until you act in the Lab.
 - [ ] Move a knob in the Synth view, then drag the Lab pad: it asks "Replace your Synth edits?"; Keep editing keeps
       your knob, Replace plays the pad.
+
+## Rendering and profiling the prompt feature
+
+`vae_p0_eval` (Surge builds; `tools/p0_eval`) renders the fixed prompt set and profiles Find. Run from the repo
+root with `B=models/joint-vae-j48w_b05/bundle.json` and `P=models/prompt-p0/prompt.json`:
+
+```sh
+T=build-surge/tools/p0_eval/vae_p0_eval_artefacts/Release/vae_p0_eval
+$T eval build-surge/p0-eval $B $P    # WAVs + results.md (see docs/P0-PROMPT-EVAL.md)
+$T profile $B $P                     # 20 Finds, half during a Lab drag, held note on Lite
+$T mem 2 1 $B $P                     # resident memory: <editors> <load p0 0|1>
+```

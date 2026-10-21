@@ -258,7 +258,10 @@ PromptWorker::~PromptWorker()
 {
     ++state->request;
     ++state->loads;
-    pool.removeAllJobs (true, -1); // shortcut: waits for a running inference (<= ~0.6 s); ONNX runs cannot be cut short
+    pool.removeAllJobs (
+        true,
+        -1); // shortcut: closing the editor waits for a running load or Find (load ~0.5 s, Find <= ~0.6 s; ONNX runs cannot be
+    // cut short); upgrade to a process-wide or detached runner that owns the model if that wait is noticed
 }
 
 void PromptWorker::load (juce::File file, JointLayout lab, std::function<void (juce::Result)> callback)

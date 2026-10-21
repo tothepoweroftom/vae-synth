@@ -46,6 +46,10 @@ JointVaePanel::JointVaePanel()
         addAndMakeVisible (c);
     addChildComponent (zSlider);
     addChildComponent (findButton);
+    addChildComponent (experimentalTag);
+    experimentalTag.setFont (juce::FontOptions (11.0f));
+    experimentalTag.setColour (juce::Label::textColourId, LF::quiet());
+    experimentalTag.setTooltip ("Learned prompt search is unproven: see docs/P0-PROMPT-EVAL.md");
     addChildComponent (exploreButton);
     for (size_t i = 0; i < chips.size(); ++i)
     {
@@ -473,29 +477,20 @@ void JointVaePanel::loadPromptBundle (const juce::File& file)
 {
     promptFile = file;
     ++promptToken;
-    promptReady = false;
+    promptLoaded = promptLoading = false; // the model is checked against this Lab bundle when Find first needs it
+    // Find is offered when a bundle is installed; a failed load on the first Find switches it off
+    promptReady = xy != nullptr && file.existsAsFile();
+    if (promptReady)
+        findButton.setToggleState (true, juce::dontSendNotification);
     candidates.clear();
     selected = -1;
     updatePromptUi();
-    if (! xy || ! file.existsAsFile())
-        return; // loads after the Lab bundle, which it is checked against
-    prompter.load (file, current.layout,
-                   [safe = juce::Component::SafePointer (this)] (juce::Result r)
-                   {
-                       if (! safe)
-                           return;
-                       safe->promptReady = r.wasOk();
-                       if (r.wasOk())
-                           safe->findButton.setToggleState (true, juce::dontSendNotification);
-                       else
-                           safe->setStatus ("Prompt search is off, using the word list: " + r.getErrorMessage(), true);
-                       safe->updatePromptUi();
-                   });
 }
 
 void JointVaePanel::updatePromptUi()
 {
     findButton.setVisible (promptReady);
+    experimentalTag.setVisible (promptReady);
     if (! promptReady)
         nudgeButton.setToggleState (true, juce::dontSendNotification);
     const bool find = promptReady && findButton.getToggleState();
@@ -531,7 +526,28 @@ void JointVaePanel::findSounds (const juce::String& text)
     if (! xy || ! promptReady || text.trim().isEmpty())
         return;
     const auto token = ++promptToken;
-    setStatus ("Finding sounds...");
+    if (! promptLoaded && ! promptLoading)
+    {
+        promptLoading = true;
+        setStatus ("Loading prompt model...");
+        // The worker thread runs this load before the find queued below
+        prompter.load (promptFile, current.layout,
+                       [safe = juce::Component::SafePointer (this)] (juce::Result r)
+                       {
+                           if (! safe)
+                               return;
+                           safe->promptLoading = false;
+                           safe->promptLoaded = r.wasOk();
+                           if (r.wasOk())
+                               return;
+                           safe->promptReady = false;
+                           ++safe->promptToken; // the find queued behind it has nothing to apply
+                           safe->setStatus ("Prompt search is off, using the word list: " + r.getErrorMessage(), true);
+                           safe->updatePromptUi();
+                       });
+    }
+    else if (! promptLoading)
+        setStatus ("Finding sounds...");
     // The whole text goes to the learned model; no word-list nudges follow
     prompter.find (
         text,
@@ -1089,7 +1105,10 @@ void JointVaePanel::resized()
     promptArea = left.removeFromBottom (kPromptH + (chipRow ? kChipRowH + 4 : 0));
     auto promptRow = promptArea.removeFromTop (kPromptRowH);
     if (findButton.isVisible())
+    {
         findButton.setBounds (promptRow.removeFromLeft (88));
+        experimentalTag.setBounds (promptRow.removeFromLeft (70));
+    }
     nudgeButton.setBounds (promptRow.removeFromLeft (76));
     promptRow.removeFromLeft (6);
     promptGo.setBounds (promptRow.removeFromRight (kPromptRowH + 8));

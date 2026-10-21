@@ -38,9 +38,11 @@ public:
     void submitPrompt (const juce::String&);
     void findSounds (const juce::String&); // the learned prompt search (p0); results come back async
     void nudge (const juce::String&);      // the word list (interpretPrompt)
-    /** The p0 prompt bundle loads after each Lab bundle; the installed one by default. */
+    /** The p0 prompt bundle (the installed one by default) is offered after each Lab bundle but only loads on the
+        first Find (R20: it is ~625 MB, so an editor that never searches never pays for it). */
     void loadPromptBundle (const juce::File&);
-    bool isPromptReady() const { return promptReady; }
+    bool isPromptReady() const { return promptReady; }   // Find is offered
+    bool isPromptLoaded() const { return promptLoaded; } // the model is in memory
     const std::vector<PromptCandidate>& promptCandidates() const { return candidates; }
     int selectedCandidate() const { return selected; }
     void selectCandidate (int);
@@ -83,7 +85,7 @@ private:
     JointVaeWorker worker;
     PromptWorker prompter;
     juce::File promptFile;
-    bool promptReady = false;
+    bool promptReady = false, promptLoaded = false, promptLoading = false;
     uint64_t promptToken = 0; // a prompt result applies only while this is unchanged
     std::vector<PromptCandidate> candidates;
     int selected = -1;
@@ -120,6 +122,7 @@ private:
     juce::Label status;
     juce::TextEditor promptBox;
     juce::TextButton promptGo { juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x92")) };
+    juce::Label experimentalTag { {}, "experimental" };
     juce::TextButton findButton { "Find sounds" }, nudgeButton { "Word list" },
         exploreButton { "Explore generated variations" };
     std::array<juce::TextButton, 8> chips;

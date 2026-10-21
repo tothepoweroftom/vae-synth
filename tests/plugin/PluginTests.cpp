@@ -333,7 +333,7 @@ public:
             expect (pumpUntil ([&] { return shown; }, 60000), "Lab bundle loaded");
             t->lab->onMapShown = nullptr;
             t->lab->loadPromptBundle (prompt);
-            expect (pumpUntil ([&] { return t->lab->isPromptReady(); }, 60000), "prompt bundle loaded");
+            expect (pumpUntil ([&] { return t->lab->isPromptReady(); }, 60000), "Find offered");
             return t;
         };
         const auto found = [] (experimental::JointVaePanel& lab)
@@ -341,6 +341,21 @@ public:
         // The lab() result for the current request has arrived when the output codes match
         const auto playing = [&] (experimental::JointVaePanel& lab, const std::vector<float>& codes)
         { return pumpUntil ([&] { return same (lab.output().codes, codes); }, 30000); };
+
+        beginTest ("prompt model loads on the first Find, not on open (R20)");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                pumpUntil ([] { return false; }, 1500); // a load on open would be done by now
+                expect (! lab.isPromptLoaded(), "opening the editor does not load p0");
+                lab.findSounds ("deep sub bass");
+                expect (lab.statusText().startsWith ("Loading prompt model"), lab.statusText());
+                expect (found (lab), "candidates");
+                expect (lab.isPromptLoaded());
+            }
+        }
 
         beginTest ("find selects fixture row");
         {
