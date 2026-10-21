@@ -52,6 +52,10 @@ public:
     /** The smoothed value in effect right now (for tests). */
     float currentControl (int index) const noexcept { return controls[index]; }
 
+    /** Click diagnostics (for tests): ducks started, and output samples rendered at a duck gain below 1. */
+    int ducksStarted = 0;
+    int64_t duckedSamples = 0;
+
 private:
     void noteOn (int note);
     void noteOff (int note);

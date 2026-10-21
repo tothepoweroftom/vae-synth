@@ -187,24 +187,30 @@ private:
     // Delay: unsynced stereo delay with gentle damping; mix crossfades dry/wet.
     void processDelay (float* l, float* r, int n, const FxSettings& p) noexcept
     {
-        const float d = std::clamp (p.delaySeconds, 0.001f, kMaxDelaySeconds) * sr;
+        // The time ramps across the span: a read head that jumps each block crackles while it moves (Task 18).
+        const float target = std::clamp (p.delaySeconds, 0.001f, kMaxDelaySeconds) * sr;
+        if (delayRead < 0.0f)
+            delayRead = target;
+        const float step = (target - delayRead) / float (std::max (n, 1));
         const float fb = std::clamp (p.delayFeedback, 0.0f, 0.99f);
         const float c = onePoleCoef (9000.0f, sr);
         float* ch[] = { l, r };
         for (int i = 0; i < n; ++i)
             for (int k = 0; k < 2; ++k)
             {
-                const float wet = delay[k].read (d);
+                const float wet = delay[k].read (delayRead + step * float (i + 1));
                 delayLp[k] = wet + c * (delayLp[k] - wet);
                 delay[k].push (ch[k][i] + fb * delayLp[k]);
                 ch[k][i] += p.delayMix * (wet - ch[k][i]);
             }
+        delayRead = target;
     }
     void resetDelay() noexcept
     {
         delay[0].restart();
         delay[1].restart();
         delayLp[0] = delayLp[1] = 0.0f;
+        delayRead = -1.0f;
     }
 
     // Reverb: juce::Reverb (Freeverb); decay time and size both drive room size.
@@ -234,6 +240,7 @@ private:
     float modPhase = 0.0f;
     dsp::fx::DelayLine delay[2];
     float delayLp[2] {};
+    float delayRead = -1.0f; // samples; < 0 after a reset
     juce::Reverb reverb;
 };
 

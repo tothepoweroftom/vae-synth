@@ -103,6 +103,7 @@ void LiteEngine::setControl (int index, float value)
     else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down)
     {
         duck = Duck::Down;
+        ++ducksStarted;
         duckCountdown = std::max (1, int (std::ceil (duckGain / duckStep))); // samples until gain 0
     }
 }
@@ -274,6 +275,7 @@ float LiteEngine::finishSpan (float* left, float* right, int len)
             if (duckGain == 1.0f)
                 duck = Duck::Idle;
         }
+        duckedSamples += duckGain < 1.0f ? 1 : 0;
         const float g = patch.masterGain * duckGain;
         left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
         right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);

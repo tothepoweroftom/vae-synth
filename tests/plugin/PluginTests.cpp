@@ -7,8 +7,11 @@
 #include "experiments/joint_vae/LabPad.h"
 #include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
+#include "engine/lite/LiteEngine.h"
 #if VAE_WITH_SURGE
 #include "engine/surge/SurgeEngine.h"
+#include "experiments/joint_vae/JointVae.h"
+#include "experiments/joint_vae/LiteTranslation.h"
 #endif
 
 namespace vae
@@ -111,6 +114,130 @@ juce::Label* headerStatus (juce::Component& editor)
             return l;
     return nullptr;
 }
+
+#if VAE_WITH_SURGE
+// Task 18: Lab results along a drag, 2 s at 60 per second, made as JointVaeWorker::lab makes them.
+enum class Drag
+{
+    pad,
+    padLocked,
+    slider
+};
+std::vector<schema::Snapshot> labDrag (experimental::JointVae& model, Drag drag)
+{
+    using namespace experimental;
+    const auto& xy = model.xypad();
+    auto z = xy.typical.at ("Lead");
+    const auto* ax = xy.find ("s:brightness");
+    const auto* ay = xy.find ("s:length");
+    const auto* dim = &*std::find_if (xy.axes.begin(), xy.axes.end(), [] (const auto& a) { return a.kind == "dim"; });
+    std::optional<std::vector<float>> tail;
+    std::vector<schema::Snapshot> out;
+    for (int k = 0; k < 120; ++k)
+    {
+        const float t = float (k) / 119.0f;
+        if (drag == Drag::slider)
+        {
+            // The list slider: move one latent dim, hold the pad's axes
+            const LatentAxis* held[] { dim, ax, ay };
+            const float targets[] { axisTarget (*dim, 0.2f + 0.6f * t), axisTarget (*ax, 0.5f),
+                                    axisTarget (*ay, 0.5f) };
+            z = constrain (z, held, targets);
+        }
+        else
+        {
+            const LatentAxis* held[] { ax, ay };
+            const float targets[] { axisTarget (*ax, 0.2f + 0.6f * t),
+                                    axisTarget (*ay, 0.5f + 0.3f * std::sin (juce::MathConstants<float>::twoPi * t)) };
+            z = constrain (z, held, targets);
+        }
+        std::vector<float> codes;
+        if (model.decode (z, 1, codes).failed())
+            return {};
+        const auto from = codes.begin() + model.layout().numNumeric;
+        if (drag == Drag::padLocked && ! tail)
+            tail.emplace (from, codes.end());
+        if (tail)
+            std::copy (tail->begin(), tail->end(), from);
+        juce::MemoryBlock patch;
+        auto lite = schema::Snapshot::defaults();
+        if (model.patch (codes, patch).failed() || liteControls (patch, lite).failed())
+            return {};
+        out.push_back (lite);
+    }
+    return out;
+}
+
+struct DragStats
+{
+    double discretePerSecond = 0, edgeRatio = 0, meanMs = 0, maxMs = 0;
+    int ducks = 0;
+    int64_t duckedSamples = 0;
+    float maxStep = 0;
+    juce::String describe() const
+    {
+        return juce::String (discretePerSecond, 1) + " discrete changes/s, " + juce::String (ducks) + " ducks, "
+               + juce::String (duckedSamples) + " samples ducked, max step " + juce::String (maxStep, 4)
+               + ", block-edge/inside step " + juce::String (edgeRatio, 2) + ", process " + juce::String (meanMs, 3)
+               + " ms mean / " + juce::String (maxMs, 3) + " ms max";
+    }
+};
+
+/** Holds a note on Lite and plays `results` at 60 per second through playLiteControls (2 s, 512-sample blocks). */
+DragStats playDrag (const std::vector<schema::Snapshot>& results)
+{
+    DragStats stats;
+    for (size_t k = 1; k < results.size(); ++k)
+        for (int i = 0; i < schema::kControlCount; ++i)
+            stats.discretePerSecond += schema::control (i).kind != schema::Kind::Continuous
+                                       && ! juce::exactlyEqual (results[k][i], results[k - 1][i]);
+    stats.discretePerSecond /= 2.0;
+
+    PluginProcessor p;
+    settleModel (p);
+    p.prepareToPlay (kRate, 512);
+    p.playLiteControls (results[0]);
+    juce::AudioBuffer<float> buffer (2, 512);
+    juce::MidiBuffer midi;
+    p.processBlock (buffer, midi); // the engine switch lands
+    auto& lite = dynamic_cast<LiteEngine&> (*p.findEngine (EngineKind::Lite));
+    midi.addEvent (juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100), 0);
+    for (int b = 0; b < 24; ++b) // 0.25 s into the note
+    {
+        p.processBlock (buffer, midi);
+        midi.clear();
+    }
+    lite.ducksStarted = 0;
+    lite.duckedSamples = 0;
+    float last = buffer.getSample (0, 511);
+    size_t next = 1;
+    double sumMs = 0, edge = 0, inside = 0;
+    const int blocks = 2 * int (kRate) / 512;
+    for (int b = 0; b < blocks; ++b)
+    {
+        while (next < results.size() && b * 512 >= int (next) * 800) // 48000 / 60
+            p.playLiteControls (results[next++]);
+        const auto t0 = juce::Time::getHighResolutionTicks();
+        p.processBlock (buffer, midi);
+        const auto ms = juce::Time::highResolutionTicksToSeconds (juce::Time::getHighResolutionTicks() - t0) * 1000.0;
+        sumMs += ms;
+        stats.maxMs = std::max (stats.maxMs, ms);
+        for (int i = 0; i < 512; ++i)
+        {
+            const float x = buffer.getSample (0, i), step = std::abs (x - last);
+            stats.maxStep = std::max (stats.maxStep, step);
+            (i == 0 ? edge : inside) += step;
+            last = x;
+        }
+    }
+    stats.edgeRatio = (edge / blocks) / (inside / (blocks * 511));
+    stats.meanMs = sumMs / blocks;
+    stats.ducks = lite.ducksStarted;
+    stats.duckedSamples = lite.duckedSamples;
+    p.releaseResources();
+    return stats;
+}
+#endif
 } // namespace
 
 class PluginTests final : public juce::UnitTest
@@ -956,6 +1083,35 @@ public:
             expectEquals (gestures.ends, 0);
             expectWithinAbsoluteError (p.getControls()[schema::kFilter1Cutoff], 0.3f, 1e-6f);
             p.releaseResources();
+        }
+#endif
+
+#if VAE_WITH_SURGE
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("Lab drags play without clicks (Task 18)");
+            experimental::JointVae lab;
+            expect (lab.load (juce::File (bundle)).wasOk());
+            for (auto drag : { Drag::pad, Drag::padLocked, Drag::slider })
+            {
+                const auto results = labDrag (lab, drag);
+                expectEquals ((int) results.size(), 120);
+                if (results.size() != 120)
+                    continue;
+                const juce::String name = drag == Drag::pad         ? "pad"
+                                          : drag == Drag::padLocked ? "pad, Lock on"
+                                                                    : "slider";
+                const auto moving = playDrag (results);
+                const auto still = playDrag (std::vector<schema::Snapshot> (120, results[0]));
+                logMessage (name + ": " + moving.describe());
+                logMessage (name + " (still): " + still.describe());
+                // Before the fix a moving delay time stepped every block edge (pad 3.4x, slider 1.5x the other steps)
+                expect (moving.edgeRatio < 1.3, name + ": " + moving.describe());
+                expectEquals (still.ducks, 0); // 93 values written again: no duck for an unchanged one
+                expect (moving.ducks <= 2 * moving.discretePerSecond, name + ": " + moving.describe());
+                expect (moving.duckedSamples < kRate / 10, name + ": " + moving.describe()); // < 5% of 2 s
+                expect (moving.maxMs < 512 * 1000 / kRate, name + ": " + moving.describe()); // the block budget
+            }
         }
 #endif
 

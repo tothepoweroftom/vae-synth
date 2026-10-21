@@ -403,6 +403,31 @@ public:
                     "block " + juce::String (hostBlock) + ": silent samples " + juce::String (silent));
         }
 
+        beginTest ("a moving delay time does not step at block edges");
+        {
+            // Task 18: a Lab drag moved delay_time and every 512-sample block edge stepped (3.4x the other steps)
+            e.reset();
+            auto s = basePatch ("saw");
+            s[kDelayOn] = 1.0f;
+            s[kDelayMix] = 0.5f;
+            s[kDelayTime] = 0.3f;
+            e.setControls (s);
+            testutil::Player p (e);
+            p.block (512, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (second / 2);
+            const size_t from = p.left.size();
+            for (int b = 0; b < 188; ++b) // 2 s
+            {
+                e.setControl (kDelayTime, 0.3f + 0.4f * float (b) / 187.0f);
+                p.block (512);
+            }
+            double edge = 0.0, inside = 0.0;
+            for (size_t i = from + 1; i < p.left.size(); ++i)
+                ((i - from) % 512 == 0 ? edge : inside) += std::abs (p.left[i] - p.left[i - 1]);
+            const double ratio = (edge / 187.0) / (inside / double (p.left.size() - from - 188));
+            expect (ratio < 1.3, "edge / inside step " + juce::String (ratio));
+        }
+
         beginTest ("fresh render unchanged by smoothing");
         {
             auto s = Snapshot::defaults();
