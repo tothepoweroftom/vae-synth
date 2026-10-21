@@ -12,6 +12,9 @@ inline const juce::Colour labCategoryColours[9] = { juce::Colour (0xff3987e5), j
                                                     juce::Colour (0xff9085e9), juce::Colour (0xffe66767),
                                                     juce::Colour (0xff8a919c) };
 
+/** The pad's well, behind the map and inside the dot. */
+inline const juce::Colour labWell { 0xff000000 };
+
 /** The Lab's XY pad: positions are 0..1 with y up. Arrow keys move the dot by 0.02 (Shift: 0.1). */
 class LabPad final : public juce::Component
 {

@@ -29,7 +29,7 @@ void LabPad::setPresetDots (std::vector<std::tuple<float, float, int>> d, int la
 void LabPad::paint (juce::Graphics& g)
 {
     const auto r = getLocalBounds().toFloat();
-    g.setColour (juce::Colours::black);
+    g.setColour (labWell);
     g.fillRoundedRectangle (r, 6);
     if (map.isValid())
     {
@@ -52,7 +52,7 @@ void LabPad::paint (juce::Graphics& g)
                            .withCentre ({ r.getX() + x * r.getWidth(), r.getBottom() - y * r.getHeight() }));
     }
     const juce::Point<float> c { r.getX() + dot.x * r.getWidth(), r.getBottom() - dot.y * r.getHeight() };
-    g.setColour (juce::Colours::black);
+    g.setColour (labWell);
     g.fillEllipse (juce::Rectangle<float> (18, 18).withCentre (c));
     g.setColour (LF::ink);
     g.drawEllipse (juce::Rectangle<float> (18, 18).withCentre (c), 2);

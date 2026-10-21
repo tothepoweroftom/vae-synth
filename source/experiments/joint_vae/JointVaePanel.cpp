@@ -49,6 +49,7 @@ JointVaePanel::JointVaePanel()
 
     pad.moved = [this] (juce::Point<float> p)
     {
+        userActed = true;
         pos[0] = p.x;
         pos[1] = p.y;
         applyPositions();
@@ -57,6 +58,7 @@ JointVaePanel::JointVaePanel()
     };
     zSlider.onValueChange = [this]
     {
+        userActed = true;
         pos[2] = (float) zSlider.getValue();
         applyPositions();
         refresh();
@@ -65,6 +67,7 @@ JointVaePanel::JointVaePanel()
     list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
     list.slid = [this] (const LatentAxis& axis, float p)
     {
+        userActed = true;
         // Move along this axis and keep the pad's axes where they are (page latItem input)
         std::vector<const LatentAxis*> held { &axis };
         std::vector<float> targets { axisTarget (axis, p) };
@@ -79,15 +82,20 @@ JointVaePanel::JointVaePanel()
         refresh (&axis);
         decode();
     };
-    base.onChange = [this] { loadBase (base.getSelectedId()); };
-    resetButton.onClick = [this] { loadBase (base.getSelectedId()); };
+    base.onChange = resetButton.onClick = [this]
+    {
+        userActed = true;
+        loadBase (base.getSelectedId());
+    };
     category.onChange = [this]
     {
+        userActed = true;
         updateDots();
         decode();
     };
     lockButton.onClick = [this]
     {
+        userActed = true;
         if (lockedTail)
             lockedTail.reset();
         else if (outputValid && current.layout.numNumeric > 0
@@ -103,7 +111,8 @@ JointVaePanel::JointVaePanel()
             return;
         const auto r = onPatch ? onPatch (current.patch) : juce::Result::fail ("Surge playback not connected");
         setStatus (r.wasOk() ? "Playing the decoded point on Surge; move the pad to return to Lite."
-                             : r.getErrorMessage());
+                             : r.getErrorMessage(),
+                   r.failed());
     };
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton,
                                                              &sendButton, &pad, &zSlider })
@@ -116,7 +125,11 @@ JointVaePanel::JointVaePanel()
         setStatus ("No VAE bundle installed: run scripts/install-models.sh");
 }
 
-void JointVaePanel::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
+void JointVaePanel::setStatus (const juce::String& text, bool error)
+{
+    errorShown = error;
+    status.setText (text, juce::dontSendNotification);
+}
 
 const LatentAxis* JointVaePanel::axisOn (int slot) const
 {
@@ -133,7 +146,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          return;
                      if (r.failed() || ! out.xypad || out.xypad->axes.size() < 2)
                      {
-                         safe->setStatus (r.failed() ? r.getErrorMessage() : "Bundle has no pad axes");
+                         safe->setStatus (r.failed() ? r.getErrorMessage() : "Bundle has no pad axes", true);
                          return;
                      }
                      auto& self = *safe;
@@ -280,7 +293,7 @@ void JointVaePanel::decode()
                         return;
                     if (r.failed())
                     {
-                        safe->setStatus (r.getErrorMessage());
+                        safe->setStatus (r.getErrorMessage(), true);
                         return;
                     }
                     safe->current = std::move (out);
@@ -288,9 +301,15 @@ void JointVaePanel::decode()
                     const bool playable = safe->current.patchResult.wasOk();
                     safe->sendButton.setEnabled (playable);
                     if (! playable)
-                        safe->setStatus (safe->current.patchResult.getErrorMessage());
-                    else if (safe->onLite)
-                        safe->onLite (safe->current.lite);
+                        safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
+                    else
+                    {
+                        if (safe->errorShown)
+                            safe->setStatus ({});
+                        // Bundle load and showing the tab decode for display only (ruling R14)
+                        if (safe->userActed && safe->onLite)
+                            safe->onLite (safe->current.lite);
+                    }
                 });
 }
 

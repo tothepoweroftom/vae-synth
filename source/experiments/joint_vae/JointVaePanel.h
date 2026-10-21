@@ -30,13 +30,15 @@ private:
     void decode();
     void refresh (const LatentAxis* dragged = nullptr);
     void updateDots();
-    void setStatus (const juce::String&);
+    void setStatus (const juce::String&, bool error = false);
     const LatentAxis* axisOn (int slot) const;
 
     JointVaeWorker worker;
     std::shared_ptr<const XyPadData> xy;
     JointVaeWorker::Output current;
     bool outputValid = false;
+    bool userActed = false; // results play only after the user acts in the Lab (ruling R14)
+    bool errorShown = false;
     JointLatent z {};
     std::array<juce::String, 3> axes;
     std::array<float, 3> pos { 0.5f, 0.5f, 0.5f };

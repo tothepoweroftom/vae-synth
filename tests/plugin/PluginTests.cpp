@@ -149,17 +149,11 @@ public:
                     const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");
                     if (bundle.isNotEmpty())
                     {
-                        int played = 0;
-                        auto play = lab->onLite;
-                        lab->onLite = [&] (const schema::Snapshot& s)
-                        {
-                            ++played;
-                            if (play)
-                                play (s);
-                        };
                         lab->loadBundle (juce::File (bundle));
-                        expect (pumpUntil ([&] { return played > 0; }, 30000), "first decode plays on Lite");
-                        expect (list->getViewedComponent()->getNumChildComponents() > 30, "axis rows");
+                        expect (
+                            pumpUntil ([&] { return list->getViewedComponent()->getNumChildComponents() > 30; }, 30000),
+                            "axis rows");
+                        pumpUntil ([] { return false; }, 300); // the first decode, for the screenshot
                         expect (list->getViewedComponent()->getWidth() <= list->getMaximumVisibleWidth(),
                                 "rows clear the scroll bar: " + juce::String (list->getViewedComponent()->getWidth())
                                     + " > " + juce::String (list->getMaximumVisibleWidth()));
@@ -181,6 +175,57 @@ public:
                 }
             }
         }
+
+#if VAE_WITH_SURGE
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("VAE Lab plays nothing until the user acts in it");
+            PluginProcessor processor;
+            settleModel (processor);
+            processor.getParams().set (PluginProcessor::kEngineParamId, float (processor.getEngineKinds().size() - 1));
+            const auto engine = processor.getParams().get (PluginProcessor::kEngineParamId);
+            const auto before = processor.getControls();
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            expect (lab != nullptr && ! lab->isVisible());
+            if (lab)
+            {
+                int played = 0;
+                auto play = lab->onLite;
+                lab->onLite = [&] (const schema::Snapshot& s)
+                {
+                    ++played;
+                    if (play)
+                        play (s);
+                };
+                juce::TextButton* send = nullptr;
+                std::function<void (juce::Component&)> find = [&] (juce::Component& c)
+                {
+                    for (auto* child : c.getChildren())
+                    {
+                        if (auto* b = dynamic_cast<juce::TextButton*> (child);
+                            b && b->getButtonText() == "Send to Surge")
+                            send = b;
+                        find (*child);
+                    }
+                };
+                find (*lab);
+                expect (send != nullptr);
+                lab->loadBundle (juce::File (bundle));
+                // Send to Surge enables when the first decode result arrives
+                expect (send && pumpUntil ([&] { return send->isEnabled(); }, 30000), "decode result for display");
+                pumpUntil ([] { return false; }, 200);
+                expectEquals (played, 0);
+                expectEquals (processor.getParams().get (PluginProcessor::kEngineParamId), engine);
+                const auto after = processor.getControls();
+                for (int i = 0; i < schema::kControlCount; ++i)
+                    expectEquals (after[i], before[i]);
+                if (auto* pad = findChild<experimental::LabPad> (*lab))
+                    pad->keyPressed (juce::KeyPress (juce::KeyPress::rightKey));
+                expect (pumpUntil ([&] { return played > 0; }, 30000), "a pad move plays");
+            }
+        }
+#endif
 
         beginTest ("SAME invalid latents and cancelled worker callbacks");
         {
