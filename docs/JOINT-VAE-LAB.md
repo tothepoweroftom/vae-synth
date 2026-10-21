@@ -8,6 +8,20 @@ The old Lab (raw latent slice, radius, 631-value list, import/export) is tagged 
 path, which v2 still uses for Send to Surge, is described in [JOINT-VAE-SURGE-RESULTS.md](JOINT-VAE-SURGE-RESULTS.md).
 The Lab needs a `VAE_WITH_SURGE=ON` build; the default build shows "VAE Lab needs a Surge build".
 
+## Two views, one sound
+
+The editor has two views, **Synth** and **VAE Lab**, and they show the same sound. The Lab plays by writing the
+schema controls, so the Synth view's knobs show the Lab's preset and you can tweak it there.
+
+- **Synth edits carry back.** A change to any control that does not come from the Lab (a Synth-view knob, Init, host
+  automation) marks the Lab's sound edited, and its status line reads "Edited in Synth view". The next Lab edit
+  (pad, slider, Z, prompt, base, category, lock or preset dot) first asks "Replace your Synth edits?". **Replace**
+  applies the Lab edit; **Keep editing** leaves the sound and the Lab as they were.
+- **After Send to Surge** the Synth view shows "Playing the full Surge patch from the Lab. Knobs return to Lite". The
+  first knob move goes back to Lite with the knobs' values.
+- **The Prompt tab is compiled out** (Task 16). Its code stays behind `VAE_PROMPT_TAB`, default 0; build with
+  `-DVAE_PROMPT_TAB=1` to bring it back. The Stable Audio / SAME code in the processor still builds.
+
 ## Workflow: prompt, preset, pad, tweak
 
 1. **Prompt.** Type a sound ("dark reese bass") in the box under the pad. The first message picks a label from the
@@ -85,6 +99,7 @@ ctest --test-dir build-default        # no Surge: checks the "needs a Surge buil
 - `VAE_PROMPT_BUNDLE`: `prompt.json` of the p0 bundle, for the prompt model parity tests.
 - `VAE_CODEC_PARITY`: an extra codec plan file to compare the native codec with, e.g. the bank's `bank-codec-parity.json`.
 - `VAE_LAB_SCREENSHOT=<file.png>`: `vae_plugin_tests` writes a snapshot of the editor there.
+- `VAE_SYNTH_SCREENSHOT=<file.png>`: a snapshot of the Synth view after a Lab pad move.
 
 No inference, model loading or UI logic runs in the audio callback. Surge's own patch load does, once per Send to
 Surge.
@@ -119,3 +134,5 @@ VAE Lab, hold a note, and check each line. Note anything that differs.
 - [ ] Send to Surge: the Surge patch plays (a held note may cut once on the switch).
 - [ ] Drag again: back on Lite.
 - [ ] Close and reopen the editor: your sound is unchanged until you act in the Lab.
+- [ ] Move a knob in the Synth view, then drag the Lab pad: it asks "Replace your Synth edits?"; Keep editing keeps
+      your knob, Replace plays the pad.

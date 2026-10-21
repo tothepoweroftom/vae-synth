@@ -1,5 +1,7 @@
 #include <juce_events/juce_events.h>
 
+#include <thread>
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "experiments/joint_vae/LabPad.h"
@@ -65,6 +67,50 @@ struct GestureCounter final : juce::AudioProcessorListener
     void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override { ++ends; }
     int begins = 0, ends = 0;
 };
+/** Depth-first search for a TextButton with this text. */
+juce::TextButton* findButton (juce::Component& parent, const juce::String& text)
+{
+    for (auto* child : parent.getChildren())
+    {
+        if (auto* b = dynamic_cast<juce::TextButton*> (child); b && b->getButtonText() == text)
+            return b;
+        if (auto* hit = findButton (*child, text))
+            return hit;
+    }
+    return nullptr;
+}
+
+/** The Synth view's knob for a continuous control (its tooltip starts with the control id). */
+juce::Slider* synthKnob (juce::Component& editor, int control)
+{
+    const juce::String id (schema::control (control).id);
+    for (auto* child : editor.getChildren())
+        if (auto* section = dynamic_cast<ControlSection*> (child))
+            for (auto* cell : section->getChildren())
+                for (auto* c : cell->getChildren())
+                    if (auto* s = dynamic_cast<juce::Slider*> (c);
+                        s && s->getTooltip().upToFirstOccurrenceOf (" ", false, false) == id)
+                        return s;
+    return nullptr;
+}
+
+/** First continuous control index. */
+int firstContinuous()
+{
+    for (int i = 0; i < schema::kControlCount; ++i)
+        if (schema::control (i).kind == schema::Kind::Continuous)
+            return i;
+    return -1;
+}
+
+/** The editor's header status label (a direct child; the Lab has its own). */
+juce::Label* headerStatus (juce::Component& editor)
+{
+    for (auto* child : editor.getChildren())
+        if (auto* l = dynamic_cast<juce::Label*> (child))
+            return l;
+    return nullptr;
+}
 } // namespace
 
 class PluginTests final : public juce::UnitTest
@@ -176,6 +222,31 @@ public:
             }
         }
 
+#if ! VAE_PROMPT_TAB // Task 16: the Prompt tab is compiled out by default
+        beginTest ("two views only");
+        {
+            PluginProcessor processor;
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            expect (findButton (*editor, "Synth") != nullptr);
+            expect (findButton (*editor, "VAE Lab") != nullptr);
+            expect (findButton (*editor, "Prompt") == nullptr);
+        }
+
+        beginTest ("prompt tab compiled out");
+        {
+            expectEquals (VAE_PROMPT_TAB, 0);
+            PluginProcessor processor;
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            expect (findChild<XYPad> (*editor) == nullptr, "no latent XY pad");
+            expect (findChild<ParamList> (*editor) == nullptr, "no parameter sidebar");
+            expect (findButton (*editor, "Generate") == nullptr && findButton (*editor, "SAME bank...") == nullptr);
+            auto* status = headerStatus (*editor);
+            expect (status != nullptr && ! status->getText().contains ("SAME")
+                        && ! status->getText().contains ("model"),
+                    status ? status->getText() : juce::String());
+        }
+#endif
+
 #if VAE_WITH_SURGE
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {
@@ -227,6 +298,174 @@ public:
         }
         else
             logMessage ("Set VAE_JOINT_BUNDLE to run the VAE Lab bundle tests.");
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            // A fresh editor whose Lab has loaded the bundle; `steps` get the editor and its Lab
+            const auto withLab =
+                [&] (const std::function<void (juce::AudioProcessorEditor&, PluginProcessor&,
+                                               experimental::JointVaePanel&, experimental::LabPad&)>& steps)
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                processor.prepareToPlay (48000.0, 512); // Surge needs its synth to leave patch mode
+                std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+                auto* lab = findChild<experimental::JointVaePanel> (*editor);
+                auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
+                bool ready = false;
+                if (lab)
+                {
+                    lab->onMapShown = [&ready] { ready = true; };
+                    lab->loadBundle (juce::File (bundle));
+                }
+                expect (pad != nullptr && pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                if (pad && ready)
+                    steps (*editor, processor, *lab, *pad);
+                editor.reset();
+                processor.releaseResources();
+            };
+            const auto liteOf = [] (const experimental::JointVaePanel& lab)
+            {
+                schema::Snapshot s;
+                for (int i = 0; i < schema::kControlCount; ++i)
+                    s[i] = schema::sanitiseValue (i, lab.output().lite[i]);
+                return s;
+            };
+            const auto same = [] (const schema::Snapshot& a, const schema::Snapshot& b)
+            {
+                for (int i = 0; i < schema::kControlCount; ++i)
+                    if (std::abs (a[i] - b[i]) > 1e-5f)
+                        return false;
+                return true;
+            };
+
+            beginTest ("lab preset shows in synth view");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabPad& pad)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    const auto before = lab.output().codes;
+                    pad.moved ({ 0.85f, 0.2f });
+                    expect (
+                        pumpUntil (
+                            [&]
+                            { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                            30000),
+                        "the Lab's point is on the parameters");
+                    findButton (editor, "Synth")->onClick();
+                    int checked = 0;
+                    for (int i = 0; i < schema::kControlCount; ++i)
+                        if (auto* knob = synthKnob (editor, i))
+                        {
+                            ++checked;
+                            expectWithinAbsoluteError ((float) knob->getValue(), liteOf (lab)[i], 1e-4f,
+                                                       schema::control (i).id);
+                        }
+                    expect (checked > 40, "synth knobs found: " + juce::String (checked));
+                    if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_SYNTH_SCREENSHOT", "");
+                        shot.isNotEmpty())
+                        if (auto stream = juce::File (shot).createOutputStream())
+                            juce::PNGImageFormat().writeImageToStream (
+                                editor.createComponentSnapshot (editor.getLocalBounds()), *stream);
+                    expect (! lab.isEdited(), "showing the Synth view is not an edit");
+
+                    // Send to Surge: the Synth view says so; the first knob move returns to Lite
+                    auto* send = findButton (lab, "Send to Surge");
+                    expect (send != nullptr && send->isEnabled());
+                    if (send)
+                        send->onClick();
+                    auto* status = headerStatus (editor);
+                    expect (status != nullptr && status->isVisible()
+                                && status->getText()
+                                       == "Playing the full Surge patch from the Lab. Knobs return to Lite",
+                            status ? status->getText() : juce::String());
+                    auto* surge = dynamic_cast<SurgeEngine*> (processor.findEngine (EngineKind::Surge));
+                    expect (surge != nullptr && surge->hasPatchData());
+                    if (auto* knob = synthKnob (editor, firstContinuous()))
+                        knob->setValue (knob->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                    pumpUntil ([] { return false; }, 100);
+                    expectEquals (processor.getParams().get (PluginProcessor::kEngineParamId), 0.0f); // Lite is first
+                    expect (surge != nullptr && ! surge->hasPatchData());
+                    expect (status != nullptr && status->getText().isEmpty(),
+                            status ? status->getText() : juce::String());
+                });
+
+            beginTest ("lab writes do not mark edited");
+            withLab (
+                [&] (juce::AudioProcessorEditor&, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabPad& pad)
+                {
+                    for (auto p : { juce::Point<float> (0.2f, 0.8f), juce::Point<float> (0.7f, 0.4f) })
+                    {
+                        const auto before = lab.output().codes;
+                        pad.moved (p);
+                        expect (pumpUntil (
+                            [&]
+                            { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                            30000));
+                    }
+                    pumpUntil ([] { return false; }, 300); // every async parameter notification lands
+                    expect (! lab.isEdited());
+                    expect (! lab.statusText().contains ("Edited"), lab.statusText());
+                });
+
+            beginTest ("synth edit marks lab edited");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabPad& pad)
+                {
+                    auto before = lab.output().codes;
+                    pad.moved ({ 0.3f, 0.3f });
+                    expect (pumpUntil (
+                        [&] { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                        30000));
+                    // A Synth-view knob move, as the user makes it
+                    auto* knob = synthKnob (editor, firstContinuous());
+                    expect (knob != nullptr);
+                    if (knob == nullptr)
+                        return;
+                    knob->setValue (knob->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                    expect (pumpUntil ([&] { return lab.isEdited(); }, 1000), "knob move marks edited");
+                    expectEquals (lab.statusText(), juce::String ("Edited in Synth view"));
+                    const auto edited = processor.getControls();
+                    const auto z0 = lab.latent();
+
+                    // Keep editing: sound and Lab state unchanged
+                    pad.moved ({ 0.9f, 0.9f });
+                    expect (lab.isAskingToReplace(), "a Lab move asks");
+                    pad.moved ({ 0.1f, 0.1f }); // ignored while asking
+                    lab.answerReplace (false);
+                    pumpUntil ([] { return false; }, 500);
+                    expect (same (processor.getControls(), edited), "Keep editing leaves the parameters");
+                    expect (lab.latent() == z0, "Keep editing leaves the Lab");
+                    expect (lab.isEdited());
+
+                    // Replace: the new point plays
+                    before = lab.output().codes;
+                    pad.moved ({ 0.9f, 0.9f });
+                    expect (lab.isAskingToReplace(), "asks again");
+                    lab.answerReplace (true);
+                    expect (! lab.isAskingToReplace() && ! lab.isEdited());
+                    expect (
+                        pumpUntil (
+                            [&]
+                            { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                            30000),
+                        "Replace applies the new point");
+                    expect (! (lab.latent() == z0));
+                    pumpUntil ([] { return false; }, 200);
+                    expect (! lab.isEdited(), "the replacing write is the Lab's");
+
+                    // Host automation from another thread also marks edited
+                    const auto index = processor.getParams().indexOf (schema::control (firstContinuous()).id);
+                    std::thread host (
+                        [&]
+                        { processor.getParams().set (index, processor.getParams().get (index) > 0.5f ? 0.2f : 0.8f); });
+                    host.join();
+                    expect (pumpUntil ([&] { return lab.isEdited(); }, 1000), "automation marks edited");
+                });
+        }
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {

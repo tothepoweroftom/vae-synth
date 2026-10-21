@@ -13,6 +13,7 @@ JointVaePanel::JointVaePanel()
     addAndMakeVisible (note);
 }
 void JointVaePanel::loadBundle (const juce::File&) {}
+void JointVaePanel::markEdited() {}
 void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
 void JointVaePanel::paint (juce::Graphics&) {}
 #else
@@ -45,7 +46,11 @@ JointVaePanel::JointVaePanel()
     addChildComponent (zSlider);
     latentButton.setToggleState (true, juce::dontSendNotification);
     knobButton.setEnabled (false);
-    latentButton.onClick = [this] { setKnobMode (false); };
+    latentButton.onClick = [this]
+    {
+        if (knobMode)
+            edit ([this] { setKnobMode (false); }); // back on the latent pad, the kept z plays
+    };
     knobButton.onClick = [this] { setKnobMode (true); };
     for (int i = 0; i < 9; ++i)
         category.addItem (jointLabels[i], i + 1);
@@ -76,61 +81,102 @@ JointVaePanel::JointVaePanel()
 
     pad.moved = [this] (juce::Point<float> p)
     {
-        userActed = true;
-        pos[0] = p.x;
-        pos[1] = p.y;
-        applyPositions (3);
-        refresh();
-        decode();
+        edit (
+            [this, p]
+            {
+                userActed = true;
+                pos[0] = p.x;
+                pos[1] = p.y;
+                applyPositions (3);
+                refresh();
+                decode();
+            });
     };
     zSlider.onValueChange = [this]
     {
-        userActed = true;
-        pos[2] = (float) zSlider.getValue();
-        applyPositions (4);
-        refresh();
-        decode();
-    };
-    pad.tapped = [this] (juce::Point<float> p) { jumpToDot (p); };
-    list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
-    list.slid = [this] (const LatentAxis& axis, float p)
-    {
-        userActed = true;
-        // Move along this axis and keep the pad's axes where they are (page latItem input)
-        std::vector<const LatentAxis*> held { &axis };
-        std::vector<float> targets { axisTarget (axis, p) };
-        for (int i = 0; i < 3; ++i)
-            if (auto* a = axisOn (i); a && a != &axis)
+        edit (
+            [this, v = (float) zSlider.getValue()]
             {
-                held.push_back (a);
-                targets.push_back (axisTarget (*a, pos[(size_t) i]));
-            }
-        z = constrain (z, held, targets);
-        syncPositions();
-        refresh (&axis);
-        decode();
+                userActed = true;
+                pos[2] = v;
+                applyPositions (4);
+                refresh();
+                decode();
+            });
+    };
+    pad.tapped = [this] (juce::Point<float> p)
+    {
+        // A tap's mouse-down already moved (and may be asking): the dot jump follows that move
+        if (pendingEdit)
+            pendingEdit = [this, p, move = std::move (pendingEdit)]
+            {
+                move();
+                jumpToDot (p);
+            };
+        else
+            edit ([this, p] { jumpToDot (p); });
+    };
+    list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
+    list.slid = [this] (const LatentAxis& slid, float p)
+    {
+        edit (
+            [this, id = slid.id, p]
+            {
+                auto* found = xy ? xy->find (id) : nullptr; // by id: a bundle may load while asking
+                if (found == nullptr)
+                    return;
+                const auto& axis = *found;
+                userActed = true;
+                // Move along this axis and keep the pad's axes where they are (page latItem input)
+                std::vector<const LatentAxis*> held { &axis };
+                std::vector<float> targets { axisTarget (axis, p) };
+                for (int i = 0; i < 3; ++i)
+                    if (auto* a = axisOn (i); a && a != &axis)
+                    {
+                        held.push_back (a);
+                        targets.push_back (axisTarget (*a, pos[(size_t) i]));
+                    }
+                z = constrain (z, held, targets);
+                syncPositions();
+                refresh (&axis);
+                decode();
+            });
     };
     base.onChange = resetButton.onClick = [this]
     {
-        userActed = true;
-        loadBase (base.getSelectedId());
+        edit (
+            [this, id = base.getSelectedId()]
+            {
+                userActed = true;
+                base.setSelectedId (id, juce::dontSendNotification);
+                loadBase (id);
+            });
     };
     category.onChange = [this]
     {
-        userActed = true;
-        updateDots();
-        decode();
+        edit (
+            [this, id = category.getSelectedId()]
+            {
+                userActed = true;
+                category.setSelectedId (id, juce::dontSendNotification);
+                updateDots();
+                decode();
+            });
     };
     lockButton.onClick = [this]
     {
-        userActed = true;
-        if (lockedTail)
-            lockedTail.reset();
-        else if (outputValid && current.layout.numNumeric > 0
-                 && (size_t) current.layout.numNumeric <= current.codes.size())
-            lockedTail.emplace (current.codes.begin() + current.layout.numNumeric, current.codes.end());
-        lockButton.setToggleState (lockedTail.has_value(), juce::dontSendNotification);
-        decode();
+        edit (
+            [this]
+            {
+                userActed = true;
+                if (lockedTail)
+                    lockedTail.reset();
+                else if (outputValid && current.layout.numNumeric > 0
+                         && (size_t) current.layout.numNumeric <= current.codes.size())
+                    lockedTail.emplace (current.codes.begin() + current.layout.numNumeric, current.codes.end());
+                lockButton.setToggleState (lockedTail.has_value(), juce::dontSendNotification);
+                decode();
+            });
     };
     dotsButton.onClick = [this] { updateDots(); };
     sendButton.onClick = [this]
@@ -153,6 +199,62 @@ JointVaePanel::JointVaePanel()
         loadBundle (installed);
     else
         setStatus ("No VAE bundle installed: run scripts/install-models.sh");
+}
+
+void JointVaePanel::markEdited()
+{
+    if (! std::exchange (edited, true))
+        setStatus ("Edited in Synth view");
+}
+
+void JointVaePanel::edit (std::function<void()> change)
+{
+    if (pendingEdit)
+        return; // asking: further Lab edits are ignored
+    if (! edited)
+    {
+        change();
+        return;
+    }
+    pendingEdit = std::move (change);
+    // Async, so the editor never blocks the host
+    replaceBox = juce::AlertWindow::showScopedAsync (
+        juce::MessageBoxOptions()
+            .withIconType (juce::MessageBoxIconType::QuestionIcon)
+            .withTitle ("Replace your Synth edits?")
+            .withMessage ("The Lab's sound replaces the changes made in the Synth view.")
+            .withButton ("Replace")
+            .withButton ("Keep editing")
+            .withAssociatedComponent (this),
+        [safe = juce::Component::SafePointer (this)] (int result)
+        {
+            if (safe)
+                safe->resolveReplace (result == 1);
+        });
+}
+
+void JointVaePanel::answerReplace (bool replace)
+{
+    replaceBox.close();
+    resolveReplace (replace);
+}
+
+void JointVaePanel::resolveReplace (bool replace)
+{
+    if (! pendingEdit)
+        return;
+    const auto change = std::exchange (pendingEdit, nullptr);
+    if (replace)
+    {
+        edited = false;
+        setStatus ({});
+        change();
+        return;
+    }
+    // Keep editing: z, positions and codes were never touched; put the controls back on them
+    base.setSelectedId (shownBase, juce::dontSendNotification);
+    category.setSelectedId (shownCategory, juce::dontSendNotification);
+    refresh();
 }
 
 void JointVaePanel::setStatus (const juce::String& text, bool error)
@@ -323,36 +425,43 @@ void JointVaePanel::submitPrompt (const juce::String& text)
     const auto reply = interpretPrompt (
         text, userActed,
         *xy); // the auto-loaded base is not a chosen start (R18); the one call the text -> z search replaces
-    if (reply.start)
-    {
-        // Loads like a base; Lock is untouched
-        z = reply.start->first;
-        category.setSelectedId (reply.start->second + 1, juce::dontSendNotification);
-        syncPositions();
-    }
-    for (const auto& [id, delta] : reply.nudges)
-        if (auto* axis = xy->find (id))
-        {
-            // As the list slider: move this axis, hold the pad's axes
-            std::vector<const LatentAxis*> held { axis };
-            std::vector<float> targets { axisTarget (*axis,
-                                                     juce::jlimit (0.0f, 1.0f, axisPosition (*axis, z) + delta)) };
-            for (int i = 0; i < 3; ++i)
-                if (auto* a = axisOn (i); a && a != axis)
-                {
-                    held.push_back (a);
-                    targets.push_back (axisTarget (*a, pos[(size_t) i]));
-                }
-            z = constrain (z, held, targets);
-            syncPositions();
-        }
-    setStatus (reply.message);
     if (! reply.start && reply.nudges.empty())
+    {
+        setStatus (reply.message);
         return;
-    userActed = true; // R14: applying a prompt is a user action
-    refresh();
-    updateDots();
-    decode();
+    }
+    edit (
+        [this, reply]
+        {
+            if (reply.start)
+            {
+                // Loads like a base; Lock is untouched
+                z = reply.start->first;
+                category.setSelectedId (reply.start->second + 1, juce::dontSendNotification);
+                syncPositions();
+            }
+            for (const auto& [id, delta] : reply.nudges)
+                if (auto* axis = xy->find (id))
+                {
+                    // As the list slider: move this axis, hold the pad's axes
+                    std::vector<const LatentAxis*> held { axis };
+                    std::vector<float> targets { axisTarget (
+                        *axis, juce::jlimit (0.0f, 1.0f, axisPosition (*axis, z) + delta)) };
+                    for (int i = 0; i < 3; ++i)
+                        if (auto* a = axisOn (i); a && a != axis)
+                        {
+                            held.push_back (a);
+                            targets.push_back (axisTarget (*a, pos[(size_t) i]));
+                        }
+                    z = constrain (z, held, targets);
+                    syncPositions();
+                }
+            setStatus (reply.message);
+            userActed = true; // R14: applying a prompt is a user action
+            refresh();
+            updateDots();
+            decode();
+        });
 }
 
 void JointVaePanel::assign (int slot, const juce::String& id)
@@ -564,6 +673,8 @@ void JointVaePanel::decode()
 {
     if (! xy)
         return;
+    shownBase = base.getSelectedId();
+    shownCategory = category.getSelectedId();
     scheduleMap(); // 150 ms after the last change
     LabRequest request;
     request.z = z;

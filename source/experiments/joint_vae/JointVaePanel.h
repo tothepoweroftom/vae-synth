@@ -21,7 +21,14 @@ public:
     std::function<juce::Result (const juce::MemoryBlock&)> onPatch;
     /** The installed bundle loads on construction; tests load another one. */
     void loadBundle (const juce::File&);
+    /** A change to the controls that did not come from onLite (Synth view, host): the sound is
+        "edited" and the next Lab sound edit asks before replacing it (Task 16; message thread). */
+    void markEdited();
 #if VAE_WITH_SURGE
+    bool isEdited() const { return edited; }
+    bool isAskingToReplace() const { return pendingEdit != nullptr; }
+    /** Answers "Replace your Synth edits?" (the dialog's buttons; tests call it directly). */
+    void answerReplace (bool replace);
     /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
     std::function<void()> onMapShown;
     bool isMapRunning() const { return worker.mapRunning(); }
@@ -54,13 +61,19 @@ private:
     bool hasSlot (int slot) const { return knobMode ? groupOn (slot) >= 0 : axisOn (slot) != nullptr; }
     void setKnobMode (bool); // page mode switch: the decoded codes stay, the other pad's edits are dropped
     void fillBackground();
+    void edit (std::function<void()> change); // a Lab sound edit: asks first while the sound is edited
+    void resolveReplace (bool replace);
 
     JointVaeWorker worker;
     std::shared_ptr<const XyPadData> xy;
     std::shared_ptr<const KnobGroups> kg;
     JointVaeWorker::Output current;
     bool outputValid = false;
-    bool userActed = false; // results play only after the user acts in the Lab (ruling R14)
+    bool userActed = false;            // results play only after the user acts in the Lab (ruling R14)
+    bool edited = false;               // the controls changed outside the Lab since its last write
+    std::function<void()> pendingEdit; // the Lab edit waiting on "Replace your Synth edits?"
+    juce::ScopedMessageBox replaceBox;
+    int shownBase = 0, shownCategory = 0; // the combos at the last decode, put back by Keep editing
     bool errorShown = false;
     bool mapError = false; // the status line shows a map failure
     JointLatent z {};
