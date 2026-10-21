@@ -88,6 +88,45 @@ public:
         expect (out.axes.empty());
         tmp.deleteFile();
 
+        beginTest ("pca npz accepts float32 and float64 scale");
+        for (const bool f8 : { false, true })
+        {
+            const auto npy = [] (const juce::String& shape, const std::vector<double>& v, bool wide)
+            {
+                juce::String h = "{'descr': '" + juce::String (wide ? "<f8" : "<f4")
+                                 + "', 'fortran_order': False, 'shape': " + shape + ", }";
+                while ((10 + h.length() + 1) % 64 != 0)
+                    h += " ";
+                h += "\n";
+                juce::MemoryOutputStream o;
+                o.write ("\x93NUMPY\x01\x00", 8);
+                o.writeShort ((short) h.length());
+                o.write (h.toRawUTF8(), (size_t) h.length());
+                for (auto x : v)
+                    wide ? o.writeDouble (x) : o.writeFloat ((float) x);
+                return o.getMemoryBlock();
+            };
+            juce::ZipFile::Builder zb;
+            const auto comps = npy ("(48, 64)", std::vector<double> (48 * 64, 0.0), false);
+            const auto mean = npy ("(64,)", std::vector<double> (64, -3.0), false);
+            const auto scale = npy ("()", { 2.5 }, f8);
+            // addEntry takes ownership of the streams
+            zb.addEntry (new juce::MemoryInputStream (comps, true), 0, "components.npy", juce::Time::getCurrentTime());
+            zb.addEntry (new juce::MemoryInputStream (mean, true), 0, "mean.npy", juce::Time::getCurrentTime());
+            zb.addEntry (new juce::MemoryInputStream (scale, true), 0, "scale.npy", juce::Time::getCurrentTime());
+            const auto f = juce::File::createTempFile (".npz");
+            {
+                juce::FileOutputStream fo (f);
+                expect (zb.writeToStream (fo, nullptr));
+            }
+            SoundPca sp;
+            const auto sr = loadPca (f, sp);
+            expect (sr.wasOk(), sr.getErrorMessage());
+            expectEquals (sp.scale, 2.5f);
+            expectEquals (sp.frames, 1);
+            f.deleteFile();
+        }
+
         const auto path = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");
         if (path.isEmpty())
         {

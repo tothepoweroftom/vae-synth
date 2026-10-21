@@ -348,7 +348,8 @@ JointLatent constrain (const JointLatent& z0, std::span<const LatentAxis* const>
 namespace
 {
 // Minimal .npy reader: v1/v2 header, '<f4' or '<f8', C order. Returns values as floats plus the first double.
-juce::Result readNpy (juce::ZipFile& zip, const char* name, std::vector<float>& out, double* scalar = nullptr)
+juce::Result readNpy (juce::ZipFile& zip, const char* name, std::vector<float>& out, const juce::String& shape,
+                      double* scalar = nullptr)
 {
     const auto fail = [&] (const char* why)
     { return juce::Result::fail (juce::String ("sound_pca.npz ") + name + ": " + why); };
@@ -375,6 +376,8 @@ juce::Result readNpy (juce::ZipFile& zip, const char* name, std::vector<float>& 
     const bool f8 = head.contains ("<f8"), f4 = head.contains ("<f4");
     if ((! f4 && ! f8) || ! head.contains ("'fortran_order': False"))
         return fail ("expected little-endian float, C order");
+    if (! head.contains ("'shape': " + shape))
+        return fail ("unexpected shape");
     const size_t w = f8 ? 8 : 4;
     if ((n - start) % w != 0)
         return fail ("size mismatch");
@@ -392,6 +395,15 @@ juce::Result readNpy (juce::ZipFile& zip, const char* name, std::vector<float>& 
         else
             std::memcpy (&out[i], p + start + i * 4, 4);
     }
+    if (scalar != nullptr)
+    {
+        if (out.empty())
+            return fail ("empty scalar");
+        if (! f8)
+            *scalar = out[0];
+        if (! std::isfinite (*scalar))
+            return fail ("non-finite scalar");
+    }
     return juce::Result::ok();
 }
 } // namespace
@@ -402,11 +414,14 @@ juce::Result loadPca (const juce::File& file, SoundPca& out)
     SoundPca pca;
     std::vector<float> s;
     double scale = 1;
-    if (auto r = readNpy (zip, "components.npy", pca.components); r.failed())
+    if (auto r = readNpy (zip, "mean.npy", pca.mean, "("); r.failed())
         return r;
-    if (auto r = readNpy (zip, "mean.npy", pca.mean); r.failed())
+    const auto n = juce::String (pca.mean.size());
+    if (auto r = readNpy (zip, "mean.npy", pca.mean, "(" + n + ",)"); r.failed())
         return r;
-    if (auto r = readNpy (zip, "scale.npy", s, &scale); r.failed())
+    if (auto r = readNpy (zip, "components.npy", pca.components, "(48, " + n + ")"); r.failed())
+        return r;
+    if (auto r = readNpy (zip, "scale.npy", s, "()", &scale); r.failed())
         return r;
     if (pca.mean.empty() || pca.mean.size() % 64 != 0 || pca.components.size() != 48 * pca.mean.size())
         return juce::Result::fail ("sound_pca.npz: expected components 48 x (frames*64) and matching mean");
