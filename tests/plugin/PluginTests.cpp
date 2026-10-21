@@ -357,6 +357,23 @@ public:
             }
         }
 
+        beginTest ("a prompt load that a Lab bundle change overtakes is ignored");
+        {
+            auto t = open (promptJson);
+            if (t->lab && t->lab->isPromptReady())
+            {
+                auto& lab = *t->lab;
+                lab.findSounds ("deep sub bass");  // starts the load
+                lab.loadPromptBundle (promptJson); // what a Lab bundle change does, before the load completes
+                pumpUntil ([] { return false; }, 2000);
+                expect (! lab.isPromptLoaded(), "the stale load did not count");
+                expect (lab.isPromptReady());
+                lab.findSounds ("deep sub bass");
+                expect (found (lab), "a fresh load and Find succeed");
+                expect (lab.isPromptLoaded());
+            }
+        }
+
         beginTest ("find selects fixture row");
         {
             auto t = open (promptJson);

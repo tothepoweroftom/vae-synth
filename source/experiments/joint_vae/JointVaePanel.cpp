@@ -477,6 +477,7 @@ void JointVaePanel::loadPromptBundle (const juce::File& file)
 {
     promptFile = file;
     ++promptToken;
+    ++promptEpoch;
     promptLoaded = promptLoading = false; // the model is checked against this Lab bundle when Find first needs it
     // Find is offered when a bundle is installed; a failed load on the first Find switches it off
     promptReady = xy != nullptr && file.existsAsFile();
@@ -532,9 +533,9 @@ void JointVaePanel::findSounds (const juce::String& text)
         setStatus ("Loading prompt model...");
         // The worker thread runs this load before the find queued below
         prompter.load (promptFile, current.layout,
-                       [safe = juce::Component::SafePointer (this)] (juce::Result r)
+                       [safe = juce::Component::SafePointer (this), epoch = promptEpoch] (juce::Result r)
                        {
-                           if (! safe)
+                           if (! safe || epoch != safe->promptEpoch)
                                return;
                            safe->promptLoading = false;
                            safe->promptLoaded = r.wasOk();

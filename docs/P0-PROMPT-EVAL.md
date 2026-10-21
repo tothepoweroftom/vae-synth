@@ -125,13 +125,11 @@ Observations (objective, not about sound):
 - No prompt fell back for lack of bank rows: p0 only predicts Bass, Lead and Pad and the bank holds those, so all 12
   returned rows. The fallback ("no <label> presets") only appears for other predicted categories, which this
   bundle's prior does not produce.
-- **Every contrasting pair got the same first candidate**: dark/bright bass row 80, short/long pad row 1129,
-  soft/sharp lead row 892. The adjective only reorders or changes the later rows. If your listening finds no
-  difference either, that is evidence against semantic claims for Find, and the word list's adjective nudges are the
-  only control that follows adjectives.
-- Prompts that name sounds outside the three categories were mapped to one of them: "plucky bell" returned Bass rows,
-  "warm electric piano keys" and "evolving texture" returned Pad rows. Those are mis-categorised for the prompt, not
-  errors the app can see.
+- Every contrasting pair got the same first candidate: dark/bright bass row 80, short/long pad row 1129, soft/sharp
+  lead row 892. Only the later rows differ between the two prompts of a pair. Whether the pairs sound different is for
+  the listening notes.
+- Some prompts named sounds outside Bass, Lead and Pad: "plucky bell" returned Bass rows, "warm electric piano keys"
+  and "evolving texture" returned Pad rows.
 - Typical starts for a category are identical across prompts of that category (all Pad prompts share one typical
   start), as expected from a category-only start.
 

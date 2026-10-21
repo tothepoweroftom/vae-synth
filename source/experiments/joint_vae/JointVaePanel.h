@@ -86,6 +86,7 @@ private:
     PromptWorker prompter;
     juce::File promptFile;
     bool promptReady = false, promptLoaded = false, promptLoading = false;
+    uint64_t promptEpoch = 0; // a prompt load from before the last loadPromptBundle completes into nothing
     uint64_t promptToken = 0; // a prompt result applies only while this is unchanged
     std::vector<PromptCandidate> candidates;
     int selected = -1;
