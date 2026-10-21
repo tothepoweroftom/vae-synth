@@ -1,0 +1,66 @@
+/* Three-column workspace: conversation → exploration → axis assignment. */
+main{grid-template-columns:240px minmax(0,1fr) 260px;gap:24px}
+.chat-panel{display:flex;flex-direction:column;min-width:0;min-height:420px;max-height:510px;padding-right:20px;border-right:1px solid var(--line)}
+.chat-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.chat-heading h2{font:13px var(--body);letter-spacing:0}
+.chat-heading button{border:0;background:none;color:var(--muted);font-size:17px;padding:2px 5px}
+.chat-heading button:hover{color:var(--accent)}
+.chat-log{flex:1;min-height:100px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#48483b transparent;padding:8px 4px 12px 0}
+.chat-message{margin-bottom:23px;overflow-wrap:anywhere}
+.chat-speaker{display:block;font:7px var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:9px}
+.chat-message p{font:11px/1.75 var(--body);color:#dddcd4}
+.chat-message .chat-secondary{font-size:10px;color:var(--muted);margin-top:9px}
+.chat-message.user{border-left:1px solid #505045;padding-left:12px}
+.chat-message.user .chat-speaker{color:var(--muted)}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+.chat-suggestions button{font:8px var(--body);color:#aaa99c;background:none;border:1px solid #34342f;border-radius:3px;padding:6px 8px}
+.chat-suggestions button:hover{border-color:var(--accent);color:var(--accent)}
+.chat-composer{padding:11px;border:1px solid #46463c;border-radius:4px;background:#191918}
+.chat-composer:focus-within{border-color:var(--accent)}
+.chat-composer textarea{display:block;width:100%;min-height:65px;max-height:160px;resize:vertical;border:0;outline:none;background:transparent;color:var(--ink);font:11px/1.6 var(--body);padding:0}
+.chat-composer textarea::placeholder{color:#85857b}
+.composer-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.composer-footer>span{font:7px var(--body);color:#77776c}
+.composer-footer button{width:27px;height:27px;border:0;border-radius:3px;background:var(--accent);color:#121212;font:18px var(--body)}
+.composer-footer button:disabled{background:#34342e;color:#777;cursor:default}
+.chat-demo-note{font:7px/1.5 var(--body);color:#88887e;margin-top:9px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+main>section.panel{min-width:0;justify-content:flex-start}
+.padbox{aspect-ratio:1.5/1}
+.axes-panel{padding-left:20px;max-height:510px}
+[data-style=brutalist] .chat-panel{border-right:2px solid #777}
+[data-style=brutalist] .chat-heading h2{font:700 20px StudyMono,monospace;text-transform:uppercase}
+[data-style=brutalist] .chat-composer,[data-style=brutalist] .chat-suggestions button,[data-style=brutalist] .composer-footer button{border-radius:0}
+[data-style=brutalist] .chat-composer{border:2px solid #777;background:#121212}
+[data-style=brutalist] .chat-message p{font-family:StudyMono,monospace;font-size:10px}
+[data-style=swiss] .chat-heading h2{font:700 22px StudyInter,Arial,sans-serif;letter-spacing:-.7px}
+[data-style=swiss] .chat-composer,[data-style=swiss] .chat-suggestions button,[data-style=swiss] .composer-footer button{border-radius:0}
+[data-style=swiss] .chat-speaker{font:700 9px StudyInter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+[data-style=industrial] .chat-panel{border-right:3px double #34342f}
+[data-style=industrial] .chat-heading h2{font:10px StudyMono,monospace;letter-spacing:1.4px;text-transform:uppercase}
+[data-style=industrial] .chat-composer{border:1px solid #4b4b40;box-shadow:inset 0 2px 5px #0007;background:#121212}
+[data-style=industrial] .composer-footer button{box-shadow:inset 0 -2px #b1b100}
+[data-style=editorial] .chat-heading h2{font:italic 24px Georgia,serif;letter-spacing:-.5px}
+[data-style=editorial] .chat-message.assistant p{font:14px/1.6 Georgia,serif}
+[data-style=editorial] .chat-message.assistant .chat-secondary{font-size:12px}
+[data-style=editorial] .chat-composer{border-radius:0;background:transparent}
+[data-style=editorial] .composer-footer button{border-radius:50%}
+@media(min-width:1450px){main{grid-template-columns:260px minmax(0,1fr) 280px}.chat-panel,.axes-panel{max-height:550px}.padbox{aspect-ratio:1.65/1}}
+@media(min-width:1000px) and (max-width:1200px){main{grid-template-columns:210px minmax(0,1fr) 230px;gap:16px;padding:20px}.chat-panel{padding-right:14px}.axes-panel{padding-left:14px}.padbox{aspect-ratio:1.25/1}.axbtn{width:21px;height:23px}.g .nm{font-size:10px}}
+@media(max-width:999px){main{grid-template-columns:220px minmax(0,1fr);gap:20px}.chat-panel{grid-column:1;grid-row:1/3;max-height:730px}.axes-panel{grid-column:2;border-left:0;border-top:1px solid var(--line);padding:18px 0 0;max-height:300px}.padbox{aspect-ratio:1.65/1}[data-style=industrial] .axes-panel,[data-style=brutalist] .axes-panel{border-left:0}.list{max-height:220px}}
+@media(max-width:650px){main{display:flex;flex-direction:column;gap:22px}.chat-panel{border-right:0!important;border-bottom:1px solid var(--line);padding:0 0 18px;min-height:300px;max-height:380px}.chat-log{min-height:90px}.chat-suggestions{margin:8px 0}.chat-composer textarea{min-height:45px}.padbox{aspect-ratio:1.4/1}.axes-panel{padding-left:0;max-height:330px}}
+
+.pad-view-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-left:27px;min-height:29px}
+.pad-view-bar .seg button{font-size:9px;padding:5px 12px}
+#xyz-help{font:8px var(--body);color:var(--muted)}
+.padwrap.xyz-view .padbox{background-image:none}
+.padwrap.xyz-view .yaxis,.padwrap.xyz-view .xaxis{opacity:.7}
+@media(max-width:560px){#xyz-help{font-size:7px}.pad-view-bar{gap:8px}}
+
+.camera-controls{display:flex;gap:5px;align-items:center;margin-left:27px}
+.camera-controls[hidden]{display:none}
+.camera-controls button{border:1px solid #36362e;background:transparent;color:var(--muted);padding:5px 8px;font:8px var(--body);border-radius:3px}
+.camera-controls button:hover{color:var(--accent);border-color:var(--accent)}
+.camera-controls>span{flex:1}
+[data-style=brutalist] .camera-controls button,[data-style=swiss] .camera-controls button{border-radius:0}
+@media(max-width:560px){.camera-controls{flex-wrap:wrap}.pad-view-bar{flex-wrap:wrap}}

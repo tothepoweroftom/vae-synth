@@ -362,6 +362,51 @@ function assign(a, name) {
 // ---------- pad ----------
 const cv = document.getElementById("pad"), ctx = cv.getContext("2d");
 const GRID = 40, LGRID = 24;
+let padView = 'xy';
+const orbitCamera = XyzPad.createCamera();
+let cameraStart = null, orbitGesture = null, handleStart = null, handleSelected = false;
+const hasZ = () => isLat() ? Boolean(AXI[lat.axes.z]) : Boolean(byName[state.axes.z]);
+function xyzDots() {
+  if (isLat()) {
+    const axes = ['x','y','z'].map(a => AXI[lat.axes[a]]);
+    if (axes.some(a => !a)) return [];
+    return Array.from({length: NPZ}, (_,i) => [...axes.map(a => posOf(a,pz(i))), LT.presets.label[i]]);
+  }
+  const groups = ['x','y','z'].map(a => byName[state.axes[a]]);
+  if (groups.some(g => !g)) return [];
+  return PV.map((row,i) => [...groups.map(g => groupPos(g,row)), PL[i]])
+    .filter(row => row.slice(0,3).every(v => v !== null));
+}
+function setPadView(view) {
+  padView = view;
+  bgSel.disabled = view !== 'xy';
+  bgSel.title = view !== 'xy' ? 'Heat maps are available in the XY view' : '';
+  if(view !== 'xy' && !hasZ()) {
+    const active = isLat() ? lat.axes : state.axes;
+    const choice = isLat() ? AX.find(a => a.id !== active.x && a.id !== active.y)?.id : ranked.find(g => g.name !== active.x && g.name !== active.y)?.name;
+    if(choice) assign('z',choice);
+  }
+  document.getElementById('view-xy').setAttribute('aria-pressed', String(view==='xy'));
+  document.getElementById('view-xyz').setAttribute('aria-pressed', String(view==='xyz'));
+  document.getElementById('view-orbit').setAttribute('aria-pressed', String(view==='orbit'));
+  document.getElementById('camera-controls').hidden = view!=='orbit';
+  document.getElementById('xyz-help').hidden = view==='xy';
+  document.querySelector('.padwrap').classList.toggle('xyz-view',view!=='xy');
+  cv.setAttribute('aria-label', view==='orbit' ? 'Preset cloud. Drag the handle to move sound; Shift-drag it for depth. Click it for axis arrows. Drag empty space or use arrow keys to rotate the camera. Scroll to zoom. Home resets the camera.' : view==='xyz' ? 'XYZ pad. Drag for X and Y. Shift-drag or Page Up and Page Down for Z. The Z slider also controls depth.' : 'XY pad: drag, or use the arrow keys');
+  const url=new URL(location.href);url.searchParams.set('view',view);history.replaceState(null,'',url);
+  render(false);
+}
+document.getElementById('view-xy').addEventListener('click',()=>setPadView('xy'));
+document.getElementById('view-xyz').addEventListener('click',()=>setPadView('xyz'));
+document.getElementById('view-orbit').addEventListener('click',()=>setPadView('orbit'));
+function zoomCamera(factor) {orbitCamera.zoom=Math.max(.5,Math.min(2.5,orbitCamera.zoom*factor));drawPad();}
+document.getElementById('camera-in').addEventListener('click',()=>zoomCamera(1.15));
+document.getElementById('camera-out').addEventListener('click',()=>zoomCamera(1/1.15));
+document.querySelectorAll('[data-camera]').forEach(button=>button.addEventListener('click',()=>{
+  const views={front:{yaw:0,pitch:0},top:{yaw:0,pitch:Math.PI/2},side:{yaw:-Math.PI/2,pitch:0},reset:XyzPad.createCamera()};
+  Object.assign(orbitCamera,views[button.dataset.camera]);drawPad();
+}));
+cv.addEventListener('wheel',e=>{if(padView!=='orbit')return;e.preventDefault();zoomCamera(Math.exp(-Math.max(-100,Math.min(100,e.deltaY))*.002));},{passive:false});
 let mapDirty = true, mapImg = null, dotsCache = null, mapTimer = null;
 function resize() { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); render(false); }
 function computeKnobMap() {
@@ -409,6 +454,13 @@ function drawLegend() {
   if (k !== "none" && (document.getElementById("showdots").checked)) legend.innerHTML += `<span class="mono">Preset categories</span>`;
 }
 function drawPad() {
+  if(padView!=='xy') {
+    if(!hasZ()) { document.getElementById('xyz-help').textContent='Assign a Z axis to explore depth'; }
+    else document.getElementById('xyz-help').textContent=padView==='orbit'?'Handle: move · Shift: depth · Empty space: orbit':'Drag XY · Shift-drag depth';
+    XyzPad.draw(ctx,cv.width,cv.height,{point:{...P_(),z:hasZ()?P_().z:0},dots:xyzDots(),accent:cssVar('--accent'),ink:cssVar('--muted'),line:cssVar('--line'),colors:COL,category:isLat()?lat.y:null,showDots:document.getElementById('showdots').checked,camera:padView==='orbit'?orbitCamera:null,selected:handleSelected});
+    legend.textContent=padView==='orbit'?'Click handle for XYZ arrows · scroll to zoom':'Preset positions in XYZ · highlighted plane is the current depth';
+    return;
+  }
   if (mapDirty) computeMap();
   const W = cv.width, H = cv.height, dpr = window.devicePixelRatio || 1;
   ctx.clearRect(0, 0, W, H);
@@ -449,10 +501,32 @@ function drawPad() {
   ctx.beginPath(); ctx.arc(cx, cy, 2.5 * dpr, 0, 6.283); ctx.fillStyle = cssVar("--dot-ring"); ctx.fill();
   drawLegend();
 }
-let dragging = false, downAt = null;
+let dragging = false, downAt = null, depthStart = 0;
 function padSet(e) {
+  if(padView==='orbit') {
+    if(downAt && cameraStart){
+      if(orbitGesture==='camera'){
+        orbitCamera.yaw=cameraStart.yaw+(e.clientX-downAt[0])*.008;orbitCamera.pitch=cameraStart.pitch+(e.clientY-downAt[1])*.008;drawPad();
+      } else if(handleStart && orbitGesture){
+        const r=cv.getBoundingClientRect();
+        const next=XyzPad.orbitDrag(handleStart,e.clientX-downAt[0],e.clientY-downAt[1],cameraStart,r.width,r.height,orbitGesture);
+        if(!hasZ())next.z=handleStart.z;
+        const current=P_();
+        if(['x','y','z'].some(a=>Math.abs(next[a]-current[a])>1e-8)){
+          Object.assign(current,next);mapDirty=true;
+          if(isLat()){latApplyPos();latDecode();refreshSliders();}else applyPos();
+          render(false);
+        }else drawPad();
+      }
+    }
+    return;
+  }
   const r = cv.getBoundingClientRect(), p = P_();
-  p.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); p.y = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));
+  if(padView==='xyz') {
+    if(e.shiftKey && downAt && hasZ()) p.z=Math.min(1,Math.max(0,depthStart+(downAt[1]-e.clientY)/r.height));
+    else Object.assign(p,XyzPad.unproject((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height,hasZ()?p.z:0));
+    mapDirty=true;
+  } else {p.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); p.y = Math.min(1, Math.max(0, 1 - (e.clientY - r.top) / r.height));}
   if (isLat()) { latApplyPos(); latDecode(); } else applyPos();
   render(false); if (isLat()) refreshSliders();
 }
@@ -463,20 +537,46 @@ function nearestDot(e) {
   for (const d of dotsCache) { if (isLat() && d[2] !== lat.y) continue; const dd = (d[0] - x) ** 2 + (d[1] - y) ** 2; if (dd < bd) { bd = dd; best = d; } }
   return best;
 }
-cv.addEventListener("pointerdown", e => { dragging = true; downAt = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); padSet(e); });
+cv.addEventListener("pointerdown", e => {
+  if(e.button!==0)return;
+  dragging=true;downAt=[e.clientX,e.clientY];depthStart=P_().z;cameraStart={...orbitCamera};
+  if(padView==='orbit'){
+    const r=cv.getBoundingClientRect(),p=P_();
+    handleStart={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y)),z:hasZ()?Math.max(0,Math.min(1,p.z)):0};
+    const hit=XyzPad.hitOrbit(handleStart,orbitCamera,r.width,r.height,e.clientX-r.left,e.clientY-r.top,handleSelected);
+    orbitGesture=hit==='handle'?(e.shiftKey?'depth':'plane'):hit||'camera';
+    handleSelected=Boolean(hit);
+  }
+  cv.focus();cv.setPointerCapture(e.pointerId);
+  if(padView==='orbit')drawPad();else padSet(e);
+});
 cv.addEventListener("pointermove", e => { if (dragging) padSet(e); });
 cv.addEventListener("pointerup", e => {
   dragging = false;
-  if (isLat() && downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) < 3) {
+  if (padView==='xy' && isLat() && downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) < 3) {
     const d = nearestDot(e);
     if (d) { lat.z = Float32Array.from(pz(d[3])); lat.y = d[2]; catSel.value = lat.y; lat.msg = `Jumped to the real preset “${LT.presets.name[d[3]] || "preset " + d[3]}” (${LT.labels[d[2]]}).`;
       latSyncPos(); latDecode(); mapDirty = true; render(false); refreshSliders(); }
   }
-  downAt = null;
+  downAt = null; orbitGesture=null; handleStart=null;
 });
-cv.addEventListener("keydown", e => { const d = e.shiftKey ? 0.1 : 0.02, m = { ArrowLeft: ["x", -d], ArrowRight: ["x", d], ArrowUp: ["y", d], ArrowDown: ["y", -d] }[e.key];
-  if (!m) return; e.preventDefault(); const p = P_(); p[m[0]] = Math.min(1, Math.max(0, p[m[0]] + m[1]));
+cv.addEventListener("keydown", e => {
+  if(padView==='orbit') {
+    const step=e.shiftKey?.2:.07;
+    if(e.key==='ArrowLeft')orbitCamera.yaw-=step;
+    else if(e.key==='ArrowRight')orbitCamera.yaw+=step;
+    else if(e.key==='ArrowUp')orbitCamera.pitch-=step;
+    else if(e.key==='ArrowDown')orbitCamera.pitch+=step;
+    else if(e.key==='Home')Object.assign(orbitCamera,XyzPad.createCamera());
+    else if(e.key==='+'||e.key==='='){e.preventDefault();zoomCamera(1.15);return;}
+    else if(e.key==='-'){e.preventDefault();zoomCamera(1/1.15);return;}
+    else return;
+    e.preventDefault();drawPad();return;
+  }
+  const d = e.shiftKey ? 0.1 : 0.02, m = { ArrowLeft: ["x", -d], ArrowRight: ["x", d], ArrowUp: ["y", d], ArrowDown: ["y", -d], PageUp: ["z", d], PageDown: ["z", -d] }[e.key];
+  if (!m || (m[0] === "z" && !hasZ())) return; e.preventDefault(); if(m[0] === "z") mapDirty=true; const p = P_(); p[m[0]] = Math.min(1, Math.max(0, p[m[0]] + m[1]));
   if (isLat()) { latApplyPos(); latDecode(); refreshSliders(); } else applyPos(); render(false); });
+cv.addEventListener("pointercancel", () => { dragging=false; downAt=null; orbitGesture=null; handleStart=null; });
 const zEl = document.getElementById("z");
 zEl.addEventListener("input", () => { const p = P_(); p.z = zEl.value / 1000;
   if (isLat()) { latApplyPos(); latDecode(); refreshSliders(); } else applyPos();
@@ -691,9 +791,12 @@ window.addEventListener("keyup", (e) => { const i = PCK.indexOf(e.key.toLowerCas
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); render(); });
 new MutationObserver(() => { readColors(); render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 window.addEventListener("blur", () => { noteOff(); keysEl.querySelectorAll(".on").forEach(key => key.classList.remove("on")); });
+window.addEventListener("xypad-style-change", () => { readColors(); render(false); });
 // start
 catSel.value = lat.y; latSyncPos();
 setMode(state.mode);
+const initialView=new URL(location.href).searchParams.get('view');
+if(['xyz','orbit'].includes(initialView)) setPadView(initialView);
 new ResizeObserver(resize).observe(cv);
 window.__xypad = { decodeP, decodeA, measures, LT, lat, AX };     // for checks
 })();
