@@ -42,10 +42,14 @@ JointVaePanel::JointVaePanel()
     description.setMinimumHorizontalScale (1.0f);
     axisLabel.setText ("X dimension                 Y dimension                 Radius (latent units)",
                        juce::dontSendNotification);
-    for (auto* c : std::initializer_list<juce::Component*> { &title, &description, &axisLabel, &status, &loadButton,
-                                                             &importButton, &randomButton, &resetButton, &exportButton,
-                                                             &category, &xAxis, &yAxis, &radius, &pad, &values })
+    for (auto* c : std::initializer_list<juce::Component*> {
+             &title, &description, &axisLabel, &status, &loadButton, &importButton, &randomButton, &resetButton,
+             &exportButton, &category, &xAxis, &yAxis, &radius, &pad, &values, &prompt, &promptButton })
         addAndMakeVisible (c);
+    prompt.setTextToShowWhenEmpty ("Describe a sound, e.g. \"dark reese bass\" (label demo: only the noun counts)",
+                                   juce::Colours::grey);
+    prompt.onReturnKey = [this] { fromPrompt(); };
+    promptButton.onClick = [this] { fromPrompt(); };
     for (int i = 0; i < 9; ++i)
         category.addItem (jointLabels[i], i + 1);
     category.setSelectedId (1, juce::dontSendNotification);
@@ -64,7 +68,7 @@ JointVaePanel::JointVaePanel()
     values.setReadOnly (true);
     values.setFont (juce::FontOptions (12));
     values.setText (
-        "Load bundle.json exported by tools/joint_vae/export_bundle.py.\n\n"
+        "Loads models/joint-vae/bundle.json from the app data folder (scripts/install-models.sh), or pick one.\n\n"
         "The pad is a local 2D slice through a 32D latent. Its axes have no assigned perceptual meaning.\n\n"
         "Release the pad to decode. The keyboard then plays the decoded Surge patch; loading a preset or "
         "generating from a prompt returns the synth to its own controls.");
@@ -100,7 +104,24 @@ JointVaePanel::JointVaePanel()
         decode();
     };
     enableActions (false);
-    setStatus ("No VAE bundle loaded. Existing synth and retrieval are unchanged.");
+    // Installed by scripts/install-models.sh, like the Prompt tab's models; the button overrides it
+    if (const auto installed = ml::appDataDir().getChildFile ("models/joint-vae/bundle.json"); installed.existsAsFile())
+        loadBundle (installed);
+    else
+        setStatus ("No VAE bundle installed: run scripts/install-models.sh, or Load VAE bundle...");
+}
+void JointVaePanel::fromPrompt()
+{
+    if (! loaded)
+        return;
+    const auto match = JointVae::labelFor (prompt.getText());
+    // z = 0: the label's typical sound; Random anchor then gives variations within the label
+    category.setSelectedId (match.category + 1, juce::dontSendNotification);
+    anchor = {};
+    centre();
+    decode();
+    promptNote = match.noun.isEmpty() ? "no label noun found -> Unknown - "
+                                      : "\"" + match.noun + "\" -> " + jointLabels[match.category] + " - ";
 }
 void JointVaePanel::setStatus (juce::String text) { status.setText (text, juce::dontSendNotification); }
 void JointVaePanel::centre()
@@ -111,7 +132,7 @@ void JointVaePanel::centre()
 void JointVaePanel::enableActions (bool enable)
 {
     for (auto* c : std::initializer_list<juce::Component*> { &importButton, &randomButton, &resetButton, &category,
-                                                             &xAxis, &yAxis, &radius, &pad })
+                                                             &xAxis, &yAxis, &radius, &pad, &prompt, &promptButton })
         c->setEnabled (enable);
     exportButton.setEnabled (enable && outputValid);
 }
@@ -121,31 +142,34 @@ void JointVaePanel::chooseBundle()
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [safe = juce::Component::SafePointer (this)] (const juce::FileChooser& fc)
                           {
-                              if (! safe || fc.getResult() == juce::File())
-                                  return;
-                              safe->enableActions (false);
-                              safe->loadButton.setEnabled (false);
-                              safe->setStatus ("Loading and checking joint VAE...");
-                              safe->worker.load (fc.getResult(),
-                                                 [safe] (juce::Result r, JointVaeWorker::Output output)
-                                                 {
-                                                     if (! safe)
-                                                         return;
-                                                     safe->loadButton.setEnabled (true);
-                                                     if (r.failed())
-                                                     {
-                                                         safe->enableActions (safe->loaded);
-                                                         safe->setStatus (r.getErrorMessage());
-                                                         return;
-                                                     }
-                                                     safe->loaded = true;
-                                                     safe->current = std::move (output);
-                                                     safe->anchor = {};
-                                                     safe->centre();
-                                                     safe->enableActions (true);
-                                                     safe->decode();
-                                                 });
+                              if (safe && fc.getResult() != juce::File())
+                                  safe->loadBundle (fc.getResult());
                           });
+}
+void JointVaePanel::loadBundle (const juce::File& file)
+{
+    enableActions (false);
+    loadButton.setEnabled (false);
+    setStatus ("Loading and checking joint VAE...");
+    worker.load (file,
+                 [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output output)
+                 {
+                     if (! safe)
+                         return;
+                     safe->loadButton.setEnabled (true);
+                     if (r.failed())
+                     {
+                         safe->enableActions (safe->loaded);
+                         safe->setStatus (r.getErrorMessage());
+                         return;
+                     }
+                     safe->loaded = true;
+                     safe->current = std::move (output);
+                     safe->anchor = {};
+                     safe->centre();
+                     safe->enableActions (true);
+                     safe->decode();
+                 });
 }
 void JointVaePanel::decode()
 {
@@ -153,6 +177,7 @@ void JointVaePanel::decode()
         return;
     worker.cancel();
     outputValid = false;
+    promptNote = {};
     exportButton.setEnabled (false);
     JointLatent point;
     if (auto r = JointVae::slice (anchor, xAxis.getSelectedId() - 1, yAxis.getSelectedId() - 1, pad.position.x,
@@ -186,7 +211,8 @@ void JointVaePanel::showOutput (JointVaeWorker::Output out)
     auto playback = current.patchResult;
     if (playback.wasOk())
         playback = onPatch ? onPatch (current.patch) : juce::Result::fail ("playback not connected");
-    setStatus (current.layout.id + " - " + juce::String (current.layout.names.size()) + " decoded parameters - "
+    setStatus (promptNote + current.layout.id + " - " + juce::String (current.layout.names.size())
+               + " decoded parameters - "
                + (playback.wasOk() ? juce::String ("playing on Surge") : playback.getErrorMessage()));
 }
 void JointVaePanel::importPoint()
@@ -292,7 +318,11 @@ void JointVaePanel::resized()
     resetButton.setBounds (buttons.removeFromLeft (80));
     category.setBounds (buttons.removeFromLeft (140));
     exportButton.setBounds (buttons);
-    r.removeFromTop (12);
+    r.removeFromTop (8);
+    auto promptRow = r.removeFromTop (28);
+    promptButton.setBounds (promptRow.removeFromRight (160));
+    prompt.setBounds (promptRow.withTrimmedRight (8));
+    r.removeFromTop (8);
     status.setBounds (r.removeFromBottom (28));
     auto left = r.removeFromLeft (r.getWidth() / 2);
     left.removeFromRight (16);

@@ -35,6 +35,16 @@ public:
     static juce::Result slice (const JointLatent& anchor, int xDim, int yDim, float x, float y, float radius,
                                JointLatent& result);
 
+    /** Label demo: the category whose noun from the student's prompt vocabulary
+        (vae/pitcher/text2preset/vocabulary_v2.yaml) appears in the text, longest match first.
+        Unknown (8) with an empty noun when none does. */
+    struct LabelMatch
+    {
+        int category;
+        juce::String noun;
+    };
+    static LabelMatch labelFor (const juce::String& prompt);
+
 private:
     JointLayout metadata;
     std::unique_ptr<ml::OnnxModel> decoder, encoder;

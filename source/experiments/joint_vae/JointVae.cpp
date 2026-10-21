@@ -44,7 +44,52 @@ juce::Result run (ml::OnnxModel* model, std::span<const float> values, int categ
     output = std::move (outputs[0]);
     return juce::Result::ok();
 }
+
+// Noun forms per category from vae/pitcher/text2preset/vocabulary_v2.yaml (v2.1), in jointLabels order.
+const char* const labelNouns[8][19] = {
+    { "bass", "synth bass", "bass sound", "sub bass", "sub", "reese bass", "reese", "neuro bass", "neurofunk bass",
+      "acid bass", "303-style bass", "tb-303-style bass", "fm bass", "dx-style bass", "wobble bass", "lfo bass", "808",
+      "808 bass", "808-style bass" },
+    { "lead", "synth lead", "lead synth", "saw lead", "sawtooth lead", "square lead", "square-wave lead", "solo lead",
+      "mono lead", "sync lead", "hard-sync lead", "whistle lead", "g-funk-style lead", "screech lead",
+      "screamer lead" },
+    { "pad", "synth pad", "pad sound", "string pad", "string-like pad", "choir pad", "vocal pad", "synth choir" },
+    { "keys", "keyboard sound", "synth keys", "electric piano", "e-piano", "rhodes-style piano",
+      "wurlitzer-style piano", "organ", "synth organ", "drawbar organ", "house organ", "clavinet", "clav" },
+    { "pluck", "synth pluck", "plucked synth", "bell", "bell tone", "synth bell", "mallet", "mallet sound",
+      "marimba-like pluck", "vibraphone-like synth", "harp-like pluck", "plucked string synth", "music-box-like pluck",
+      "kalimba-like pluck" },
+    { "synth", "synth tone", "synthesizer sound", "poly synth", "polysynth", "synth stab", "stab", "hoover",
+      "hoover synth", "brass synth", "synth brass" },
+    { "atmosphere", "atmospheric sound", "ambience", "drone", "drone tone", "soundscape", "sound texture", "texture",
+      "wind-like texture", "noise bed", "riser", "uplifter", "riser sweep", "sweep", "noise sweep", "whoosh" },
+    { "strings", "string ensemble", "synth strings", "brass", "brass section", "horn", "orchestral hit",
+      "orchestra stab", "cello-like synth", "violin-like synth", "flute-like synth", "woodwind-like synth" },
+};
+
+bool containsWord (const juce::String& text, const juce::String& word)
+{
+    for (int i = text.indexOf (word); i >= 0; i = text.indexOf (i + 1, word))
+    {
+        const int end = i + word.length();
+        if ((i == 0 || ! juce::CharacterFunctions::isLetterOrDigit (text[i - 1]))
+            && (end == text.length() || ! juce::CharacterFunctions::isLetterOrDigit (text[end])))
+            return true;
+    }
+    return false;
+}
 } // namespace
+
+JointVae::LabelMatch JointVae::labelFor (const juce::String& prompt)
+{
+    const auto text = prompt.toLowerCase();
+    LabelMatch best { 8, {} };
+    for (int c = 0; c < 8; ++c)
+        for (const auto* noun : labelNouns[c])
+            if (noun != nullptr && juce::String (noun).length() > best.noun.length() && containsWord (text, noun))
+                best = { c, noun };
+    return best;
+}
 
 juce::Result JointLayout::parse (const juce::var& value, JointLayout& output)
 {
@@ -125,9 +170,13 @@ juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock
         return r;
 #if VAE_WITH_SURGE
     if (builder == nullptr)
-        // shortcut: Surge's factory data from the build tree (template + wavetables); install it
-        // next to the models before shipping
-        builder = std::make_unique<SurgePatchBuilder> (juce::File (VAE_SURGE_DATA_DIR));
+    {
+        // Template + wavetables: installed by scripts/install-models.sh, else the build tree's Surge checkout
+        auto data = ml::appDataDir().getChildFile ("models/surge-data");
+        if (! data.isDirectory())
+            data = juce::File (VAE_SURGE_DATA_DIR);
+        builder = std::make_unique<SurgePatchBuilder> (data);
+    }
     return builder->build (plan, output);
 #else
     juce::ignoreUnused (output);

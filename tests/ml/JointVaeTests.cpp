@@ -41,6 +41,22 @@ public:
         anchor[3] = std::numeric_limits<float>::quiet_NaN();
         expect (JointVae::slice (anchor, 0, 1, 0, 0, 1, point).failed());
         expect (point == previous);
+        beginTest ("label demo: prompt nouns pick the student's category");
+        const std::pair<const char*, int> prompts[] = {
+            { "dark reese bass", 0 },
+            { "Synth Strings, slow", 7 },
+            { "warm string pad", 2 },
+            { "a Rhodes-style piano", 3 },
+            { "glassy bell tone", 4 },
+            { "subtle evolving", 8 },
+            { "", 8 },
+            { "808", 0 },
+            { "hoover synth", 5 },
+        };
+        for (const auto& [text, expected] : prompts)
+            expectEquals (JointVae::labelFor (text).category, expected, text);
+        expectEquals (JointVae::labelFor ("dark reese bass").noun, juce::String ("reese bass"));
+
         beginTest ("no model never returns a mock preset");
         JointVae model;
         std::vector<float> codes { 42 };

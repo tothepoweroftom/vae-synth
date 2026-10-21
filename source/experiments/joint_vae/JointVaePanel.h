@@ -29,6 +29,7 @@ private:
         }
     } pad;
     void chooseBundle();
+    void loadBundle (const juce::File&);
     void importPoint();
     void exportPoint();
     void decode();
@@ -36,6 +37,7 @@ private:
     void enableActions (bool);
     void setStatus (juce::String);
     void centre();
+    void fromPrompt();
 
     JointVaeWorker worker;
     JointLatent anchor {};
@@ -46,7 +48,9 @@ private:
     juce::ComboBox category, xAxis, yAxis;
     juce::Slider radius;
     juce::Label title, description, status, axisLabel;
-    juce::TextEditor values;
+    juce::String promptNote; // which noun picked the label, shown with the decode that follows
+    juce::TextEditor values, prompt;
+    juce::TextButton promptButton { "Sound from label" };
     std::unique_ptr<juce::FileChooser> chooser;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JointVaePanel)
 };
