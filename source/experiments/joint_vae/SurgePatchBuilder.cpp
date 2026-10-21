@@ -172,7 +172,7 @@ struct SurgePatchBuilder::Impl
     std::unique_ptr<SurgeSynthesizer> synth;
     juce::File data;
     std::map<juce::String, Parameter*> paths;
-    std::vector<FxStorage> pristineFx; // FX slots exactly as a fresh synth has them
+    std::vector<FxStorage> pristineFx;             // FX slots exactly as a fresh synth has them
     std::map<juce::String, juce::File> wavetables; // display name -> file, factory folder first
 
     void settle()

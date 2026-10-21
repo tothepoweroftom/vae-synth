@@ -250,7 +250,8 @@ public:
                 expect (fresh == afterOthers, "case " + juce::String ((int) c));
             }
             logMessage ("mean build incl. fresh builders: "
-                        + juce::String ((juce::Time::getMillisecondCounterHiRes() - t0) / double (n * n + n), 1) + " ms");
+                        + juce::String ((juce::Time::getMillisecondCounterHiRes() - t0) / double (n * n + n), 1)
+                        + " ms");
         }
 #endif
         beginTest ("failed replacement leaves working model loaded");

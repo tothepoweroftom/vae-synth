@@ -100,8 +100,11 @@ void LiteEngine::setControl (int index, float value)
         controls[index] = value;
         patch.set (index, controls);
     }
-    else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down && duck != Duck::Hold)
+    else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down)
+    {
         duck = Duck::Down;
+        duckCountdown = std::max (1, int (std::ceil (duckGain / duckStep))); // samples until gain 0
+    }
 }
 
 int LiteEngine::numActiveVoices() const noexcept
@@ -255,6 +258,30 @@ void LiteEngine::renderVoices (float* left, float* right, int numSamples)
     }
 }
 
+// FX and output gain (with the duck ramp) for samples [pos, pos + len).
+float LiteEngine::finishSpan (float* left, float* right, int len)
+{
+    fx.process (left, right, len, patch.fx);
+
+    float check = 0.0f;
+    for (int i = 0; i < len; ++i)
+    {
+        if (duck == Duck::Down)
+            duckGain = std::max (0.0f, duckGain - duckStep);
+        else if (duck == Duck::Up)
+        {
+            duckGain = std::min (1.0f, duckGain + duckStep);
+            if (duckGain == 1.0f)
+                duck = Duck::Idle;
+        }
+        const float g = patch.masterGain * duckGain;
+        left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
+        right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);
+        check += left[i] + right[i];
+    }
+    return check;
+}
+
 void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuffer& midi)
 {
     buffer.clear();
@@ -265,6 +292,28 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
     auto* left = buffer.getWritePointer (0);
     auto* right = buffer.getWritePointer (1);
 
+    // A duck in progress is finished span by span, so the discrete controls swap
+    // on the exact sample where the gain reaches 0. Otherwise FX/gain run once.
+    const bool ducking = duck == Duck::Down;
+    float check = 0.0f;
+    auto span = [&] (int pos, int len)
+    {
+        while (len > 0)
+        {
+            const int seg = duck == Duck::Down ? std::min (len, duckCountdown) : len;
+            renderVoices (left + pos, right + pos, seg);
+            if (ducking)
+                check += finishSpan (left + pos, right + pos, seg);
+            if (duck == Duck::Down && (duckCountdown -= seg) == 0)
+            {
+                applyDiscrete();
+                duck = Duck::Up;
+            }
+            pos += seg;
+            len -= seg;
+        }
+    };
+
     // Render between events so every event lands on its sample.
     int position = 0;
     for (const auto meta : midi)
@@ -272,7 +321,7 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
         const int at = std::clamp (meta.samplePosition, 0, numSamples);
         if (at > position)
         {
-            renderVoices (left + position, right + position, at - position);
+            span (position, at - position);
             position = at;
         }
 
@@ -291,35 +340,9 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
             setSustain (false);
     }
     if (position < numSamples)
-        renderVoices (left + position, right + position, numSamples - position);
-
-    fx.process (left, right, numSamples, patch.fx);
-
-    float check = 0.0f;
-    for (int i = 0; i < numSamples; ++i)
-    {
-        if (duck == Duck::Down)
-        {
-            duckGain = std::max (0.0f, duckGain - duckStep);
-            if (duckGain == 0.0f)
-                duck = Duck::Hold;
-        }
-        else if (duck == Duck::Up)
-        {
-            duckGain = std::min (1.0f, duckGain + duckStep);
-            if (duckGain == 1.0f)
-                duck = Duck::Idle;
-        }
-        const float g = patch.masterGain * duckGain;
-        left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
-        right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);
-        check += left[i] + right[i];
-    }
-    if (duck == Duck::Hold) // silent now: swap the discrete controls, ramp up next block
-    {
-        applyDiscrete();
-        duck = Duck::Up;
-    }
+        span (position, numSamples - position);
+    if (! ducking)
+        check = finishSpan (left, right, numSamples);
 
     if (! dsp::isFiniteBits (check))
     {

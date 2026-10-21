@@ -369,14 +369,19 @@ public:
         }
 
         beginTest ("discrete change does not click");
+        for (const int hostBlock : { 64, 1024 })
         {
             e.reset();
             e.setControls (Snapshot::defaults());
             testutil::Player p (e);
-            p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
-            p.run (9600 - 256);
+            p.block (hostBlock, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            while (p.left.size() < 9600)
+                p.block (hostBlock);
+            const size_t change = p.left.size();
             e.setControl (kOsc1Wave, option (kOsc1Wave, "square"));
-            p.run (9600);
+            while (p.left.size() < change + 9600)
+                p.block (hostBlock);
+
             auto maxStep = [&] (size_t from, size_t to)
             {
                 float m = 0.0f;
@@ -384,17 +389,27 @@ public:
                     m = juce::jmax (m, std::abs (p.left[i] - p.left[i - 1]));
                 return m;
             };
-            const float before = maxStep (4800, 9600), around = maxStep (9600 - 480, 9600 + 480);
-            expect (before > 0.0f && around <= 1.5f * before,
-                    "around " + juce::String (around) + " vs " + juce::String (before));
+            const float before = maxStep (change - 4800, change), around = maxStep (change - 480, change + 480);
+            expect (before > 0.0f && around <= 1.5f * before, "block " + juce::String (hostBlock) + ": around "
+                                                                  + juce::String (around) + " vs "
+                                                                  + juce::String (before));
+
+            // The swap happens on the sample where the ramp reaches 0: output is silent there
+            // (a hard swap never is), and only for a moment (not a host-block dropout).
+            int silent = 0;
+            for (size_t i = change; i < change + 2400; ++i)
+                silent += std::abs (p.left[i]) < 1.0e-6f ? 1 : 0;
+            expect (silent >= 1 && silent <= 8,
+                    "block " + juce::String (hostBlock) + ": silent samples " + juce::String (silent));
         }
 
         beginTest ("fresh render unchanged by smoothing");
         {
             auto s = Snapshot::defaults();
             for (int i = 0; i < kControlCount; ++i)
-                if (control (i).kind == Kind::Continuous)
-                    s[i] = 0.25f + 0.5f * float ((i * 37) % 11) / 10.0f;
+                s[i] = sanitiseValue (i, control (i).kind == Kind::Continuous
+                                             ? 0.25f + 0.5f * float ((i * 37) % 11) / 10.0f
+                                             : float ((i * 5) % 3));
             std::vector<float> a, b;
             LiteEngine x, y;
             x.prepare (kRate, 512);

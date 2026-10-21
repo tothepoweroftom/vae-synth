@@ -63,6 +63,7 @@ private:
     void snapControls();
     void smoothControls (int numSamples);
     void applyDiscrete();
+    float finishSpan (float* left, float* right, int len);
 
     std::shared_ptr<const dsp::Wavetable> wavetable;
     // `controls` are the values in effect (smoothed); `targets` what was set.
@@ -70,17 +71,17 @@ private:
     schema::Snapshot targets = schema::Snapshot::defaults();
     float smoothCoeff = 1.0f; // one-pole step per kControlBlock
     float smoothRate = 0.0f;  // -1 / (tau * sampleRate)
-    // Toggle/Categorical changes duck the output: Down -> Hold (swap) -> Up.
+    // Toggle/Categorical changes duck the output: Down, swap at gain 0, Up.
     enum class Duck
     {
         Idle,
         Down,
-        Hold,
         Up
     };
     Duck duck = Duck::Idle;
     float duckGain = 1.0f;
     float duckStep = 1.0f;
+    int duckCountdown = 0; // samples until a Down duck reaches gain 0
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;
     lite::FxRack fx;
