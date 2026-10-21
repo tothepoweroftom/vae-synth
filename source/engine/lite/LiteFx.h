@@ -91,23 +91,39 @@ private:
 
     // EQ: Surge's 3-band EQ with bands 1 and 3 at their default frequencies,
     // modelled as low shelf / peak / high shelf.
+    // The settings ramp across the span in 16-sample steps: new coefficients only at block edges click (Task 18).
     void processEq (float* l, float* r, int n, const FxSettings& p) noexcept
     {
         using B = dsp::fx::Biquad;
-        eq[0].set (B::Shape::LowShelf, schema::surge::semitonesToHz (-30.0f), p.eqLowDb, 0.707f, sr);
-        eq[1].set (B::Shape::Peak, p.eqMidHz, p.eqMidDb, 0.67f, sr);
-        eq[2].set (B::Shape::HighShelf, schema::surge::semitonesToHz (54.0f), p.eqHighDb, 0.707f, sr);
-        for (int i = 0; i < n; ++i)
-            for (auto& b : eq)
+        const std::array<float, 4> target { p.eqLowDb, p.eqMidHz, p.eqMidDb, p.eqHighDb };
+        const auto from = eqPrimed ? eqNow : target;
+        for (int start = 0; start < n; start += kEqStep)
+        {
+            const int len = std::min (kEqStep, n - start);
+            if (start == 0 || from != target)
             {
-                l[i] = b.process (0, l[i]);
-                r[i] = b.process (1, r[i]);
+                const float t = from == target ? 1.0f : float (start + len) / float (n);
+                for (size_t k = 0; k < 4; ++k)
+                    eqNow[k] = from[k] + (target[k] - from[k]) * t;
+                eq[0].set (B::Shape::LowShelf, schema::surge::semitonesToHz (-30.0f), eqNow[0], 0.707f, sr);
+                eq[1].set (B::Shape::Peak, eqNow[1], eqNow[2], 0.67f, sr);
+                eq[2].set (B::Shape::HighShelf, schema::surge::semitonesToHz (54.0f), eqNow[3], 0.707f, sr);
             }
+            for (int i = start; i < start + len; ++i)
+                for (auto& b : eq)
+                {
+                    l[i] = b.process (0, l[i]);
+                    r[i] = b.process (1, r[i]);
+                }
+        }
+        eqNow = target;
+        eqPrimed = true;
     }
     void resetEq() noexcept
     {
         for (auto& b : eq)
             b.reset();
+        eqPrimed = false;
     }
 
     // Chorus: two modulated delay lines, 90 degrees apart.
@@ -232,6 +248,9 @@ private:
     std::array<bool, 6> wasOn {};
     float tone[2][2] {};
     dsp::fx::Biquad eq[3];
+    static constexpr int kEqStep = 16;
+    std::array<float, 4> eqNow {}; // low dB, mid Hz, mid dB, high dB at the end of the last span
+    bool eqPrimed = false;         // false after a reset: the next span starts at its target
     dsp::fx::DelayLine chorus[2];
     float chorusPhase = 0.0f;
     float allpass[2][4] {};

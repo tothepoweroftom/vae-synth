@@ -52,9 +52,13 @@ public:
     /** The smoothed value in effect right now (for tests). */
     float currentControl (int index) const noexcept { return controls[index]; }
 
-    /** Click diagnostics (for tests): ducks started, and output samples rendered at a duck gain below 1. */
-    int ducksStarted = 0;
-    int64_t duckedSamples = 0;
+    /** Click diagnostics. Written on the audio thread; only tests read them (between process() calls). */
+    struct Diagnostics
+    {
+        int ducksStarted = 0;
+        int64_t duckedSamples = 0; // output samples at a duck gain below 1
+    };
+    Diagnostics diagnostics;
 
 private:
     void noteOn (int note);
@@ -85,6 +89,7 @@ private:
     Duck duck = Duck::Idle;
     float duckGain = 1.0f;
     float duckStep = 1.0f;
+    float gainNow = -1.0f; // master gain at the end of the last span; < 0 after a snap
     int duckCountdown = 0; // samples until a Down duck reaches gain 0
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;

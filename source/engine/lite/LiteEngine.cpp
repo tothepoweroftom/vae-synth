@@ -59,6 +59,7 @@ void LiteEngine::snapControls()
     patch.setAll (controls);
     duck = Duck::Idle;
     duckGain = 1.0f;
+    gainNow = -1.0f;
 }
 
 void LiteEngine::applyDiscrete()
@@ -103,7 +104,7 @@ void LiteEngine::setControl (int index, float value)
     else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down)
     {
         duck = Duck::Down;
-        ++ducksStarted;
+        ++diagnostics.ducksStarted;
         duckCountdown = std::max (1, int (std::ceil (duckGain / duckStep))); // samples until gain 0
     }
 }
@@ -264,6 +265,10 @@ float LiteEngine::finishSpan (float* left, float* right, int len)
 {
     fx.process (left, right, len, patch.fx);
 
+    // The master gain ramps across the span: a step at each block edge clicks while it moves (Task 18).
+    if (gainNow < 0.0f)
+        gainNow = patch.masterGain;
+    const float gainStep = (patch.masterGain - gainNow) / float (std::max (len, 1));
     float check = 0.0f;
     for (int i = 0; i < len; ++i)
     {
@@ -275,12 +280,13 @@ float LiteEngine::finishSpan (float* left, float* right, int len)
             if (duckGain == 1.0f)
                 duck = Duck::Idle;
         }
-        duckedSamples += duckGain < 1.0f ? 1 : 0;
-        const float g = patch.masterGain * duckGain;
+        diagnostics.duckedSamples += duckGain < 1.0f ? 1 : 0;
+        const float g = (gainNow + gainStep * float (i + 1)) * duckGain;
         left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
         right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);
         check += left[i] + right[i];
     }
+    gainNow = patch.masterGain;
     return check;
 }
 

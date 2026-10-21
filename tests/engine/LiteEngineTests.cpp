@@ -403,14 +403,19 @@ public:
                     "block " + juce::String (hostBlock) + ": silent samples " + juce::String (silent));
         }
 
-        beginTest ("a moving delay time does not step at block edges");
+        beginTest ("a moving delay time, EQ gain or master volume does not step at block edges");
+        for (const auto [c, fxOn] :
+             { std::pair<int, int> { kDelayTime, kDelayOn }, std::pair<int, int> { kEqHighGain, kEqOn },
+               std::pair<int, int> { kMasterVolume, -1 } })
         {
-            // Task 18: a Lab drag moved delay_time and every 512-sample block edge stepped (3.4x the other steps)
+            // Task 18: FX settings and the master gain applied once per host block stepped at every block edge
+            // while a Lab drag moved them (edge / inside curvature before the ramps: delay 399, EQ high gain 23, master volume 10)
             e.reset();
-            auto s = basePatch ("saw");
-            s[kDelayOn] = 1.0f;
+            auto s = basePatch ("sine");
+            if (fxOn >= 0)
+                s[fxOn] = 1.0f;
             s[kDelayMix] = 0.5f;
-            s[kDelayTime] = 0.3f;
+            s[c] = 0.3f;
             e.setControls (s);
             testutil::Player p (e);
             p.block (512, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
@@ -418,14 +423,20 @@ public:
             const size_t from = p.left.size();
             for (int b = 0; b < 188; ++b) // 2 s
             {
-                e.setControl (kDelayTime, 0.3f + 0.4f * float (b) / 187.0f);
+                e.setControl (c, 0.3f + 0.4f * float (b) / 187.0f);
                 p.block (512);
             }
+            // A sine's second difference is smooth; a step in level or slope at a block edge stands out
             double edge = 0.0, inside = 0.0;
-            for (size_t i = from + 1; i < p.left.size(); ++i)
-                ((i - from) % 512 == 0 ? edge : inside) += std::abs (p.left[i] - p.left[i - 1]);
-            const double ratio = (edge / 187.0) / (inside / double (p.left.size() - from - 188));
-            expect (ratio < 1.3, "edge / inside step " + juce::String (ratio));
+            int edges = 0, insides = 0;
+            for (size_t i = from + 2; i < p.left.size(); ++i)
+            {
+                const bool atEdge = (i - from) % 512 <= 1;
+                (atEdge ? edge : inside) += std::abs (p.left[i] - 2.0f * p.left[i - 1] + p.left[i - 2]);
+                ++(atEdge ? edges : insides);
+            }
+            const double ratio = (edge / edges) / (inside / insides);
+            expect (ratio < 1.5, juce::String (control (c).id) + ": edge / inside curvature " + juce::String (ratio));
         }
 
         beginTest ("fresh render unchanged by smoothing");

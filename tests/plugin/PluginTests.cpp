@@ -207,8 +207,7 @@ DragStats playDrag (const std::vector<schema::Snapshot>& results)
         p.processBlock (buffer, midi);
         midi.clear();
     }
-    lite.ducksStarted = 0;
-    lite.duckedSamples = 0;
+    lite.diagnostics = {};
     float last = buffer.getSample (0, 511);
     size_t next = 1;
     double sumMs = 0, edge = 0, inside = 0;
@@ -232,8 +231,8 @@ DragStats playDrag (const std::vector<schema::Snapshot>& results)
     }
     stats.edgeRatio = (edge / blocks) / (inside / (blocks * 511));
     stats.meanMs = sumMs / blocks;
-    stats.ducks = lite.ducksStarted;
-    stats.duckedSamples = lite.duckedSamples;
+    stats.ducks = lite.diagnostics.ducksStarted;
+    stats.duckedSamples = lite.diagnostics.duckedSamples;
     p.releaseResources();
     return stats;
 }
@@ -1105,6 +1104,14 @@ public:
                 const auto still = playDrag (std::vector<schema::Snapshot> (120, results[0]));
                 logMessage (name + ": " + moving.describe());
                 logMessage (name + " (still): " + still.describe());
+                // The loudest of the path's start, middle and end held still: the steps the sound has anyway.
+                // Before the ramps a drag reached 3.8x (pad), 3.5x (Lock on), 1.23x (slider); after, 1.02x at most
+                float stillStep = still.maxStep;
+                for (size_t k : { 60, 119 })
+                    stillStep =
+                        std::max (stillStep, playDrag (std::vector<schema::Snapshot> (120, results[k])).maxStep);
+                logMessage (name + ": max step " + juce::String (moving.maxStep / stillStep, 2) + "x the still path's");
+                expect (moving.maxStep < 1.15f * stillStep, name + ": " + moving.describe());
                 // Before the fix a moving delay time stepped every block edge (pad 3.4x, slider 1.5x the other steps)
                 expect (moving.edgeRatio < 1.3, name + ": " + moving.describe());
                 expectEquals (still.ducks, 0); // 93 values written again: no duck for an unchanged one
