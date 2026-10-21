@@ -1,6 +1,8 @@
 #include "experiments/joint_vae/JointVae.h"
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #if VAE_WITH_SURGE
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wfloat-equal", "-Wpedantic", "-Wshadow", "-Wconversion",
                                      "-Wfloat-conversion", "-Wold-style-cast", "-Wzero-as-null-pointer-constant",
@@ -254,12 +256,100 @@ public:
                         + " ms");
         }
 #endif
+        {
+            JointVaeWorker worker;
+            auto wait = [&] (auto submit)
+            {
+                std::optional<std::pair<juce::Result, JointVaeWorker::Output>> got;
+                submit ([&] (juce::Result res, JointVaeWorker::Output o) { got.emplace (res, std::move (o)); });
+                const auto deadline = juce::Time::getMillisecondCounter() + 20000;
+                while (! got && juce::Time::getMillisecondCounter() < deadline)
+                    juce::MessageManager::getInstance()->runDispatchLoopUntil (1);
+                expect (got.has_value(), "worker timed out");
+                return got ? std::move (*got) : std::pair { juce::Result::fail ("timeout"), JointVaeWorker::Output {} };
+            };
+            auto lab = [&] (LabRequest req)
+            { return wait ([&] (auto cb) { worker.lab (std::move (req), std::move (cb)); }); };
+            expect (wait ([&] (auto cb) { worker.load (manifest, std::move (cb)); }).first.wasOk());
+            LabRequest a;
+            const auto& case0 = (*cases)[0];
+            for (int i = 0; i < 32; ++i)
+                a.z[(size_t) i] = (float) case0["latent"][i];
+            a.category = (int) case0["category"];
+            const auto [ra, outA] = lab (a);
+            expect (ra.wasOk(), ra.getErrorMessage());
+            const int numNumeric = model.layout().numNumeric;
+            expect (numNumeric > 0 && numNumeric < model.layout().names.size());
+            expectEquals ((int) outA.knobs.size(), 123);
+            expect (std::any_of (outA.knobs.begin(), outA.knobs.end(), [] (float k) { return std::isfinite (k); }));
+            expectEquals ((int) outA.mel.size(), model.soundPca().frames * 64);
+            expect (! outA.mel.empty());
+#if VAE_WITH_SURGE
+            beginTest ("decoded point plays on Lite");
+            expect (outA.patchResult.wasOk(), outA.patchResult.getErrorMessage());
+            expect (outA.patch.getSize() > 0);
+            for (int i = 0; i < schema::kControlCount; ++i)
+                expectEquals (schema::sanitiseValue (i, outA.lite[i]), outA.lite[i], schema::control (i).id);
+            LabRequest knobPad = a; // given codes skip the decoder: same codes, same patch
+            knobPad.codes = outA.codes;
+            knobPad.z = {};
+            const auto [rk, outK] = lab (knobPad);
+            expect (rk.wasOk() && outK.codes == outA.codes && outK.patch == outA.patch);
+#endif
+            beginTest ("lock keeps structure");
+            LabRequest b;
+            b.z = a.z;
+            for (auto& v : b.z)
+                v = -v;
+            b.category = a.category;
+            const auto [rFree, outFree] = lab (b);
+            b.lockedTail = std::vector<float> (outA.codes.begin() + numNumeric, outA.codes.end());
+            const auto [rb, outB] = lab (b);
+            expect (rb.wasOk() && rFree.wasOk(), rb.getErrorMessage());
+            const auto n = (size_t) model.layout().names.size();
+            expect (outA.codes.size() == n && outB.codes.size() == n && outFree.codes.size() == n);
+            if (outA.codes.size() == n && outB.codes.size() == n && outFree.codes.size() == n)
+            {
+                expect (
+                    std::equal (outA.codes.begin() + numNumeric, outA.codes.end(), outB.codes.begin() + numNumeric));
+                expect (std::equal (outFree.codes.begin(), outFree.codes.begin() + numNumeric, outB.codes.begin()));
+                expect (outFree.codes != outB.codes, "point B's own structure differs from A's");
+            }
+            LabRequest wrong = b;
+            wrong.lockedTail->push_back (0);
+            expect (lab (wrong).first.failed());
+
+            beginTest ("lab timing");
+            const auto t0 = juce::Time::getMillisecondCounterHiRes();
+            for (int i = 0; i < 50; ++i)
+            {
+                LabRequest moved = a;
+                moved.z[0] += 0.01f * (float) i;
+                lab (moved);
+            }
+            logMessage ("mean lab() time over 50 calls: "
+                        + juce::String ((juce::Time::getMillisecondCounterHiRes() - t0) / 50.0, 1) + " ms");
+        }
         beginTest ("failed replacement leaves working model loaded");
         const auto id = model.layout().id;
         expect (model.load (manifest.getSiblingFile ("missing.json")).failed());
         expectEquals (model.layout().id, id);
         expect (model.decode ({}, 0, codes).wasOk());
         expect (model.decode ({}, 9, codes).failed());
+        beginTest ("old bundle rejected");
+        {
+            const auto old = juce::File::createTempFile ("old-bundle");
+            old.createDirectory();
+            for (const auto& f : manifest.getParentDirectory().findChildFiles (juce::File::findFiles, false))
+                if (f.getFileName() != "xypad.json")
+                    f.copyFileTo (old.getChildFile (f.getFileName()));
+            const auto rejected = model.load (old.getChildFile (manifest.getFileName()));
+            expect (rejected.failed() && rejected.getErrorMessage().contains ("export_xypad.py"),
+                    rejected.getErrorMessage());
+            expectEquals (model.layout().id, id);
+            expect (model.decode ({}, 0, codes).wasOk());
+            old.deleteRecursively();
+        }
         beginTest ("manifest rejects wrong category order and duplicate features");
         auto data = juce::JSON::parse (manifest);
         JointLayout layout;

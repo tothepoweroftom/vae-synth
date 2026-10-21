@@ -653,7 +653,8 @@ void SurgeEngine::useSchemaControls()
     impl->leaveExternal = true;
 }
 
-bool SurgeEngine::hasPatchData() const noexcept { return impl->external; }
+// A pending useSchemaControls counts as left: the audio thread finishes it on its next block.
+bool SurgeEngine::hasPatchData() const noexcept { return impl->external && ! impl->leaveExternal; }
 
 void SurgeEngine::reset()
 {

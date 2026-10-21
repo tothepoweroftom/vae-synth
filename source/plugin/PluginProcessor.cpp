@@ -194,6 +194,27 @@ juce::Result PluginProcessor::loadSurgePatch (const juce::MemoryBlock& patch)
     return juce::Result::fail ("Full Surge patches need a build with VAE_WITH_SURGE=ON");
 }
 
+void PluginProcessor::playLiteControls (const schema::Snapshot& snapshot)
+{
+    const auto lite = std::find (engineKinds.begin(), engineKinds.end(), EngineKind::Lite);
+    if (lite != engineKinds.end())
+        params.set (kEngineParamId, float (std::distance (engineKinds.begin(), lite)));
+#if VAE_WITH_SURGE
+    if (auto* surge = findEngine (EngineKind::Surge))
+        static_cast<SurgeEngine&> (*surge).useSchemaControls();
+#endif
+    for (int i = 0; i < schema::kControlCount; ++i)
+        params.set (controlIndex[(size_t) i], schema::sanitiseValue (i, snapshot[i]));
+}
+
+SynthEngine* PluginProcessor::findEngine (EngineKind kind) const noexcept
+{
+    for (const auto& e : engines)
+        if (e->kind() == kind)
+            return e.get();
+    return nullptr;
+}
+
 void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 {
 #if VAE_WITH_SURGE

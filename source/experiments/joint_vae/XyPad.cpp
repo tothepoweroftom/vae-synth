@@ -583,6 +583,7 @@ juce::Result KnobGroups::load (const juce::var& knobs, KnobGroups& out)
         if (! isNum (v["p5"]) || ! isNum (v["p95"]))
             return juce::Result::fail ("xypad.json: bad knob p5/p95");
         index[v["name"].toString()] = (int) k.p5.size();
+        k.names.add (v["name"].toString());
         k.p5.push_back ((float) (double) v["p5"]);
         k.p95.push_back ((float) (double) v["p95"]);
     }

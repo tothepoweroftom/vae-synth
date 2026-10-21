@@ -26,7 +26,8 @@ struct StudentPlan
     {
         juce::String path, kind; // cont, ord, bool, cat
         float code;
-        int natural; // cat only
+        int natural;          // cat only
+        juce::String feature; // the student feature name
     };
     struct Wavetable
     {

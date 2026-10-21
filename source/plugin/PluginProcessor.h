@@ -73,6 +73,13 @@ public:
         (message thread). The next applyControls returns that engine to the schema vector. */
     juce::Result loadSurgePatch (const juce::MemoryBlock& patch);
 
+    /** Lab playback (message thread): selects the Lite engine, leaves Surge patch mode and sets every
+        control without host gestures, so pad moves are not recorded as automation. */
+    void playLiteControls (const schema::Snapshot&);
+
+    /** The engine of that kind, or nullptr when it is not in this build. */
+    SynthEngine* findEngine (EngineKind) const noexcept;
+
     /** Apply a whole vector as one host gesture per control (message thread). */
     void applyControls (const schema::Snapshot&);
 

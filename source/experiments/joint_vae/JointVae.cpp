@@ -1,6 +1,9 @@
 #include "JointVae.h"
+#include "LiteTranslation.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <map>
 #include <set>
 
 namespace vae::experimental
@@ -122,8 +125,12 @@ juce::Result JointLayout::parse (const juce::var& value, JointLayout& output)
             || ! std::isfinite ((double) feature["min"]) || ! std::isfinite ((double) feature["max"])
             || (double) feature["min"] > (double) feature["max"])
             return juce::Result::fail ("Invalid or duplicate feature in bundle");
+        if (feature["kind"].toString() == "bool" && candidate.numNumeric == 0)
+            candidate.numNumeric = candidate.names.size();
         candidate.names.add (name);
     }
+    if (candidate.numNumeric == 0)
+        candidate.numNumeric = candidate.names.size();
     output = std::move (candidate);
     return juce::Result::ok();
 }
@@ -158,6 +165,22 @@ juce::Result JointVae::load (const juce::File& file)
         return r;
     if (auto r = validate (*sdec, false, 48, "sound"); r.failed())
         return r;
+    const auto xypadFile = file.getSiblingFile ("xypad.json");
+    if (! xypadFile.existsAsFile())
+        return juce::Result::fail ("Bundle has no xypad.json (re-export it with tools/joint_vae/export_xypad.py)");
+    XyPadData nextXy;
+    if (auto r = XyPadData::load (xypadFile, nextXy); r.failed())
+        return r;
+    const auto knobs = juce::JSON::parse (xypadFile)["knobs"];
+    CategoryForest nextForest;
+    if (auto r = CategoryForest::load (knobs["forest"], nextForest); r.failed())
+        return r;
+    KnobGroups nextGroups;
+    if (auto r = KnobGroups::load (knobs, nextGroups); r.failed())
+        return r;
+    SoundPca nextPca;
+    if (auto r = loadPca (file.getSiblingFile ("sound_pca.npz"), nextPca); r.failed())
+        return r;
     // Exercise both models before replacing a working bundle.
     std::vector<float> probe;
     if (auto r = run (enc.get(), SoundCode {}, 0, 32, probe); r.failed())
@@ -172,6 +195,10 @@ juce::Result JointVae::load (const juce::File& file)
     decoder = std::move (dec);
     encoder = std::move (enc);
     codec = std::move (nextCodec);
+    xy = std::move (nextXy);
+    categoryForest = std::move (nextForest);
+    groups = std::move (nextGroups);
+    pca = std::move (nextPca);
     return juce::Result::ok();
 }
 
@@ -189,9 +216,10 @@ juce::Result JointVae::decodeSound (const JointLatent& latent, int category, Sou
     return juce::Result::ok();
 }
 
-juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock& output)
+juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock& output, StudentPlan* planOut)
 {
-    StudentPlan plan;
+    StudentPlan local;
+    auto& plan = planOut != nullptr ? *planOut : local;
     if (auto r = codec.plan (metadata.names, codes, plan); r.failed())
         return r;
 #if VAE_WITH_SURGE
@@ -289,6 +317,51 @@ void JointVaeWorker::encode (SoundCode sound, int category, Callback cb)
             if (auto r = model.decode (out.latent, category, out.codes); r.failed())
                 return r;
             out.patchResult = model.patch (out.codes, out.patch);
+            return juce::Result::ok();
+        },
+        std::move (cb));
+}
+void JointVaeWorker::lab (LabRequest request, Callback cb)
+{
+    submit (
+        [req = std::move (request)] (JointVae& model, Output& out)
+        {
+            const auto n = (size_t) model.layout().names.size();
+            out.latent = req.z;
+            if (req.codes)
+            {
+                if (req.codes->size() != n
+                    || ! std::all_of (req.codes->begin(), req.codes->end(), [] (float v) { return std::isfinite (v); }))
+                    return juce::Result::fail ("Codes do not match the bundle layout");
+                out.codes = *req.codes;
+            }
+            else if (auto r = model.decode (req.z, req.category, out.codes); r.failed())
+                return r;
+            if (req.lockedTail)
+            {
+                const auto from = (size_t) model.layout().numNumeric;
+                if (req.lockedTail->size() != n - from)
+                    return juce::Result::fail ("Locked structure does not match the bundle layout");
+                std::copy (req.lockedTail->begin(), req.lockedTail->end(), out.codes.begin() + (std::ptrdiff_t) from);
+            }
+            if (auto r = model.decodeSound (req.z, req.category, out.sound); r.failed())
+                return r;
+            out.mel = melFromSound (model.soundPca(), out.sound);
+
+            StudentPlan plan;
+            out.patchResult = model.patch (out.codes, out.patch, &plan);
+            if (out.patchResult.wasOk())
+                out.patchResult = liteControls (out.patch, out.lite);
+            if (out.patchResult.failed())
+                out.patch.reset();
+            std::map<juce::String, float> written;
+            for (const auto& v : plan.values)
+                written[v.feature] = v.code;
+            for (const auto& name : model.knobGroups().names)
+            {
+                const auto it = written.find (name);
+                out.knobs.push_back (it != written.end() ? it->second : std::numeric_limits<float>::quiet_NaN());
+            }
             return juce::Result::ok();
         },
         std::move (cb));

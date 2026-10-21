@@ -248,7 +248,7 @@ juce::Result StudentCodec::plan (const juce::StringArray& names, std::span<const
             && (field == "type" || field == "shape" || field == "fm_switch" || field == "filterblock_configuration"))
             plan.types.push_back ({ path, natural });
         else
-            plan.values.push_back ({ path, f.kind, c, natural });
+            plan.values.push_back ({ path, f.kind, c, natural, name });
     }
     for (const auto& [o, t] : oscType)
         if ((t == 2 || t == 7)

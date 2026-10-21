@@ -1,4 +1,4 @@
-#include "experiments/joint_vae/XyPad.h"
+#include "experiments/joint_vae/JointVae.h"
 #include <cmath>
 
 namespace vae::experimental

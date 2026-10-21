@@ -1,6 +1,6 @@
 #pragma once
 
-#include "XyPad.h"
+#include "JointVae.h"
 #include <optional>
 #include <utility>
 #include <vector>

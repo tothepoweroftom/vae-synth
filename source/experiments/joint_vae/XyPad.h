@@ -1,6 +1,7 @@
 #pragma once
 
-#include "JointVae.h"
+#include <array>
+#include <juce_core/juce_core.h>
 #include <map>
 #include <span>
 #include <utility>
@@ -8,6 +9,12 @@
 
 namespace vae::experimental
 {
+// Independent of ControlSchema: these are the student's full Surge features.
+using JointLatent = std::array<float, 32>;
+using SoundCode = std::array<float, 48>;
+inline constexpr const char* jointLabels[] = { "Bass",  "Lead",       "Pad",        "Keys",   "Pluck",
+                                               "Synth", "Atmosphere", "Orchestral", "Unknown" };
+
 // Port of the student's XY-pad page maths (vae/pitcher/xypad/page_v2.template.html). Engine-free.
 struct LatentAxis
 {
@@ -81,6 +88,7 @@ struct KnobGroups
         std::vector<int> knob;
         std::vector<float> sign;
     };
+    juce::StringArray names; // knobs.knobs[].name: student feature names
     std::vector<float> p5, p95;
     std::vector<Group> groups;
     /** `xypad.json` knobs (the object holding `knobs` and `groups`). */

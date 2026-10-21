@@ -4,6 +4,9 @@
 #include "PluginEditor.h"
 #include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
+#if VAE_WITH_SURGE
+#include "engine/surge/SurgeEngine.h"
+#endif
 
 namespace vae
 {
@@ -279,6 +282,56 @@ public:
             expect (restored.getControls().values == before.values);
             settleModel (restored);
         }
+
+#if VAE_WITH_SURGE
+        beginTest ("Lite after Surge");
+        {
+            PluginProcessor p;
+            settleModel (p);
+            p.prepareToPlay (kRate, 512);
+            juce::MemoryBlock fxp;
+            expect (juce::File (VAE_SURGE_DATA_DIR "/patches_factory/Templates/Init Sine.fxp").loadFileAsData (fxp));
+            expect (p.loadSurgePatch (fxp).wasOk());
+            juce::AudioBuffer<float> buffer (2, 480); // 10 ms
+            juce::MidiBuffer midi;
+            p.processBlock (buffer, midi);
+            auto* surge = dynamic_cast<SurgeEngine*> (p.findEngine (EngineKind::Surge));
+            expect (surge != nullptr && surge->hasPatchData());
+
+            GestureCounter gestures;
+            p.addListener (&gestures);
+            auto lite = schema::Snapshot::defaults();
+            p.playLiteControls (lite);
+            const auto liteIndex =
+                std::distance (p.getEngineKinds().begin(),
+                               std::find (p.getEngineKinds().begin(), p.getEngineKinds().end(), EngineKind::Lite));
+            expectEquals (juce::roundToInt (p.getParams().get (PluginProcessor::kEngineParamId)), (int) liteIndex);
+            expect (surge != nullptr && ! surge->hasPatchData());
+            p.processBlock (buffer, midi); // the engine switch lands
+            midi.addEvent (juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100), 0);
+            auto rmsOf50ms = [&]
+            {
+                double sum = 0;
+                for (int b = 0; b < 5; ++b)
+                {
+                    p.processBlock (buffer, midi);
+                    midi.clear();
+                    for (int i = 0; i < buffer.getNumSamples(); ++i)
+                        sum += buffer.getSample (0, i) * buffer.getSample (0, i);
+                }
+                return std::sqrt (sum / (5 * buffer.getNumSamples()));
+            };
+            expectGreaterThan (rmsOf50ms(), 0.0);
+            lite[schema::kFilter1Cutoff] = 0.3f; // a pad move while the note is held
+            p.playLiteControls (lite);
+            expectGreaterThan (rmsOf50ms(), 0.0);
+            p.removeListener (&gestures);
+            expectEquals (gestures.begins, 0);
+            expectEquals (gestures.ends, 0);
+            expectWithinAbsoluteError (p.getControls()[schema::kFilter1Cutoff], 0.3f, 1e-6f);
+            p.releaseResources();
+        }
+#endif
 
         beginTest ("a rejected decoder keeps the previous model and its saved path");
         {
