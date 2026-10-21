@@ -338,8 +338,8 @@
 **Interfaces:**
 - Consumes: `interpretPrompt` (Task 5).
 - Behaviour:
-  - A single-line `TextEditor` under the pad, with a read-only log of the last 4 lines above it (newest at the bottom). Return submits.
-  - The user's line is shown as "› text", then the `PromptReply.message`.
+  - A single-line `TextEditor` under the pad with a compact submit arrow, and a one-line inline status beside or under it showing the latest `PromptReply.message`. There is no transcript or log (user decision 21 Oct 2026, Task 17 answer 4). Return submits.
+  - The text stays editable after submit.
   - A `start` loads that z and category like a base, without changing Lock. Then each nudge moves the named axis position by its delta, clamped to 0..1. Each nudge runs `constrain` with that axis plus the pad's assigned axes held, as the page's list slider does. Last, one `lab` decode runs.
 - [ ] **Step 1: Write failing test** `"prompt starts and nudges"`: with the bundle loaded, submit "dark bass". The category combo shows Bass, and `axisPosition(brightness)` is the typical Bass position −0.1 (±1e-3). Submit "brighter": it is back at the typical position (±1e-3). Skip without a bundle.
 - [ ] **Step 2:** Run. Expected: FAIL.
@@ -583,7 +583,13 @@ public:
 - Study: `design-study/juce/`. Reuse `design-study/juce/Source/ui/`, the `pitcher_study_ui` target: `PitcherLookAndFeel`, `PitcherKeyboard`, `AxisRow`, `OrbitView`/`OrbitMath`, `Spectrum`, `PitcherLayout`.
 - Do NOT copy `StudyView`, `StudyData`, the embedded study data or the study's approximate category matching, prompt lookup or message-thread inference. The completed Lab's worker, forest, prompt and data are authoritative.
 
-- [ ] **Step 1: Decide with the user before building.** These are the conflicts with the built Lab:
+- **User decisions (21 Oct 2026):**
+  1. **Orbit is the only view of the latent pad.** The 2D category/measure map from Task 8 is not shown. The map worker request may stay for later use or be removed. *My call:* the **knob pad** keeps its flat 2D pad, because it moves knob groups, not latent axes, so it has no 3D cloud.
+  2. **Toolbar controls go in the left sidebar, under the category view.** That covers Latent/Knob pad, the start point, category, Lock structure, Reset and Send to Surge.
+  3. **No Presets tab and no favourites** ("Shape my space" is skipped too). The right sidebar shows only the axis list.
+  4. **Single-line prompt field** with inline status, and no transcript. This is already applied to Task 9.
+  5. **The study's 3-octave centre keyboard replaces the editor keyboard** while the Lab is shown.
+- [ ] **Step 1 (done): the user's decisions are above.** These are the conflicts with the built Lab:
   - **Orbit only, or Orbit + flat XY?** The handoff says Orbit is the only view. That removes Task 8's 2D category/measure map and click-to-jump on the map.
   - **Toolbar:** the study has no toolbar. Where do Latent/Knob pad, the start point, category, Lock structure, Reset and Send to Surge go? Hidden, a compact row, or a menu?
   - **Presets tab and favourites:** do they persist in plug-in state, and does "Shape my space" stay a concept-only preview?
