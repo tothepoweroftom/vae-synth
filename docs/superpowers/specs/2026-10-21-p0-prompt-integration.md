@@ -39,6 +39,8 @@ The student's instructions explicitly specify nearest-bank snapping as the defau
 
 ### Exploration after selecting a bank preset
 
+> **Superseded by user decision, 21 Oct 2026 (plan Task 20):** Find highlights its candidates as numbered dots on the pad. Clicking a dot or chip plays the exact bank preset. Exploring is never locked: the first move decodes from the bank z and dragging continues. Re-selecting restores the exact codes. There is no "Explore generated variations" button. The bullets below describe the original design.
+
 The bank patch and `decode(bank.z)` are not equivalent. Re-decoding immediately would discard the benefit of selecting a real preset.
 
 - While a bank result is selected, retain its exact codes. Camera changes, axis assignment and display-only updates must not decode or change audio.

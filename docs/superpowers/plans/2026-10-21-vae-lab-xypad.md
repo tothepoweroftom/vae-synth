@@ -674,3 +674,43 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
   - Reuse the Task 18 drag-crackle measurement: run the orbit for 2 s with a held note and assert zero ducks and a bounded max sample step.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run the tests, then ask the user to listen with a held note. Commit.
+
+---
+
+### Task 20: Find highlights its matches on the pad; exploring continues from the selected one (runs next, after Task 15)
+
+*User decision (21 Oct 2026), after trying Task 14. It replaces the p0 spec's "explicit Explore generated variations transition": bank mode must not lock the pad.*
+
+**Behaviour:**
+- **Find marks its candidates on the pad.**
+  - Each candidate's bank z is projected with `axisPosition` on the assigned axes and drawn as a highlighted dot: an accent ring and its number 1–8.
+  - The highlights sit above the ordinary preset dots.
+  - They reproject when the axes change.
+  - They stay until the next Find, Reset, a base change or a bundle change.
+  - The chips remain and stay in sync with the dots: the selected chip and the selected dot match.
+- **Clicking a highlighted dot (7 px) or its chip** selects that candidate. It goes through `edit()`, as in Task 14, and plays the bank row's exact codes. The handle moves to that point.
+- **Exploring is never locked.**
+  - The first pad, Z, axis-slider or prompt-nudge move after selecting a candidate leaves exact-preset mode.
+  - The move is decoded from the bank z with the normal v2 path, and dragging continues live.
+  - The status reads "Exploring from <name>".
+  - Re-selecting the dot or chip restores the exact codes.
+- **Removed:** the "Explore generated variations" button and every bank-mode guard that disabled pad, slider, Z, category or nudge.
+- **Kept:**
+  - Knob pad on a copy of the bank codes.
+  - Send to Surge sends the exact preset's codes (no decoder) while still on the exact preset, and the decoded patch after exploring.
+  - Stale-result tokens.
+  - R14.
+  - The edit gate.
+- **Docs:** update the p0 spec ("Exploration after selecting a bank preset" now points to this user decision) and docs/JOINT-VAE-LAB.md.
+
+- [ ] **Step 1: Write failing tests:**
+  - `"find highlights candidates"`: after a fixture Find, the pad has N highlighted dots at `axisPosition`(bank z), within 1e-4.
+  - `"dot click selects candidate"`: clicking highlighted dot 2 plays row 2's exact codes and moves the handle.
+  - `"drag explores from candidate"`: after selecting, an arrow-key move calls `lab` without `codes` (decoded), starting from the bank z. Nothing is blocked.
+  - `"reselect restores exact codes"`.
+  - `"send to surge exact then decoded"`.
+  - Update or remove the Task 14 bank-mode-blocks tests.
+- [ ] **Step 2:** Run them. Expected: FAIL.
+- [ ] **Step 3:** Implement.
+- [ ] **Step 4:** Run them, plus the full ctest in both builds. Expected: PASS. Take a screenshot.
+- [ ] **Step 5:** Commit.
