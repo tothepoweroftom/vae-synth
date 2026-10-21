@@ -230,6 +230,56 @@ public:
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {
+            beginTest ("prompt starts and nudges");
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            juce::ComboBox* category = nullptr;
+            std::function<void (juce::Component&)> find = [&] (juce::Component& c)
+            {
+                for (auto* child : c.getChildren())
+                {
+                    if (auto* box = dynamic_cast<juce::ComboBox*> (child); box && box->getItemText (0) == "Bass")
+                        category = box;
+                    find (*child);
+                }
+            };
+            if (lab)
+                find (*lab);
+            expect (lab != nullptr && category != nullptr);
+            if (lab && category)
+            {
+                int played = 0;
+                lab->onLite = [&played] (const schema::Snapshot&) { ++played; };
+                bool ready = false;
+                lab->onMapShown = [&ready] { ready = true; };
+                lab->loadBundle (juce::File (bundle));
+                expect (pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                auto* xy = lab->padData();
+                auto* brightness = xy ? xy->find ("s:brightness") : nullptr;
+                expect (brightness != nullptr);
+                if (brightness)
+                {
+                    const auto typical = axisPosition (*brightness, xy->typical.at ("Bass"));
+                    // "zorp" has nothing usable: no change, no sound
+                    const auto z0 = lab->latent();
+                    lab->submitPrompt ("zorp");
+                    pumpUntil ([] { return false; }, 300);
+                    expect (lab->latent() == z0);
+                    expectEquals (played, 0);
+                    lab->submitPrompt ("dark bass");
+                    expectEquals (category->getText(), juce::String ("Bass"));
+                    expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical - 0.1f, 1e-3f);
+                    lab->submitPrompt ("brighter");
+                    expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical, 1e-3f);
+                    expect (pumpUntil ([&] { return played > 0; }, 30000), "a prompt plays");
+                }
+            }
+        }
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
             beginTest ("editor closes mid-map");
             PluginProcessor processor;
             settleModel (processor);

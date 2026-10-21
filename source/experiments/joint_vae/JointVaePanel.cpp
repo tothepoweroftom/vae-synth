@@ -18,8 +18,8 @@ void JointVaePanel::paint (juce::Graphics&) {}
 #else
 namespace
 {
-constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kXLabelH = 18, kZRowH = 24,
-              kYLabelW = 18, kEyebrowH = 13;
+constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kPromptRowH = 26,
+              kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13;
 // Background menu (page bgSel, latent mode): ids 1.. in this order
 const char* const mapKinds[][2] = { { "cat", "Category guess" }, { "brightness", "Brightness" }, { "length", "Length" },
                                     { "attack", "Attack" },      { "noise", "Noise" },           { "none", "None" } };
@@ -40,7 +40,7 @@ JointVaePanel::JointVaePanel()
 {
     for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
                                                              &resetButton, &dotsButton, &sendButton, &background, &pad,
-                                                             &listView, &status })
+                                                             &listView, &status, &promptBox, &promptGo })
         addAndMakeVisible (c);
     addChildComponent (zSlider);
     latentButton.setToggleState (true, juce::dontSendNotification);
@@ -66,6 +66,11 @@ JointVaePanel::JointVaePanel()
     status.setFont (LF::labelFont (10.0f));
     status.setColour (juce::Label::textColourId, LF::quiet());
     status.setJustificationType (juce::Justification::topLeft);
+
+    promptBox.setTextToShowWhenEmpty ("Describe a sound: dark bass, then brighter", LF::quiet());
+    promptBox.setSelectAllWhenFocused (true);
+    promptBox.onReturnKey = promptGo.onClick = [this] { submitPrompt (promptBox.getText()); };
+    promptGo.setTooltip ("Apply the prompt");
 
     pad.moved = [this] (juce::Point<float> p)
     {
@@ -138,6 +143,8 @@ JointVaePanel::JointVaePanel()
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton,
                                                              &sendButton, &background, &pad, &zSlider })
         c->setEnabled (false);
+    promptBox.setEnabled (false);
+    promptGo.setEnabled (false);
 
     // Installed by scripts/install-models.sh, like the Prompt tab's models
     if (const auto installed = ml::appDataDir().getChildFile ("models/joint-vae/bundle.json"); installed.existsAsFile())
@@ -192,7 +199,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.base.addItem ("Random real preset", kRandomBase);
                      for (auto* c : std::initializer_list<juce::Component*> {
                               &self.base, &self.category, &self.lockButton, &self.resetButton, &self.dotsButton,
-                              &self.background, &self.pad, &self.zSlider })
+                              &self.background, &self.pad, &self.zSlider, &self.promptBox, &self.promptGo })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
@@ -225,6 +232,43 @@ void JointVaePanel::loadBase (int id)
     lockButton.setToggleState (false, juce::dontSendNotification);
     setStatus (message);
     syncPositions();
+    refresh();
+    updateDots();
+    decode();
+}
+
+void JointVaePanel::submitPrompt (const juce::String& text)
+{
+    if (! xy)
+        return;
+    const auto reply = interpretPrompt (text, true, *xy); // the one call the text -> z search replaces
+    if (reply.start)
+    {
+        // Loads like a base; Lock is untouched
+        z = reply.start->first;
+        category.setSelectedId (reply.start->second + 1, juce::dontSendNotification);
+        syncPositions();
+    }
+    for (const auto& [id, delta] : reply.nudges)
+        if (auto* axis = xy->find (id))
+        {
+            // As the list slider: move this axis, hold the pad's axes
+            std::vector<const LatentAxis*> held { axis };
+            std::vector<float> targets { axisTarget (*axis,
+                                                     juce::jlimit (0.0f, 1.0f, axisPosition (*axis, z) + delta)) };
+            for (int i = 0; i < 3; ++i)
+                if (auto* a = axisOn (i); a && a != axis)
+                {
+                    held.push_back (a);
+                    targets.push_back (axisTarget (*a, pos[(size_t) i]));
+                }
+            z = constrain (z, held, targets);
+            syncPositions();
+        }
+    setStatus (reply.message);
+    if (! reply.start && reply.nudges.empty())
+        return;
+    userActed = true; // R14: applying a prompt is a user action
     refresh();
     updateDots();
     decode();
@@ -606,7 +650,12 @@ void JointVaePanel::resized()
         presetArea = strip;
     }
     left.removeFromBottom (kGap);
-    promptArea = left.removeFromBottom (kPromptH); // Task 9's log and prompt; the status line until then
+    promptArea = left.removeFromBottom (kPromptH); // one prompt line, then the status line
+    auto promptRow = promptArea.removeFromTop (kPromptRowH);
+    promptGo.setBounds (promptRow.removeFromRight (kPromptRowH + 8));
+    promptRow.removeFromRight (4);
+    promptBox.setBounds (promptRow);
+    promptArea.removeFromTop (4);
     status.setBounds (promptArea);
     left.removeFromBottom (kGap);
     const bool hasZ = axisOn (2) != nullptr;

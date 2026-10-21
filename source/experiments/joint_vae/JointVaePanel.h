@@ -2,6 +2,7 @@
 #include "JointVae.h"
 #include "LabAxisList.h"
 #include "LabPad.h"
+#include "PromptWords.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace vae::experimental
@@ -24,6 +25,10 @@ public:
     /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
     std::function<void()> onMapShown;
     bool isMapRunning() const { return worker.mapRunning(); }
+    /** Runs a prompt as if typed and submitted; the test hooks read the result back. */
+    void submitPrompt (const juce::String&);
+    const XyPadData* padData() const { return xy.get(); }
+    const JointLatent& latent() const { return z; }
 #endif
 
 private:
@@ -62,6 +67,8 @@ private:
     juce::Viewport listView;
     LabAxisList list;
     juce::Label status;
+    juce::TextEditor promptBox;
+    juce::TextButton promptGo { juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x92")) };
     juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea, specArea, measureArea, presetArea,
         guessArea;
     juce::Image spec; // frames x 64 expected spectrogram of `current`
