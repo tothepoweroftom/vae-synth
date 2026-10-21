@@ -48,6 +48,7 @@ TensorInfo describe (const Ort::TypeInfo& type, std::string name)
         const auto tensor = type.GetTensorTypeAndShapeInfo();
         info.shape = tensor.GetShape();
         info.isFloat = tensor.GetElementType() == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT;
+        info.isInt64 = tensor.GetElementType() == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64;
     }
     return info;
 }
@@ -81,7 +82,7 @@ void OnnxModel::unload()
 
 template <typename MakeSession>
 juce::Result OnnxModel::loadWith (MakeSession&& makeSession, int threads, const juce::File& saveOptimizedTo,
-                                  bool preOptimized)
+                                  bool preOptimized, bool int64Inputs)
 {
     unload();
     if (! runtime->isAvailable())
@@ -113,7 +114,7 @@ juce::Result OnnxModel::loadWith (MakeSession&& makeSession, int threads, const 
         unload();
         return juce::Result::fail (juce::String ("Could not load model: ") + e.what());
     }
-    return finishLoad();
+    return finishLoad (int64Inputs);
 }
 
 juce::Result OnnxModel::load (const juce::File& file, ModelLoadOptions options)
@@ -124,14 +125,14 @@ juce::Result OnnxModel::load (const juce::File& file, ModelLoadOptions options)
         return juce::Result::fail ("Model not found: " + file.getFullPathName());
     }
     if (! isSha256Hex (options.cacheKey) || ! runtime->isAvailable())
-        return loadWith (fromPath (file), options.threads);
+        return loadWith (fromPath (file), options.threads, {}, false, options.int64Inputs);
 
     // Content-addressed, so a changed model or runtime never picks up a stale graph.
     const auto cached =
         appDataDir().getChildFile ("cache/optimized/" + options.cacheKey + "-ort" + runtime->getVersion() + ".onnx");
     if (cached.existsAsFile())
     {
-        if (loadWith (fromPath (cached), options.threads, {}, true).wasOk())
+        if (loadWith (fromPath (cached), options.threads, {}, true, options.int64Inputs).wasOk())
             return juce::Result::ok();
         cached.deleteFile(); // unreadable: rebuild it below
     }
@@ -139,9 +140,10 @@ juce::Result OnnxModel::load (const juce::File& file, ModelLoadOptions options)
     // ORT writes while creating the session; publish under the real name only once that succeeded.
     const auto partial = cached.getSiblingFile (cached.getFileNameWithoutExtension() + ".partial");
     if (cached.getParentDirectory().createDirectory().wasOk()
-        && loadWith (fromPath (file), options.threads, partial).wasOk() && partial.moveFileTo (cached))
+        && loadWith (fromPath (file), options.threads, partial, false, options.int64Inputs).wasOk()
+        && partial.moveFileTo (cached))
         return juce::Result::ok();
-    return loadWith (fromPath (file), options.threads); // caching failed: plain load
+    return loadWith (fromPath (file), options.threads, {}, false, options.int64Inputs); // caching failed: plain load
 }
 
 juce::Result OnnxModel::load (const void* data, size_t size)
@@ -150,7 +152,7 @@ juce::Result OnnxModel::load (const void* data, size_t size)
                      { return std::make_unique<Ort::Session> (env, data, size, options); });
 }
 
-juce::Result OnnxModel::finishLoad()
+juce::Result OnnxModel::finishLoad (bool int64Inputs)
 {
     Ort::AllocatorWithDefaultOptions allocator;
     auto& s = *session->session;
@@ -168,7 +170,9 @@ juce::Result OnnxModel::finishLoad()
         session->outputNames.push_back (std::move (name));
     }
 
-    if (inputs.empty() || std::any_of (inputs.begin(), inputs.end(), [] (const auto& i) { return ! i.isFloat; }))
+    if (inputs.empty()
+        || std::any_of (inputs.begin(), inputs.end(),
+                        [int64Inputs] (const auto& i) { return ! i.isFloat && ! (int64Inputs && i.isInt64); }))
     {
         unload();
         return juce::Result::fail ("Expected float input tensors");
@@ -185,6 +189,18 @@ juce::Result OnnxModel::run (std::span<const float> input, std::span<const int64
 
 juce::Result OnnxModel::run (std::span<const FloatTensorView> tensors, std::vector<std::vector<float>>& outputsOut)
 {
+    return runViews (tensors, outputsOut);
+}
+
+juce::Result OnnxModel::run (std::span<const Int64TensorView> tensors, std::vector<std::vector<float>>& outputsOut)
+{
+    return runViews (tensors, outputsOut);
+}
+
+template <typename View>
+juce::Result OnnxModel::runViews (std::span<const View> tensors, std::vector<std::vector<float>>& outputsOut)
+{
+    using Element = std::remove_const_t<typename decltype (View::data)::element_type>;
     if (! isLoaded())
         return juce::Result::fail ("No model loaded");
     if (tensors.size() != inputs.size())
@@ -206,9 +222,9 @@ juce::Result OnnxModel::run (std::span<const FloatTensorView> tensors, std::vect
             }
             if (count != tensor.data.size())
                 return juce::Result::fail ("Input size mismatch");
-            values.push_back (Ort::Value::CreateTensor<float> (memory, const_cast<float*> (tensor.data.data()),
-                                                               tensor.data.size(), tensor.shape.data(),
-                                                               tensor.shape.size()));
+            values.push_back (Ort::Value::CreateTensor<Element> (memory, const_cast<Element*> (tensor.data.data()),
+                                                                 tensor.data.size(), tensor.shape.data(),
+                                                                 tensor.shape.size()));
         }
 
         std::vector<const char*> inNames, outNames;

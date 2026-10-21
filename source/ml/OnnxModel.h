@@ -27,11 +27,18 @@ struct TensorInfo
     std::string name;
     std::vector<int64_t> shape; // -1 for dynamic dimensions
     bool isFloat = false;
+    bool isInt64 = false;
 };
 
 struct FloatTensorView
 {
     std::span<const float> data;
+    std::span<const int64_t> shape;
+};
+
+struct Int64TensorView
+{
+    std::span<const int64_t> data;
     std::span<const int64_t> shape;
 };
 
@@ -43,7 +50,8 @@ bool isSha256Hex (const juce::String&);
 struct ModelLoadOptions
 {
     int threads = 1;
-    juce::String cacheKey; // a SHA-256: keep ORT's optimized graph under it so later loads skip optimizing
+    juce::String cacheKey;    // a SHA-256: keep ORT's optimized graph under it so later loads skip optimizing
+    bool int64Inputs = false; // accept int64 input tensors too (token ids); run them with the Int64TensorView overload
 };
 
 class OnnxModel
@@ -68,6 +76,7 @@ public:
                       std::vector<std::vector<float>>& outputsOut);
 
     juce::Result run (std::span<const FloatTensorView> tensors, std::vector<std::vector<float>>& outputsOut);
+    juce::Result run (std::span<const Int64TensorView> tensors, std::vector<std::vector<float>>& outputsOut);
 
     /** Status of the shared runtime ("not found", version, ...). */
     juce::String getRuntimeStatus() const { return runtime->getStatus(); }
@@ -76,8 +85,10 @@ public:
 private:
     template <typename MakeSession>
     juce::Result loadWith (MakeSession&& makeSession, int threads = 1, const juce::File& saveOptimizedTo = {},
-                           bool preOptimized = false);
-    juce::Result finishLoad();
+                           bool preOptimized = false, bool int64Inputs = false);
+    juce::Result finishLoad (bool int64Inputs);
+    template <typename View>
+    juce::Result runViews (std::span<const View> tensors, std::vector<std::vector<float>>& outputsOut);
 
     juce::SharedResourcePointer<OrtRuntime> runtime;
     struct Session;
