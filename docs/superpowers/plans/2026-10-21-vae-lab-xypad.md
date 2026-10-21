@@ -630,3 +630,47 @@ public:
     - a longer crossfade.
   - The Lite-vs-Surge comparison must still match (fresh renders unchanged).
 - [ ] **Step 4:** Ask the user to drag again in the standalone. Commit with the before and after measurements in the commit message.
+
+---
+
+### Task 19: Orbit LFO, slow movement around the current preset (final sprint, after Task 17)
+
+*User request (21 Oct 2026): "an orbit LFO so the synth moves smoothly around its current preset", in the spirit of Animoog's orbit.*
+
+**Idea:**
+- The current point becomes the orbit **centre**: the anchor z plus the pad positions of the assigned axes.
+- The orbit moves the dot along a closed path around that centre in the assigned axes: X/Y, or X/Y/Z in the Orbit view.
+- Each step runs `constrain` from the centre, so the other latent directions stay at the anchor. It is decoded through the normal Lab path to Lite, so the sound drifts continuously around the preset and returns to it.
+
+**Defaults (my calls; confirm in Step 1):**
+- **Shape:** a circle in the X/Y axes. A Z wobble at a 0.7× rate is used when Z is assigned.
+- **Rate:** 0.02–2 Hz on a log scale, default 0.1 Hz. It is free-running and not tempo-synced.
+- **Depth:** 0–0.25 pad units of radius, default 0.08.
+- **Lock structure is forced on while the orbit runs.** Only continuous knobs move, so a switch flip never ducks or crackles. This builds on the Task 18 findings.
+- **Update rate:** a message-thread timer at 30 Hz submits `lab` requests (latest wins). Lite's 20 ms smoothing fills the gaps between them.
+- **Ownership:** a drag, a prompt nudge or a dot click re-centres the orbit at the new point. The orbit stops on Reset, a base or category change, and in knob-pad mode.
+- **Display:** the Orbit view shows the centre (hollow ring), the path (dashed) and the moving handle. Axis sliders follow the handle.
+- **R14:** turning the orbit on is a user action.
+
+**Files:**
+- Create: `source/experiments/joint_vae/LatentOrbit.{h,cpp}`, a pure function with no GUI.
+- Modify: `JointVaePanel.{h,cpp}` (controls in the left sidebar under the category view, per Task 17, plus a timer) and the Orbit view.
+- Test: `tests/ml/XyPadTests.cpp` or a new `LatentOrbitTests.cpp`, plus `tests/plugin/PluginTests.cpp`.
+
+**Interface:**
+```cpp
+struct OrbitSettings { bool on = false; float rateHz = 0.1f, depth = 0.08f; };
+// Pad positions (x, y, z) on the orbit at phase t (seconds); centre + depth*(cos, sin, 0.5*sin(0.7 wt)), clamped to 0..1.
+std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSettings&, double seconds, bool hasZ);
+```
+
+- [ ] **Step 1: Confirm the defaults with the user.** Cover the shape (circle or figure-8), the rate range, tempo sync, the depth range, and whether forcing Lock on during the orbit is acceptable.
+- [ ] **Step 2: Write failing tests:**
+  - `orbitPosition` at t = 0 and one full period returns the centre plus (depth, 0); it stays within depth of the centre and inside 0..1.
+  - A panel test with the bundle: orbit on, pump for 1 s → at least 20 `onLite` calls, the codes from index 435 on are constant (Lock), and the dot moves.
+  - Orbit off returns the sound to the centre point.
+  - A user drag re-centres the orbit.
+  - Reset stops it.
+  - Reuse the Task 18 drag-crackle measurement: run the orbit for 2 s with a held note and assert zero ducks and a bounded max sample step.
+- [ ] **Step 3:** Implement.
+- [ ] **Step 4:** Run the tests, then ask the user to listen with a held note. Commit.
