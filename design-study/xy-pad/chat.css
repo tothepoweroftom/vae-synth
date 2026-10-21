@@ -20,7 +20,7 @@ main>section.panel{min-width:0;display:flex;flex-direction:column;gap:12px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .inspector .readouts{grid-template-columns:1fr;max-width:600px}
 [data-style=brutalist] .prompt-composer,[data-style=brutalist] .prompt-composer button{border-radius:0}
-[data-style=brutalist] .prompt-composer{border:2px solid #777;background:#121212}
+[data-style=brutalist] .prompt-composer{border:2px solid #777;background:var(--well)}
 [data-style=brutalist] .prompt-composer input{font-family:StudyMono,monospace;font-size:11px}
 [data-style=swiss] .prompt-composer,[data-style=swiss] .prompt-composer button{border-radius:0}
 [data-style=industrial] .prompt-composer{border:1px solid #4b4b40;box-shadow:inset 0 2px 5px #0007;background:#121212}
@@ -67,3 +67,44 @@ main>section.panel{grid-column:2;grid-row:1}
 @media(min-width:1000px) and (max-width:1200px){main{grid-template-columns:160px minmax(0,1fr) 230px;gap:16px}.category-panel{padding-right:14px}.axes-panel{padding-left:14px}.padbox{aspect-ratio:1.4/1}}
 @media(max-width:999px){main{grid-template-columns:170px minmax(0,1fr);gap:20px}.category-panel{grid-column:1;grid-row:1/3}.axes-panel{grid-column:2;grid-row:2;border-left:0;border-top:1px solid var(--line);padding:18px 0 0;max-height:340px}.list{max-height:260px}.padbox{aspect-ratio:1.6/1}}
 @media(max-width:650px){main{grid-template-columns:1fr}.category-panel{grid-column:1;grid-row:1;border-right:0!important;border-bottom:1px solid var(--line);padding:0 0 16px}.category-panel .probs{grid-template-columns:1fr 1fr;gap:10px 20px}.category-panel .match-heading{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}.category-panel .prob{font-size:9px}main>section.panel{grid-column:1;grid-row:2}.axes-panel{grid-column:1;grid-row:3}.padbox{aspect-ratio:1.4/1}}
+
+/* Camera buttons belong to the viewer, above its canvas hit area. */
+.padbox{position:relative}
+.padbox .camera-controls{position:absolute;top:12px;right:12px;z-index:2;margin:0;gap:5px}
+.padbox .camera-controls button{background:var(--bg);padding:7px 10px}
+
+.category-panel .pitcher-brand{margin:0 0 28px}
+.category-save{display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.category-save .heart-button{display:flex;align-items:center;justify-content:center;width:38px;height:36px}
+.category-panel button.prob{appearance:none;width:100%;text-align:left;background:transparent;border:1px solid transparent;padding:8px 6px;color:var(--ink);font-family:var(--body);cursor:pointer;border-radius:0}
+.category-panel button.prob:hover{background:var(--accent-soft)}
+.category-panel button.prob[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+
+/* Wider sidebars; the spectrogram shares the bottom row with the keyboard. */
+@media(min-width:1000px){
+ main{grid-template-columns:280px minmax(0,1fr) 280px;row-gap:20px}
+ .category-panel{grid-row:1/3;display:flex;flex-direction:column}
+ .axes-panel{max-height:560px}
+ main>.audition{grid-column:2;grid-row:2;min-width:0}
+}
+@media(min-width:1450px){main{grid-template-columns:300px minmax(0,1fr) 300px}}
+@media(min-width:1000px) and (max-width:1200px){main{grid-template-columns:240px minmax(0,1fr) 240px}}
+.category-panel .pitcher-brand{margin-bottom:20px}
+.category-panel .probs{gap:5px}
+.category-panel .match-heading{gap:6px;margin-bottom:8px}
+.category-panel button.prob{padding:5px 6px;gap:4px}
+.category-panel .prob .bar{height:3px}
+.category-save{margin-top:12px;padding-top:12px}
+.spectrogram-panel{position:relative;margin-top:auto;padding-top:20px;outline-offset:4px}
+.spectrogram-title{font:9px var(--mono);color:var(--muted);margin-bottom:8px}
+.spectrogram-panel .spec{display:block;width:100%;height:90px;aspect-ratio:auto;border:1px solid var(--line);border-radius:0}
+.spectrogram-panel .speccap{display:flex;justify-content:space-between;margin-top:5px;font:8px var(--mono);color:var(--muted)}
+#sound-tooltip{display:none;position:absolute;left:calc(100% + 12px);bottom:0;width:310px;padding:18px;background:var(--bg);border:1px solid var(--line);box-shadow:0 8px 30px #0006;z-index:10;pointer-events:none}
+.spectrogram-panel:hover #sound-tooltip,.spectrogram-panel:focus #sound-tooltip{display:block}
+#sound-tooltip .eyebrow{font:9px var(--mono);color:var(--accent);margin-bottom:10px}
+#sound-tooltip .row{display:flex;justify-content:space-between;gap:18px;margin-top:7px;font:10px/1.5 var(--body)}
+#sound-tooltip .k{color:var(--muted);flex-shrink:0}
+#sound-tooltip .v{text-align:right}
+[data-style=brutalist] main>.audition{padding:14px 0 0;background:var(--bg);align-self:end}
+@media(max-width:999px){main>.audition{grid-column:1/-1;grid-row:3}.spectrogram-panel{margin-top:20px}}
+@media(max-width:650px){main>.audition{grid-row:4}.spectrogram-panel{max-width:100%}#sound-tooltip{left:0;bottom:100%;width:min(310px,100%)} }

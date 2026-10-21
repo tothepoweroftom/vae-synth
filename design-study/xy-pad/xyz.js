@@ -51,7 +51,7 @@ window.XyzPad = (() => {
     }
     return best;
   }
-  function draw(ctx, width, height, {point, dots, accent, ink, line, colors, category, showDots, camera=null, selected=false}) {
+  function draw(ctx, width, height, {point, dots, accent, ink, line, colors, category, showDots, camera=null, selected=false, highlightCategory=false}) {
     ctx.clearRect(0,0,width,height);
     const dpr = window.devicePixelRatio || 1;
     const screen = (x,y,z) => {if(camera){const p=orbitProject(x,y,z,camera,width,height);return [p.x,p.y];}const p=project(x,y,z);return [p.x*width,p.y*height];};
@@ -70,7 +70,14 @@ window.XyzPad = (() => {
     // Presets have real coordinates along all three selected directions.
     if(showDots){
       const visible=dots.filter(d=>d.slice(0,3).every(v=>Number.isFinite(v)&&v>=0&&v<=1)).sort((a,b)=>camera ? orbitProject(...a.slice(0,3),camera,width,height).depth-orbitProject(...b.slice(0,3),camera,width,height).depth : b[2]-a[2]);
-      for(const [x,y,z,label] of visible){const s=screen(x,y,z);ctx.globalAlpha=(category===null||label===category?.65:.2)*(camera?1:Math.abs(z-p.z)<.1?1:.4);ctx.fillStyle=colors[label]||ink;ctx.beginPath();ctx.arc(...s,1.7*dpr,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+      for(const [x,y,z,label] of visible){
+        const s=screen(x,y,z), matches=category===null||label===category;
+        // Keep every category readable in orbit; reserve emphasis for the current category.
+        ctx.globalAlpha=(camera ? (matches ? 1 : highlightCategory ? .12 : .78) : (matches ? .8 : .5)*(Math.abs(z-p.z)<.1?1:.4));
+        ctx.fillStyle=colors[label]||ink;
+        ctx.beginPath();ctx.arc(...s,(camera ? (matches ? (highlightCategory ? 3.2 : 2.5) : 2.1) : 1.7)*dpr,0,Math.PI*2);ctx.fill();
+      }
+      ctx.globalAlpha=1;
     }
     ctx.setLineDash([3*dpr,4*dpr]);
     path([[p.x,p.y,0],[p.x,p.y,1]],accent+'55');

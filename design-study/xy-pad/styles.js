@@ -1,7 +1,7 @@
 (() => {
   const captions = {
     precision: 'Fine lines. Quiet precision.',
-    brutalist: 'Heavy rules. Unapologetic controls.',
+    brutalist: 'Graphite. Signal green. Heavy rules.',
     swiss: 'Clear type. Rigorous alignment.',
     industrial: 'Tactile controls. Studio equipment.',
     editorial: 'Expressive type. Space to explore.'
@@ -24,9 +24,5 @@
   applyStyle(new URL(location.href).searchParams.get('style') || saved || 'precision');
   document.querySelectorAll('[data-style-choice]').forEach(button => {
     button.addEventListener('click', () => applyStyle(button.dataset.styleChoice));
-  });
-  // A fragment-only About link should reveal the details it points to.
-  document.querySelector('.about-link').addEventListener('click', () => {
-    document.getElementById('research').open = true;
   });
 })();

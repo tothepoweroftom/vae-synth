@@ -85,3 +85,11 @@ Snapshots retain both mode contexts: latent vector, conditioning category, laten
 “Use this preview” records only session-local presentation settings and shows a personal-space preview summary; “Back to original” clears them. No weights, latent positions, classifier outputs or sound parameters are changed. Cancelling makes no selection active. Removing a selected favourite clears the active concept preview. Actual fine-tuning would require a separately specified training/adaptation method and evaluation.
 
 Naming captures the patch when the dialog opens, persists only after Save, preserves the dialog on storage failure, and uses text nodes for user-provided names. Snapshot tests and JavaScript syntax checks pass; visual UI verification is pending.
+
+### Brutalist — graphite / green
+
+Open `?style=brutalist&view=orbit` for the graphite variant: #252525 instrument, #1c1c1c page, #70ff63 highlights. Hard rules, square controls and monospace labels remain. The pad, selected controls, favourites and concept-preview dots share the green accent; other styles retain their existing palettes.
+
+The simplified study hides the legacy pad-mode, starting-preset, category, structure-lock and patch-reset controls. Their DOM bindings remain for compatibility with the student runtime and saved favourites. The audition keyboard spans C3–C6 (37 notes); A–K still plays C3–C4, and all keys support pointer or focused Enter/Space input.
+
+The compact pitcher wordmark uses a circular air-swish symbol in place of the large header. Audio starts from a piano key; there is no visible Sound on button. The keyboard now shows three complete piano octaves (C3–B5): 21 white keys with three repeated 2+3 black-key groups, positioned explicitly rather than relying on flex overlap.

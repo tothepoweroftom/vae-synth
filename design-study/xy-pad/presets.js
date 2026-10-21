@@ -21,7 +21,7 @@
   function updateHeart(){
     let active;
     try{active=activeFavorite();}catch{return;}
-    heart.textContent=active?'♥':'♡';heart.setAttribute('aria-pressed',String(Boolean(active)));
+    heart.setAttribute('aria-pressed',String(Boolean(active)));
     heart.setAttribute('aria-label',active?'Rename current favourite':'Save current patch as favourite');
     heart.title=active?'Rename favourite':'Save favourite';
     list.querySelectorAll('[data-favorite-id]').forEach(row=>row.classList.toggle('current',row.dataset.favoriteId===active?.id));
@@ -31,7 +31,7 @@
     list.replaceChildren();
     document.getElementById('open-tuning').disabled=!favorites.length;
     if(appliedPreview && appliedPreview.ids.some(id=>!favorites.some(f=>f.id===id)))resetSpace();
-    if(!favorites.length){const p=document.createElement('p');p.className='preset-empty';p.textContent='Found a sound you like? Tap ♡ to keep it here.';list.append(p);return;}
+    if(!favorites.length){const p=document.createElement('p');p.className='preset-empty';p.textContent='Found a sound you like? Use the save button to keep it here.';list.append(p);return;}
     for(const favorite of favorites){
       const row=document.createElement('div');row.className='favorite-row';row.dataset.favoriteId=favorite.id;
       const load=document.createElement('button');load.className='load-favorite';load.type='button';
@@ -87,7 +87,7 @@
       const cx=117+Math.cos(angle)*50,cy=120+Math.sin(angle)*50;
       const blend=selected.length?amount*.8:0;
       const px=x*(1-blend)+cx*blend,py=y*(1-blend)+cy*blend;
-      art+=`<circle cx="${x}" cy="${y}" r="2" fill="#86867b"/><circle cx="${px+264}" cy="${py}" r="2" fill="${selected.length?'#ffff07':'#86867b'}" opacity=".75"/>`;
+      art+=`<circle cx="${x}" cy="${y}" r="2" fill="#86867b"/><circle cx="${px+264}" cy="${py}" r="2" fill="${selected.length?'var(--accent)':'#86867b'}" opacity=".75"/>`;
     }
     document.getElementById('tune-map').innerHTML=art;
   }

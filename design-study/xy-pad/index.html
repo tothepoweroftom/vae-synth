@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>XY Lab — Style study</title>
+<title>pitcher — Style study</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 
 
 <link rel="stylesheet" href="precision.css">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=minimal-keys-1">
 <script src="styles.js" defer></script>
-<link rel="stylesheet" href="chat.css">
+<link rel="stylesheet" href="chat.css?v=balanced-columns-1">
 <script src="chat.js" defer></script>
-<script src="presets.js" defer></script>
-<link rel="stylesheet" href="presets.css">
+<script src="presets.js?v=disk-save-1" defer></script>
+<link rel="stylesheet" href="presets.css?v=sidebar-layout-1">
 
 </head><body>
 <nav class="study-nav" aria-label="Design study">
@@ -28,12 +28,10 @@
   <span id="style-caption">Fine lines. Quiet precision.</span>
 </nav>
 <div class="wrap">
-  <header class="instrument-header">
-    <div class="brand"><span class="brand-mark">✳</span><div>VAE</div></div>
-    <div class="header-title">XY Lab</div>
-    <a class="about-link" href="#research">About</a>
-  </header>
-  <div class="toolbar">
+  <div hidden inert>
+
+    <!-- Retained off-screen for the student runtime and saved-patch compatibility. -->
+    <div hidden inert>
     <div class="seg" role="group" aria-label="Pad mode">
       <button type="button" id="m-latent" aria-pressed="true">Latent pad</button>
       <button type="button" id="m-knob" aria-pressed="false">Knob pad</button>
@@ -42,43 +40,58 @@
     <div class="field only-latent"><label for="cat">Category</label><select id="cat"></select></div>
     <button class="btn only-latent" id="lock" type="button" aria-pressed="false" title="Keep oscillator types, effects and other switches fixed while dragging">Lock structure</button>
     <button class="btn" id="reset" type="button">Reset</button>
-    <button class="btn heart-button" id="favorite-patch" type="button" aria-label="Save current patch as favourite" aria-pressed="false" title="Save current patch as favourite">♡</button>
-    <span id="favorite-status" class="favorite-status" role="status"></span>
-    <button class="btn primary" id="sound" type="button" aria-pressed="false">Sound on</button>
+    </div>
+    <button hidden class="btn primary" id="sound" type="button" aria-pressed="false">Sound on</button>
 
   </div>
 
   <main>
     <aside class="category-panel" aria-label="Current sound category matches">
+    <div class="pitcher-brand" aria-label="pitcher">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M32 12a15 15 0 1 0 2 13"/><path d="M7 25c8-15 17-16 28-14M9 30c9-12 17-14 27-13"/></svg>
+      <span>pitcher</span>
+    </div>
       <div class="category-matches"><div class="probs" id="probs"></div></div>
+      <div class="category-save">    <button class="btn heart-button" id="favorite-patch" type="button" aria-label="Save current patch as favourite" aria-pressed="false" title="Save current patch as favourite"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h13l4 4v14H3V3z"/><path d="M7 3v6h9V3M7 21v-8h10v8M13 4v3"/></svg></button>
+    <span id="favorite-status" class="favorite-status" role="status"></span>
+</div>
+      <div class="spectrogram-panel" tabindex="0" aria-label="Predicted spectrogram and sound details" aria-describedby="sound-tooltip">
+        <div class="spectrogram-title">Expected sound</div>
+        <canvas class="spec" id="spec" role="img" aria-label="Model-predicted spectrogram"></canvas>
+        <div class="speccap"><span>0 s</span><span>2 s</span><span>6 s</span></div>
+        <div id="sound-tooltip" role="tooltip"><div id="knobs"></div></div>
+      </div>
     </aside>
     <section class="panel" aria-label="XY or XYZ pad">
-      <div class="pad-view-bar"><div class="seg" role="group" aria-label="Pad view"><button id="view-xy" type="button" aria-pressed="true">XY</button><button id="view-xyz" type="button" aria-pressed="false">XYZ</button><button id="view-orbit" type="button" aria-pressed="false">Orbit</button></div><span id="xyz-help" hidden>Drag XY · Shift-drag depth</span></div>
+      <div hidden inert><span id="xyz-help"></span></div>
 
-      <div id="camera-controls" class="camera-controls" hidden role="group" aria-label="Camera controls">
-        <button type="button" data-camera="front">Front</button><button type="button" data-camera="top">Top</button><button type="button" data-camera="side">Side</button>
-        <span></span><button type="button" id="camera-out" aria-label="Zoom out">−</button><button type="button" id="camera-in" aria-label="Zoom in">+</button><button type="button" data-camera="reset">Reset view</button>
-      </div>
+
       <div class="padwrap">
         <div class="yaxis" id="yaxis"></div>
-        <div class="padbox"><canvas id="pad" tabindex="0" aria-label="XY pad: drag, or use the arrow keys"></canvas></div>
+        <div class="padbox"><canvas id="pad" tabindex="0" aria-label="XY pad: drag, or use the arrow keys"></canvas><div id="camera-controls" class="camera-controls" hidden role="group" aria-label="Camera controls">
+        <button type="button" id="camera-out" aria-label="Zoom out">−</button><button type="button" id="camera-in" aria-label="Zoom in">+</button><button type="button" data-camera="reset">Reset view</button>
+      </div></div>
         <div class="xaxis" id="xaxis"></div>
       </div>
+      <div hidden inert>
       <div class="zrow" id="zrow">
         <span class="mono">Z</span><input type="range" id="z" min="0" max="1000" value="500" aria-label="Third axis">
         <span class="zname" id="zname"></span>
+      </div>
       </div>
       <form id="chat-form" class="prompt-composer">
         <label class="sr-only" for="chat-prompt">Describe a sound</label>
         <input id="chat-prompt" type="text" maxlength="1000" placeholder="Describe a sound…" autocomplete="off" aria-describedby="prompt-status">
         <button id="send-chat" type="submit" aria-label="Apply prompt" disabled>↑</button>
       </form>
-      <p id="prompt-status" class="prompt-status" role="status">Local demo · category matching only</p>
+      <p id="prompt-status" class="prompt-status" role="status"></p>
+      <div hidden inert>
       <details class="map-options"><summary>Map options</summary><div class="checks">
         <label for="bg">Background</label><select id="bg"></select>
         <label><input type="checkbox" id="showdots" checked> Preset dots</label>
       </div>
       </details><div class="legend" id="legend"></div>
+      </div>
 
     </section>
 
@@ -89,10 +102,9 @@
       </div>
       <div id="axes-content" role="tabpanel" aria-labelledby="axes-tab">
 
-      <div class="listhead">
+      <div class="listhead" hidden>
         <h2 id="listtitle">Axes</h2>
         <p class="hint" id="listhint" hidden></p>
-        <input type="search" id="filter" placeholder="Find an axis…" aria-label="Filter the list">
       </div>
       <div class="list" id="list"></div>
       </div>
@@ -102,26 +114,12 @@
         <div class="tune-entry"><button id="open-tuning" class="btn" type="button">Shape my space ↗</button><p id="space-state">Choose favourites to guide your space.</p><button id="reset-space" type="button" hidden>Back to original</button></div>
       </div>
     </aside>
+  <div class="audition"><div><strong>3 octaves</strong><span class="eyebrow">Keys A–K</span></div><div class="keys" id="keys" aria-label="Three octave keyboard C3 to C6 (computer keys A to K play C3 to C4)"></div><p><span>Approximate browser sound</span></p></div>
   </main>
 
-  <div class="audition"><div><strong>C3 — C4</strong><span class="eyebrow">Keys A–K</span></div><div class="keys" id="keys" aria-label="Keyboard C3 to C4 (computer keys A to K)"></div><p><span>Approximate browser sound</span></p></div>
-  <details class="inspector"><summary>Sound details</summary>      <div class="readouts">
-        <div class="knobs" id="knobs"></div>
-      </div>
-      <p class="hint" id="hint"></p>
-  </details>
-  <details id="research" class="research-notes"><summary>About this prototype</summary>
-  <section class="panel notes" aria-label="Notes">
-    <div>
-      <h2>How this was made</h2>
-      <ul id="method"></ul>
-    </div>
-    <div>
-      <h2>For the C++ version</h2>
-      <ul id="cpp"></ul>
-    </div>
-  </section>
-  </details>
+
+  <!-- Legacy readout targets retained for the student runtime. -->
+  <div hidden inert><p id="hint"></p><ul id="method"></ul><ul id="cpp"></ul></div>
 
 </div>
 
@@ -133,7 +131,7 @@
     <label for="favorite-name">Patch name</label>
     <input id="favorite-name" maxlength="70" required autocomplete="off" placeholder="e.g. Midnight glass">
     <p id="name-error" role="status"></p>
-    <div class="dialog-actions"><button type="button" id="cancel-name" class="btn">Cancel</button><button type="submit" class="btn primary">Save favourite ♥</button></div>
+    <div class="dialog-actions"><button type="button" id="cancel-name" class="btn">Cancel</button><button type="submit" class="btn primary">Save favourite</button></div>
   </form>
 </dialog>
 <dialog id="tune-dialog" aria-labelledby="tune-title">
@@ -147,7 +145,7 @@
   <p class="tune-limit">Design preview only. The dots are illustrative; no model training or sound changes.</p>
   <div class="dialog-actions"><button id="cancel-tuning" type="button" class="btn">Cancel</button><button id="apply-tuning" type="button" class="btn primary">Use this preview</button></div>
 </dialog>
-<script src="xyz.js"></script>
-<script src="app.js"></script>
+<script src="xyz.js?v=category-highlight-1"></script>
+<script src="app.js?v=flat-axes-1"></script>
 
 </body></html>

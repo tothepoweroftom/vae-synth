@@ -1,5 +1,5 @@
 .heart-button{font-size:23px;line-height:1;padding:6px 9px;color:var(--accent)}
-.heart-button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:#ffff070c}
+.heart-button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .favorite-status{font:8px/1.5 var(--body);color:var(--muted);max-width:160px}
 .favorite-status:empty{display:none}
 .sidebar-tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:12px;flex-shrink:0}
@@ -56,3 +56,28 @@ dialog h2{font:400 22px var(--body);letter-spacing:-.6px;margin:0 0 22px}
 [data-style=brutalist] dialog{border:2px solid var(--accent)}
 [data-style=editorial] dialog h2{font-family:Georgia,serif;font-style:italic}
 @media(max-width:650px){.tune-layout{grid-template-columns:1fr}.tune-heading h2{font-size:21px}#tune-favorites{max-height:140px}.tune-preview{max-width:450px}}
+
+/* Sidebar: a continuous surface with a stable tab/search header. */
+[data-style=brutalist] .axes-panel{background:var(--bg);border-radius:0;border-left:1px solid var(--line);padding:0 0 0 20px;gap:0}
+.axes-panel .sidebar-tabs{gap:0;margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr}
+.axes-panel .sidebar-tabs button{padding:12px 4px;text-align:left;font-size:11px}
+.axes-panel .sidebar-tabs button[aria-selected=true]{color:var(--accent)}
+.axes-panel .listhead h2{display:none}
+.axes-panel #filter{padding:10px 12px;border:1px solid var(--line);font-size:10px}
+.axes-panel .list{margin:0;scrollbar-color:var(--line) var(--bg)}
+.axes-panel .g{grid-template-columns:minmax(0,1fr) auto;gap:10px 8px;padding:16px 0;border-left:0;background:transparent}
+.axes-panel .g .nm{grid-column:1/-1;grid-row:1;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.axes-panel .g .axbtns{grid-column:1;grid-row:2;justify-self:start;gap:6px}
+.axes-panel .g .axbtn{width:30px;height:27px;box-shadow:none}
+.axes-panel .g .axis-info{grid-column:2;grid-row:2;align-self:center;text-align:right}
+.axes-panel .g .axis-info[open]{grid-column:1/-1;grid-row:4;text-align:left}
+.axes-panel .g .axis-info summary{font-size:9px;color:var(--muted)}
+.axes-panel .g .slide{grid-column:1/-1;grid-row:3;padding-top:4px;font-size:8px;gap:8px}
+.axes-panel .g .slide input{min-width:0}
+.axes-panel .lhead{background:transparent;padding:14px 0}
+.axes-panel details.more>summary{padding:16px 0}
+.axes-panel #presets-content{padding-top:2px}
+.axes-panel .favorite-row{gap:6px;padding:14px 0}
+.axes-panel .load-favorite strong{font-size:12px}
+.axes-panel .tune-entry{margin-top:20px;padding-top:20px}
+@media(max-width:999px){[data-style=brutalist] .axes-panel{border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}

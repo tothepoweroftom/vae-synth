@@ -262,7 +262,7 @@ document.getElementById("m-knob").addEventListener("click", () => setMode("knob"
 const legend = document.getElementById("legend");
 
 // ---------- list ----------
-const list = document.getElementById("list"), filt = document.getElementById("filter");
+const list = document.getElementById("list");
 const AUDIBLE = new Set(["Amp attack", "Amp decay", "Amp sustain", "Amp release", "Filter env attack", "Filter env decay", "Filter env sustain", "Filter env release",
   "Cutoff", "Resonance", "Filter env amount", "Filter keytrack", "Drive", "Glide", "Drift", "Osc 2/3 detune", "Osc 1 level", "Osc 2/3 level", "Noise level",
   "Classic shape", "Sub mix", "Unison detune", "LFO 1 rate", "LFO 1 amount", "Reverb size / decay", "Reverb mix", "Delay time", "Delay feedback", "Delay mix", "Volume"]);
@@ -281,7 +281,6 @@ function drawKnobList(q) {
     el.innerHTML = `<div class="rank">${r + 1}</div>
       <div class="nm">${g.name}<span class="sec">${g.section}</span></div>
       <div class="axbtns">${axButtons(on, g.name)}</div>
-      <details class="axis-info"><summary aria-label="About ${g.name}">Info</summary><div class="desc">${g.desc}</div></details>
       <div class="meter"><div class="track"><i class="${clear ? "" : "unclear"}" style="width:${w.toFixed(1)}%"></i></div>
         <span class="num">${g.importance >= 0 ? "+" : ""}${(g.importance * 100).toFixed(1)} pts</span></div>
       <div class="tags"><span class="tag">${g.knobs.length} knob${g.knobs.length > 1 ? "s" : ""}</span>
@@ -305,7 +304,6 @@ function latItem(ax, rank) {
   el.innerHTML = `<div class="rank">${rank}</div>
     <div class="nm">${ax.name}</div>
     <div class="axbtns">${axButtons(on, ax.name)}</div>
-    <details class="axis-info"><summary aria-label="About ${ax.name}">Info</summary><div class="desc">${ax.desc}</div></details>
     ${meter}
     <div class="tags">${tags}</div>
     <div class="slide"><span>${ax.low}</span><input type="range" min="0" max="1000" value="${Math.round(p * 1000)}" aria-label="${ax.name}"><span>${ax.high}</span></div>`;
@@ -323,32 +321,14 @@ function latItem(ax, rank) {
 function refreshSliders(except) {
   list.querySelectorAll(".g").forEach(el => { if (!el._ax) return; const s = el.querySelector("input"); if (s !== except) s.value = Math.round(Math.min(1, Math.max(0, posOf(el._ax, lat.z))) * 1000); });
 }
-function drawLatList(q) {
-  document.getElementById("listtitle").textContent = "Axes";
-  document.getElementById("listhint").textContent = "Put any axis on X, Y or Z, or move it with its own slider. Sound axes are directions in z that follow a measured sound property; latent dimensions are the VAE's own axes, ranked by how much they change the decoded sound.";
-  const match = (ax) => !q || (ax.name + " " + ax.desc + " " + (ax.secs || []).map(s => s[0]).join(" ")).toLowerCase().includes(q);
-  const head = (t, s) => { const h = document.createElement("div"); h.className = "lhead"; h.innerHTML = `<h3>${t}</h3><span class="hint">${s}</span>`; list.appendChild(h); };
-  const snd = AX.filter(a => a.kind === "sound" && match(a));
-  if (snd.length) { head("Sound axes", "Tangible for users: one sound property each."); snd.forEach((a, i) => list.appendChild(latItem(a, i + 1))); }
-  const dims = AX.filter(a => a.kind === "dim" && match(a));
-  const main = dims.filter(a => !a.minor), minor = dims.filter(a => a.minor);
-  if (main.length) {
-    const more = document.createElement("details"); more.className = "more"; more.open = Boolean(q);
-    more.innerHTML = "<summary>Latent dimensions</summary>";
-    main.forEach(a => more.appendChild(latItem(a, a.rank + 1))); list.appendChild(more);
-  }
-  if (minor.length) {
-    const det = document.createElement("details"); det.className = "more"; if (q) det.open = true;
-    det.innerHTML = `<summary>${minor.length} more dimensions</summary>`;
-    minor.forEach(a => det.appendChild(latItem(a, a.rank + 1))); list.appendChild(det);
-  }
+function drawLatList() {
+  AX.filter(a => a.kind === "sound").forEach((a, i) => list.appendChild(latItem(a, i + 1)));
+  AX.filter(a => a.kind === "dim").forEach(a => list.appendChild(latItem(a, a.rank + 1)));
 }
 function drawList() {
-  const q = filt.value.trim().toLowerCase();
   list.innerHTML = "";
-  if (isLat()) drawLatList(q); else drawKnobList(q);
+  if (isLat()) drawLatList(); else drawKnobList("");
 }
-filt.addEventListener("input", drawList);
 function assign(a, name) {
   const ax = isLat() ? lat.axes : state.axes;
   if (ax[a] === name) { if (a === "z") ax.z = null; else return; }
@@ -363,6 +343,7 @@ function assign(a, name) {
 const cv = document.getElementById("pad"), ctx = cv.getContext("2d");
 const GRID = 40, LGRID = 24;
 let padView = 'xy';
+let highlightedCategory = null;
 const orbitCamera = XyzPad.createCamera();
 let cameraStart = null, orbitGesture = null, handleStart = null, handleSelected = false;
 const hasZ = () => isLat() ? Boolean(AXI[lat.axes.z]) : Boolean(byName[state.axes.z]);
@@ -386,9 +367,6 @@ function setPadView(view) {
     const choice = isLat() ? AX.find(a => a.id !== active.x && a.id !== active.y)?.id : ranked.find(g => g.name !== active.x && g.name !== active.y)?.name;
     if(choice) assign('z',choice);
   }
-  document.getElementById('view-xy').setAttribute('aria-pressed', String(view==='xy'));
-  document.getElementById('view-xyz').setAttribute('aria-pressed', String(view==='xyz'));
-  document.getElementById('view-orbit').setAttribute('aria-pressed', String(view==='orbit'));
   document.getElementById('camera-controls').hidden = view!=='orbit';
   document.getElementById('xyz-help').hidden = view==='xy';
   document.querySelector('.padwrap').classList.toggle('xyz-view',view!=='xy');
@@ -396,9 +374,6 @@ function setPadView(view) {
   const url=new URL(location.href);url.searchParams.set('view',view);history.replaceState(null,'',url);
   render(false);
 }
-document.getElementById('view-xy').addEventListener('click',()=>setPadView('xy'));
-document.getElementById('view-xyz').addEventListener('click',()=>setPadView('xyz'));
-document.getElementById('view-orbit').addEventListener('click',()=>setPadView('orbit'));
 function zoomCamera(factor) {orbitCamera.zoom=Math.max(.5,Math.min(2.5,orbitCamera.zoom*factor));drawPad();}
 document.getElementById('camera-in').addEventListener('click',()=>zoomCamera(1.15));
 document.getElementById('camera-out').addEventListener('click',()=>zoomCamera(1/1.15));
@@ -457,7 +432,7 @@ function drawPad() {
   if(padView!=='xy') {
     if(!hasZ()) { document.getElementById('xyz-help').textContent='Assign a Z axis to explore depth'; }
     else document.getElementById('xyz-help').textContent=padView==='orbit'?'Handle: move · Shift: depth · Empty space: orbit':'Drag XY · Shift-drag depth';
-    XyzPad.draw(ctx,cv.width,cv.height,{point:{...P_(),z:hasZ()?P_().z:0},dots:xyzDots(),accent:cssVar('--accent'),ink:cssVar('--muted'),line:cssVar('--line'),colors:COL,category:isLat()?lat.y:null,showDots:document.getElementById('showdots').checked,camera:padView==='orbit'?orbitCamera:null,selected:handleSelected});
+    XyzPad.draw(ctx,cv.width,cv.height,{point:{...P_(),z:hasZ()?P_().z:0},dots:xyzDots(),accent:cssVar('--accent'),ink:cssVar('--muted'),line:cssVar('--line'),colors:COL,category:highlightedCategory ?? (isLat()?lat.y:null),highlightCategory:highlightedCategory!==null,showDots:document.getElementById('showdots').checked,camera:padView==='orbit'?orbitCamera:null,selected:handleSelected});
     legend.textContent=padView==='orbit'?'Click handle for XYZ arrows · scroll to zoom':'Preset positions in XYZ · highlighted plane is the current depth';
     return;
   }
@@ -616,7 +591,8 @@ const FX_NAMES = { "fx/reverb/present": "reverb", "fx/reverb2/present": "reverb 
   "fx/freqshift/present": "freq shift", "fx/conditioner/present": "conditioner", "fx/nimbus/present": "nimbus" };
 function specCanvas() {
   const c = document.getElementById("spec"); if (!c || !lat.X) return;
-  const Tn = PCA.T, g = c.getContext("2d"), img = g.createImageData(Tn, NM);
+  const Tn = PCA.T; c.width=Tn; c.height=NM;
+  const g = c.getContext("2d"), img = g.createImageData(Tn, NM);
   const hex = cssVar("--heat").replace("#", ""), n = parseInt(hex, 16), R = n >> 16 & 255, G = n >> 8 & 255, B = n & 255;
   const bgc = cssVar("--well").replace("#", ""), nb = parseInt(bgc.length === 3 ? bgc.split("").map(ch => ch + ch).join("") : bgc, 16), r0 = nb >> 16 & 255, g0 = nb >> 8 & 255, b0 = nb & 255;
   for (let t = 0; t < Tn; t++) for (let b = 0; b < NM; b++) {
@@ -624,10 +600,18 @@ function specCanvas() {
     img.data[k] = r0 + (R - r0) * v; img.data[k + 1] = g0 + (G - g0) * v; img.data[k + 2] = b0 + (B - b0) * v; img.data[k + 3] = 255; }
   g.putImageData(img, 0, 0);
 }
+document.getElementById('probs').addEventListener('click', event => {
+  const button=event.target.closest('[data-highlight-category]');
+  if(!button)return;
+  const category=Number(button.dataset.highlightCategory);
+  highlightedCategory=highlightedCategory===category?null:category;
+  document.querySelectorAll('[data-highlight-category]').forEach(item=>item.setAttribute('aria-pressed',String(Number(item.dataset.highlightCategory)===highlightedCategory)));
+  drawPad(); // Visual focus only: preserve the sound and latent position.
+});
 function drawReadouts() {
   const p = predict(state.vals), top = argmax(p);
   document.getElementById("probs").innerHTML = `<div class="match-heading"><span>Category match</span><strong>Closest: ${L[top]} · ${Math.round(p[top] * 100)}%</strong></div>` + L.map((l, c) =>
-    `<div class="prob${c === top ? " top" : ""}"><span class="name">${l}</span><span class="bar"><i style="width:${(p[c] * 100).toFixed(1)}%;background:${COL[c]}"></i></span><span class="pct">${Math.round(p[c] * 100)}%</span></div>`).join("");
+    `<button type="button" data-highlight-category="${c}" aria-pressed="${highlightedCategory===c}" class="prob${c === top ? " top" : ""}"><span class="name">${l}</span><span class="bar"><i style="width:${(p[c] * 100).toFixed(1)}%;background:${COL[c]}"></i></span><span class="pct">${Math.round(p[c] * 100)}%</span></button>`).join("");
   const kn = document.getElementById("knobs");
   if (isLat() && lat.out) {
     const m = lat.m, o = lat.out;
@@ -635,8 +619,6 @@ function drawReadouts() {
     const fx = LT.bools.filter((b, j) => FX_NAMES[b] && o.bools[j]).map(b => FX_NAMES[b]);
     const row = (k, v) => `<div class="row wide"><span class="k">${k}</span><span class="v">${v}</span></div>`;
     kn.innerHTML = `<div class="eyebrow">Expected sound at the dot</div>
-      <canvas class="spec" id="spec" width="${PCA.T}" height="${NM}" role="img" aria-label="Expected spectrogram"></canvas>
-      <div class="speccap"><span>0 s</span><span>note off 2 s</span><span>6 s</span></div>
       ${row("Brightness", `${m.brightness.toFixed(1)} oct above the note`)}${row("Attack", m.attack < 0.05 ? "< 50 ms" : `${Math.round(m.attack * 1000)} ms`)}
       ${row("Length", `${m.length.toFixed(1)} s`)}${row("Noise", `${Math.round(m.noise * 100)}%`)}
       <div class="eyebrow" style="margin-top:8px">Decoded preset${lat.lock ? " · structure locked" : ""}</div>
@@ -775,13 +757,20 @@ soundBtn.addEventListener("click", async () => {
   if (soundOn) { await AC.resume(); synthUpdate(); } else { noteOff(); AC.suspend(); }
 });
 const keysEl = document.getElementById("keys"), PCK = "awsedftgyhujk";
-for (let m = 48; m <= 60; m++) {
+let whiteKeyIndex = 0;
+for (let m = 48; m <= 84; m++) {
   const b = document.createElement("div"); const black = [1, 3, 6, 8, 10].includes(m % 12);
-  b.className = "key" + (black ? " black" : ""); b.tabIndex = 0; b.textContent = m === 48 ? "C3" : m === 60 ? "C4" : PCK[m - 48].toUpperCase();
+  b.className = "key" + (black ? " black" : ""); b.tabIndex = 0; b.textContent = m % 12 === 0 ? `C${Math.floor(m / 12) - 1}` : "";
+  b.style.left = `${(whiteKeyIndex - (black ? 0.31 : 0)) * 100 / 22}%`;
+  if (!black) whiteKeyIndex++;
   b.dataset.m = m; b.setAttribute("role", "button"); b.setAttribute("aria-label", `Note ${m}`);
   const on = async (e) => { e.preventDefault(); if (!soundOn) soundBtn.click(); if (AC.state !== "running") await AC.resume(); noteOn(m); b.classList.add("on"); };
   const off = () => { if (curNote === m) noteOff(); b.classList.remove("on"); };
   b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off);
+  b.addEventListener("pointercancel", off);
+  b.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && !e.repeat) on(e); });
+  b.addEventListener("keyup", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); off(); } });
+  b.addEventListener("blur", off);
   keysEl.appendChild(b);
 }
 window.addEventListener("keydown", (e) => { if (e.target.matches("input,select,button,textarea") || e.repeat) return; const i = PCK.indexOf(e.key.toLowerCase()); if (i < 0) return;
@@ -827,8 +816,8 @@ window.XypadPresets={capture:capturePatch,restore:restorePatch,validate:validate
 // start
 catSel.value = lat.y; latSyncPos();
 setMode(state.mode);
-const initialView=new URL(location.href).searchParams.get('view');
-if(['xyz','orbit'].includes(initialView)) setPadView(initialView);
+
+setPadView('orbit');
 new ResizeObserver(resize).observe(cv);
 window.__xypad = { decodeP, decodeA, measures, LT, lat, AX };     // for checks
 })();
