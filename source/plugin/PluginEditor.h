@@ -1,5 +1,5 @@
 /*
-  Editor: two toggleable views over one header (engine choice, init, status) and
+  Editor: Synth, Prompt and isolated VAE Lab views over one header (engine choice, init, status) and
   an on-screen keyboard. Synth view: the schema controls as knobs grouped by
   their schema "section". Prompt view: prompt and model tools, a latent XY pad,
   and a sidebar of every control as a linear bar. Every control binds through params::SliderBinding /
@@ -9,6 +9,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "experiments/joint_vae/JointVaePanel.h"
 #include "params/Attachments.h"
 #include "ui/VaeLookAndFeel.h"
 
@@ -125,7 +126,13 @@ private:
     void choosePreset();
     void chooseSearchFile (bool bank);
     void setStatus (const juce::String&);
-    void showView (bool prompt);
+    enum class View
+    {
+        synth,
+        prompt,
+        jointVae
+    };
+    void showView (View);
 
     PluginProcessor& processor;
     // Shared by every open editor: it is also the global default, which is where JUCE resolves fonts.
@@ -146,7 +153,9 @@ private:
     std::unique_ptr<juce::FileChooser> chooser;
 
     juce::TextButton synthViewButton { "Synth" }, promptViewButton { "Prompt" };
-    bool promptView = false;
+    juce::TextButton jointVaeViewButton { "VAE Lab" };
+    View currentView = View::synth;
+    experimental::JointVaePanel jointVaePanel;
     XYPad xyPad;
     schema::Latent xyLatent {};
     juce::Viewport paramViewport;

@@ -344,13 +344,16 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                 safe->setStatus (message);
         });
 
-    for (auto* b : { &synthViewButton, &promptViewButton })
+    for (auto* b : { &synthViewButton, &promptViewButton, &jointVaeViewButton })
     {
         b->setClickingTogglesState (false);
         addAndMakeVisible (b);
     }
-    synthViewButton.onClick = [this] { showView (false); };
-    promptViewButton.onClick = [this] { showView (true); };
+    synthViewButton.onClick = [this] { showView (View::synth); };
+    promptViewButton.onClick = [this] { showView (View::prompt); };
+
+    jointVaeViewButton.onClick = [this] { showView (View::jointVae); };
+    addChildComponent (jointVaePanel);
 
     // shortcut: the pad drives latent dims 0 and 1 with the rest at 0; add per-axis dim pickers if wanted.
     xyPad.onMove = [this] (float x, float y)
@@ -388,20 +391,23 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     const int sectionsH = layOutSections (sections, { kMargin, 0, kEditorW - 2 * kMargin, 10000 }, false);
     setSize (kEditorW, kMargin + kTopBarH + sectionsH + kGap + kKeyboardH + kMargin);
-    showView (false);
+    showView (View::synth);
 }
 
-void PluginEditor::showView (bool prompt)
+void PluginEditor::showView (View view)
 {
-    promptView = prompt;
+    currentView = view;
+    const bool prompt = view == View::prompt;
+    jointVaePanel.setVisible (view == View::jointVae);
+    jointVaeViewButton.setToggleState (view == View::jointVae, juce::dontSendNotification);
     for (auto* c : std::initializer_list<juce::Component*> { &promptEditor, &generateButton, &randomButton,
                                                              &modelButton, &stubButton, &presetButton,
                                                              &generatorPackageButton, &bankButton, &referenceButton,
                                                              &cancelSearchButton, &matchesBox, &xyPad, &paramViewport })
         c->setVisible (prompt);
     for (auto* s : sections)
-        s->setVisible (! prompt);
-    synthViewButton.setToggleState (! prompt, juce::dontSendNotification);
+        s->setVisible (view == View::synth);
+    synthViewButton.setToggleState (view == View::synth, juce::dontSendNotification);
     promptViewButton.setToggleState (prompt, juce::dontSendNotification);
     resized();
 }
@@ -560,6 +566,7 @@ void PluginEditor::resized()
     auto header = r.removeFromTop (kTopBarH).removeFromTop (24);
     synthViewButton.setBounds (header.removeFromLeft (80));
     promptViewButton.setBounds (header.removeFromLeft (80));
+    jointVaeViewButton.setBounds (header.removeFromLeft (90));
     header.removeFromLeft (16);
     engineBox.setBounds (header.removeFromRight (120));
     header.removeFromRight (12);
@@ -572,7 +579,13 @@ void PluginEditor::resized()
     keyboard.setBounds (r.removeFromBottom (kKeyboardH));
     r.removeFromBottom (kGap);
 
-    if (! promptView)
+    if (currentView == View::jointVae)
+    {
+        jointVaePanel.setBounds (r);
+        return;
+    }
+
+    if (currentView == View::synth)
     {
         layOutSections (sections, r, true);
         return;

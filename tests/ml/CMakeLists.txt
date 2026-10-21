@@ -2,6 +2,8 @@ juce_add_console_app(vae_ml_tests PRODUCT_NAME "vae_ml_tests" VERSION 0.1.0)
 
 target_sources(vae_ml_tests PRIVATE
     MlTests.cpp
+    JointVaeTests.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp
     ../common/TestMain.cpp)
 
 target_compile_definitions(vae_ml_tests PRIVATE

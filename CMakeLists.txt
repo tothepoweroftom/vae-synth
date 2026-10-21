@@ -62,6 +62,13 @@ add_library(vae_retrieval INTERFACE)
 target_sources(vae_retrieval INTERFACE source/ml/SameSearch.cpp source/ml/StableAudioGenerator.cpp)
 target_link_libraries(vae_retrieval INTERFACE vae_tokenizer vae_ml juce::juce_audio_formats juce::juce_cryptography)
 
+# --- isolated joint VAE experiment ---------------------------------------------
+add_library(vae_joint_experiment INTERFACE)
+target_sources(vae_joint_experiment INTERFACE
+    source/experiments/joint_vae/JointVae.cpp
+    source/experiments/joint_vae/JointVaePanel.cpp)
+target_link_libraries(vae_joint_experiment INTERFACE vae_ml juce::juce_gui_basics)
+
 # --- parameter store (clean-room, docs/specs/parameter-manager.md) ------------
 add_subdirectory(source/params)
 
@@ -111,6 +118,7 @@ target_link_libraries(VAESynth
         vae_params
         vae_engine
         vae_retrieval
+        vae_joint_experiment
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags

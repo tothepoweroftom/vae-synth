@@ -1,6 +1,7 @@
 #include <juce_events/juce_events.h>
 
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 #include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
 
@@ -63,6 +64,51 @@ public:
         const auto model = dir.getChildFile ("roundtrip_decoder.onnx");
         juce::File (VAE_STUB_DECODER_PATH).copyFileTo (model);
         juce::Random rng (99);
+
+        beginTest ("VAE Lab is separate and tab switching does not change synth parameters");
+        {
+            PluginProcessor processor;
+            settleModel (processor);
+            const auto before = processor.getControls();
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            experimental::JointVaePanel* lab = nullptr;
+            juce::TextButton* labButton = nullptr;
+            juce::TextButton* synthButton = nullptr;
+            for (auto* child : editor->getChildren())
+            {
+                if (auto* panel = dynamic_cast<experimental::JointVaePanel*> (child))
+                    lab = panel;
+                if (auto* button = dynamic_cast<juce::TextButton*> (child))
+                {
+                    if (button->getButtonText() == "VAE Lab")
+                        labButton = button;
+                    if (button->getButtonText() == "Synth")
+                        synthButton = button;
+                }
+            }
+            expect (lab != nullptr && labButton != nullptr && synthButton != nullptr);
+            if (lab && labButton && synthButton)
+            {
+                expect (! lab->isVisible());
+                labButton->onClick();
+                expect (lab->isVisible());
+                expect (! lab->getBounds().isEmpty());
+                auto image = editor->createComponentSnapshot (editor->getLocalBounds());
+                expect (image.isValid());
+                const auto screenshot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_SCREENSHOT", "");
+                if (screenshot.isNotEmpty())
+                {
+                    auto stream = juce::File (screenshot).createOutputStream();
+                    if (stream)
+                        juce::PNGImageFormat().writeImageToStream (image, *stream);
+                }
+                synthButton->onClick();
+                expect (! lab->isVisible());
+            }
+            const auto after = processor.getControls();
+            for (int i = 0; i < schema::kControlCount; ++i)
+                expectEquals (after[i], before[i]);
+        }
 
         beginTest ("SAME invalid latents and cancelled worker callbacks");
         {

@@ -1,0 +1,68 @@
+#pragma once
+
+#include "ml/OnnxModel.h"
+#include <array>
+#include <atomic>
+#include <juce_events/juce_events.h>
+
+namespace vae::experimental
+{
+// Independent of ControlSchema: these are the student's full Surge features.
+using JointLatent = std::array<float, 32>;
+using SoundCode = std::array<float, 48>;
+inline constexpr const char* jointLabels[] = { "Bass",  "Lead",       "Pad",        "Keys",   "Pluck",
+                                               "Synth", "Atmosphere", "Orchestral", "Unknown" };
+
+struct JointLayout
+{
+    juce::String id;
+    juce::StringArray names;
+    static juce::Result parse (const juce::var&, JointLayout&);
+};
+
+// Synchronous, worker-thread only. Failed loads preserve the previous bundle.
+class JointVae
+{
+public:
+    juce::Result load (const juce::File& manifest);
+    juce::Result decode (const JointLatent&, int category, std::vector<float>& codes);
+    juce::Result encode (const SoundCode&, int category, JointLatent&);
+    const JointLayout& layout() const { return metadata; }
+    static juce::Result slice (const JointLatent& anchor, int xDim, int yDim, float x, float y, float radius,
+                               JointLatent& result);
+
+private:
+    JointLayout metadata;
+    std::unique_ptr<ml::OnnxModel> decoder, encoder;
+};
+
+// Owns model lifetime on a serial worker. UI callbacks run on the message thread.
+// No engine or parameter-store dependency, and no mock/fallback output.
+class JointVaeWorker
+{
+public:
+    struct Output
+    {
+        JointLayout layout;
+        JointLatent latent {};
+        std::vector<float> codes;
+    };
+    using Callback = std::function<void (juce::Result, Output)>;
+    ~JointVaeWorker();
+    void load (juce::File, Callback);
+    void cancel() { ++state->request; }
+    void decode (JointLatent, int category, Callback);
+    void encode (SoundCode, int category, Callback);
+
+private:
+    struct State
+    {
+        JointVae model;
+        std::atomic<uint64_t> request { 0 };
+    };
+    using Work = std::function<juce::Result (JointVae&, Output&)>;
+    void submit (Work, Callback);
+    std::shared_ptr<State> state = std::make_shared<State>();
+    juce::ThreadPool pool { juce::ThreadPoolOptions {}.withThreadName ("vae-joint").withNumberOfThreads (1) };
+};
+} // namespace vae::experimental
