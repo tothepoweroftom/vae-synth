@@ -68,3 +68,11 @@ Checks: 72 camera orientations preserve 3D distance; projected coordinates stay 
 - Touch supports handle/arrow dragging and camera rotation; use the Z slider for depth without a keyboard.
 
 Run `node design-study/xy-pad/xyz.test.cjs` from the repository root. Checks cover 72 camera orientations for screen-plane and depth movement, single-axis constraints, end-on stability, bounds, handle/arrow hit tests and isolation between camera drags and sound edits. Visual browser verification is pending.
+
+## Favourite presets
+
+The right sidebar now has Axes / Presets tabs. The toolbar heart saves the current sound, using the prompt as its name when present or its predicted category otherwise. A filled heart means the current sound matches a saved favourite; clicking it removes that favourite. The Presets tab loads entries and also offers a per-entry remove heart. Favourites persist under `precision-xypad-favorites-v1` in this browser's local storage. Storage failures are reported without claiming the favourite was saved.
+
+Snapshots retain both mode contexts: latent vector, conditioning category, latent axes, structure-lock arrays, knob values (including inactive values), knob axes and starting-preset selections. Loading validates the snapshot/model before changing the sound. Camera and visual style remain as the user currently has them. These are browser-prototype presets, not exported Surge/JUCE patches. Changing origin/browser or clearing site data affects availability.
+
+`node design-study/xy-pad/presets.test.cjs` checks snapshot restoration in both modes, inactive values, structure locks and rejection of incompatible/invalid snapshots before mutation. Orbit regression checks also pass. Browser UI verification is pending.

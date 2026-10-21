@@ -660,6 +660,7 @@ function render(full = true) {
   if (full) { drawAxes(); drawList(); }
   else if (isLat()) drawAxes();
   drawPad(); drawReadouts(); drawHint(); synthUpdate();
+  window.dispatchEvent(new Event("xypad-patch-change"));
 }
 
 const r2s = LT.directions.map(d => `${d.key} ${d.r2.toFixed(2)}`).join(", ");
@@ -792,6 +793,37 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { re
 new MutationObserver(() => { readColors(); render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 window.addEventListener("blur", () => { noteOff(); keysEl.querySelectorAll(".on").forEach(key => key.classList.remove("on")); });
 window.addEventListener("xypad-style-change", () => { readColors(); render(false); });
+// Browser-preset contract: retain both editing modes, including structure locks.
+function capturePatch() {
+  return JSON.parse(JSON.stringify({version:1,model:LT.run,knobCount:NK,label:L[argmax(predict(state.vals))],
+    mode:state.mode,base:state.base,values:Array.from(state.vals),axes:{...state.axes},
+    latent:{base:lat.base,z:Array.from(lat.z),category:lat.y,axes:{...lat.axes},
+      lock:lat.lock?{act:Array.from(lat.lock.act),bools:Array.from(lat.lock.bools),cats:Array.from(lat.lock.cats)}:null}}));
+}
+function validatePatch(p) {
+  const arr=(v,n,check)=>Array.isArray(v)&&v.length===n&&v.every(check);
+  const finite=Number.isFinite,bit=n=>n===0||n===1;
+  const axes=(a,table)=>a&&table[a.x]&&table[a.y]&&a.x!==a.y&&(a.z===null||(table[a.z]&&a.z!==a.x&&a.z!==a.y));
+  const index=(v,n)=>Number.isInteger(v)&&v>=0&&v<n;
+  if(!p||p.version!==1||p.model!==LT.run||p.knobCount!==NK||!['latent','knob'].includes(p.mode)
+    ||!index(p.base,BASES.length)||!arr(p.values,NK,v=>v===null||(finite(v)&&v>=0&&v<=1))||!axes(p.axes,byName)
+    ||!p.latent||!index(p.latent.base,LBASES.length)||!index(p.latent.category,NC)||!arr(p.latent.z,ZD,finite)||!axes(p.latent.axes,AXI))
+    throw new Error('This favourite is not compatible with the current model.');
+  const lock=p.latent.lock;
+  if(lock!==null&&(!lock||!arr(lock.act,NK,bit)||!arr(lock.bools,NB,bit)||!Array.isArray(lock.cats)||lock.cats.length!==CAT_SIZES.length||!lock.cats.every((v,i)=>index(v,CAT_SIZES[i]))))
+    throw new Error('This favourite contains an invalid structure lock.');
+}
+function restorePatch(p) {
+  validatePatch(p); // Reject before changing any sound state.
+  noteOff();
+  state.base=p.base;state.axes={...p.axes};state.vals=p.values.map(v=>v===null?NaN:v);
+  lat.base=p.latent.base;lat.z=Float32Array.from(p.latent.z);lat.y=p.latent.category;lat.axes={...p.latent.axes};lat.msg='';
+  const lock=p.latent.lock;
+  lat.lock=lock?{act:Uint8Array.from(lock.act),bools:Uint8Array.from(lock.bools),cats:[...lock.cats]}:null;
+  catSel.value=lat.y;lockBtn.setAttribute('aria-pressed',String(Boolean(lat.lock)));
+  latSyncPos();setMode(p.mode);
+}
+window.XypadPresets={capture:capturePatch,restore:restorePatch,validate:validatePatch};
 // start
 catSel.value = lat.y; latSyncPos();
 setMode(state.mode);
