@@ -28,6 +28,8 @@ class JointVae
 public:
     juce::Result load (const juce::File& manifest);
     juce::Result decode (const JointLatent&, int category, std::vector<float>& codes);
+    /** Latent + category -> 48-number sound code (sound_decoder.onnx). */
+    juce::Result decodeSound (const JointLatent&, int category, SoundCode&);
     juce::Result encode (const SoundCode&, int category, JointLatent&);
     /** Decoded codes -> full Surge patch data (student codec + template). Needs a VAE_WITH_SURGE build. */
     juce::Result patch (const std::vector<float>& codes, juce::MemoryBlock&);
@@ -47,7 +49,7 @@ public:
 
 private:
     JointLayout metadata;
-    std::unique_ptr<ml::OnnxModel> decoder, encoder;
+    std::unique_ptr<ml::OnnxModel> decoder, encoder, soundDecoder;
     StudentCodec codec;
 #if VAE_WITH_SURGE
     std::unique_ptr<SurgePatchBuilder> builder; // created on first use: loads Surge's data folder

@@ -1,6 +1,7 @@
 #include "XyPad.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <regex>
 
 namespace vae::experimental
@@ -106,6 +107,8 @@ juce::String pname (const juce::String& idStr, const std::map<juce::String, juce
     return s (replaceFirst (id, "scene/", ""));
 }
 
+bool isNum (const juce::var& v) { return v.isDouble() || v.isInt() || v.isInt64(); }
+
 bool readLatent (const juce::var& v, JointLatent& z)
 {
     auto* a = v.getArray();
@@ -113,7 +116,7 @@ bool readLatent (const juce::var& v, JointLatent& z)
         return false;
     for (size_t i = 0; i < z.size(); ++i)
     {
-        if (! (*a)[(int) i].isDouble() && ! (*a)[(int) i].isInt())
+        if (! isNum ((*a)[(int) i]))
             return false;
         z[i] = (float) (double) (*a)[(int) i];
     }
@@ -174,8 +177,8 @@ juce::Result XyPadData::load (const juce::File& file, XyPadData& out)
     {
         LatentAxis a;
         const auto key = v["key"].toString();
-        if (key.isEmpty() || ! readLatent (v["u"], a.u) || ! v["mean"].isDouble() || ! (double (v["sd"]) > 0)
-            || ! v["effect"].isDouble() || ! v["r2"].isDouble())
+        if (key.isEmpty() || ! readLatent (v["u"], a.u) || ! isNum (v["mean"]) || ! (double (v["sd"]) > 0)
+            || ! isNum (v["effect"]) || ! isNum (v["r2"]))
             return bad ("directions entry");
         const double effect = v["effect"];
         a.id = "s:" + key;
@@ -200,7 +203,7 @@ juce::Result XyPadData::load (const juce::File& file, XyPadData& out)
         auto* sec = v["sections"].getDynamicObject();
         auto* top = v["top"].getArray();
         if (dim < 0 || dim >= 32 || eff == nullptr || sec == nullptr || top == nullptr || ! (double (v["sd"]) > 0)
-            || ! v["mean"].isDouble() || ! v["impact"].isDouble())
+            || ! isNum (v["mean"]) || ! isNum (v["impact"]))
             return bad ("dims entry");
         for (auto& p : sec->getProperties())
             a.sections.emplace_back (p.name.toString(), (float) (double) p.value);
@@ -267,7 +270,7 @@ juce::Result XyPadData::load (const juce::File& file, XyPadData& out)
     }
 
     auto* bands = root["band_hz"].getArray();
-    if (bands == nullptr || bands->isEmpty() || ! root["dt"].isDouble() || ! root["f0"].isDouble()
+    if (bands == nullptr || bands->isEmpty() || ! isNum (root["dt"]) || ! isNum (root["f0"])
         || ! root["hold_frames"].isInt())
         return bad ("band_hz/dt/f0/hold_frames");
     for (auto& b : *bands)
@@ -332,9 +335,301 @@ JointLatent constrain (const JointLatent& z0, std::span<const LatentAxis* const>
         a[c] = s / g[c][c];
     }
     // Rows were swapped, but a[] indexes columns, which are never permuted.
-    for (size_t i = 0; i < n; ++i)
-        for (size_t k = 0; k < z.size(); ++k)
-            z[k] += (float) (a[i] * axes[i]->u[k]);
+    for (size_t k = 0; k < z.size(); ++k)
+    {
+        double s = z0[k]; // the ~1e5 terms cancel: sum in double, round once
+        for (size_t i = 0; i < n; ++i)
+            s += a[i] * axes[i]->u[k];
+        z[k] = (float) s;
+    }
     return z;
+}
+
+namespace
+{
+// Minimal .npy reader: v1/v2 header, '<f4' or '<f8', C order. Returns values as floats plus the first double.
+juce::Result readNpy (juce::ZipFile& zip, const char* name, std::vector<float>& out, double* scalar = nullptr)
+{
+    const auto fail = [&] (const char* why)
+    { return juce::Result::fail (juce::String ("sound_pca.npz ") + name + ": " + why); };
+    const int idx = zip.getIndexOfFileName (name);
+    if (idx < 0)
+        return fail ("missing");
+    std::unique_ptr<juce::InputStream> in (zip.createStreamForEntry (idx));
+    juce::MemoryBlock mb;
+    if (in == nullptr || in->readIntoMemoryBlock (mb) == 0)
+        return fail ("unreadable");
+    const auto* p = static_cast<const juce::uint8*> (mb.getData());
+    const size_t n = mb.getSize();
+    if (n < 12 || std::memcmp (p, "\x93NUMPY", 6) != 0 || p[6] > 2)
+        return fail ("not an npy file");
+    const size_t lenBytes = p[6] == 1 ? 2 : 4;
+    size_t hl = (size_t) p[8] | ((size_t) p[9] << 8);
+    if (lenBytes == 4)
+        hl |= ((size_t) p[10] << 16) | ((size_t) p[11] << 24);
+    const size_t start = 8 + lenBytes + hl;
+    if (start > n)
+        return fail ("truncated header");
+    const juce::String head (juce::CharPointer_UTF8 ((const char*) p + 8 + lenBytes),
+                             juce::CharPointer_UTF8 ((const char*) p + start));
+    const bool f8 = head.contains ("<f8"), f4 = head.contains ("<f4");
+    if ((! f4 && ! f8) || ! head.contains ("'fortran_order': False"))
+        return fail ("expected little-endian float, C order");
+    const size_t w = f8 ? 8 : 4;
+    if ((n - start) % w != 0)
+        return fail ("size mismatch");
+    out.resize ((n - start) / w);
+    for (size_t i = 0; i < out.size(); ++i)
+    {
+        if (f8)
+        {
+            double d;
+            std::memcpy (&d, p + start + i * 8, 8);
+            out[i] = (float) d;
+            if (i == 0 && scalar != nullptr)
+                *scalar = d;
+        }
+        else
+            std::memcpy (&out[i], p + start + i * 4, 4);
+    }
+    return juce::Result::ok();
+}
+} // namespace
+
+juce::Result loadPca (const juce::File& file, SoundPca& out)
+{
+    juce::ZipFile zip (file);
+    SoundPca pca;
+    std::vector<float> s;
+    double scale = 1;
+    if (auto r = readNpy (zip, "components.npy", pca.components); r.failed())
+        return r;
+    if (auto r = readNpy (zip, "mean.npy", pca.mean); r.failed())
+        return r;
+    if (auto r = readNpy (zip, "scale.npy", s, &scale); r.failed())
+        return r;
+    if (pca.mean.empty() || pca.mean.size() % 64 != 0 || pca.components.size() != 48 * pca.mean.size())
+        return juce::Result::fail ("sound_pca.npz: expected components 48 x (frames*64) and matching mean");
+    pca.scale = (float) scale;
+    pca.frames = (int) pca.mean.size() / 64;
+    out = std::move (pca);
+    return juce::Result::ok();
+}
+
+std::vector<float> melFromSound (const SoundPca& pca, const SoundCode& code)
+{
+    const size_t F = pca.mean.size();
+    if (pca.components.size() != 48 * F)
+        return {};
+    std::vector<double> x (pca.mean.begin(), pca.mean.end());
+    for (size_t k = 0; k < 48; ++k)
+    {
+        const double a = (double) code[k] * pca.scale;
+        for (size_t j = 0; j < F; ++j)
+            x[j] += a * pca.components[k * F + j];
+    }
+    const double mx = *std::max_element (x.begin(), x.end());
+    std::vector<float> mel (F);
+    for (size_t j = 0; j < F; ++j)
+        mel[j] = (float) std::max (x[j] - mx, -80.0);
+    return mel;
+}
+
+SoundMeasures measures (const XyPadData& d, std::span<const float> mel)
+{
+    const size_t NM = d.bandHz.size();
+    if (NM == 0 || mel.size() < NM || mel.size() % NM != 0)
+        return {};
+    const size_t Tn = mel.size() / NM;
+    std::vector<double> P (mel.size()), e (Tn);
+    for (size_t j = 0; j < mel.size(); ++j)
+        P[j] = std::pow (10.0, (double) mel[j] / 10);
+    double emax = -1e9;
+    for (size_t t = 0; t < Tn; ++t)
+    {
+        double s = 0;
+        for (size_t b = 0; b < NM; ++b)
+            s += P[t * NM + b];
+        e[t] = 10 * std::log10 (s + 1e-12);
+        emax = std::max (emax, e[t]);
+    }
+    std::vector<double> Pb (NM, 0.0);
+    int na = 0;
+    for (size_t t = 0; t < Tn; ++t)
+        if (e[t] >= emax - 30)
+        {
+            ++na;
+            for (size_t b = 0; b < NM; ++b)
+                Pb[b] += P[t * NM + b];
+        }
+    double sp = 0, sf = 0, sl = 0;
+    for (size_t b = 0; b < NM; ++b)
+    {
+        Pb[b] /= std::max (na, 1);
+        sp += Pb[b];
+        sf += Pb[b] * d.bandHz[b];
+        sl += std::log (Pb[b] + 1e-12);
+    }
+    size_t att = 0;
+    while (att < Tn && e[att] < emax - 3)
+        ++att;
+    size_t last = Tn - 1;
+    while (last > 0 && e[last] < emax - 40)
+        --last;
+    double dsum = 0;
+    int nl = 0;
+    for (size_t t = 1; t < (size_t) d.holdFrames && t < Tn; ++t)
+        for (size_t b = 0; b < NM; ++b)
+        {
+            const double a = mel[t * NM + b], p = mel[(t - 1) * NM + b];
+            if (std::max (a, p) > -50)
+            {
+                dsum += std::abs (a - p);
+                ++nl;
+            }
+        }
+    return { (float) std::log2 (sf / sp / d.f0), (float) ((double) att * d.dt), (float) ((double) (last + 1) * d.dt),
+             (float) (std::exp (sl / (double) NM) / (sp / (double) NM)), nl ? (float) (dsum / nl) : 0.0f };
+}
+
+juce::Result CategoryForest::load (const juce::var& forest, CategoryForest& out)
+{
+    auto* trees = forest["trees"].getArray();
+    if (trees == nullptr || trees->isEmpty())
+        return juce::Result::fail ("xypad.json: bad or missing knobs.forest");
+    CategoryForest f;
+    for (auto& tv : *trees)
+    {
+        Tree t;
+        auto *fa = tv["f"].getArray(), *ta = tv["t"].getArray(), *la = tv["l"].getArray(), *ra = tv["r"].getArray(),
+             *va = tv["v"].getArray();
+        const int n = fa != nullptr ? fa->size() : 0;
+        if (n == 0 || ta == nullptr || la == nullptr || ra == nullptr || va == nullptr || ta->size() != n
+            || la->size() != n || ra->size() != n || va->size() != n)
+            return juce::Result::fail ("xypad.json: bad forest tree");
+        for (int i = 0; i < n; ++i)
+        {
+            t.f.push_back ((*fa)[i]);
+            t.t.push_back ((float) (double) (*ta)[i]);
+            t.l.push_back ((*la)[i]);
+            t.r.push_back ((*ra)[i]);
+            auto* v = (*va)[i].getArray(); // internal nodes carry a scalar 0, leaves the 8 class fractions
+            if (v == nullptr && t.l.back() == -1)
+                return juce::Result::fail ("xypad.json: bad forest tree");
+            if (v != nullptr && v->size() != 8)
+                return juce::Result::fail ("xypad.json: bad forest tree");
+            std::array<float, 8> row {};
+            for (int c = 0; v != nullptr && c < 8; ++c)
+                row[(size_t) c] = (float) (double) (*v)[c];
+            t.v.push_back (row);
+        }
+        for (int i = 0; i < n; ++i) // reject out-of-range links so predict can't walk off the tree
+            if (t.l[(size_t) i] != -1
+                && (t.l[(size_t) i] < 0 || t.l[(size_t) i] >= n || t.r[(size_t) i] < 0 || t.r[(size_t) i] >= n))
+                return juce::Result::fail ("xypad.json: bad forest tree");
+        f.trees.push_back (std::move (t));
+    }
+    out = std::move (f);
+    return juce::Result::ok();
+}
+
+std::array<float, 8> CategoryForest::predict (std::span<const float> knobs) const
+{
+    std::array<double, 8> p {};
+    for (auto& t : trees)
+    {
+        size_t n = 0;
+        for (size_t guard = 0; guard <= t.l.size() && t.l[n] != -1; ++guard)
+        {
+            const int f = t.f[n];
+            const float x =
+                f >= 0 && (size_t) f < knobs.size() && ! std::isnan (knobs[(size_t) f]) ? knobs[(size_t) f] : -1.0f;
+            n = (size_t) (x <= t.t[n] ? t.l[n] : t.r[n]);
+        }
+        for (size_t c = 0; c < 8; ++c)
+            p[c] += t.v[n][c];
+    }
+    std::array<float, 8> r {};
+    for (size_t c = 0; c < 8; ++c)
+        r[c] = trees.empty() ? 0.0f : (float) (p[c] / (double) trees.size());
+    return r;
+}
+
+juce::Result KnobGroups::load (const juce::var& knobs, KnobGroups& out)
+{
+    auto* ks = knobs["knobs"].getArray();
+    auto* gs = knobs["groups"].getArray();
+    if (ks == nullptr || gs == nullptr || ks->isEmpty() || gs->isEmpty())
+        return juce::Result::fail ("xypad.json: bad or missing knobs/groups");
+    KnobGroups k;
+    std::map<juce::String, int> index;
+    for (auto& v : *ks)
+    {
+        if (! isNum (v["p5"]) || ! isNum (v["p95"]))
+            return juce::Result::fail ("xypad.json: bad knob p5/p95");
+        index[v["name"].toString()] = (int) k.p5.size();
+        k.p5.push_back ((float) (double) v["p5"]);
+        k.p95.push_back ((float) (double) v["p95"]);
+    }
+    for (auto& v : *gs)
+    {
+        Group g;
+        g.name = v["name"].toString();
+        auto* names = v["knobs"].getArray();
+        if (names == nullptr)
+            return juce::Result::fail ("xypad.json: bad group");
+        for (auto& n : *names)
+        {
+            const auto it = index.find (n.toString());
+            if (it == index.end() || ! isNum (v["signs"][juce::Identifier (n.toString())]))
+                return juce::Result::fail ("xypad.json: bad group knob " + n.toString());
+            g.knob.push_back (it->second);
+            g.sign.push_back ((double) v["signs"][juce::Identifier (n.toString())] > 0 ? 1.0f : -1.0f);
+        }
+        k.groups.push_back (std::move (g));
+    }
+    out = std::move (k);
+    return juce::Result::ok();
+}
+
+int KnobGroups::find (const juce::String& name) const
+{
+    for (size_t i = 0; i < groups.size(); ++i)
+        if (groups[i].name == name)
+            return (int) i;
+    return -1;
+}
+
+float KnobGroups::position (int group, std::span<const float> v) const
+{
+    if (group < 0 || (size_t) group >= groups.size())
+        return std::nanf ("");
+    double s = 0;
+    int n = 0;
+    const auto& g = groups[(size_t) group];
+    for (size_t j = 0; j < g.knob.size(); ++j)
+    {
+        const auto i = (size_t) g.knob[j];
+        if (i >= v.size() || std::isnan (v[i]))
+            continue;
+        const double span = (double) p95[i] - p5[i];
+        const double u = std::clamp (((double) v[i] - p5[i]) / (std::abs (span) > 0 ? span : 1e-6), 0.0, 1.0);
+        s += g.sign[j] > 0 ? u : 1 - u;
+        ++n;
+    }
+    return n ? (float) (s / n) : std::nanf ("");
+}
+
+void KnobGroups::set (int group, float pos, std::span<float> v) const
+{
+    if (group < 0 || (size_t) group >= groups.size())
+        return;
+    const auto& g = groups[(size_t) group];
+    for (size_t j = 0; j < g.knob.size(); ++j)
+        if ((size_t) g.knob[j] < v.size())
+        {
+            const auto i = (size_t) g.knob[j];
+            v[i] = p5[i] + (g.sign[j] > 0 ? pos : 1 - pos) * (p95[i] - p5[i]);
+        }
 }
 } // namespace vae::experimental

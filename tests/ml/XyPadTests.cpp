@@ -139,6 +139,119 @@ public:
             }
         logMessage ("max constrain parity error " + juce::String (worst, 8));
         expect (worst < 2e-4);
+
+        const auto none = [] (const juce::var& v) { return v.isVoid() || v.isUndefined(); };
+        const auto knobs = juce::JSON::parse (dir.getChildFile ("xypad.json"))["knobs"];
+
+        beginTest ("measures parity");
+        SoundPca pca;
+        const auto pr = loadPca (dir.getChildFile ("sound_pca.npz"), pca);
+        expect (pr.wasOk(), pr.getErrorMessage());
+        expectEquals (pca.frames, 139);
+        auto* ms = parity["measures"].getArray();
+        expect (ms != nullptr && ! ms->isEmpty());
+        double worstM = 0;
+        if (pr.wasOk() && ms != nullptr)
+            for (auto& m : *ms)
+            {
+                SoundCode s {};
+                for (int i = 0; i < 48; ++i)
+                    s[(size_t) i] = (float) (double) m["sound"][i];
+                const auto mel = melFromSound (pca, s);
+                expectEquals ((int) mel.size(), 139 * 64);
+                expectEquals (*std::max_element (mel.begin(), mel.end()), 0.0f);
+                const auto got = measures (data, mel);
+                const float g[] = { got.brightness, got.attack, got.length, got.noise, got.movement };
+                const char* keys[] = { "brightness", "attack", "length", "noise", "movement" };
+                for (int i = 0; i < 5; ++i)
+                    worstM = std::max (worstM, std::abs ((double) g[i] - (double) m["measures"][keys[i]]));
+            }
+        logMessage ("max measures parity error " + juce::String (worstM, 8));
+        expect (worstM < 1e-3);
+
+        beginTest ("sound decoder parity");
+        JointVae vae;
+        const auto lr = vae.load (juce::File (path));
+        expect (lr.wasOk(), lr.getErrorMessage());
+        double worstS = 0;
+        if (lr.wasOk() && ms != nullptr)
+            for (auto& m : *ms)
+            {
+                JointLatent lat {};
+                for (int i = 0; i < 32; ++i)
+                    lat[(size_t) i] = (float) (double) m["latent"][i];
+                SoundCode snd {};
+                expect (vae.decodeSound (lat, (int) m["category"], snd).wasOk());
+                for (int i = 0; i < 48; ++i)
+                    worstS = std::max (worstS, std::abs ((double) snd[(size_t) i] - (double) m["sound"][i]));
+            }
+        logMessage ("max sound decoder parity error " + juce::String (worstS, 8));
+        expect (worstS < 1e-4);
+
+        beginTest ("bundle without sound_decoder fails and keeps the model");
+        auto manifest = juce::JSON::parse (juce::File (path));
+        manifest.getDynamicObject()->removeProperty ("sound_decoder");
+        const auto old = dir.getChildFile ("bundle-no-sound-decoder.tmp.json");
+        old.replaceWithText (juce::JSON::toString (manifest));
+        const auto nr = vae.load (old);
+        old.deleteFile();
+        expect (nr.failed() && nr.getErrorMessage().contains ("sound_decoder"), nr.getErrorMessage());
+        SoundCode kept {};
+        expect (vae.decodeSound ({}, 0, kept).wasOk());
+
+        beginTest ("forest parity");
+        CategoryForest forest;
+        const auto fr = CategoryForest::load (knobs["forest"], forest);
+        expect (fr.wasOk(), fr.getErrorMessage());
+        double worstF = 0;
+        int nulls = 0;
+        if (fr.wasOk())
+            for (auto& c : *parity["forest"].getArray())
+            {
+                std::vector<float> k (123);
+                for (int i = 0; i < 123; ++i)
+                {
+                    nulls += none (c["knobs"][i]);
+                    k[(size_t) i] = none (c["knobs"][i]) ? std::nanf ("") : (float) (double) c["knobs"][i];
+                }
+                const auto p = forest.predict (k);
+                for (int i = 0; i < 8; ++i)
+                    worstF = std::max (worstF, std::abs ((double) p[(size_t) i] - (double) c["p"][i]));
+            }
+        logMessage ("max forest parity error " + juce::String (worstF, 9));
+        expect (nulls > 0);
+        expect (worstF < 1e-6);
+
+        beginTest ("group parity");
+        KnobGroups kg;
+        const auto gr = KnobGroups::load (knobs, kg);
+        expect (gr.wasOk(), gr.getErrorMessage());
+        double worstG = 0;
+        int nanCases = 0;
+        if (gr.wasOk())
+            for (auto& c : *parity["groups"].getArray())
+            {
+                const int g = kg.find (c["group"].toString());
+                expect (g >= 0);
+                std::vector<float> k (123);
+                for (int i = 0; i < 123; ++i)
+                    k[(size_t) i] = none (c["vals"][i]) ? std::nanf ("") : (float) (double) c["vals"][i];
+                const float at = kg.position (g, k);
+                if (none (c["pos"]))
+                {
+                    expect (std::isnan (at));
+                    ++nanCases;
+                    continue;
+                }
+                worstG = std::max (worstG, std::abs ((double) at - (double) c["pos"]));
+                kg.set (g, 0.3f, k);
+                if (c["group"].toString()
+                    != "EQ output") // its only knob has p5 == p95, so the position is not recoverable
+                    expectWithinAbsoluteError (kg.position (g, k), 0.3f, 1e-6f);
+            }
+        logMessage ("max group parity error " + juce::String (worstG, 9));
+        expect (worstG < 1e-6);
+        expect (nanCases > 0);
     }
 };
 static XyPadTests xyPadTests;

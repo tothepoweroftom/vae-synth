@@ -13,12 +13,17 @@ bool shape (const ml::TensorInfo& t, const char* name, int size)
     return t.name == name && t.isFloat && t.shape.size() == 2 && (t.shape[0] == 1 || t.shape[0] == -1)
            && t.shape[1] == size;
 }
-juce::Result validate (const ml::OnnxModel& m, bool encoder, int count)
+juce::Result validate (const ml::OnnxModel& m, bool encoder, int count, const char* outName = nullptr)
 {
     const auto& in = m.getInputs();
     const auto& out = m.getOutputs();
     if (in.size() != 2 || out.size() != 1 || ! shape (in[0], encoder ? "sound" : "latent", encoder ? 48 : 32)
-        || ! shape (in[1], "category", 9) || ! shape (out[0], encoder ? "latent" : "codes", count))
+        || ! shape (in[1], "category", 9)
+        || ! shape (out[0],
+                    outName != nullptr ? outName
+                    : encoder          ? "latent"
+                                       : "codes",
+                    count))
         return juce::Result::fail ("Joint VAE tensor contract mismatch");
     return juce::Result::ok();
 }
@@ -145,13 +150,25 @@ juce::Result JointVae::load (const juce::File& file)
         return r;
     if (auto r = validate (*enc, true, 32); r.failed())
         return r;
+    const auto soundFile = manifest["sound_decoder"].toString();
+    if (soundFile.isEmpty() || soundFile != juce::File::createFileWithoutCheckingPath (soundFile).getFileName())
+        return juce::Result::fail ("Bundle has no \"sound_decoder\" entry (re-export it with sound_decoder.onnx)");
+    auto sdec = std::make_unique<ml::OnnxModel>();
+    if (auto r = sdec->load (file.getSiblingFile (soundFile)); r.failed())
+        return r;
+    if (auto r = validate (*sdec, false, 48, "sound"); r.failed())
+        return r;
     // Exercise both models before replacing a working bundle.
     std::vector<float> probe;
     if (auto r = run (enc.get(), SoundCode {}, 0, 32, probe); r.failed())
         return r;
+    std::vector<float> soundProbe;
+    if (auto r = run (sdec.get(), probe, 0, 48, soundProbe); r.failed())
+        return r;
     if (auto r = run (dec.get(), probe, 0, next.names.size(), probe); r.failed())
         return r;
     metadata = std::move (next);
+    soundDecoder = std::move (sdec);
     decoder = std::move (dec);
     encoder = std::move (enc);
     codec = std::move (nextCodec);
@@ -161,6 +178,15 @@ juce::Result JointVae::load (const juce::File& file)
 juce::Result JointVae::decode (const JointLatent& latent, int category, std::vector<float>& codes)
 {
     return run (decoder.get(), latent, category, metadata.names.size(), codes);
+}
+
+juce::Result JointVae::decodeSound (const JointLatent& latent, int category, SoundCode& sound)
+{
+    std::vector<float> result;
+    if (auto r = run (soundDecoder.get(), latent, category, 48, result); r.failed())
+        return r;
+    std::copy (result.begin(), result.end(), sound.begin());
+    return juce::Result::ok();
 }
 
 juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock& output)
