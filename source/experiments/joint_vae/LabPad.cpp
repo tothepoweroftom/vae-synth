@@ -15,9 +15,10 @@ void LabPad::setDot (juce::Point<float> p)
     dot = { juce::jlimit (0.0f, 1.0f, p.x), juce::jlimit (0.0f, 1.0f, p.y) };
     repaint();
 }
-void LabPad::setMap (juce::Image image)
+void LabPad::setMap (juce::Image image, std::vector<std::pair<juce::String, juce::Point<float>>> labels)
 {
     map = std::move (image);
+    mapLabels = std::move (labels);
     repaint();
 }
 void LabPad::setPresetDots (std::vector<std::tuple<float, float, int>> d, int label)
@@ -36,6 +37,13 @@ void LabPad::paint (juce::Graphics& g)
         g.setImageResamplingQuality (juce::Graphics::mediumResamplingQuality);
         g.drawImage (map, r, juce::RectanglePlacement::stretchToFit);
     }
+    g.setColour (LF::ink.withAlpha (0.75f));
+    g.setFont (LF::labelFont (12.0f, true));
+    for (const auto& [text, p] : mapLabels)
+        g.drawText (text,
+                    juce::Rectangle<float> (120, 16).withCentre (
+                        { r.getX() + p.x * r.getWidth(), r.getBottom() - p.y * r.getHeight() }),
+                    juce::Justification::centred);
     g.setColour (LF::faint);
     for (int i = 1; i < 4; ++i)
     {
@@ -44,12 +52,20 @@ void LabPad::paint (juce::Graphics& g)
     }
     for (const auto& [x, y, label] : dots)
     {
+        if (x < -0.02f || x > 1.02f || y < -0.02f || y > 1.02f)
+            continue;
         const bool same = label == activeLabel;
         const auto colour = labCategoryColours[juce::jlimit (0, 8, label)];
         g.setColour (colour.withAlpha (same ? 0.85f : 0.28f));
         const float radius = same ? 2.6f : 1.8f;
-        g.fillEllipse (juce::Rectangle<float> (2 * radius, 2 * radius)
-                           .withCentre ({ r.getX() + x * r.getWidth(), r.getBottom() - y * r.getHeight() }));
+        const auto d = juce::Rectangle<float> (2 * radius, 2 * radius)
+                           .withCentre ({ r.getX() + x * r.getWidth(), r.getBottom() - y * r.getHeight() });
+        g.fillEllipse (d);
+        if (same)
+        {
+            g.setColour (LF::ink.withAlpha (0.35f));
+            g.drawEllipse (d, 0.8f);
+        }
     }
     const juce::Point<float> c { r.getX() + dot.x * r.getWidth(), r.getBottom() - dot.y * r.getHeight() };
     g.setColour (labWell);

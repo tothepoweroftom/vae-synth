@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numeric>
 #include <optional>
 #if VAE_WITH_SURGE
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wfloat-equal", "-Wpedantic", "-Wshadow", "-Wconversion",
@@ -329,6 +330,73 @@ public:
             }
             logMessage ("mean lab() time over 50 calls: "
                         + juce::String ((juce::Time::getMillisecondCounterHiRes() - t0) / 50.0, 1) + " ms");
+
+            beginTest ("readouts");
+            expectEquals ((int) outA.guess.size(), 8);
+            expectWithinAbsoluteError (std::accumulate (outA.guess.begin(), outA.guess.end(), 0.0f), 1.0f, 1e-3f);
+            expect (std::any_of (outA.preset.begin(), outA.preset.end(),
+                                 [] (const auto& row) { return row.first == "Amp A / D / S / R"; }));
+            expect (std::any_of (outA.preset.begin(), outA.preset.end(),
+                                 [] (const auto& row) { return row.first == "Osc 1"; }));
+
+            auto map = [&] (MapRequest req)
+            {
+                std::optional<std::pair<juce::Result, MapResult>> got;
+                worker.map (std::move (req), [&] (juce::Result res, MapResult o) { got.emplace (res, std::move (o)); });
+                const auto deadline = juce::Time::getMillisecondCounter() + 60000;
+                while (! got && juce::Time::getMillisecondCounter() < deadline)
+                    juce::MessageManager::getInstance()->runDispatchLoopUntil (1);
+                expect (got.has_value(), "map timed out");
+                return got ? std::move (*got) : std::pair { juce::Result::fail ("timeout"), MapResult {} };
+            };
+            MapRequest m;
+            m.z = a.z;
+            m.category = a.category;
+            m.axisIds = { "s:brightness", "s:length" };
+            m.zPos = 0.5f;
+            beginTest ("map shape");
+            for (const auto* kind : { "brightness", "cat" })
+            {
+                m.kind = kind;
+                const auto t = juce::Time::getMillisecondCounterHiRes();
+                const auto [rm, outM] = map (m);
+                logMessage (juce::String ("24x24 ") + kind
+                            + " map: " + juce::String (juce::Time::getMillisecondCounterHiRes() - t, 0) + " ms");
+                expect (rm.wasOk(), rm.getErrorMessage());
+                expectEquals (outM.n, 24);
+                if (m.kind == "brightness")
+                {
+                    expectEquals ((int) outM.val.size(), 576);
+                    expect (std::all_of (outM.val.begin(), outM.val.end(), [] (float v) { return std::isfinite (v); }));
+                    expect (outM.lo < outM.hi);
+                }
+                else
+                {
+                    expectEquals ((int) outM.cells.size(), 576);
+                    expectEquals ((int) outM.conf.size(), 576);
+                    expect (std::all_of (outM.cells.begin(), outM.cells.end(), [] (int c) { return c >= 0 && c < 8; }));
+                }
+            }
+
+            beginTest ("map cancels");
+            {
+                m.kind = "cat";
+                bool mapFired = false, mapOk = false;
+                std::optional<juce::Result> labDone;
+                worker.map (m,
+                            [&] (juce::Result res, MapResult)
+                            {
+                                mapFired = true;
+                                mapOk = res.wasOk();
+                            });
+                worker.lab (a, [&] (juce::Result res, JointVaeWorker::Output) { labDone = res; });
+                const auto deadline = juce::Time::getMillisecondCounter() + 20000;
+                while (! labDone && juce::Time::getMillisecondCounter() < deadline)
+                    juce::MessageManager::getInstance()->runDispatchLoopUntil (1);
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (200);
+                expect (labDone.has_value() && labDone->wasOk(), "lab result after a cancelled map");
+                expect (! mapFired || ! mapOk, "map was cancelled");
+            }
         }
         beginTest ("failed replacement leaves working model loaded");
         const auto id = model.layout().id;

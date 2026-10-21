@@ -30,6 +30,10 @@ private:
     void decode();
     void refresh (const LatentAxis* dragged = nullptr);
     void updateDots();
+    void scheduleMap() { mapTimer.startTimer (150); }
+    void requestMap();
+    void jumpToDot (juce::Point<float>); // page pointerup: a tap within 7 px of a same-label dot
+    void paintReadouts (juce::Graphics&);
     void setStatus (const juce::String&, bool error = false);
     const LatentAxis* axisOn (int slot) const;
 
@@ -46,13 +50,21 @@ private:
 
     juce::TextButton latentButton { "Latent pad" }, knobButton { "Knob pad" }, lockButton { "Lock structure" },
         resetButton { "Reset" }, dotsButton { "Preset dots" }, sendButton { "Send to Surge" };
-    juce::ComboBox base, category;
+    juce::ComboBox base, category, background;
     LabPad pad;
     juce::Slider zSlider;
     juce::Viewport listView;
     LabAxisList list;
     juce::Label status;
-    juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea;
+    juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea, specArea, measureArea, presetArea,
+        guessArea;
+    juce::Image spec; // frames x 64 expected spectrogram of `current`
+    SoundMeasures sound {};
+    juce::TimedCallback mapTimer { [this]
+                                   {
+                                       mapTimer.stopTimer();
+                                       requestMap();
+                                   } };
 #else
     juce::Label note;
 #endif

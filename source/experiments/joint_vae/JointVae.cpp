@@ -75,6 +75,147 @@ const char* const labelNouns[8][19] = {
       "orchestra stab", "cello-like synth", "violin-like synth", "flute-like synth", "woodwind-like synth" },
 };
 
+juce::Result applyTail (const JointLayout& layout, const std::optional<std::vector<float>>& tail,
+                        std::vector<float>& codes)
+{
+    if (! tail)
+        return juce::Result::ok();
+    const auto from = (size_t) layout.numNumeric;
+    if (codes.size() != (size_t) layout.names.size() || tail->size() != codes.size() - from)
+        return juce::Result::fail ("Locked structure does not match the bundle layout");
+    std::copy (tail->begin(), tail->end(), codes.begin() + (std::ptrdiff_t) from);
+    return juce::Result::ok();
+}
+
+// KnobGroups::names order; NaN when the plan writes no Value for it
+std::vector<float> knobValues (const StudentPlan& plan, const KnobGroups& groups)
+{
+    std::map<juce::String, float> written;
+    for (const auto& v : plan.values)
+        written[v.feature] = v.code;
+    std::vector<float> knobs;
+    for (const auto& name : groups.names)
+    {
+        const auto it = written.find (name);
+        knobs.push_back (it != written.end() ? it->second : std::numeric_limits<float>::quiet_NaN());
+    }
+    return knobs;
+}
+
+// Page drawReadouts "Decoded preset" rows. Osc display names by Surge osc type id.
+const char* const oscNames[] = { "Classic", "Sine",   "Wavetable", "S&H noise", "Audio input", "FM3",
+                                 "FM2",     "Window", "Modern",    "String",    "Twist",       "Alias" };
+const char* const fxNames[][2] = { { "reverb", "reverb" },         { "reverb2", "reverb 2" },
+                                   { "delay", "delay" },           { "chorus", "chorus" },
+                                   { "flanger", "flanger" },       { "phaser", "phaser" },
+                                   { "distortion", "distortion" }, { "eq", "EQ" },
+                                   { "rotary", "rotary" },         { "resonator", "resonator" },
+                                   { "freqshift", "freq shift" },  { "conditioner", "conditioner" },
+                                   { "nimbus", "nimbus" } };
+std::vector<std::pair<juce::String, juce::String>> presetRows (const StudentPlan& plan, const JointLayout& layout,
+                                                               const std::vector<float>& codes,
+                                                               const KnobGroups& groups,
+                                                               const std::vector<float>& knobs)
+{
+    std::vector<std::pair<juce::String, juce::String>> rows;
+    for (int o = 0; o < 3; ++o)
+    {
+        juce::String type = "off";
+        for (const auto& t : plan.types)
+            if (t.path == "scene/0/osc/" + juce::String (o) + "/type" && t.value >= 0 && t.value < 12)
+                type = oscNames[t.value];
+        for (const auto& v : plan.values)
+            if (v.path == "scene/0/mute_o" + juce::String (o + 1) && v.code >= 0.5f)
+                type << " (muted)";
+        rows.emplace_back ("Osc " + juce::String (o + 1), type);
+    }
+    juce::StringArray fx;
+    for (const auto& f : fxNames)
+        if (const int i = layout.names.indexOf ("fx/" + juce::String (f[0]) + "/present");
+            i >= 0 && (size_t) i < codes.size() && codes[(size_t) i] >= 0.5f)
+            fx.add (f[1]);
+    rows.emplace_back ("Effects", fx.isEmpty() ? juce::String ("none") : fx.joinIntoString (", "));
+    const auto knob = [&] (const juce::String& name)
+    {
+        const int i = groups.names.indexOf (name);
+        return groups.format (i, i >= 0 && (size_t) i < knobs.size() ? knobs[(size_t) i] : 0.0f);
+    };
+    rows.emplace_back ("Cutoff", knob ("scene/filterunit/0/cutoff"));
+    rows.emplace_back ("Resonance", knob ("scene/filterunit/0/resonance"));
+    rows.emplace_back ("Amp A / D / S / R",
+                       knob ("scene/adsr/0/a") + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "))
+                           + knob ("scene/adsr/0/d") + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "))
+                           + knob ("scene/adsr/0/s") + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "))
+                           + knob ("scene/adsr/0/r"));
+    return rows;
+}
+
+juce::Result computeMap (JointVae& model, const MapRequest& req, MapResult& out, const std::function<bool()>& stale)
+{
+    std::vector<const LatentAxis*> axes;
+    for (const auto& id : req.axisIds)
+        if (const auto* a = model.xypad().find (id))
+            axes.push_back (a);
+        else
+            return juce::Result::fail ("Unknown pad axis " + id);
+    if (axes.size() < 2 || axes.size() > 3)
+        return juce::Result::fail ("A map needs X and Y axes");
+    float SoundMeasures::* measure = nullptr;
+    if (req.kind == "brightness")
+        measure = &SoundMeasures::brightness;
+    else if (req.kind == "length")
+        measure = &SoundMeasures::length;
+    else if (req.kind == "attack")
+        measure = &SoundMeasures::attack;
+    else if (req.kind == "noise")
+        measure = &SoundMeasures::noise;
+    else if (req.kind == "none")
+        return juce::Result::ok();
+    else if (req.kind != "cat")
+        return juce::Result::fail ("Unknown map kind " + req.kind);
+    const int n = out.n;
+    std::vector<float> targets (axes.size());
+    if (axes.size() == 3)
+        targets[2] = axisTarget (*axes[2], req.zPos);
+    std::vector<float> codes;
+    SoundCode sound;
+    for (int j = 0; j < n; ++j)
+        for (int i = 0; i < n; ++i)
+        {
+            if (stale())
+                return juce::Result::fail ("Map cancelled");
+            targets[0] = axisTarget (*axes[0], ((float) i + 0.5f) / (float) n);
+            targets[1] = axisTarget (*axes[1], 1.0f - ((float) j + 0.5f) / (float) n);
+            const auto z = constrain (req.z, axes, targets);
+            if (measure != nullptr)
+            {
+                if (auto r = model.decodeSound (z, req.category, sound); r.failed())
+                    return r;
+                out.val.push_back (measures (model.xypad(), melFromSound (model.soundPca(), sound)).*measure);
+                continue;
+            }
+            StudentPlan plan;
+            if (auto r = model.decode (z, req.category, codes); r.failed())
+                return r;
+            if (auto r = applyTail (model.layout(), req.lockedTail, codes); r.failed())
+                return r;
+            if (auto r = model.plan (codes, plan); r.failed())
+                return r;
+            const auto p = model.forest().predict (knobValues (plan, model.knobGroups()));
+            const auto best = std::max_element (p.begin(), p.end());
+            out.cells.push_back ((int) (best - p.begin()));
+            out.conf.push_back (*best);
+        }
+    if (measure != nullptr)
+    {
+        auto sorted = out.val;
+        std::sort (sorted.begin(), sorted.end());
+        out.lo = sorted[(size_t) (sorted.size() * 2 / 100)];
+        out.hi = sorted[(size_t) (sorted.size() * 98 / 100)];
+    }
+    return juce::Result::ok();
+}
+
 bool containsWord (const juce::String& text, const juce::String& word)
 {
     for (int i = text.indexOf (word); i >= 0; i = text.indexOf (i + 1, word))
@@ -216,11 +357,16 @@ juce::Result JointVae::decodeSound (const JointLatent& latent, int category, Sou
     return juce::Result::ok();
 }
 
+juce::Result JointVae::plan (const std::vector<float>& codes, StudentPlan& output) const
+{
+    return codec.plan (metadata.names, codes, output);
+}
+
 juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock& output, StudentPlan* planOut)
 {
     StudentPlan local;
     auto& plan = planOut != nullptr ? *planOut : local;
-    if (auto r = codec.plan (metadata.names, codes, plan); r.failed())
+    if (auto r = this->plan (codes, plan); r.failed())
         return r;
 #if VAE_WITH_SURGE
     if (builder == nullptr)
@@ -266,6 +412,7 @@ juce::Result JointVae::slice (const JointLatent& anchor, int xDim, int yDim, flo
 JointVaeWorker::~JointVaeWorker()
 {
     ++state->request;
+    ++state->mapRequest;
     pool.removeAllJobs (true, -1);
 }
 
@@ -273,6 +420,7 @@ void JointVaeWorker::submit (Work work, Callback callback)
 {
     auto shared = state;
     const auto id = ++shared->request;
+    ++shared->mapRequest; // any newer request cancels a map
     pool.addJob (
         [shared, id, task = std::move (work), completion = std::move (callback)]
         {
@@ -345,13 +493,8 @@ void JointVaeWorker::lab (LabRequest request, Callback cb)
             }
             else if (auto r = model.decode (req.z, req.category, out.codes); r.failed())
                 return r;
-            if (req.lockedTail)
-            {
-                const auto from = (size_t) model.layout().numNumeric;
-                if (req.lockedTail->size() != n - from)
-                    return juce::Result::fail ("Locked structure does not match the bundle layout");
-                std::copy (req.lockedTail->begin(), req.lockedTail->end(), out.codes.begin() + (std::ptrdiff_t) from);
-            }
+            if (auto r = applyTail (model.layout(), req.lockedTail, out.codes); r.failed())
+                return r;
             if (auto r = model.decodeSound (req.z, req.category, out.sound); r.failed())
                 return r;
             out.mel = melFromSound (model.soundPca(), out.sound);
@@ -362,16 +505,33 @@ void JointVaeWorker::lab (LabRequest request, Callback cb)
                 out.patchResult = liteControls (out.patch, out.lite);
             if (out.patchResult.failed())
                 out.patch.reset();
-            std::map<juce::String, float> written;
-            for (const auto& v : plan.values)
-                written[v.feature] = v.code;
-            for (const auto& name : model.knobGroups().names)
-            {
-                const auto it = written.find (name);
-                out.knobs.push_back (it != written.end() ? it->second : std::numeric_limits<float>::quiet_NaN());
-            }
+            out.knobs = knobValues (plan, model.knobGroups());
+            out.guess = model.forest().predict (out.knobs);
+            out.preset = presetRows (plan, model.layout(), out.codes, model.knobGroups(), out.knobs);
             return juce::Result::ok();
         },
         std::move (cb));
+}
+void JointVaeWorker::map (MapRequest request, std::function<void (juce::Result, MapResult)> callback)
+{
+    auto shared = state;
+    const auto id = ++shared->mapRequest;
+    pool.addJob (
+        [shared, id, req = std::move (request), completion = std::move (callback)]
+        {
+            const auto stale = [&] { return id != shared->mapRequest.load(); };
+            if (stale())
+                return;
+            MapResult out;
+            auto result = computeMap (shared->model, req, out, stale);
+            if (stale())
+                return;
+            juce::MessageManager::callAsync (
+                [shared, id, result, map = std::move (out), completion]
+                {
+                    if (id == shared->mapRequest.load() && completion)
+                        completion (result, map);
+                });
+        });
 }
 } // namespace vae::experimental

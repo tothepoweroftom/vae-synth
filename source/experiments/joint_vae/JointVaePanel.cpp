@@ -19,14 +19,28 @@ void JointVaePanel::paint (juce::Graphics&) {}
 namespace
 {
 constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kXLabelH = 18, kZRowH = 24,
-              kYLabelW = 18;
+              kYLabelW = 18, kEyebrowH = 13;
+// Background menu (page bgSel, latent mode): ids 1.. in this order
+const char* const mapKinds[][2] = { { "cat", "Category guess" }, { "brightness", "Brightness" }, { "length", "Length" },
+                                    { "attack", "Attack" },      { "noise", "Noise" },           { "none", "None" } };
+const juce::String dotSep (juce::CharPointer_UTF8 (" \xc2\xb7 "));
+juce::String quoted (const juce::String& name)
+{
+    return juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9c")) + name
+           + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9d"));
 }
+juce::String presetName (const XyPadData& xy, size_t k)
+{
+    return (int) k < xy.presetName.size() && xy.presetName[(int) k].isNotEmpty() ? xy.presetName[(int) k]
+                                                                                 : "preset " + juce::String (k);
+}
+} // namespace
 
 JointVaePanel::JointVaePanel()
 {
-    for (auto* c :
-         std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
-                                                   &resetButton, &dotsButton, &sendButton, &pad, &listView, &status })
+    for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
+                                                             &resetButton, &dotsButton, &sendButton, &background, &pad,
+                                                             &listView, &status })
         addAndMakeVisible (c);
     addChildComponent (zSlider);
     latentButton.setToggleState (true, juce::dontSendNotification);
@@ -38,6 +52,12 @@ JointVaePanel::JointVaePanel()
     lockButton.setTooltip ("Keep oscillator types, effects and other switches fixed while dragging");
     dotsButton.setTooltip ("Real presets as dots (colour = category)");
     dotsButton.setClickingTogglesState (true);
+    dotsButton.setToggleState (true, juce::dontSendNotification); // page default: checked
+    for (int i = 0; i < 6; ++i)
+        background.addItem (mapKinds[i][1], i + 1);
+    background.setSelectedId (2, juce::dontSendNotification); // page default in latent mode: brightness
+    background.setTooltip ("Background: what the map shows at each point");
+    background.onChange = [this] { scheduleMap(); };
     listView.setViewedComponent (&list, false);
     listView.setScrollBarsShown (true, false);
     zSlider.setRange (0.0, 1.0, 0.001);
@@ -64,6 +84,7 @@ JointVaePanel::JointVaePanel()
         refresh();
         decode();
     };
+    pad.tapped = [this] (juce::Point<float> p) { jumpToDot (p); };
     list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
     list.slid = [this] (const LatentAxis& axis, float p)
     {
@@ -115,7 +136,7 @@ JointVaePanel::JointVaePanel()
                    r.failed());
     };
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton,
-                                                             &sendButton, &pad, &zSlider })
+                                                             &sendButton, &background, &pad, &zSlider })
         c->setEnabled (false);
 
     // Installed by scripts/install-models.sh, like the Prompt tab's models
@@ -170,7 +191,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.base.addItem ("Random real preset", kRandomBase);
                      for (auto* c : std::initializer_list<juce::Component*> {
                               &self.base, &self.category, &self.lockButton, &self.resetButton, &self.dotsButton,
-                              &self.pad, &self.zSlider })
+                              &self.background, &self.pad, &self.zSlider })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
@@ -189,11 +210,7 @@ void JointVaePanel::loadBase (int id)
         const auto k = (size_t) juce::Random::getSystemRandom().nextInt ((int) xy->presetZ.size());
         z = xy->presetZ[k];
         label = juce::jlimit (0, 8, xy->presetLabel[k]);
-        const auto name = (int) k < xy->presetName.size() && xy->presetName[(int) k].isNotEmpty()
-                              ? xy->presetName[(int) k]
-                              : "preset " + juce::String (k);
-        message = juce::String (juce::CharPointer_UTF8 ("Started from \xe2\x80\x9c")) + name
-                  + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9d (")) + jointLabels[label] + ").";
+        message = "Started from " + quoted (presetName (*xy, k)) + " (" + jointLabels[label] + ").";
     }
     else if (auto it = xy->typical.find (jointLabels[juce::jlimit (1, 9, id) - 1]); it != xy->typical.end())
     {
@@ -235,6 +252,7 @@ void JointVaePanel::assign (int slot, const juce::String& id)
     syncPositions();
     refresh();
     updateDots();
+    scheduleMap();
     resized();
 }
 
@@ -278,16 +296,55 @@ void JointVaePanel::updateDots()
     pad.setPresetDots (std::move (dots), category.getSelectedId() - 1);
 }
 
-void JointVaePanel::decode()
+void JointVaePanel::jumpToDot (juce::Point<float> p)
+{
+    auto *ax = axisOn (0), *ay = axisOn (1);
+    if (! dotsButton.getToggleState() || ! ax || ! ay)
+        return;
+    const int label = category.getSelectedId() - 1;
+    const auto w = (float) pad.getWidth(), h = (float) pad.getHeight();
+    float best = 7.0f * 7.0f;
+    int hit = -1;
+    for (size_t i = 0; i < xy->presetZ.size(); ++i)
+    {
+        if (xy->presetLabel[i] != label)
+            continue;
+        const auto dx = (axisPosition (*ax, xy->presetZ[i]) - p.x) * w,
+                   dy = (axisPosition (*ay, xy->presetZ[i]) - p.y) * h;
+        if (dx * dx + dy * dy < best)
+        {
+            best = dx * dx + dy * dy;
+            hit = (int) i;
+        }
+    }
+    if (hit < 0)
+        return;
+    userActed = true; // a dot click is a user action (ruling R14)
+    z = xy->presetZ[(size_t) hit];
+    const int l = juce::jlimit (0, 8, xy->presetLabel[(size_t) hit]);
+    category.setSelectedId (l + 1, juce::dontSendNotification);
+    setStatus ("Jumped to the real preset " + quoted (presetName (*xy, (size_t) hit)) + " (" + jointLabels[l] + ").");
+    syncPositions();
+    refresh();
+    updateDots();
+    decode();
+}
+
+void JointVaePanel::requestMap()
 {
     if (! xy)
         return;
-    LabRequest request;
+    MapRequest request;
     request.z = z;
     request.category = category.getSelectedId() - 1;
+    for (int i = 0; i < 3; ++i)
+        if (axisOn (i))
+            request.axisIds.push_back (axes[(size_t) i]);
+    request.zPos = pos[2];
+    request.kind = mapKinds[juce::jlimit (0, 5, background.getSelectedId() - 1)][0];
     request.lockedTail = lockedTail;
-    worker.lab (std::move (request),
-                [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
+    worker.map (std::move (request),
+                [safe = juce::Component::SafePointer (this)] (juce::Result r, MapResult m)
                 {
                     if (! safe)
                         return;
@@ -296,21 +353,95 @@ void JointVaePanel::decode()
                         safe->setStatus (r.getErrorMessage(), true);
                         return;
                     }
-                    safe->current = std::move (out);
-                    safe->outputValid = true;
-                    const bool playable = safe->current.patchResult.wasOk();
-                    safe->sendButton.setEnabled (playable);
-                    if (! playable)
-                        safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
-                    else
+                    // Page drawPad: one pixel per cell, scaled up smoothly by the pad
+                    const int n = m.n;
+                    juce::Image image;
+                    std::vector<std::pair<juce::String, juce::Point<float>>> labels;
+                    if (m.cells.size() == (size_t) (n * n))
                     {
-                        if (safe->errorShown)
-                            safe->setStatus ({});
-                        // Bundle load and showing the tab decode for display only (ruling R14)
-                        if (safe->userActed && safe->onLite)
-                            safe->onLite (safe->current.lite);
+                        image = juce::Image (juce::Image::ARGB, n, n, true);
+                        std::array<int, 9> count {};
+                        std::array<float, 9> sx {}, sy {};
+                        for (int k = 0; k < n * n; ++k)
+                        {
+                            const int c = juce::jlimit (0, 8, m.cells[(size_t) k]);
+                            image.setPixelAt (k % n, k / n,
+                                              labCategoryColours[c].withAlpha (juce::jmin (
+                                                  1.0f, labMapAlpha * (0.45f + 0.9f * m.conf[(size_t) k]))));
+                            ++count[(size_t) c];
+                            sx[(size_t) c] += (float) (k % n);
+                            sy[(size_t) c] += (float) (k / n);
+                        }
+                        for (size_t c = 0; c < 9; ++c)
+                            if ((float) count[c] > (float) (n * n) * 0.04f)
+                                labels.push_back ({ jointLabels[c],
+                                                    { (sx[c] / (float) count[c] + 0.5f) / (float) n,
+                                                      1.0f - (sy[c] / (float) count[c] + 0.5f) / (float) n } });
                     }
+                    else if (m.val.size() == (size_t) (n * n))
+                    {
+                        image = juce::Image (juce::Image::ARGB, n, n, true);
+                        const auto span = m.hi > m.lo ? m.hi - m.lo : 1.0f;
+                        for (int k = 0; k < n * n; ++k)
+                            image.setPixelAt (
+                                k % n, k / n,
+                                labHeat.withAlpha (
+                                    0.03f + 0.72f * juce::jlimit (0.0f, 1.0f, (m.val[(size_t) k] - m.lo) / span)));
+                    }
+                    safe->pad.setMap (image, std::move (labels));
                 });
+}
+
+void JointVaePanel::decode()
+{
+    if (! xy)
+        return;
+    scheduleMap(); // 150 ms after the last change
+    LabRequest request;
+    request.z = z;
+    request.category = category.getSelectedId() - 1;
+    request.lockedTail = lockedTail;
+    worker.lab (
+        std::move (request),
+        [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
+        {
+            if (! safe)
+                return;
+            if (r.failed())
+            {
+                safe->setStatus (r.getErrorMessage(), true);
+                return;
+            }
+            auto& self = *safe;
+            self.current = std::move (out);
+            self.outputValid = true;
+            // Page specCanvas: ((mel + 70) / 70)^0.8, accent over the well, low bands at the bottom
+            const auto bands = (int) self.xy->bandHz.size();
+            const auto frames = bands > 0 ? (int) self.current.mel.size() / bands : 0;
+            self.spec = frames > 0 ? juce::Image (juce::Image::RGB, frames, bands, false) : juce::Image();
+            for (int t = 0; t < frames; ++t)
+                for (int b = 0; b < bands; ++b)
+                    self.spec.setPixelAt (
+                        t, bands - 1 - b,
+                        labWell.interpolatedWith (
+                            labHeat,
+                            std::pow (juce::jlimit (0.0f, 1.0f, (self.current.mel[(size_t) (t * bands + b)] + 70) / 70),
+                                      0.8f)));
+            self.sound = measures (*self.xy, self.current.mel);
+            self.repaint();
+            const bool playable = safe->current.patchResult.wasOk();
+            safe->sendButton.setEnabled (playable);
+            if (! playable)
+                safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
+            else
+            {
+                if (safe->errorShown)
+                    safe->setStatus ({});
+                // Bundle load and showing the tab decode for display only (ruling R14)
+                if (safe->userActed && safe->onLite)
+                    safe->onLite (safe->current.lite);
+            }
+        });
 }
 
 void JointVaePanel::paint (juce::Graphics& g)
@@ -350,12 +481,84 @@ void JointVaePanel::paint (juce::Graphics& g)
         g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + name (2), zLabelArea,
                           juce::Justification::centredLeft, 1, 0.7f);
     }
-    // Reserved for the readout strip (Task 8)
+    paintReadouts (g);
+}
+
+void JointVaePanel::paintReadouts (juce::Graphics& g)
+{
+    // Page drawReadouts (latent mode), laid out as one strip
     g.setColour (LF::faint);
     g.drawRoundedRectangle (readoutArea.toFloat().reduced (0.5f), 5, 1);
+    const auto eyebrow = [&g] (juce::Rectangle<int>& area, const juce::String& text)
+    {
+        g.setColour (LF::quiet());
+        g.setFont (LF::labelFont (9.5f, true));
+        g.drawText (text.toUpperCase(), area.removeFromTop (kEyebrowH), juce::Justification::topLeft);
+    };
+    const auto rows =
+        [&g] (juce::Rectangle<int> area, const std::vector<std::pair<juce::String, juce::String>>& items, int keyW)
+    {
+        const int h = items.empty() ? 0 : juce::jmin (14, area.getHeight() / (int) items.size());
+        g.setFont (LF::labelFont (10.0f));
+        for (const auto& [k, v] : items)
+        {
+            auto row = area.removeFromTop (h);
+            g.setColour (LF::quiet());
+            g.drawText (k, row.removeFromLeft (keyW), juce::Justification::centredLeft);
+            g.setColour (LF::ink);
+            g.drawFittedText (v, row, juce::Justification::centredRight, 1, 0.75f);
+        }
+    };
+    auto area = specArea;
+    eyebrow (area, "Expected sound at the dot");
+    auto caption = area.removeFromBottom (12);
+    g.setColour (labWell);
+    g.fillRoundedRectangle (area.toFloat(), 4);
+    if (outputValid && spec.isValid())
+        g.drawImage (spec, area.toFloat().reduced (1), juce::RectanglePlacement::stretchToFit);
+    g.setColour (LF::faint);
+    g.drawRoundedRectangle (area.toFloat().reduced (0.5f), 4, 1);
     g.setColour (LF::quiet());
-    g.setFont (LF::labelFont (9.5f, true));
-    g.drawText ("EXPECTED SOUND", readoutArea.reduced (8), juce::Justification::topLeft);
+    g.setFont (LF::labelFont (9.0f));
+    g.drawText ("0 s", caption, juce::Justification::bottomLeft);
+    g.drawText ("note off 2 s", caption, juce::Justification::centredBottom);
+    g.drawText ("6 s", caption, juce::Justification::bottomRight);
+    if (! outputValid)
+        return;
+
+    area = measureArea.withTrimmedTop (kEyebrowH);
+    rows (area,
+          { { "Brightness", juce::String (sound.brightness, 1) + " oct above the note" },
+            { "Attack", sound.attack < 0.05f ? juce::String ("< 50 ms")
+                                             : juce::String (juce::roundToInt (sound.attack * 1000)) + " ms" },
+            { "Length", juce::String (sound.length, 1) + " s" },
+            { "Noise", juce::String (juce::roundToInt (sound.noise * 100)) + "%" } },
+          64);
+
+    area = presetArea;
+    eyebrow (area, juce::String ("Decoded preset") + (lockedTail ? dotSep + "structure locked" : juce::String()));
+    rows (area, current.preset, 96);
+
+    area = guessArea;
+    eyebrow (area, "Category guess at the dot");
+    const auto top = (int) (std::max_element (current.guess.begin(), current.guess.end()) - current.guess.begin());
+    const int h = area.getHeight() / 8;
+    for (int c = 0; c < 8; ++c)
+    {
+        auto row = area.removeFromTop (h);
+        const auto p = current.guess[(size_t) c];
+        g.setColour (c == top ? LF::ink : LF::quiet());
+        g.setFont (LF::labelFont (9.5f, c == top));
+        g.drawText (jointLabels[c], row.removeFromLeft (66), juce::Justification::centredLeft);
+        g.setColour (LF::quiet());
+        g.drawText (juce::String (juce::roundToInt (p * 100)) + "%", row.removeFromRight (32),
+                    juce::Justification::centredRight);
+        const auto bar = row.reduced (4, 0).withSizeKeepingCentre (row.getWidth() - 8, 6).toFloat();
+        g.setColour (LF::faint);
+        g.fillRoundedRectangle (bar, 3);
+        g.setColour (labCategoryColours[c]);
+        g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * juce::jlimit (0.0f, 1.0f, p)), 3);
+    }
 }
 
 void JointVaePanel::resized()
@@ -371,12 +574,13 @@ void JointVaePanel::resized()
     put (latentButton, 92);
     put (knobButton, 84);
     bar.removeFromLeft (10);
-    put (base, 200);
+    put (base, 180);
     put (category, 120);
     put (lockButton, 124);
     put (resetButton, 64);
     put (dotsButton, 104);
     put (sendButton, 120);
+    put (background, 130);
 
     auto left = r.removeFromLeft (r.getWidth() * 2 / 3);
     left.removeFromRight (12);
@@ -384,6 +588,17 @@ void JointVaePanel::resized()
     list.layOut (listView.getWidth() - listView.getScrollBarThickness()); // rows never sit under the scroll bar
 
     readoutArea = left.removeFromBottom (kReadoutH);
+    {
+        auto strip = readoutArea.reduced (8);
+        const auto w = strip.getWidth();
+        specArea = strip.removeFromLeft (w * 22 / 100);
+        strip.removeFromLeft (12);
+        measureArea = strip.removeFromLeft (w * 25 / 100);
+        strip.removeFromLeft (12);
+        guessArea = strip.removeFromRight (w * 22 / 100);
+        strip.removeFromRight (12);
+        presetArea = strip;
+    }
     left.removeFromBottom (kGap);
     promptArea = left.removeFromBottom (kPromptH); // Task 9's log and prompt; the status line until then
     status.setBounds (promptArea);

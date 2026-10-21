@@ -1,5 +1,6 @@
 #include "experiments/joint_vae/JointVae.h"
 #include <cmath>
+#include <limits>
 
 namespace vae::experimental
 {
@@ -125,6 +126,20 @@ public:
             expectEquals (sp.scale, 2.5f);
             expectEquals (sp.frames, 1);
             f.deleteFile();
+        }
+
+        beginTest ("knob values read like the page's fmt");
+        {
+            KnobGroups k;
+            k.ctrltype = { "ct_envtime", "ct_envtime", "ct_freq_audible_with_tunability", "ct_percent", "ct_pitch" };
+            k.natLo = { -8, -8, -60, 0, -12 };
+            k.natHi = { 5, 5, 70, 1, 12 };
+            expectEquals (k.format (0, 0.5f), juce::String ("354 ms"));  // 2^-1.5
+            expectEquals (k.format (1, 1.0f), juce::String ("32.00 s")); // 2^5
+            expectEquals (k.format (2, 60.0f / 130.0f), juce::String ("440 Hz"));
+            expectEquals (k.format (3, 0.256f), juce::String ("26%"));
+            expectEquals (k.format (4, 0.75f), juce::String ("+6.0 st"));
+            expectEquals (k.format (3, std::numeric_limits<float>::quiet_NaN()), juce::String ("off"));
         }
 
         const auto path = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");

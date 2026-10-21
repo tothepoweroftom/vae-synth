@@ -225,6 +225,26 @@ public:
                 expect (pumpUntil ([&] { return played > 0; }, 30000), "a pad move plays");
             }
         }
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("editor closes mid-map");
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
+            expect (pad != nullptr);
+            if (pad)
+            {
+                lab->loadBundle (juce::File (bundle));
+                expect (pumpUntil ([&] { return pad->getMap().isValid(); }, 60000), "the first map arrives");
+                pad->keyPressed (juce::KeyPress (juce::KeyPress::rightKey));
+                pumpUntil ([] { return false; }, 170); // the map timer fires: a map is on the worker
+                editor.reset();
+                pumpUntil ([] { return false; }, 500);
+            }
+        }
 #endif
 
         beginTest ("SAME invalid latents and cancelled worker callbacks");

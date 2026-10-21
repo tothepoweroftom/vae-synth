@@ -32,6 +32,8 @@ public:
     /** Decoded codes -> full Surge patch data (student codec + template). Needs a VAE_WITH_SURGE build.
         `plan`, when given, receives the codec plan even when the build fails. */
     juce::Result patch (const std::vector<float>& codes, juce::MemoryBlock&, StudentPlan* plan = nullptr);
+    /** Decoded codes -> codec plan only (no Surge build). */
+    juce::Result plan (const std::vector<float>& codes, StudentPlan&) const;
     const JointLayout& layout() const { return metadata; }
     const XyPadData& xypad() const { return xy; }
     const CategoryForest& forest() const { return categoryForest; }
@@ -71,6 +73,25 @@ struct LabRequest
     std::optional<std::vector<float>> codes;      /* knob pad: skip the decoder */
 };
 
+struct MapRequest
+{
+    JointLatent z {};
+    int category = 8;
+    std::vector<juce::String> axisIds; // X, Y and optionally Z
+    float zPos = 0.5f;
+    juce::String kind /* cat|brightness|length|attack|noise|none */;
+    std::optional<std::vector<float>> lockedTail;
+};
+
+/** n x n cells, row 0 at the top (high Y). `cells`/`conf` for "cat", `val`/`lo`/`hi` for a measure. */
+struct MapResult
+{
+    int n = 24;
+    std::vector<int> cells;
+    std::vector<float> conf, val;
+    float lo = 0, hi = 0;
+};
+
 // Owns model lifetime on a serial worker. UI callbacks run on the message thread.
 // No engine or parameter-store dependency, and no mock/fallback output.
 class JointVaeWorker
@@ -88,21 +109,29 @@ public:
         std::vector<float> mel;                 // melFromSound (frames x 64 dB)
         std::vector<float> knobs;               // KnobGroups::names order; NaN when the plan writes no Value for it
         std::shared_ptr<const XyPadData> xypad; // set by a successful load, for the UI
+        std::array<float, 8> guess {};          // CategoryForest::predict (knobs)
+        std::vector<std::pair<juce::String, juce::String>> preset; // page "Decoded preset" rows
     };
     using Callback = std::function<void (juce::Result, Output)>;
     ~JointVaeWorker();
     void load (juce::File, Callback);
-    void cancel() { ++state->request; }
+    void cancel()
+    {
+        ++state->request;
+        ++state->mapRequest;
+    }
     void decode (JointLatent, int category, Callback);
     void encode (SoundCode, int category, Callback);
     /** decode (unless codes) -> apply lockedTail -> plan -> patch -> lite + sound. */
     void lab (LabRequest, Callback);
+    /** The pad's background map. Cancelled by any newer request; never cancels one. */
+    void map (MapRequest, std::function<void (juce::Result, MapResult)>);
 
 private:
     struct State
     {
         JointVae model;
-        std::atomic<uint64_t> request { 0 };
+        std::atomic<uint64_t> request { 0 }, mapRequest { 0 };
     };
     using Work = std::function<juce::Result (JointVae&, Output&)>;
     void submit (Work, Callback);

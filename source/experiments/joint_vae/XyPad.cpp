@@ -586,6 +586,11 @@ juce::Result KnobGroups::load (const juce::var& knobs, KnobGroups& out)
         k.names.add (v["name"].toString());
         k.p5.push_back ((float) (double) v["p5"]);
         k.p95.push_back ((float) (double) v["p95"]);
+        k.ctrltype.add (v["ctrltype"].toString());
+        const auto natRange = v["natural_range"];
+        const bool ranged = natRange.size() == 2 && isNum (natRange[0]) && isNum (natRange[1]);
+        k.natLo.push_back (ranged ? (float) (double) natRange[0] : 0.0f);
+        k.natHi.push_back (ranged ? (float) (double) natRange[1] : 1.0f);
     }
     for (auto& v : *gs)
     {
@@ -606,6 +611,31 @@ juce::Result KnobGroups::load (const juce::var& knobs, KnobGroups& out)
     }
     out = std::move (k);
     return juce::Result::ok();
+}
+
+juce::String KnobGroups::format (int knob, float v) const
+{
+    if (knob < 0 || knob >= ctrltype.size() || (size_t) knob >= natLo.size() || std::isnan (v))
+        return "off";
+    const auto x = natLo[(size_t) knob] + v * (natHi[(size_t) knob] - natLo[(size_t) knob]);
+    const auto& t = ctrltype[knob];
+    const auto plus = [] (float y) { return y >= 0 ? juce::String ("+") : juce::String(); };
+    if (t.startsWith ("ct_envtime") || t == "ct_portatime")
+        return std::exp2 (x) < 1 ? juce::String (juce::roundToInt (std::exp2 (x) * 1000)) + " ms"
+                                 : juce::String (std::exp2 (x), 2) + " s";
+    if (t == "ct_reverbtime")
+        return juce::String (std::exp2 (x), 2) + " s";
+    if (t.startsWith ("ct_lforate"))
+        return juce::String (std::exp2 (x), 2) + " Hz";
+    if (t.startsWith ("ct_freq_audible"))
+        return juce::String (juce::roundToInt (440 * std::exp2 (x / 12))) + " Hz";
+    if (t.startsWith ("ct_pitch") || t == "ct_freq_mod")
+        return plus (x) + juce::String (x, 1) + " st";
+    if (t.startsWith ("ct_decibel"))
+        return plus (x) + juce::String (x, 1) + " dB";
+    if (t.contains ("bipolar"))
+        return plus (x) + juce::String (juce::roundToInt (x * 100)) + "%";
+    return juce::String (juce::roundToInt (v * 100)) + "%";
 }
 
 int KnobGroups::find (const juce::String& name) const

@@ -90,11 +90,15 @@ struct KnobGroups
     };
     juce::StringArray names; // knobs.knobs[].name: student feature names
     std::vector<float> p5, p95;
+    juce::StringArray ctrltype;      // Surge ctrltype per knob ("" = percent)
+    std::vector<float> natLo, natHi; // natural_range per knob
     std::vector<Group> groups;
     /** `xypad.json` knobs (the object holding `knobs` and `groups`). */
     static juce::Result load (const juce::var&, KnobGroups&);
     int find (const juce::String& name) const;
     float position (int group, std::span<const float> knobs123) const; // NaN if none set
     void set (int group, float pos, std::span<float> knobs123) const;
+    /** Page fmt: a knob code (0..1, NaN = off) in its unit, e.g. "354 ms", "440 Hz", "26%". */
+    juce::String format (int knob, float code) const;
 };
 } // namespace vae::experimental
