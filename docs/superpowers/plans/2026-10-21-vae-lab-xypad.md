@@ -714,3 +714,29 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run them, plus the full ctest in both builds. Expected: PASS. Take a screenshot.
 - [ ] **Step 5:** Commit.
+
+---
+
+### Task 21: Switch prompt search to the student's p1 model
+
+*User request (21 Oct 2026). Source: `/Users/thomaspower/Downloads/p1/`. This is import-only data and must never be read at runtime.*
+
+**Checked by the controller:**
+- p1 has the same `text_encoder.onnx`, tokenizer and `decoder.onnx` as p0 (identical sha1).
+- `prior.onnx` is **retrained**: layout `prior: "p1"`, max diff vs PyTorch 3.8e-6.
+- `bank.npz` has **4,429 rows covering all 8 categories**: Atmosphere 751, Synth 693, Orchestral 629, Bass 527, Lead 494, Keys 474, Pluck 468, Pad 393.
+- `feats` are in the same order as p0's. The VAE is still j48w_b05 with 435/85/111 features.
+
+**Files:**
+- Modify:
+  - `tools/joint_vae/export_prompt.py` and `tools/joint_vae/prompt_reference.py`: accept any prior id, recorded in prompt.json, instead of requiring "p0".
+  - `scripts/install-models.sh`: install `models/prompt-p1` as the prompt bundle, falling back to p0 when it's absent.
+  - Any native code that hard-codes "p0" or the p0 bank size or path.
+  - `docs/JOINT-VAE-LAB.md`.
+  - `docs/P0-PROMPT-EVAL.md`: rename it to a prompt-eval sheet covering both models, or add a p1 section.
+- Output (git-ignored): `models/prompt-p1/`.
+
+- [ ] **Step 1:** Run `export_prompt.py --source ~/Downloads/p1 --lab models/joint-vae-j48w_b05 --out models/prompt-p1`. Expected: all compatibility checks pass, including the decoder comparison and the feature order. Then run `prompt_reference.py` for p1 parity fixtures, including a Keys prompt that now selects real Keys rows, and `codec_parity.py --bank` on 20 p1 rows.
+- [ ] **Step 2:** Run the native `PromptModelTests` and the plugin prompt tests with `VAE_PROMPT_BUNDLE=models/prompt-p1/prompt.json`. Expected: parity passes, with no code changes beyond any hard-coded p0 assumptions. Keep the p0 tests passing too.
+- [ ] **Step 3:** Re-render the listening sheet with p1, using the same prompts and `vae_p0_eval`. Record next to p0: the categories returned, whether the contrasting pairs (dark/bright, short/long, soft/sharp) now select different first rows, and coverage. Make no quality claims; listening is the user's.
+- [ ] **Step 4:** Switch the installer and docs to p1, then run the full ctest in both builds and commit.
