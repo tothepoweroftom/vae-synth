@@ -6,6 +6,8 @@ target_sources(vae_ml_tests PRIVATE
     XyPadTests.cpp
     PromptWordsTests.cpp
     LiteTranslationTests.cpp
+    PromptModelTests.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptModel.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LiteTranslation.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptWords.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/XyPad.cpp
@@ -26,6 +28,7 @@ target_compile_definitions(vae_ml_tests PRIVATE
 
 target_link_libraries(vae_ml_tests PRIVATE
     vae_ml
+    vae_tokenizer
     juce::juce_events
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)

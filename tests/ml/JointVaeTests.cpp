@@ -122,7 +122,10 @@ public:
                 expectWithinAbsoluteError (z[(size_t) i], (float) row["encoded_latent"][i], 2e-5f);
         }
         beginTest ("native codec matches the student's Python codec plans");
-        const auto codecParity = juce::JSON::parse (manifest.getSiblingFile ("codec-parity.json"));
+        // VAE_CODEC_PARITY: another plan file, e.g. the p0 bank's (codec_parity.py --bank)
+        const auto parityFile = juce::SystemStats::getEnvironmentVariable ("VAE_CODEC_PARITY", "");
+        const auto codecParity = juce::JSON::parse (
+            parityFile.isNotEmpty() ? juce::File (parityFile) : manifest.getSiblingFile ("codec-parity.json"));
         const auto* plans = codecParity["cases"].getArray();
         expect (plans != nullptr, "run tools/joint_vae/codec_parity.py --bundle <bundle dir>");
         StudentCodec codec;
@@ -132,8 +135,8 @@ public:
         {
             const auto& expected = (*plans)[c]["plan"];
             std::vector<float> rowCodes;
-            for (const auto& v : *(*plans)[c]["codes"].getArray())
-                rowCodes.push_back ((float) v);
+            for (const auto& v : *(*plans)[c]["codes"].getArray()) // null = NaN = inactive (bank rows)
+                rowCodes.push_back (v.isVoid() ? std::numeric_limits<float>::quiet_NaN() : (float) v);
             StudentPlan plan;
             expect (codec.plan (model.layout().names, rowCodes, plan).wasOk());
             auto sameSize = [&] (const char* key, size_t n)
