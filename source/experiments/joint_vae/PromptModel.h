@@ -15,7 +15,7 @@ struct PromptCandidate
     juce::String name;
 };
 
-// p0 prompt bundle (prompt.json): text -> CLAP text encoder -> prior -> nearest bank presets.
+// p0/p1 prompt bundle (prompt.json): text -> CLAP text encoder -> prior -> nearest bank presets.
 // Synchronous, worker-thread only. Failed loads keep the previous model.
 class PromptModel
 {

@@ -102,7 +102,9 @@ JointVaePanel::JointVaePanel()
                               "edit it. The sound may change; select the preset again to get it back.");
     exploreButton.onClick = [this] { explore(); };
     // Installed beside the Lab bundle by scripts/install-models.sh; loads after each Lab bundle
-    promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
+    promptFile = ml::appDataDir().getChildFile ("models/prompt-p1/prompt.json");
+    if (! promptFile.existsAsFile()) // older installs
+        promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
     updatePromptUi();
 
     pad.moved = [this] (juce::Point<float> p)

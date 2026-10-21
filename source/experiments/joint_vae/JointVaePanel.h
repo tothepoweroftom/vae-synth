@@ -36,9 +36,9 @@ public:
     /** The prompt box's submit handler: Find sounds with a prompt bundle loaded and Find chosen, else Nudge
         (also driven by tests, which read the state back below). */
     void submitPrompt (const juce::String&);
-    void findSounds (const juce::String&); // the learned prompt search (p0); results come back async
+    void findSounds (const juce::String&); // the learned prompt search (p0/p1); results come back async
     void nudge (const juce::String&);      // the word list (interpretPrompt)
-    /** The p0 prompt bundle (the installed one by default) is offered after each Lab bundle but only loads on the
+    /** The prompt bundle (the installed one by default) is offered after each Lab bundle but only loads on the
         first Find (R20: it is ~625 MB, so an editor that never searches never pays for it). */
     void loadPromptBundle (const juce::File&);
     bool isPromptReady() const { return promptReady; }   // Find is offered

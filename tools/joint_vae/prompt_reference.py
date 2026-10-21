@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Offline reference runner for a p0 prompt bundle (export_prompt.py): writes prompt-parity.json.
+"""Offline reference runner for a p0/p1 prompt bundle (export_prompt.py): writes prompt-parity.json.
 
-python3 -I tools/joint_vae/prompt_reference.py --bundle models/prompt-p0
+python3 -I tools/joint_vae/prompt_reference.py --bundle models/prompt-p1
 
 text -> tokenizer -> text encoder -> L2-normalised embedding -> prior -> mixture means -> nearest unused bank row
 of the predicted category (squared distance in bank z) -> stored codes. This is OUR reading of the student's
@@ -30,8 +30,8 @@ CASES = [
     ('long_pad', 'long pad'),
     ('soft_lead', 'soft lead'),
     ('sharp_lead', 'sharp lead'),
-    ('near_tie', 'acid lead'),  # second-nearest bank row 1.9e-4 farther; sharp_lead has a 7e-6 weight gap
-    ('keys_forced', 'electric piano keys', 3),  # p0 never predicts 3..7 (logits ~ -10): forced no-bank case
+    ('near_tie', 'acid lead'),
+    ('keys_forced', 'electric piano keys', 3),  # forced no-bank case
 ]
 
 

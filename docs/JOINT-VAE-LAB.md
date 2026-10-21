@@ -26,10 +26,10 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 
 1. **Prompt.** Type a sound ("deep sub bass") in the box under the pad. Two actions share the box, chosen by the
    switch on its left; Return runs the chosen one:
-   - **Find sounds** (experimental; the default with the p0 prompt bundle installed) sends the whole text to the student's text
+   - **Find sounds** (experimental; the default with the prompt bundle installed) sends the whole text to the student's text
      model and lists up to 8 real presets from its bank, like `Bass · 0142`. The first is selected. No word-list
      adjectives are applied on top.
-   - **Word list** (the only action without p0) picks a label from the student's nouns and starts from
+   - **Word list** (the only action without a prompt bundle) picks a label from the student's nouns and starts from
      Typical <label>; its adjectives nudge the axes. The reply says what it did and which words it ignored.
 
    **Bank mode.** A selected bank preset plays its exact stored settings (Lite preview; Send to Surge builds the
@@ -67,17 +67,17 @@ carry well; "noisy" and "moving" change the sound little, and the reply says so.
 ## Bundles
 
 The Lab loads `~/Library/Application Support/VAE Synth/models/joint-vae/bundle.json` when the window opens, and the
-prompt bundle from `.../models/prompt-p0/` if present. `scripts/install-models.sh` installs
-`models/joint-vae-j48w_b05` (and `models/prompt-p0` when it exists), plus the Surge template and the 32 wavetables
+prompt bundle from `.../models/prompt-p1/` (else `prompt-p0/`) if present. `scripts/install-models.sh` installs
+`models/joint-vae-j48w_b05` (and `models/prompt-p1`, else `models/prompt-p0`, when it exists), plus the Surge template and the 32 wavetables
 the model can pick. Running it overwrites the installed Lab bundle. Models are git-ignored.
 
 Lab bundle contents: `bundle.json` (id fingerprints everything below), `config.json`, `schema.json`,
 `pruning.json`, `decoder.onnx`, `sound_encoder.onnx`, `sound_decoder.onnx`, `sound_pca.npz`, `xypad.json` (axes,
 latent dimensions, per-label means, preset z, knobs, category forest), plus reference data for the tests
 (`parity.json`, `codec-parity.json`, `xypad-parity.json`, `example-sound.json`).
-Prompt bundle (`models/prompt-p0`): `prompt.json`, `text_encoder.onnx` (501 MB), `prior.onnx`, `tokenizer.json`,
-`bank.json` / `bank.bin` (1,227 real presets in Lab feature order), and parity files. It is installed by
-`scripts/install-models.sh` to `.../models/prompt-p0/` and must match the Lab bundle's id.
+Prompt bundle (`models/prompt-p1`, or the older `prompt-p0`): `prompt.json`, `text_encoder.onnx` (501 MB), `prior.onnx`, `tokenizer.json`,
+`bank.json` / `bank.bin` (p1: 4,429 real presets in all 8 categories; p0: 1,227, Bass/Lead/Pad only; Lab feature order), and parity files. It is installed by
+`scripts/install-models.sh` to `.../models/prompt-p1/` (or `prompt-p0/`) and must match the Lab bundle's id.
 
 The prompt model is **lazy** (R20): opening the editor only checks that the bundle is installed and shows Find (with
 an "experimental" tag); the model loads on the first Find, which shows "Loading prompt model..." and then runs. A
@@ -86,16 +86,16 @@ failed load turns Find off with the reason and leaves the Word list.
 ### Export order
 
 Needs numpy, onnxruntime and, for the first step, torch and onnx. The sources are the student's files (checkpoint,
-`schema.json`, `pruning.json`, `sound_pca.npz`, `xypad_v2.html`, the `p0` folder).
+`schema.json`, `pruning.json`, `sound_pca.npz`, `xypad_v2.html`, the `p0`/`p1` folder).
 
 ```sh
 python3 tools/joint_vae/export_bundle.py --source <model dir> --out models/joint-vae-j48w_b05
 python3 tools/joint_vae/export_xypad.py  --html <xypad_v2.html> --bundle models/joint-vae-j48w_b05
 python3 tools/joint_vae/codec_parity.py  --bundle models/joint-vae-j48w_b05
-# p0 (optional):
-python3 -I tools/joint_vae/export_prompt.py --source <p0 dir> --lab models/joint-vae-j48w_b05 --out models/prompt-p0
-python3 tools/joint_vae/prompt_reference.py --bundle models/prompt-p0
-python3 tools/joint_vae/codec_parity.py --bundle models/joint-vae-j48w_b05 --bank models/prompt-p0 --prompt models/prompt-p0
+# prompt model p1 (optional; p0 works the same):
+python3 -I tools/joint_vae/export_prompt.py --source <p1 dir> --lab models/joint-vae-j48w_b05 --out models/prompt-p1
+python3 tools/joint_vae/prompt_reference.py --bundle models/prompt-p1
+python3 tools/joint_vae/codec_parity.py --bundle models/joint-vae-j48w_b05 --bank <p1 dir>/bank.npz --prompt models/prompt-p1
 ```
 
 `export_xypad.py` recomputes the bundle id, so run it before `codec_parity.py`, not after.
@@ -105,13 +105,13 @@ python3 tools/joint_vae/codec_parity.py --bundle models/joint-vae-j48w_b05 --ban
 ```sh
 cmake --build build-surge
 VAE_JOINT_BUNDLE="$PWD/models/joint-vae-j48w_b05/bundle.json" \
-VAE_PROMPT_BUNDLE="$PWD/models/prompt-p0/prompt.json" \
+VAE_PROMPT_BUNDLE="$PWD/models/prompt-p1/prompt.json" \
   ctest --test-dir build-surge --output-on-failure
 ctest --test-dir build-default        # no Surge: checks the "needs a Surge build" screen
 ```
 
 - `VAE_JOINT_BUNDLE`: Lab bundle. Without it the real-model parity sections are skipped.
-- `VAE_PROMPT_BUNDLE`: `prompt.json` of the p0 bundle, for the prompt model parity and Lab prompt search tests.
+- `VAE_PROMPT_BUNDLE`: `prompt.json` of the prompt bundle (p1 or p0), for the prompt model parity and Lab prompt search tests.
 - `VAE_CODEC_PARITY`: an extra codec plan file to compare the native codec with, e.g. the bank's `bank-codec-parity.json`.
 - `VAE_LAB_SCREENSHOT=<file.png>`: `vae_plugin_tests` writes a snapshot of the editor there.
 - `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab in bank mode after "deep sub bass" (needs both bundles).
@@ -133,14 +133,14 @@ Surge.
 - The knob pad has no preset dots.
 - `pruning.json` for `j48w_b05` is assumed identical to `j48`'s. The student has not confirmed it, and a wrong one
   would give wrong patches silently.
-- The p0 text-encoder preprocessing is our reading of the student's code; there are no student golden outputs.
-- The p0 prior only predicts Bass, Lead and Pad, and its bank holds only those. Other sounds come back as one of
-  them or, for a category with no bank presets, as "This bundle has no <label> presets"; the sound is kept and the
+- The p0/p1 text-encoder preprocessing is our reading of the student's code; there are no student golden outputs.
+- p0's prior only predicted Bass, Lead and Pad and its bank held only those; p1 (the installed model) has 4,429
+  rows in all 8 categories. A category with no bank presets (a p0 bundle, or a bank that lacks one) comes back as "This bundle has no <label> presets"; the sound is kept and the
   Word list can still pick a start.
-- **Find is experimental.** The first candidate for each contrasting pair (dark/bright bass, short/long pad,
-  soft/sharp lead) is the same bank row, so the learned search has not shown that it follows adjectives. It is
-  labelled "experimental" in the UI and here until listening notes in `docs/P0-PROMPT-EVAL.md` support semantic claims.
-- p0 cost (measured headless with `vae_p0_eval`, Apple Silicon, Release): the model loads on the first Find in about
+- **Find is experimental.** With p1 the first candidate differs for dark/bright bass and short/long pad but is the same row (892) for
+  soft/sharp lead (p0 returned the same row for all three pairs); that is a selection fact, not evidence that it follows adjectives. It is
+  labelled "experimental" in the UI and here until listening notes in `docs/PROMPT-EVAL.md` support semantic claims.
+- Cost (measured with p0; p1 uses the identical text encoder, only the prior and a 4,429-row bank differ; headless with `vae_p0_eval`, Apple Silicon, Release): the model loads on the first Find in about
   0.5 s and takes about 1.0 GB of resident memory per editor that has searched (not the 625 MB first estimated). With
   no Find, an editor's Lab models take about 70 MB. Two editors that both loaded p0 held about 1.98 GB; two without
   it about 103 MB. A warm Find takes about 12 ms (up to 25 ms while a Lab drag runs; up to 0.6 s for very long text)
@@ -171,11 +171,11 @@ VAE Lab, hold a note, and check each line. Note anything that differs.
 ## Rendering and profiling the prompt feature
 
 `vae_p0_eval` (Surge builds; `tools/p0_eval`) renders the fixed prompt set and profiles Find. Run from the repo
-root with `B=models/joint-vae-j48w_b05/bundle.json` and `P=models/prompt-p0/prompt.json`:
+root with `B=models/joint-vae-j48w_b05/bundle.json` and `P=models/prompt-p1/prompt.json`:
 
 ```sh
 T=build-surge/tools/p0_eval/vae_p0_eval_artefacts/Release/vae_p0_eval
-$T eval build-surge/p0-eval $B $P    # WAVs + results.md (see docs/P0-PROMPT-EVAL.md)
+$T eval build-surge/p0-eval $B $P    # WAVs + results.md (see docs/PROMPT-EVAL.md)
 $T profile $B $P                     # 20 Finds, half during a Lab drag, held note on Lite
 $T mem 2 1 $B $P                     # resident memory: <editors> <load p0 0|1>
 ```
