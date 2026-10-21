@@ -20,7 +20,8 @@ void JointVaePanel::paint (juce::Graphics&) {}
 namespace
 {
 constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kPromptRowH = 26,
-              kChipRowH = 22, kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13;
+              kChipRowH = 22, kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13, kAskH = 34;
+const juce::String kAsking ("Replace your Synth edits? Answer above the prompt box.");
 // Background menu (page bgSel, latent mode): ids 1.. in this order
 const char* const mapKinds[][2] = { { "cat", "Category guess" }, { "brightness", "Brightness" }, { "length", "Length" },
                                     { "attack", "Attack" },      { "noise", "Noise" },           { "none", "None" } };
@@ -46,9 +47,16 @@ JointVaePanel::JointVaePanel()
     addChildComponent (zSlider);
     addChildComponent (findButton);
     addChildComponent (experimentalTag);
+    for (auto* c : std::initializer_list<juce::Component*> { &askNote, &askReplace, &askKeep })
+        addChildComponent (c);
+    askNote.setFont (LF::labelFont (10.5f));
+    askNote.setColour (juce::Label::textColourId, LF::ink);
+    askNote.setMinimumHorizontalScale (0.8f);
+    askReplace.onClick = [this] { answerReplace (true); };
+    askKeep.onClick = [this] { answerReplace (false); };
     experimentalTag.setFont (juce::FontOptions (11.0f));
     experimentalTag.setColour (juce::Label::textColourId, LF::quiet());
-    experimentalTag.setTooltip ("Learned prompt search is unproven: see docs/P0-PROMPT-EVAL.md");
+    experimentalTag.setTooltip ("Learned prompt search is unproven: see docs/PROMPT-EVAL.md");
     for (size_t i = 0; i < chips.size(); ++i)
     {
         addChildComponent (chips[i]);
@@ -171,16 +179,18 @@ JointVaePanel::JointVaePanel()
                 decode();
             });
     };
-    base.onChange = resetButton.onClick = [this]
+    const auto start = [this] (bool draw)
     {
         edit (
-            [this, id = base.getSelectedId()]
+            [this, id = base.getSelectedId(), draw]
             {
                 userActed = true;
                 base.setSelectedId (id, juce::dontSendNotification);
-                loadBase (id);
+                loadBase (id, draw);
             });
     };
+    base.onChange = [start] { start (true); };
+    resetButton.onClick = [start] { start (false); }; // back to the start point, the same random preset too
     category.onChange = [this]
     {
         edit (
@@ -249,41 +259,38 @@ void JointVaePanel::edit (std::function<void()> change)
         return;
     }
     pendingEdit = std::move (change);
-    // Async, so the editor never blocks the host
-    replaceBox = juce::AlertWindow::showScopedAsync (
-        juce::MessageBoxOptions()
-            .withIconType (juce::MessageBoxIconType::QuestionIcon)
-            .withTitle ("Replace your Synth edits?")
-            .withMessage ("The Lab's sound replaces the changes made in the Synth view.")
-            .withButton ("Replace")
-            .withButton ("Keep editing")
-            .withAssociatedComponent (this),
-        [safe = juce::Component::SafePointer (this)] (int result)
-        {
-            if (safe)
-                safe->resolveReplace (result == 1);
-        });
+    showAsk (true);
 }
 
-void JointVaePanel::answerReplace (bool replace)
+void JointVaePanel::showAsk (bool show)
 {
-    replaceBox.close();
-    resolveReplace (replace);
+    for (auto* c : std::initializer_list<juce::Component*> { &askNote, &askReplace, &askKeep })
+        c->setVisible (show);
+    if (show)
+        setStatus (kAsking);
+    resized();
+    repaint();
 }
+
+void JointVaePanel::answerReplace (bool replace) { resolveReplace (replace); }
 
 void JointVaePanel::resolveReplace (bool replace)
 {
     if (! pendingEdit)
         return;
     const auto change = std::exchange (pendingEdit, nullptr);
+    showAsk (false);
     if (replace)
     {
         edited = false;
         setStatus ({});
+        if (onReplace)
+            onReplace();
         change();
         return;
     }
     // Keep editing: z, positions and codes were never touched; put the controls back on them
+    setStatus ("Edited in Synth view");
     base.setSelectedId (shownBase, juce::dontSendNotification);
     category.setSelectedId (shownCategory, juce::dontSendNotification);
     clearPromptProgress(); // when the question was a Find's, its result is dropped
@@ -401,6 +408,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                      self.candidates.clear();
                      self.bankMode = false;
                      self.selected = -1;
+                     self.randomPreset = -1; // another bundle's presets
                      const auto& all = self.xy->axes;
                      const auto firstDim =
                          std::find_if (all.begin(), all.end(), [] (const LatentAxis& a) { return a.kind == "dim"; });
@@ -427,7 +435,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                  });
 }
 
-void JointVaePanel::loadBase (int id)
+void JointVaePanel::loadBase (int id, bool draw)
 {
     if (! xy || id == 0)
         return;
@@ -435,7 +443,9 @@ void JointVaePanel::loadBase (int id)
     int label = 8;
     if (id == kRandomBase && ! xy->presetZ.empty())
     {
-        const auto k = (size_t) juce::Random::getSystemRandom().nextInt ((int) xy->presetZ.size());
+        if (draw || randomPreset < 0 || (size_t) randomPreset >= xy->presetZ.size())
+            randomPreset = juce::Random::getSystemRandom().nextInt ((int) xy->presetZ.size());
+        const auto k = (size_t) randomPreset;
         z = xy->presetZ[k];
         label = juce::jlimit (0, 8, xy->presetLabel[k]);
         message = "Started from " + quoted (presetName (*xy, k)) + " (" + jointLabels[label] + ").";
@@ -610,7 +620,7 @@ void JointVaePanel::clearPromptProgress()
 {
     const auto s = status.getText();
     if (! finding && (s.startsWith ("Loading prompt model") || s.startsWith ("Finding sounds")))
-        setStatus ("Find cancelled");
+        setStatus (pendingEdit ? kAsking : juce::String ("Find cancelled"));
 }
 
 void JointVaePanel::nudge (const juce::String& text)
@@ -973,6 +983,13 @@ void JointVaePanel::paint (juce::Graphics& g)
         g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + label (2).name, zLabelArea,
                           juce::Justification::centredLeft, 1, 0.7f);
     }
+    if (! askArea.isEmpty())
+    {
+        g.setColour (labAsk.withAlpha (0.12f));
+        g.fillRoundedRectangle (askArea.toFloat(), 5);
+        g.setColour (labAsk);
+        g.drawRoundedRectangle (askArea.toFloat().reduced (0.5f), 5, 1);
+    }
     paintReadouts (g);
 }
 
@@ -1117,6 +1134,18 @@ void JointVaePanel::resized()
     }
     status.setBounds (promptArea);
     left.removeFromBottom (kGap);
+    askArea = {};
+    if (pendingEdit) // the Replace question, between the pad and the prompt
+    {
+        askArea = left.removeFromBottom (kAskH);
+        left.removeFromBottom (kGap);
+        auto row = askArea.reduced (8, 5);
+        askKeep.setBounds (row.removeFromRight (104));
+        row.removeFromRight (6);
+        askReplace.setBounds (row.removeFromRight (80));
+        row.removeFromRight (8);
+        askNote.setBounds (row);
+    }
     const bool hasZ = hasSlot (2);
     zSlider.setVisible (hasZ);
     if (hasZ)

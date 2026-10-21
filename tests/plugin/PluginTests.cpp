@@ -79,11 +79,11 @@ T* findChild (juce::Component& parent)
 
 struct GestureCounter final : juce::AudioProcessorListener
 {
-    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override {}
+    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override { ++changes; }
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails&) override {}
     void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override { ++begins; }
     void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override { ++ends; }
-    int begins = 0, ends = 0;
+    int begins = 0, ends = 0, changes = 0;
 };
 /** Depth-first search for a TextButton with this text. */
 juce::TextButton* findButton (juce::Component& parent, const juce::String& text)
@@ -951,14 +951,9 @@ public:
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
         {
-            // A fresh editor whose Lab has loaded the bundle; `steps` get the editor and its Lab
-            const auto withLab =
-                [&] (const std::function<void (juce::AudioProcessorEditor&, PluginProcessor&,
-                                               experimental::JointVaePanel&, experimental::LabPad&)>& steps)
+            // An editor on `processor` whose Lab has loaded the bundle; nullptr when it did not load
+            const auto openLab = [&] (PluginProcessor& processor)
             {
-                PluginProcessor processor;
-                settleModel (processor);
-                processor.prepareToPlay (48000.0, 512); // Surge needs its synth to leave patch mode
                 std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
                 auto* lab = findChild<experimental::JointVaePanel> (*editor);
                 auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
@@ -969,9 +964,25 @@ public:
                     lab->loadBundle (juce::File (bundle));
                 }
                 expect (pad != nullptr && pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
-                if (pad && ready)
-                    steps (*editor, processor, *lab, *pad);
-                editor.reset();
+                if (pad == nullptr || ! ready)
+                    editor.reset();
+                else
+                    lab->onMapShown = nullptr;
+                return editor;
+            };
+            // A fresh editor whose Lab has loaded the bundle; `steps` get the editor and its Lab
+            const auto withLab =
+                [&] (const std::function<void (juce::AudioProcessorEditor&, PluginProcessor&,
+                                               experimental::JointVaePanel&, experimental::LabPad&)>& steps)
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                processor.prepareToPlay (48000.0, 512); // Surge needs its synth to leave patch mode
+                if (auto editor = openLab (processor))
+                {
+                    auto* lab = findChild<experimental::JointVaePanel> (*editor);
+                    steps (*editor, processor, *lab, *findChild<experimental::LabPad> (*lab));
+                }
                 processor.releaseResources();
             };
             const auto liteOf = [] (const experimental::JointVaePanel& lab)
@@ -1084,8 +1095,24 @@ public:
                     // Keep editing: sound and Lab state unchanged
                     pad.moved ({ 0.9f, 0.9f });
                     expect (lab.isAskingToReplace(), "a Lab move asks");
+                    // R21: asked inline in the Lab, never in a top-level window a host can hide
+                    auto* keep = findButton (lab, "Keep editing");
+                    auto* replace = findButton (lab, "Replace");
+                    expect (keep != nullptr && keep->isVisible() && replace != nullptr && replace->isVisible(),
+                            "the question's buttons are in the Lab");
+                    expect (lab.statusText().contains ("Replace your Synth edits?"), lab.statusText());
+                    pumpUntil ([] { return false; }, 50);
+                    for (int w = 0; w < juce::TopLevelWindow::getNumTopLevelWindows(); ++w)
+                        expect (dynamic_cast<juce::AlertWindow*> (juce::TopLevelWindow::getTopLevelWindow (w))
+                                    == nullptr,
+                                "no top-level dialog");
                     pad.moved ({ 0.1f, 0.1f }); // ignored while asking
-                    lab.answerReplace (false);
+                    if (keep != nullptr)
+                        keep->triggerClick();
+                    pumpUntil ([] { return false; }, 50); // triggerClick is async
+                    expect (! lab.isAskingToReplace(), "Keep editing answers");
+                    expect (keep == nullptr || ! keep->isVisible(), "the question goes away");
+                    expectEquals (lab.statusText(), juce::String ("Edited in Synth view"));
                     pumpUntil ([] { return false; }, 500);
                     expect (same (processor.getControls(), edited), "Keep editing leaves the parameters");
                     expect (lab.latent() == z0, "Keep editing leaves the Lab");
@@ -1115,6 +1142,141 @@ public:
                     host.join();
                     expect (pumpUntil ([&] { return lab.isEdited(); }, 1000), "automation marks edited");
                 });
+
+            beginTest ("an in-flight lab decode never overwrites a non-Lab write");
+            withLab (
+                [&] (juce::AudioProcessorEditor&, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabPad& pad)
+                {
+                    const auto index = processor.getParams().indexOf (schema::control (firstContinuous()).id);
+                    const auto before = lab.output().codes;
+                    pad.moved ({ 0.8f, 0.7f });                // not edited: the decode is queued
+                    processor.getParams().set (index, 0.123f); // a host write lands before its result
+                    expect (pumpUntil ([&] { return lab.output().codes != before; }, 30000), "the decode arrives");
+                    pumpUntil ([] { return false; }, 300);
+                    expectWithinAbsoluteError (processor.getParams().get (index), 0.123f, 1e-6f);
+                    expect (lab.isEdited(), "the host write marks edited");
+                    pad.moved ({ 0.2f, 0.3f });
+                    expect (lab.isAskingToReplace(), "the next Lab move asks");
+                    lab.answerReplace (true);
+                    const auto replaced = lab.output().codes;
+                    expect (
+                        pumpUntil (
+                            [&]
+                            { return lab.output().codes != replaced && same (processor.getControls(), liteOf (lab)); },
+                            30000),
+                        "Replace still plays");
+                });
+
+            beginTest ("reset returns to the same random real preset");
+            withLab (
+                [&] (juce::AudioProcessorEditor&, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabPad&)
+                {
+                    juce::ComboBox* base = nullptr;
+                    for (auto* c : findAll<juce::ComboBox> (lab))
+                        for (int i = 0; i < c->getNumItems(); ++i)
+                            if (c->getItemText (i) == "Random real preset")
+                                base = c;
+                    auto* reset = findButton (lab, "Reset");
+                    expect (base != nullptr && reset != nullptr);
+                    if (base == nullptr || reset == nullptr)
+                        return;
+                    const auto choose = [&] (int id)
+                    {
+                        base->setSelectedId (base->getItemId (0), juce::sendNotificationSync);
+                        base->setSelectedId (id, juce::sendNotificationSync);
+                        return lab.latent();
+                    };
+                    const auto start = choose (100);
+                    for (int k = 0; k < 4; ++k)
+                    {
+                        reset->onClick();
+                        expect (lab.latent() == start, "Reset returns to the drawn preset");
+                    }
+                    bool redrawn = false;
+                    for (int k = 0; k < 8 && ! redrawn; ++k)
+                        redrawn = ! (choose (100) == start);
+                    expect (redrawn, "choosing Random real preset again draws a new one");
+                });
+
+            beginTest ("a reopened editor keeps the lab gate and the Surge patch state");
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                processor.prepareToPlay (48000.0, 512);
+                const auto index = processor.getParams().indexOf (schema::control (firstContinuous()).id);
+                const auto labOf = [] (juce::AudioProcessorEditor& e)
+                { return findChild<experimental::JointVaePanel> (e); };
+                if (auto editor = openLab (processor))
+                {
+                    auto& lab = *labOf (*editor);
+                    const auto before = lab.output().codes;
+                    findChild<experimental::LabPad> (lab)->moved ({ 0.85f, 0.2f });
+                    expect (pumpUntil (
+                        [&] { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                        30000));
+                }
+                // Reopened with the sound as the Lab left it: not edited, a move plays
+                if (auto editor = openLab (processor))
+                    expect (! labOf (*editor)->isEdited(), "the Lab's own sound is not an edit");
+                // A Synth or host edit while the editor is closed: the first pad move asks
+                processor.getParams().set (index, processor.getParams().get (index) > 0.5f ? 0.1f : 0.9f);
+                const auto edited = processor.getControls();
+                if (auto editor = openLab (processor))
+                {
+                    auto& lab = *labOf (*editor);
+                    expect (lab.isEdited(), "an edit made while closed");
+                    findChild<experimental::LabPad> (lab)->moved ({ 0.3f, 0.6f });
+                    expect (lab.isAskingToReplace(), "the first pad move asks");
+                    lab.answerReplace (false);
+                    pumpUntil ([] { return false; }, 500);
+                    expect (same (processor.getControls(), edited), "the edit is kept");
+                    // Send to Surge, then close and reopen: the banner shows and a knob returns to Lite
+                    const auto shown = lab.output().codes;
+                    findChild<experimental::LabPad> (lab)->moved ({ 0.7f, 0.6f });
+                    lab.answerReplace (true);
+                    expect (pumpUntil (
+                                [&]
+                                { return lab.output().codes != shown && same (processor.getControls(), liteOf (lab)); },
+                                30000),
+                            "Replace plays");
+                    auto* send = findButton (lab, "Send to Surge");
+                    expect (send != nullptr && send->isEnabled());
+                    if (send)
+                        send->onClick();
+                }
+                auto* surge = dynamic_cast<SurgeEngine*> (processor.findEngine (EngineKind::Surge));
+                expect (surge != nullptr && surge->hasPatchData());
+                if (auto editor = openLab (processor))
+                {
+                    expect (surge != nullptr && surge->hasPatchData(), "opening the editor keeps the patch (R14)");
+                    findButton (*editor, "Synth")->onClick();
+                    auto* status = headerStatus (*editor);
+                    expect (status != nullptr
+                                && status->getText()
+                                       == "Playing the full Surge patch from the Lab. Knobs return to Lite",
+                            status ? status->getText() : juce::String());
+                    if (auto* knob = synthKnob (*editor, firstContinuous()))
+                        knob->setValue (knob->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                    pumpUntil ([] { return false; }, 100);
+                    expectEquals (processor.getParams().get (PluginProcessor::kEngineParamId), 0.0f);
+                    expect (surge != nullptr && ! surge->hasPatchData(), "the knob returns to Lite");
+                    expect (status != nullptr && status->getText().isEmpty());
+                }
+                processor.releaseResources();
+
+                // No Lab write yet and the controls are not the defaults: the first Lab edit asks
+                PluginProcessor other;
+                settleModel (other);
+                other.getParams().set (index, other.getParams().get (index) > 0.5f ? 0.1f : 0.9f);
+                if (auto editor = openLab (other))
+                    expect (labOf (*editor)->isEdited(), "a non-default sound counts as edited");
+                PluginProcessor fresh;
+                settleModel (fresh);
+                if (auto editor = openLab (fresh))
+                    expect (! labOf (*editor)->isEdited(), "the default sound does not");
+            }
         }
 
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
@@ -1599,8 +1761,12 @@ public:
                 return std::sqrt (sum / (5 * buffer.getNumSamples()));
             };
             expectGreaterThan (rmsOf50ms(), 0.0);
+            gestures.changes = 0;
+            p.playLiteControls (lite); // the same point again: nothing to tell the host
+            expectEquals (gestures.changes, 0);
             lite[schema::kFilter1Cutoff] = 0.3f; // a pad move while the note is held
             p.playLiteControls (lite);
+            expectEquals (gestures.changes, 1);
             expectGreaterThan (rmsOf50ms(), 0.0);
             p.removeListener (&gestures);
             expectEquals (gestures.begins, 0);

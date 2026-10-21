@@ -23,6 +23,7 @@ constexpr SectionInfo kSections[] = {
     { "fx_delay", "Delay" },   { "fx_reverb", "Reverb" }, { "global", "Out" },
 };
 
+constexpr const char* kSurgePatchStatus = "Playing the full Surge patch from the Lab. Knobs return to Lite";
 constexpr int kMargin = 20, kTopBarH = 36, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
 
 juce::Array<int> sectionControls (const char* key)
@@ -366,19 +367,29 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     {
         auto r = processor.loadSurgePatch (patch);
         if (r.wasOk())
-        {
-            surgePatch = true;
-            setStatus ("Playing the full Surge patch from the Lab. Knobs return to Lite");
-        }
+            setStatus (kSurgePatchStatus);
         return r;
     };
     jointVaePanel.onLite = [this] (const schema::Snapshot& lite)
     {
+        // A decode that a Synth or host edit overtook: that edit stays, and the next Lab edit asks
+        if (processor.editedSinceLab())
+        {
+            jointVaePanel.markEdited();
+            return;
+        }
+        const bool patch = processor.isPlayingSurgePatch();
         processor.playLiteControls (lite);
-        labControls = processor.getControls(); // the store's notifications arrive later; they compare equal
-        if (std::exchange (surgePatch, false))
+        processor.markLabControls(); // the store's notifications arrive later; they compare equal
+        if (patch)
             setStatus ({});
     };
+    jointVaePanel.onReplace = [this] { processor.markLabControls(); }; // the user gave the sound to the Lab
+    // A reopened editor: the gate and the Surge patch outlive the previous one (opening plays nothing, R14)
+    if (processor.editedSinceLab())
+        jointVaePanel.markEdited();
+    if (processor.isPlayingSurgePatch())
+        setStatus (kSurgePatchStatus);
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().addListener (schema::control (i).id, this);
 #if VAE_PROMPT_TAB
@@ -446,13 +457,12 @@ void PluginEditor::showView (View view)
 
 void PluginEditor::handleAsyncUpdate()
 {
-    const auto now = processor.getControls();
-    if (labControls && now.values == labControls->values)
+    if (! processor.editedSinceLab())
         return; // the Lab's own write (or nothing new)
     jointVaePanel.markEdited();
-    if (std::exchange (surgePatch, false))
+    if (processor.isPlayingSurgePatch())
     {
-        processor.playLiteControls (now); // the first knob move after Send to Surge returns to Lite
+        processor.playLiteControls (processor.getControls()); // the first knob move after Send to Surge returns to Lite
         setStatus ({});
     }
 }

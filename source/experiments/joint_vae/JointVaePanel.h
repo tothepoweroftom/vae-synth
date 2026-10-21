@@ -20,6 +20,8 @@ public:
     std::function<void (const schema::Snapshot&)> onLite;
     /** Plays a decoded full Surge patch (set by the editor; message thread). */
     std::function<juce::Result (const juce::MemoryBlock&)> onPatch;
+    /** The user chose Replace: the edited sound is now the Lab's to replace (set by the editor). */
+    std::function<void()> onReplace;
     /** The installed bundle loads on construction; tests load another one. */
     void loadBundle (const juce::File&);
     /** A change to the controls that did not come from onLite (Synth view, host): the sound is
@@ -28,7 +30,7 @@ public:
 #if VAE_WITH_SURGE
     bool isEdited() const { return edited; }
     bool isAskingToReplace() const { return pendingEdit != nullptr; }
-    /** Answers "Replace your Synth edits?" (the dialog's buttons; tests call it directly). */
+    /** Answers "Replace your Synth edits?" (the banner's buttons; tests call it directly). */
     void answerReplace (bool replace);
     /** Test hooks: called after a map result reaches the pad; whether a map is computing. */
     std::function<void()> onMapShown;
@@ -57,7 +59,7 @@ public:
 
 private:
 #if VAE_WITH_SURGE
-    void loadBase (int index);
+    void loadBase (int index, bool draw = true); // draw: Random real preset picks a new one (Reset keeps it)
     void assign (int slot, const juce::String& id);
     void syncPositions();                // page latSyncPos
     void applyPositions (int slots = 7); // page latApplyPos; knob pad: only the slots (bit mask) the gesture moved
@@ -76,6 +78,7 @@ private:
     void fillBackground();
     void edit (std::function<void()> change); // a Lab sound edit: asks first while the sound is edited
     void resolveReplace (bool replace);
+    void showAsk (bool); // the inline Replace question
     void applyCandidate (int);
     void leaveBank();           // the first sound edit after selecting a candidate decodes from its z
     void clearPromptProgress(); // a dropped Find must not leave "Finding sounds..." behind
@@ -97,10 +100,10 @@ private:
     std::shared_ptr<const KnobGroups> kg;
     JointVaeWorker::Output current;
     bool outputValid = false;
-    bool userActed = false;            // results play only after the user acts in the Lab (ruling R14)
-    bool edited = false;               // the controls changed outside the Lab since its last write
-    std::function<void()> pendingEdit; // the Lab edit waiting on "Replace your Synth edits?"
-    juce::ScopedMessageBox replaceBox;
+    bool userActed = false;               // results play only after the user acts in the Lab (ruling R14)
+    bool edited = false;                  // the controls changed outside the Lab since its last write
+    std::function<void()> pendingEdit;    // the Lab edit waiting on "Replace your Synth edits?"
+    int randomPreset = -1;                // the Random real preset start, for Reset
     int shownBase = 0, shownCategory = 0; // the combos at the last decode, put back by Keep editing
     bool errorShown = false;
     bool mapError = false; // the status line shows a map failure
@@ -125,10 +128,14 @@ private:
     juce::TextEditor promptBox;
     juce::TextButton promptGo { juce::String (juce::CharPointer_UTF8 ("\xe2\x86\x92")) };
     juce::Label experimentalTag { {}, "experimental" };
+    // R21: the Replace question sits in the Lab, not in a top-level window a host can open behind the plug-in
+    juce::Label askNote { {},
+                          "Replace your Synth edits? The Lab's sound replaces the changes made in the Synth view." };
+    juce::TextButton askReplace { "Replace" }, askKeep { "Keep editing" };
     juce::TextButton findButton { "Find sounds" }, nudgeButton { "Word list" };
     std::array<juce::TextButton, 8> chips;
     juce::Rectangle<int> yLabelArea, xLabelArea, zLabelArea, promptArea, readoutArea, specArea, measureArea, presetArea,
-        guessArea;
+        guessArea, askArea;
     juce::Image spec; // frames x 64 expected spectrogram of `current`
     SoundMeasures sound {};
     juce::TimedCallback mapTimer { [this]

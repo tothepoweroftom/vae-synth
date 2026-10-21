@@ -17,6 +17,8 @@ inline const juce::Colour labWell { 0xff000000 };
 /** Measure map and spectrogram colour (VaeLookAndFeel::accent), and the category map's alpha (page --map-alpha). */
 inline const juce::Colour labHeat { 0xffffff07 };
 inline constexpr float labMapAlpha = 0.36f;
+/** The panel's "Replace your Synth edits?" banner (R21). */
+inline const juce::Colour labAsk { 0xffffff07 };
 
 /** The Lab's XY pad: positions are 0..1 with y up. Arrow keys move the dot by 0.02 (Shift: 0.1). */
 class LabPad final : public juce::Component

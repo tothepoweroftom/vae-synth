@@ -204,7 +204,23 @@ void PluginProcessor::playLiteControls (const schema::Snapshot& snapshot)
         static_cast<SurgeEngine&> (*surge).useSchemaControls();
 #endif
     for (int i = 0; i < schema::kControlCount; ++i)
-        params.set (controlIndex[(size_t) i], schema::sanitiseValue (i, snapshot[i]));
+        if (const auto v = schema::sanitiseValue (i, snapshot[i]);
+            ! juce::exactlyEqual (v, params.get (controlIndex[(size_t) i])))
+            params.set (controlIndex[(size_t) i], v); // a drag changes a few controls: only those reach the host
+}
+
+bool PluginProcessor::isPlayingSurgePatch() const noexcept
+{
+#if VAE_WITH_SURGE
+    if (auto* surge = findEngine (EngineKind::Surge))
+        return static_cast<const SurgeEngine&> (*surge).hasPatchData();
+#endif
+    return false;
+}
+
+bool PluginProcessor::editedSinceLab() const
+{
+    return getControls().values != labControls.value_or (schema::Snapshot::defaults()).values;
 }
 
 SynthEngine* PluginProcessor::findEngine (EngineKind kind) const noexcept

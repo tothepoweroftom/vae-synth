@@ -137,7 +137,8 @@ private:
     void chooseSearchFile (bool bank);
 #endif
     void setStatus (const juce::String&);
-    // Any thread: a control changed. The message-thread check compares against the Lab's last write.
+    // Any thread: a control changed. The message-thread check compares against the Lab's last write
+    // (PluginProcessor::editedSinceLab).
     void paramChanged (const juce::String&, float) override { triggerAsyncUpdate(); }
     void handleAsyncUpdate() override;
     enum class View
@@ -178,9 +179,7 @@ private:
     juce::TextButton synthViewButton { "Synth" };
     juce::TextButton jointVaeViewButton { "VAE Lab" };
     View currentView = View::synth;
-    experimental::JointVaePanel jointVaePanel;
-    std::optional<schema::Snapshot> labControls; // the controls as the Lab last wrote them
-    bool surgePatch = false;                     // Send to Surge is playing; the next edit returns to Lite
+    experimental::JointVaePanel jointVaePanel; // its edited gate and Surge patch state live on the processor
 
     juce::OwnedArray<ControlSection> sections;
     FlatKeyboard keyboard;
