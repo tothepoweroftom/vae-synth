@@ -15,10 +15,15 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 
 - **Synth edits carry back.** A change to any control that does not come from the Lab (a Synth-view knob, Init, host
   automation) marks the Lab's sound edited, and its status line reads "Edited in Synth view". The next Lab edit
-  (pad, slider, Z, prompt, base, category, lock or preset dot) first asks "Replace your Synth edits?". **Replace**
-  applies the Lab edit; **Keep editing** leaves the sound and the Lab as they were.
-- **After Send to Surge** the Synth view shows "Playing the full Surge patch from the Lab. Knobs return to Lite". The
-  first knob move goes back to Lite with the knobs' values.
+  (pad, slider, Z, prompt, base, category, lock or preset dot) first asks "Replace your Synth edits?" in a banner
+  above the Lab's prompt box, and the status line says a question is waiting (R21: no separate dialog window, which some
+  hosts open behind the plug-in). Other Lab edits are ignored until you answer. **Replace** applies the Lab edit;
+  **Keep editing** leaves the sound and the Lab as they were.
+- **The gate survives closing the editor.** The processor keeps the Lab's last write for the session, so a reopened
+  editor starts "edited" when the sound changed while it was closed (or, before any Lab write, when it is not the
+  default sound). A Lab decode that a Synth or host edit overtakes is dropped, so it never overwrites that edit.
+- **After Send to Surge** the Synth view shows "Playing the full Surge patch from the Lab. Knobs return to Lite", also
+  after a reopen (the state is read from the Surge engine). The first knob move goes back to Lite with the knobs' values.
 - **The Prompt tab is compiled out** (Task 16). Its code stays behind `VAE_PROMPT_TAB`, default 0; build with
   `-DVAE_PROMPT_TAB=1` to bring it back. The Stable Audio / SAME code in the processor still builds.
 
@@ -55,7 +60,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 | Start from | Typical <label>, or a random real preset. |
 | Category | The category the decoder is conditioned on (8 labels plus Unknown). |
 | Lock structure | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the dot. |
-| Reset | Back to the start point. |
+| Reset | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
 | Background map | Colours the pad by Category guess, Brightness, Length, Attack, Noise, or none. Recomputed shortly after you stop moving. |
 | Preset dots | Shows or hides the student's real presets as dots (latent pad only). Click one to jump to it. |
 | Send to Surge | Builds the full Surge patch for this point and plays it on the Surge engine. |
@@ -143,17 +148,20 @@ Surge.
 - **Find is experimental.** With p1 the first candidate differs for dark/bright bass and short/long pad but is the same row (892) for
   soft/sharp lead (p0 returned the same row for all three pairs); that is a selection fact, not evidence that it follows adjectives. It is
   labelled "experimental" in the UI and here until listening notes in `docs/PROMPT-EVAL.md` support semantic claims.
-- Cost (measured with p0; p1 uses the identical text encoder, only the prior and a 4,429-row bank differ; headless with `vae_p0_eval`, Apple Silicon, Release): the model loads on the first Find in about
-  0.5 s and takes about 1.0 GB of resident memory per editor that has searched (not the 625 MB first estimated). With
-  no Find, an editor's Lab models take about 70 MB. Two editors that both loaded p0 held about 1.98 GB; two without
-  it about 103 MB. A warm Find takes about 12 ms (up to 25 ms while a Lab drag runs; up to 0.6 s for very long text)
-  on its own thread; the cold Find, with the load, about 0.5 s. With a held note rendering on Lite and 10 of 20 Finds
-  during a drag, `process()` averaged 0.02 ms (max 0.4 ms) against a 5.3 ms block budget: no blocks over budget.
+- Cost of p1 (R22; measured 2026-10-21 with `vae_p0_eval profile` and `mem` on `models/prompt-p1`, headless, Apple
+  Silicon, Release): the model loads on the first Find in about 0.5 s (499 ms) and adds about 0.94 GB of resident
+  memory per editor that has searched: 1.02 GB for one editor with p1 loaded against 75 MB without, 2.01 GB for two
+  against 113 MB. A warm Find takes about 13 ms (21 ms mean, 29 ms max while a Lab drag runs) on its own thread; the
+  cold Find, with the load, about 0.52 s. With a held note rendering on Lite and 10 of 20 Finds during a drag,
+  `process()` averaged 0.02 ms (max 0.4 ms) against a 5.3 ms block budget: no blocks over budget. p0 measured the
+  same within noise (the text encoder is identical). Sharing one prompt model across the process, so several editors
+  pay for it once, is deferred.
   Closing the editor during a load or Find still waits for it (`shortcut:` in `PromptWorker`'s destructor; the fix is
   a process-wide or detached runner).
 - Exploring from a match is a jump, not a faithful continuation: the decoded z can sound different from the bank
   preset.
-- Lab state is not saved in the host project.
+- Lab state is not saved in the host project. The Lab's last write (the edited gate) lasts for the session only, and
+  a reopened Lab starts from its first base, not where the pad was left.
 
 ## Try it
 
@@ -171,6 +179,9 @@ VAE Lab, hold a note, and check each line. Note anything that differs.
 - [ ] Close and reopen the editor: your sound is unchanged until you act in the Lab.
 - [ ] Move a knob in the Synth view, then drag the Lab pad: it asks "Replace your Synth edits?"; Keep editing keeps
       your knob, Replace plays the pad.
+- [ ] Drag the pad, close the editor, move a knob in the host (or change nothing), reopen and drag: it asks only
+      when something changed.
+- [ ] Send to Surge, close and reopen: the Synth view still says the Surge patch is playing; a knob returns to Lite.
 
 ## Rendering and profiling the prompt feature
 
