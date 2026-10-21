@@ -1,0 +1,113 @@
+<h2>VAE Lab inside the plug-in window: which layout?</h2>
+<p class="subtitle">The window is 1240 px wide with the on-screen keyboard along the bottom. Both layouts include everything you picked: named axes, preset dots, the coloured map, the spectrogram, Lock structure and the knob pad.</p>
+
+<style>
+  .w { background:#15181d; color:#cfd3da; font:11px system-ui; border-radius:6px; padding:8px; display:grid; gap:6px; aspect-ratio: 1240/760; }
+  .bar { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .b { border:1px solid #3a404a; border-radius:4px; padding:2px 6px; }
+  .b.on { background:#58b6c6; color:#071417; border-color:#58b6c6; }
+  .pad { position:relative; border:1px solid #3a404a; border-radius:5px; aspect-ratio:1/1; overflow:hidden;
+         background: radial-gradient(circle at 30% 30%, rgba(42,120,214,.45), transparent 45%), radial-gradient(circle at 70% 65%, rgba(235,104,52,.45), transparent 45%), radial-gradient(circle at 70% 25%, rgba(27,175,122,.4), transparent 40%), #0c0e11; }
+  .pad i { position:absolute; width:4px; height:4px; border-radius:50%; background:#cfd3da; opacity:.6; }
+  .pad .dot { width:14px; height:14px; border:2px solid #fff; background:#0c0e11; opacity:1; transform:translate(-7px,-7px); }
+  .lbl { position:absolute; font-weight:600; opacity:.8; }
+  .box { border:1px solid #3a404a; border-radius:5px; padding:6px; display:grid; gap:4px; align-content:start; }
+  .spec { height:44px; border-radius:3px; background: linear-gradient(90deg, #58b6c6 0%, #2a5d66 35%, #16343a 70%, #0c0e11 100%); }
+  .row { display:flex; justify-content:space-between; color:#9aa2ae; }
+  .ax { display:grid; grid-template-columns:1fr auto; gap:2px 6px; padding:4px 0; border-bottom:1px solid #2b3038; }
+  .ax.sel { background:#16343a; }
+  .xyz { display:flex; gap:2px; } .xyz span { border:1px solid #3a404a; border-radius:3px; padding:0 4px; } .xyz span.on { background:#58b6c6; color:#071417; }
+  .kb { height:30px; border-radius:3px; background: repeating-linear-gradient(90deg, #e9ebee 0 14px, #15181d 14px 15px); }
+  .h { color:#9aa2ae; text-transform:uppercase; letter-spacing:.08em; font-size:9px; }
+</style>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Like the web page: pad left, axis list right</h3>
+      <p>The pad is large. The readouts (spectrogram, decoded preset, category guess) sit under it, and the axis list scrolls on the right.</p>
+      <div class="w">
+        <div class="bar"><span class="b on">Latent pad</span><span class="b">Knob pad</span><span class="b">Start: Typical Bass ▾</span><span class="b">Category: Bass ▾</span><span class="b">Lock structure</span><span class="b">Reset</span><span class="b">Map: Brightness ▾</span><span class="b">Send to Surge</span></div>
+        <div style="display:grid;grid-template-columns: 1.15fr 1fr 1fr; gap:8px; min-height:0">
+          <div style="display:grid;gap:4px;align-content:start">
+            <div class="pad">
+              <i style="left:20%;top:30%"></i><i style="left:35%;top:22%"></i><i style="left:62%;top:70%"></i><i style="left:74%;top:58%"></i><i style="left:70%;top:20%"></i><i style="left:44%;top:48%"></i>
+              <span class="lbl" style="left:18%;top:40%">Bass</span><span class="lbl" style="left:64%;top:78%">Pad</span>
+              <i class="dot" style="left:52%;top:44%"></i>
+            </div>
+            <div class="row"><span>Dark</span><b>X · Dark ↔ Bright</b><span>Bright</span></div>
+            <div class="row"><span>Z · z26 Filter</span><span>━━━●━━</span></div>
+          </div>
+          <div class="box">
+            <span class="h">Expected sound at the dot</span>
+            <div class="spec"></div>
+            <div class="row"><span>Brightness</span><span>1.8 oct</span></div>
+            <div class="row"><span>Attack</span><span>&lt; 50 ms</span></div>
+            <div class="row"><span>Length</span><span>2.4 s</span></div>
+            <span class="h">Decoded preset</span>
+            <div class="row"><span>Osc 1</span><span>Classic</span></div>
+            <div class="row"><span>Effects</span><span>delay, chorus</span></div>
+            <div class="row"><span>Cutoff</span><span>820 Hz</span></div>
+            <span class="h">Category guess</span>
+            <div class="row"><span>Bass</span><span>62%</span></div>
+          </div>
+          <div class="box">
+            <span class="h">Sound axes</span>
+            <div class="ax sel"><span>Dark ↔ Bright</span><span class="xyz"><span class="on">X</span><span>Y</span><span>Z</span></span></div>
+            <div class="ax sel"><span>Short ↔ Long</span><span class="xyz"><span>X</span><span class="on">Y</span><span>Z</span></span></div>
+            <div class="ax"><span>Snappy ↔ Slow</span><span class="xyz"><span>X</span><span>Y</span><span>Z</span></span></div>
+            <span class="h">Latent dimensions</span>
+            <div class="ax"><span>z26 · Filter 15 dB</span><span class="xyz"><span>X</span><span>Y</span><span class="on">Z</span></span></div>
+            <div class="ax"><span>z29 · Envelopes 12 dB</span><span class="xyz"><span>X</span><span>Y</span><span>Z</span></span></div>
+            <div class="ax"><span>z24 · Effects 11 dB</span><span class="xyz"><span>X</span><span>Y</span><span>Z</span></span></div>
+          </div>
+        </div>
+        <div class="kb"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Pad in the centre, axes left, sound right</h3>
+      <p>Pick axes on the left, play in the middle, read the result on the right. The pad sits between what you choose and what you get.</p>
+      <div class="w">
+        <div class="bar"><span class="b on">Latent pad</span><span class="b">Knob pad</span><span class="b">Start: Typical Bass ▾</span><span class="b">Category: Bass ▾</span><span class="b">Lock structure</span><span class="b">Reset</span><span class="b">Map: Brightness ▾</span><span class="b">Send to Surge</span></div>
+        <div style="display:grid;grid-template-columns: 0.9fr 1.3fr 0.9fr; gap:8px; min-height:0">
+          <div class="box">
+            <span class="h">Sound axes</span>
+            <div class="ax sel"><span>Dark ↔ Bright</span><span class="xyz"><span class="on">X</span><span>Y</span><span>Z</span></span></div>
+            <div class="ax sel"><span>Short ↔ Long</span><span class="xyz"><span>X</span><span class="on">Y</span><span>Z</span></span></div>
+            <div class="ax"><span>Snappy ↔ Slow</span><span class="xyz"><span>X</span><span>Y</span><span>Z</span></span></div>
+            <span class="h">Latent dimensions</span>
+            <div class="ax"><span>z26 · Filter 15 dB</span><span class="xyz"><span>X</span><span>Y</span><span class="on">Z</span></span></div>
+            <div class="ax"><span>z29 · Envelopes 12 dB</span><span class="xyz"><span>X</span><span>Y</span><span>Z</span></span></div>
+          </div>
+          <div style="display:grid;gap:4px;align-content:start">
+            <div class="pad">
+              <i style="left:20%;top:30%"></i><i style="left:35%;top:22%"></i><i style="left:62%;top:70%"></i><i style="left:74%;top:58%"></i><i style="left:70%;top:20%"></i><i style="left:44%;top:48%"></i>
+              <span class="lbl" style="left:18%;top:40%">Bass</span><span class="lbl" style="left:64%;top:78%">Pad</span>
+              <i class="dot" style="left:52%;top:44%"></i>
+            </div>
+            <div class="row"><span>Dark</span><b>X · Dark ↔ Bright</b><span>Bright</span></div>
+            <div class="row"><span>Z · z26 Filter</span><span>━━━●━━</span></div>
+          </div>
+          <div class="box">
+            <span class="h">Expected sound</span>
+            <div class="spec"></div>
+            <div class="row"><span>Brightness</span><span>1.8 oct</span></div>
+            <div class="row"><span>Length</span><span>2.4 s</span></div>
+            <span class="h">Decoded preset</span>
+            <div class="row"><span>Osc 1</span><span>Classic</span></div>
+            <div class="row"><span>Effects</span><span>delay, chorus</span></div>
+            <span class="h">Category guess</span>
+            <div class="row"><span>Bass</span><span>62%</span></div>
+          </div>
+        </div>
+        <div class="kb"></div>
+      </div>
+    </div>
+  </div>
+</div>
