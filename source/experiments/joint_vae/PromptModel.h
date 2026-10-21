@@ -40,7 +40,7 @@ private:
         std::vector<int64_t> ids, mask;
         std::vector<float> embedding, logits, weights, mu; // mu: k x 32
     };
-    /** Test-only seam: forceCategory >= 0 replaces the argmax (p0 never predicts 3..7). */
+    /** Test-only seam: forceCategory >= 0 replaces the argmax, so tests reach categories a prompt rarely predicts. */
     juce::Result find (const juce::String& text, std::vector<PromptCandidate>& out, int& category, int forceCategory,
                        Trace* trace);
     struct Model;

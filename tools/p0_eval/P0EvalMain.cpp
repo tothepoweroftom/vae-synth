@@ -3,7 +3,7 @@
 
     vae_p0_eval eval <outDir> <bundle.json> <prompt.json>
       Renders, per fixed prompt, the p0 Find first candidate, the category-only typical start and the word-list start
-      through Lite and Surge to WAV, and writes results.md (rows for docs/P0-PROMPT-EVAL.md).
+      through Lite and Surge to WAV, and writes results.md (rows for docs/PROMPT-EVAL.md).
     vae_p0_eval profile <bundle.json> <prompt.json>
       20 Finds through PromptWorker (odd ones while a Lab drag runs) with a held note rendering on Lite.
     vae_p0_eval mem <editors> <0|1 load p0> <bundle.json> <prompt.json>
