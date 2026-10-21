@@ -57,6 +57,15 @@ class Decoder(torch.nn.Module):
         return torch.cat([num, (bl > 0).float()] + choices, -1)
 
 
+class SoundDecoder(torch.nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+
+    def forward(self, latent, category):
+        return self.model.decode(latent, category)[1]
+
+
 class Encoder(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
@@ -86,18 +95,20 @@ def export(source, out):
     model.load_state_dict(torch.load(source / 'model.pt', map_location='cpu', weights_only=True))
     decoder = Decoder(model, len(cats), levels).eval()
     encoder = Encoder(model).eval()
+    sound_decoder = SoundDecoder(model).eval()
     out.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(17)
     z, a, y = torch.randn(1, 32), torch.randn(1, 48), torch.eye(9)[:1]
     for name, module, inputs, names, output in [
         ('decoder', decoder, (z, y), ['latent', 'category'], 'codes'),
         ('sound_encoder', encoder, (a, y), ['sound', 'category'], 'latent'),
+        ('sound_decoder', sound_decoder, (z, y), ['latent', 'category'], 'sound'),
     ]:
         torch.onnx.export(module, inputs, str(out / f'{name}.onnx'), input_names=names,
                           output_names=[output], opset_version=17, dynamo=False)
     sessions = {n: ort.InferenceSession(str(out / f'{n}.onnx'), providers=['CPUExecutionProvider'])
-                for n in ('decoder', 'sound_encoder')}
-    errors = []
+                for n in ('decoder', 'sound_encoder', 'sound_decoder')}
+    errors = {'decoder': [], 'sound_encoder': [], 'sound_decoder': []}
     references = []
     with torch.no_grad():
         for category in range(9):
@@ -111,26 +122,30 @@ def export(source, out):
                 for name, inputs, expected in [
                     ('sound_encoder', {'sound': a.numpy(), 'category': y.numpy()}, enc.numpy()),
                     ('decoder', {'latent': z.numpy(), 'category': y.numpy()}, decoder(z, y).numpy()),
+                    ('sound_decoder', {'latent': z.numpy(), 'category': y.numpy()}, sound_decoder(z, y).numpy()),
                 ]:
                     actual = sessions[name].run(None, inputs)[0]
                     np.testing.assert_allclose(actual, expected, rtol=1e-4, atol=2e-5)
-                    errors.append(float(np.max(np.abs(actual - expected))))
+                    errors[name].append(float(np.max(np.abs(actual - expected))))
                 references.append(dict(category=category, latent=z[0].tolist(), sound=a[0].tolist(),
                                        encoded_latent=enc[0].tolist(), codes=decoder(z, y)[0].tolist()))
     digest = hashlib.sha256()
     for name in ('model.pt', 'config.json', 'schema.json', 'pruning.json', 'sound_pca.npz'):
         digest.update((source / name).read_bytes())
+    digest.update((out / 'sound_decoder.onnx').read_bytes())
     identity = cfg['run'] + '-' + digest.hexdigest()[:16]
     manifest = dict(format='pitcher.joint-vae', version=1, id=identity, latent_dimensions=32,
-                    sound_dimensions=48, labels=LABELS, features=features,
+                    sound_dimensions=48, labels=LABELS,
+                    sound_decoder='sound_decoder.onnx', xypad='xypad.json', features=features,
                     notes='Codes ordered num/bool/cat/stepped; stepped indices converted to normalized codes. '
                           'Use schema.json and pruning.json with the student codec for full Surge patches.')
     for name in ('config.json', 'schema.json', 'pruning.json', 'sound_pca.npz'):
         shutil.copyfile(source / name, out / name)
     (out / 'bundle.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    (out / 'parity.json').write_text(json.dumps(dict(cases=len(references), max_error=max(errors), references=references), indent=2) + '\n')
+    (out / 'parity.json').write_text(json.dumps(dict(cases=len(references), max_error=max(max(e) for e in errors.values()), references=references), indent=2) + '\n')
     (out / 'example-sound.json').write_text(json.dumps(dict(bundle_id=identity, category=0, sound=references[0]['sound']), indent=2) + '\n')
-    print(f'Exported {identity}: {len(features)} features; {len(references)} parity cases; max error {max(errors):.3g}')
+    print(f'Exported {identity}: {len(features)} features; {len(references)} parity cases; max error '
+          + ', '.join(f'{n} {max(e):.3g}' for n, e in errors.items()))
 
 
 if __name__ == '__main__':
