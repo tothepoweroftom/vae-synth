@@ -99,7 +99,9 @@ JointVaePanel::JointVaePanel()
     findButton.setTooltip ("Learned prompt search: suggests real presets from the prompt bundle");
     nudgeButton.setTooltip ("Word list: picks a starting point and nudges it with words like darker or longer");
     // Installed beside the Lab bundle by scripts/install-models.sh; loads after each Lab bundle
-    promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
+    promptFile = ml::appDataDir().getChildFile ("models/prompt-p1/prompt.json");
+    if (! promptFile.existsAsFile()) // older installs
+        promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
     updatePromptUi();
 
     pad.picked = [this] (int i) { selectCandidate (i); };

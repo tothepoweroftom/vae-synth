@@ -180,7 +180,7 @@ private:
         {
             const auto name = c["name"].toString();
             if (! c["forced_category"].isVoid() && ! c["forced_category"].isUndefined())
-                continue; // keys_forced: the "no bank category" test below
+                continue; // keys_forced: the no-bank test below uses an empty category
             PromptModel::Trace trace;
             start = juce::Time::getMillisecondCounterHiRes();
             const auto r = model.find (c["text"].toString(), out, category, -1, &trace);
@@ -253,23 +253,37 @@ private:
                     + ", weights " + juce::String (worstWeights) + ", mu " + juce::String (worstMu));
 
         beginTest ("no bank category");
-        out.assign (1, {}); // stale candidates must not survive a failure
-        auto r = model.find ("electric piano keys", out, category, 3, nullptr);
-        expect (r.failed());
-        expectEquals (r.getErrorMessage(), juce::String ("This bundle has no Keys presets"));
-        expect (out.empty());
+        // A category with no bank rows (p0: Keys..Atmosphere; p1 covers all 8, then this is covered by the plugin test)
+        int emptyCat = -1;
+        for (int k = 0; k < (int) meta["selection"]["categories"] && emptyCat < 0; ++k)
+            if (std::find (bankCategory.begin(), bankCategory.end(), k) == bankCategory.end())
+                emptyCat = k;
+        if (emptyCat < 0)
+            logMessage ("every category has bank rows: no-bank case left to the plugin test");
+        else
+        {
+            out.assign (1, {}); // stale candidates must not survive a failure
+            auto r0 = model.find ("electric piano keys", out, category, emptyCat, nullptr);
+            expect (r0.failed());
+            expectEquals (r0.getErrorMessage(),
+                          "This bundle has no " + meta["labels"][emptyCat].toString() + " presets");
+            expect (out.empty());
+        }
 
         beginTest ("bad bundle keeps previous");
         juce::TemporaryFile tmp ("prompt.json");
         auto bad = juce::JSON::parse (juce::JSON::toString (meta));
         bad.getDynamicObject()->setProperty ("lab_bundle_id", "wrong-lab");
         expect (tmp.getFile().replaceWithText (juce::JSON::toString (bad)));
+        auto r = model.find ("deep sub bass", out, category);
+        expect (r.wasOk() && ! out.empty(), r.getErrorMessage());
+        const auto goodRow = out.empty() ? -1 : out[0].row; // the bundle's own answer, p0 and p1 differ
         r = model.load (tmp.getFile(), lab);
         expect (r.failed());
         expect (r.getErrorMessage().contains ("wrong-lab"), r.getErrorMessage());
         r = model.find ("deep sub bass", out, category);
         expect (r.wasOk(), r.getErrorMessage());
-        expect (! out.empty() && out[0].row == 43 && out[0].bundleId == meta["id"].toString());
+        expect (! out.empty() && out[0].row == goodRow && out[0].bundleId == meta["id"].toString());
 
         bad = juce::JSON::parse (juce::JSON::toString (meta));
         bad.getDynamicObject()->removeProperty ("features");
@@ -281,7 +295,7 @@ private:
         bad.getDynamicObject()->removeProperty ("labels");
         expect (tmp.getFile().replaceWithText (juce::JSON::toString (bad)));
         expect (model.load (tmp.getFile(), lab).failed());
-        expect (model.find ("deep sub bass", out, category).wasOk() && ! out.empty() && out[0].row == 43);
+        expect (model.find ("deep sub bass", out, category).wasOk() && ! out.empty() && out[0].row == goodRow);
     }
 };
 

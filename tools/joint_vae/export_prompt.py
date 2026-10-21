@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Import the student's p0 text-to-latent folder as a prompt bundle for an installed joint VAE Lab bundle.
+"""Import the student's p0/p1 text-to-latent folder as a prompt bundle for an installed joint VAE Lab bundle.
 
-python3 -I tools/joint_vae/export_prompt.py --source ~/Downloads/p0 --lab models/joint-vae-j48w_b05 --out models/prompt-p0
-Then: tools/joint_vae/prompt_reference.py --bundle models/prompt-p0 (writes prompt-parity.json).
+python3 -I tools/joint_vae/export_prompt.py --source ~/Downloads/p1 --lab models/joint-vae-j48w_b05 --out models/prompt-p1
+Then: tools/joint_vae/prompt_reference.py --bundle models/prompt-p1 (writes prompt-parity.json).
 
 Checks (any failure aborts and leaves --out untouched): the bank's feature set equals the Lab's, layout.json's
 num/bool/cat lists are exactly the Lab's feature order with 435/85/111 entries and the Lab's category sizes,
@@ -114,7 +114,7 @@ def export(source, lab, out):
     # layout says "unknown", the Lab "Unknown": same label, order checked case-insensitively
     if [l.lower() for l in layout['labels']] != [l.lower() for l in manifest['labels']]:
         fail('labels differ from the Lab bundle')
-    if layout['vae'] != config['run'] or layout['prior'] != 'p0' or (layout['z_dim'], layout['k']) != (32, 8):
+    if layout['vae'] != config['run'] or (layout['z_dim'], layout['k']) != (32, 8):
         fail(f"layout is prior {layout['prior']} / vae {layout['vae']}, the Lab run is {config['run']}")
     check_tokenizer(source / 'tokenizer')
 
@@ -152,7 +152,7 @@ def export(source, lab, out):
         category=label_of, name=[f'{labels[c]} · {r:04d}' for r, c in enumerate(label_of)]), ensure_ascii=False) + '\n')
     hashes = {name: sha256(tmp / name) for name in FILES}
     prompt = dict(format='pitcher.prompt', version=1,
-                  id='p0-' + hashlib.sha256(''.join(hashes[n] for n in FILES).encode()).hexdigest()[:16],
+                  id=layout['prior'] + '-' + hashlib.sha256(''.join(hashes[n] for n in FILES).encode()).hexdigest()[:16],
                   lab_bundle_id=manifest['id'], prior=layout['prior'], vae=layout['vae'], labels=labels,
                   tokenizer=TOKENIZER, embedding=dict(dim=512, l2_normalise=True),
                   selection=dict(categories=CATEGORIES, k=8, min_weight=0.02, max_results=8),
