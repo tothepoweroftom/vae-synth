@@ -571,3 +571,23 @@ public:
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run them, plus the full ctest with and without Surge. Expected: PASS.
 - [ ] **Step 5:** Commit.
+
+---
+
+### Task 17: Brutalist re-skin from the JUCE design study (last; after the final review of Tasks 1–16)
+
+*User request (21 Oct 2026). It replaces the deferred "re-skin to the design study" item.*
+
+**Source:**
+- Handoff: `docs/design/PITCHER-BRUTALIST-JUCE.md`, which is binding for visuals and interaction.
+- Study: `design-study/juce/`. Reuse `design-study/juce/Source/ui/`, the `pitcher_study_ui` target: `PitcherLookAndFeel`, `PitcherKeyboard`, `AxisRow`, `OrbitView`/`OrbitMath`, `Spectrum`, `PitcherLayout`.
+- Do NOT copy `StudyView`, `StudyData`, the embedded study data or the study's approximate category matching, prompt lookup or message-thread inference. The completed Lab's worker, forest, prompt and data are authoritative.
+
+- [ ] **Step 1: Decide with the user before building.** These are the conflicts with the built Lab:
+  - **Orbit only, or Orbit + flat XY?** The handoff says Orbit is the only view. That removes Task 8's 2D category/measure map and click-to-jump on the map.
+  - **Toolbar:** the study has no toolbar. Where do Latent/Knob pad, the start point, category, Lock structure, Reset and Send to Surge go? Hidden, a compact row, or a menu?
+  - **Presets tab and favourites:** do they persist in plug-in state, and does "Shape my space" stay a concept-only preview?
+  - **Prompt:** the single-line field (no transcript) versus Task 9's 4-line log, and how Task 14's Find sounds candidates are shown.
+  - **Window size:** the layout targets ≥ 1000 px; the plug-in editor is 1240 px wide above its own keyboard. Does the study's 3-octave centre keyboard replace the editor keyboard while the Lab is shown?
+- [ ] **Step 2:** Write the agreed answers into this task, then build it test-first like the other UI tasks. Link `pitcher_study_ui` into the plug-in, re-lay out `JointVaePanel::resized()`, apply the tokens and fonts, and keep every v2 behaviour and test green.
+- [ ] **Step 3:** Screenshot against `docs/design/pitcher-native-study.png`, then run the full ctest with and without Surge, then commit.
