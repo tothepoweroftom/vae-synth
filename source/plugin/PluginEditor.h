@@ -95,6 +95,7 @@ public:
     explicit PluginEditor (PluginProcessor&);
     ~PluginEditor() override;
 
+    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
@@ -107,7 +108,8 @@ private:
     void showView (bool prompt);
 
     PluginProcessor& processor;
-    VaeLookAndFeel lookAndFeel;
+    // Shared by every open editor: it is also the global default, which is where JUCE resolves fonts.
+    juce::SharedResourcePointer<VaeLookAndFeel> lookAndFeel;
 
     juce::TextEditor promptEditor;
     juce::TextButton generatorPackageButton { "Audio model..." };

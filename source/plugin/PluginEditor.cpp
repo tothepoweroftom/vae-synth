@@ -230,7 +230,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     , processor (p)
     , keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
-    setLookAndFeel (&lookAndFeel);
+    setLookAndFeel (&lookAndFeel.get());
+    juce::LookAndFeel::setDefaultLookAndFeel (&lookAndFeel.get());
 
     promptEditor.setTextToShowWhenEmpty ("Describe a sound: warm detuned pad, plucky bass...", LF::quiet());
     promptEditor.setText (processor.getLastPrompt(), false);
@@ -370,7 +371,12 @@ void PluginEditor::showView (bool prompt)
     resized();
 }
 
-PluginEditor::~PluginEditor() { setLookAndFeel (nullptr); }
+PluginEditor::~PluginEditor()
+{
+    setLookAndFeel (nullptr);
+    if (lookAndFeel.getReferenceCount() == 1) // last editor: the shared instance dies with us
+        juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+}
 
 void PluginEditor::generate()
 {
@@ -509,6 +515,8 @@ void PluginEditor::chooseModel()
 }
 
 void PluginEditor::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
+
+void PluginEditor::paint (juce::Graphics& g) { g.fillAll (LF::paper); }
 
 void PluginEditor::resized()
 {
