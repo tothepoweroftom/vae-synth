@@ -71,8 +71,17 @@ Run `node design-study/xy-pad/xyz.test.cjs` from the repository root. Checks cov
 
 ## Favourite presets
 
-The right sidebar now has Axes / Presets tabs. The toolbar heart saves the current sound, using the prompt as its name when present or its predicted category otherwise. A filled heart means the current sound matches a saved favourite; clicking it removes that favourite. The Presets tab loads entries and also offers a per-entry remove heart. Favourites persist under `precision-xypad-favorites-v1` in this browser's local storage. Storage failures are reported without claiming the favourite was saved.
+The right sidebar now has Axes / Presets tabs. The toolbar heart opens a naming dialog, prefilled from the prompt or predicted category. Saving requires a nonblank name. A filled heart means the current sound matches a saved favourite; clicking it opens the rename dialog. Each list entry also has a rename button. The Presets tab loads entries and also offers a per-entry remove heart. Favourites persist under `precision-xypad-favorites-v1` in this browser's local storage. Storage failures are reported without claiming the favourite was saved.
 
 Snapshots retain both mode contexts: latent vector, conditioning category, latent axes, structure-lock arrays, knob values (including inactive values), knob axes and starting-preset selections. Loading validates the snapshot/model before changing the sound. Camera and visual style remain as the user currently has them. These are browser-prototype presets, not exported Surge/JUCE patches. Changing origin/browser or clearing site data affects availability.
 
 `node design-study/xy-pad/presets.test.cjs` checks snapshot restoration in both modes, inactive values, structure locks and rejection of incompatible/invalid snapshots before mutation. Orbit regression checks also pass. Browser UI verification is pending.
+
+
+## Preference-guided space concept
+
+“Shape my space” in Presets opens a separate, clearly marked concept preview. The user selects named favourites and adjusts “Follow my favourites” from keeping variety to staying close. A before/after diagram demonstrates the proposed concentration of exploration around liked sounds. The diagram uses deterministic illustrative points, not actual projected presets or measured training outcomes.
+
+“Use this preview” records only session-local presentation settings and shows a personal-space preview summary; “Back to original” clears them. No weights, latent positions, classifier outputs or sound parameters are changed. Cancelling makes no selection active. Removing a selected favourite clears the active concept preview. Actual fine-tuning would require a separately specified training/adaptation method and evaluation.
+
+Naming captures the patch when the dialog opens, persists only after Save, preserves the dialog on storage failure, and uses text nodes for user-provided names. Snapshot tests and JavaScript syntax checks pass; visual UI verification is pending.
