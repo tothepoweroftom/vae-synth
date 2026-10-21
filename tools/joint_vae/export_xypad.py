@@ -5,16 +5,19 @@ python3 tools/joint_vae/export_xypad.py --html /path/to/xypad_v2.html --bundle m
 xypad.json is the page's #latent object without the decoder weights, activity stand-in and PCA (sound_pca.npz
 has it), plus "knobs" = the page's #data object. xypad-parity.json holds numpy references of the page's
 constrain / measures / forest / group math, for the native tests. Needs numpy and onnxruntime.
-The bundle id is finalised here because it also hashes xypad.json.
+The bundle id is recomputed here (bundle_id.py) because it also hashes xypad.json.
 """
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import re
+import sys
 
 import numpy as np
 import onnxruntime as ort
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from bundle_id import finalise  # noqa: E402
 
 DROP = ('dec_p', 'dec_a', 'activity', 'pca')
 CASES = 12
@@ -77,22 +80,6 @@ def group_pos(group, knobs, index, vals):
     return sum(us) / len(us) if us else None
 
 
-def finalise_id(bundle, run):
-    names = ['config.json', 'schema.json', 'pruning.json', 'sound_pca.npz', 'decoder.onnx', 'sound_encoder.onnx',
-             'sound_decoder.onnx', 'xypad.json']
-    digest = hashlib.sha256()
-    for n in names:
-        digest.update((bundle / n).read_bytes())
-    ident = run + '-' + digest.hexdigest()[:16]
-    manifest = json.loads((bundle / 'bundle.json').read_text())
-    manifest['id'] = ident
-    (bundle / 'bundle.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    example = json.loads((bundle / 'example-sound.json').read_text())
-    example['bundle_id'] = ident
-    (bundle / 'example-sound.json').write_text(json.dumps(example, indent=2) + '\n')
-    return ident
-
-
 def export(html, bundle):
     page = html.read_text()
     data, lt = page_json(page, 'data'), page_json(page, 'latent')
@@ -145,8 +132,13 @@ def export(html, bundle):
     group_cases = []
     for i, gi in enumerate(rng.choice(len(groups), CASES, replace=False)):
         vals = list(rows[rng.integers(len(rows))])
-        if i % 3 == 1:
-            vals = [None if rng.random() < 0.5 else v for v in vals]
+        if i in (0, 1):                                 # nothing known: pos is null
+            vals = [None] * len(vals)
+        elif i % 3 == 1:                                # a few nulls, still numeric
+            keep = index[groups[gi]['knobs'][0]]
+            vals = [v if j == keep or rng.random() > 0.4 else None for j, v in enumerate(vals)]
+        if i >= 2 and group_pos(groups[gi], knobs, index, [v for v in vals]) is None:  # row lacked the knob: use a full row
+            vals = [0.5 if v is None else v for v in vals]
         group_cases.append(dict(group=groups[gi]['name'], vals=vals, pos=group_pos(groups[gi], knobs, index, vals)))
 
     out = {k: v for k, v in lt.items() if k not in DROP}
@@ -154,7 +146,7 @@ def export(html, bundle):
     (bundle / 'xypad.json').write_text(json.dumps(out, separators=(',', ':')) + '\n')
     (bundle / 'xypad-parity.json').write_text(json.dumps(dict(constrain=constrain_cases, measures=measure_cases,
                                                             forest=forest_cases, groups=group_cases)) + '\n')
-    ident = finalise_id(bundle, run)
+    ident = finalise(bundle)
     print(f'Wrote xypad for {ident}: {len(lt["directions"])} directions, {len(lt["dims"])} dims, '
           f'{len(lt["presets"]["label"])} presets, {len(knobs)} knobs, {len(groups)} groups, {len(trees)} trees')
 

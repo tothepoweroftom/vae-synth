@@ -18,6 +18,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'vae'))
 from pitcher.joint_vae.model import JointVAE
+from bundle_id import finalise  # noqa: E402
 
 LABELS = ['Bass', 'Lead', 'Pad', 'Keys', 'Pluck', 'Synth', 'Atmosphere', 'Orchestral', 'Unknown']
 
@@ -129,21 +130,20 @@ def export(source, out):
                     errors[name].append(float(np.max(np.abs(actual - expected))))
                 references.append(dict(category=category, latent=z[0].tolist(), sound=a[0].tolist(),
                                        encoded_latent=enc[0].tolist(), codes=decoder(z, y)[0].tolist()))
-    digest = hashlib.sha256()
-    for name in ('model.pt', 'config.json', 'schema.json', 'pruning.json', 'sound_pca.npz'):
-        digest.update((source / name).read_bytes())
-    digest.update((out / 'sound_decoder.onnx').read_bytes())
-    identity = cfg['run'] + '-' + digest.hexdigest()[:16]
-    manifest = dict(format='pitcher.joint-vae', version=1, id=identity, latent_dimensions=32,
+    model_sha = hashlib.sha256((source / 'model.pt').read_bytes()).hexdigest()
+    manifest = dict(format='pitcher.joint-vae', version=1, id='', latent_dimensions=32,
                     sound_dimensions=48, labels=LABELS,
-                    sound_decoder='sound_decoder.onnx', xypad='xypad.json', features=features,
+                    sound_decoder='sound_decoder.onnx', model_sha256=model_sha, features=features,
                     notes='Codes ordered num/bool/cat/stepped; stepped indices converted to normalized codes. '
                           'Use schema.json and pruning.json with the student codec for full Surge patches.')
     for name in ('config.json', 'schema.json', 'pruning.json', 'sound_pca.npz'):
         shutil.copyfile(source / name, out / name)
+    for name in ('xypad.json', 'xypad-parity.json'):  # stale from an earlier export; export_xypad rewrites them
+        (out / name).unlink(missing_ok=True)
     (out / 'bundle.json').write_text(json.dumps(manifest, indent=2) + '\n')
     (out / 'parity.json').write_text(json.dumps(dict(cases=len(references), max_error=max(max(e) for e in errors.values()), references=references), indent=2) + '\n')
-    (out / 'example-sound.json').write_text(json.dumps(dict(bundle_id=identity, category=0, sound=references[0]['sound']), indent=2) + '\n')
+    (out / 'example-sound.json').write_text(json.dumps(dict(bundle_id='', category=0, sound=references[0]['sound']), indent=2) + '\n')
+    identity = finalise(out)
     print(f'Exported {identity}: {len(features)} features; {len(references)} parity cases; max error '
           + ', '.join(f'{n} {max(e):.3g}' for n, e in errors.items()))
 
