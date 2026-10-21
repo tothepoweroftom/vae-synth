@@ -27,8 +27,10 @@ const Word adjectives[] = {
     { "steady", "s:movement", -1 },    { "moving", "s:movement", 1 },    { "evolving", "s:movement", 1 },
     { "wobbly", "s:movement", 1 },
 };
-const char* const stopWords[] = { "a",    "an",   "the", "it",   "make", "sound", "more",
-                                  "less", "with", "and", "some", "bit",  "lot" };
+const char* const stopWords[] = {
+    "a",    "an",  "the", "it",  "make",      "sound",  "more", "less", "with", "and",
+    "some", "bit", "lot", "now", "something", "please", "just", "like", "too",  "little"
+};
 const juce::String minus = juce::String (juce::CharPointer_UTF8 ("\xe2\x88\x92"));
 const juce::String dot = juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "));
 
@@ -84,22 +86,6 @@ PromptReply interpretPrompt (const juce::String& text, bool hasStart, const XyPa
             r.start = std::make_pair (it->second, noun.category);
         parts.add (jointLabels[noun.category]);
     }
-    else if (! hasStart)
-    {
-        JointLatent mean {};
-        int n = 0;
-        for (size_t i = 0; i < data.presetZ.size() && i < data.presetLabel.size(); ++i)
-            if (data.presetLabel[i] == 8)
-            {
-                for (size_t d = 0; d < mean.size(); ++d)
-                    mean[d] += data.presetZ[i][d];
-                ++n;
-            }
-        for (auto& v : mean)
-            v /= (float) juce::jmax (1, n);
-        r.start = std::make_pair (mean, 8);
-        parts.add ("no sound type found");
-    }
 
     float scale = 1.0f, flip = 1.0f;
     for (int i = 0; i < tokens.size(); ++i)
@@ -122,9 +108,10 @@ PromptReply interpretPrompt (const juce::String& text, bool hasStart, const XyPa
             const float delta = 0.1f * scale * flip * (float) adj->sign;
             r.nudges.emplace_back (adj->axis, delta);
             const auto* axis = data.find (adj->axis);
-            const int steps = juce::roundToInt (delta / 0.1f);
-            auto s = (axis != nullptr ? axis->name : juce::String (adj->axis)) + " " + (steps < 0 ? minus : "+")
-                     + juce::String (std::abs (steps)) + (std::abs (steps) == 1 ? " step" : " steps");
+            const int half = juce::roundToInt (delta / 0.05f), absHalf = std::abs (half); // half-steps
+            auto s = (axis != nullptr ? axis->name : juce::String (adj->axis)) + " " + (half < 0 ? minus : "+")
+                     + juce::String (absHalf / 2) + (absHalf % 2 != 0 ? ".5" : "")
+                     + (absHalf == 2 ? " step" : " steps");
             if (juce::String (adj->axis) == "s:noise" || juce::String (adj->axis) == "s:movement")
                 s += " (small effect)";
             parts.add (s);
@@ -132,6 +119,23 @@ PromptReply interpretPrompt (const juce::String& text, bool hasStart, const XyPa
         }
         else if (! isIn (w, stopWords, std::size (stopWords)))
             r.ignored.add (w);
+    }
+
+    if (noun.noun.isEmpty() && ! hasStart && ! r.nudges.empty())
+    {
+        JointLatent mean {};
+        int n = 0;
+        for (size_t i = 0; i < data.presetZ.size() && i < data.presetLabel.size(); ++i)
+            if (data.presetLabel[i] == 8)
+            {
+                for (size_t d = 0; d < mean.size(); ++d)
+                    mean[d] += data.presetZ[i][d];
+                ++n;
+            }
+        for (auto& v : mean)
+            v /= (float) juce::jmax (1, n);
+        r.start = std::make_pair (mean, 8);
+        parts.insert (0, "no sound type found");
     }
 
     if (! r.start && r.nudges.empty())

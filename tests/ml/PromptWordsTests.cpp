@@ -68,13 +68,20 @@ public:
         expect (r.message.contains ("no sound type found"));
 
         beginTest ("nothing to change");
-        for (auto* t : { "", "zorp blarg" })
-        {
-            r = interpretPrompt (t, true, d);
-            expect (! r.start.has_value() && r.nudges.empty());
-            expect (r.message.startsWith ("Nothing to change"));
-        }
-        expectEquals (r.ignored.joinIntoString (","), juce::String ("zorp,blarg"));
+        for (auto* t : { "", "zorp blarg", "the" })
+            for (bool hasStart : { true, false })
+            {
+                r = interpretPrompt (t, hasStart, d);
+                expect (! r.start.has_value() && r.nudges.empty());
+                expect (r.message.startsWith ("Nothing to change"));
+            }
+        expectEquals (interpretPrompt ("zorp blarg", false, d).ignored.joinIntoString (","),
+                      juce::String ("zorp,blarg"));
+
+        beginTest ("half step message and filler words");
+        expect (interpretPrompt ("slightly less bright", true, d)
+                    .message.contains (juce::String (juce::CharPointer_UTF8 ("\xe2\x88\x92")) + "0.5 steps"));
+        expectEquals (interpretPrompt ("now make it a pad", true, d).ignored.size(), 0);
 
         beginTest ("closed word list: noisier is ignored");
         expectEquals (interpretPrompt ("noisier", true, d).ignored.joinIntoString (","), juce::String ("noisier"));
