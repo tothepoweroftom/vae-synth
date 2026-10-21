@@ -84,7 +84,7 @@ main>section.panel{grid-column:2;grid-row:1}
 @media(min-width:1000px){
  main{grid-template-columns:280px minmax(0,1fr) 280px;row-gap:20px}
  .category-panel{grid-row:1/3;display:flex;flex-direction:column}
- .axes-panel{max-height:560px}
+ .axes-panel{grid-row:1/3;max-height:none;min-height:0;contain:size;align-self:stretch}
  main>.audition{grid-column:2;grid-row:2;min-width:0}
 }
 @media(min-width:1450px){main{grid-template-columns:300px minmax(0,1fr) 300px}}

@@ -65,14 +65,14 @@ dialog h2{font:400 22px var(--body);letter-spacing:-.6px;margin:0 0 22px}
 .axes-panel .listhead h2{display:none}
 .axes-panel #filter{padding:10px 12px;border:1px solid var(--line);font-size:10px}
 .axes-panel .list{margin:0;scrollbar-color:var(--line) var(--bg)}
-.axes-panel .g{grid-template-columns:minmax(0,1fr) auto;gap:10px 8px;padding:16px 0;border-left:0;background:transparent}
-.axes-panel .g .nm{grid-column:1/-1;grid-row:1;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
-.axes-panel .g .axbtns{grid-column:1;grid-row:2;justify-self:start;gap:6px}
-.axes-panel .g .axbtn{width:30px;height:27px;box-shadow:none}
+.axes-panel .g{grid-template-columns:minmax(0,1fr) auto;gap:7px 8px;padding:10px 0;border-left:0;background:transparent}
+.axes-panel .g .nm{grid-column:1;grid-row:1;align-self:center;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.axes-panel .g .axbtns{grid-column:2;grid-row:1;align-self:center;justify-self:end;gap:4px}
+.axes-panel .g .axbtn{width:25px;height:25px;box-shadow:none}
 .axes-panel .g .axis-info{grid-column:2;grid-row:2;align-self:center;text-align:right}
 .axes-panel .g .axis-info[open]{grid-column:1/-1;grid-row:4;text-align:left}
 .axes-panel .g .axis-info summary{font-size:9px;color:var(--muted)}
-.axes-panel .g .slide{grid-column:1/-1;grid-row:3;padding-top:4px;font-size:8px;gap:8px}
+.axes-panel .g .slide{grid-column:1/-1;grid-row:2;padding-top:4px;font-size:8px;gap:8px}
 .axes-panel .g .slide input{min-width:0}
 .axes-panel .lhead{background:transparent;padding:14px 0}
 .axes-panel details.more>summary{padding:16px 0}
@@ -81,3 +81,6 @@ dialog h2{font:400 22px var(--body);letter-spacing:-.6px;margin:0 0 22px}
 .axes-panel .load-favorite strong{font-size:12px}
 .axes-panel .tune-entry{margin-top:20px;padding-top:20px}
 @media(max-width:999px){[data-style=brutalist] .axes-panel{border-left:0;border-top:1px solid var(--line);padding:12px 0 0}}
+
+.axes-panel #axes-content{overflow:hidden}
+.axes-panel .list{min-height:0;flex:1 1 0;overflow-y:auto}
