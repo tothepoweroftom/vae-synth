@@ -3,6 +3,8 @@ juce_add_console_app(vae_ml_tests PRODUCT_NAME "vae_ml_tests" VERSION 0.1.0)
 target_sources(vae_ml_tests PRIVATE
     MlTests.cpp
     JointVaeTests.cpp
+    XyPadTests.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/XyPad.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/StudentCodec.cpp
     ../common/TestMain.cpp)
