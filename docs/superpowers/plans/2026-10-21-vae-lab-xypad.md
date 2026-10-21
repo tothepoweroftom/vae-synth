@@ -597,3 +597,36 @@ public:
   - **Window size:** the layout targets ≥ 1000 px; the plug-in editor is 1240 px wide above its own keyboard. Does the study's 3-octave centre keyboard replace the editor keyboard while the Lab is shown?
 - [ ] **Step 2:** Write the agreed answers into this task, then build it test-first like the other UI tasks. Link `pitcher_study_ui` into the plug-in, re-lay out `JointVaePanel::resized()`, apply the tokens and fonts, and keep every v2 behaviour and test green.
 - [ ] **Step 3:** Screenshot against `docs/design/pitcher-native-study.png`, then run the full ctest with and without Surge, then commit.
+
+---
+
+### Task 18: Find and fix the crackle when dragging (runs next, after Task 16)
+
+*User report (21 Oct 2026): dragging on the latent pad, or moving individual X/Y/Z axis sliders, crackles a lot in the standalone. That breaks the spec's core goal ("drags never click or zipper"). Use superpowers:systematic-debugging. Reproduce and measure before changing anything.*
+
+**Files:** the cause decides them. Likely candidates are `source/engine/lite/LiteEngine.{h,cpp}`, `PluginProcessor::playLiteControls`, `JointVaePanel` (request rate) and `LiteFx.h`.
+
+- [ ] **Step 1: Reproduce in a test.**
+  - Write a headless repro: prepare the processor with Lite, hold a note, and drive a sweep of 60 `lab` results per second through `playLiteControls` along a real pad path with the bundle, latent, Lock off.
+  - Render 2 s and measure:
+    - the number of discrete-control changes per second;
+    - the number of ducks started;
+    - the number of samples with the duck gain below 1;
+    - the max sample-to-sample step;
+    - the process() time per block (mean and max) against the block budget.
+  - Repeat the measurements with Lock on, and with an axis slider moving a single z coordinate.
+- [ ] **Step 2: Rank the hypotheses with the numbers.**
+  - (a) Discrete changes flip often enough that repeated 5 ms ducks modulate the sound.
+  - (b) Unchanged discrete values written again still start a duck.
+  - (c) FX on/off or type changes reset or reallocate effect state.
+  - (d) Continuous smoothing (τ 20 ms) is too short for the request rate, or isn't applied on some path (e.g. `setControls` / prepare snapping, or `playLiteControls` bypassing smoothing).
+  - (e) CPU: process() exceeds its budget or allocates.
+  - (f) The message thread writes 93 parameters per move, flooding the parameter store or host.
+- [ ] **Step 3: Fix the root cause(s) only.**
+  - Each fix gets a regression test built from the Step 1 measurement: zero ducks for unchanged discrete values, a bounded duck rate during a drag, a bounded max step, and process() within budget.
+  - If discrete flips during a drag are the cause, choose the smallest musical fix and record the choice. Options:
+    - rate-limit discrete changes while dragging, applying them on release;
+    - a hysteresis/hold on discrete outputs;
+    - a longer crossfade.
+  - The Lite-vs-Surge comparison must still match (fresh renders unchanged).
+- [ ] **Step 4:** Ask the user to drag again in the standalone. Commit with the before and after measurements in the commit message.
