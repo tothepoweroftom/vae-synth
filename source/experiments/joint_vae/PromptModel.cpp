@@ -66,11 +66,15 @@ juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
 
     auto m = std::make_unique<Model>();
     m->id = meta["id"].toString();
-    for (const auto& f : *meta["features"].getArray())
+    const auto* features = meta["features"].getArray();
+    const auto* labels = meta["labels"].getArray();
+    if (m->id.isEmpty() || features == nullptr || labels == nullptr)
+        return fail ("prompt.json needs an id and \"features\" and \"labels\" arrays");
+    for (const auto& f : *features)
         m->features.add (f.toString());
-    if (m->id.isEmpty() || m->features != lab.layout().names)
+    if (m->features != lab.layout().names)
         return fail ("feature order differs from the Lab bundle");
-    for (const auto& l : *meta["labels"].getArray())
+    for (const auto& l : *labels)
         m->labels.add (l.toString());
 
     const auto tok = meta["tokenizer"], sel = meta["selection"], bank = meta["bank"];
@@ -86,7 +90,7 @@ juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
     if (tok["padding"].toString() != "longest" || tok["truncation"].toString() != "longest_first" || m->maxLength < 2
         || m->maxLength > 4096 || m->dim <= 0 || ! meta["embedding"]["l2_normalise"])
         return fail ("unsupported tokenizer or embedding settings");
-    if (m->categories <= 0 || m->labels.size() < m->categories || m->k <= 0 || m->maxResults <= 0
+    if (m->categories <= 0 || m->labels.size() < m->categories || m->k <= 0 || m->maxResults <= 0 || m->maxResults > 8
         || ! std::isfinite (m->minWeight) || (int) bank["z_dim"] != zDim || m->numCodes != m->features.size()
         || rows <= 0)
         return fail ("invalid selection or bank settings");
@@ -107,6 +111,8 @@ juce::Result PromptModel::load (const juce::File& file, const JointVae& lab)
         return fail ("bank.json does not match bank.bin");
     for (const auto& c : *cats)
     {
+        if (! c.isInt() && ! c.isInt64())
+            return fail ("bank.json has an invalid category");
         m->category.push_back (c);
         if (m->category.back() < 0 || m->category.back() >= m->categories)
             return fail ("bank.json has an invalid category");

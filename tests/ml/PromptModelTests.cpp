@@ -30,12 +30,46 @@ private:
 
     template <typename T>
     void expectClose (const juce::var& ref, const std::vector<T>& got, double tol, const juce::String& what,
-                      double& worst)
+                      double& worstOverall)
     {
         expectEquals ((int) got.size(), ref.size(), what + " size");
+        double worst = 0;
         for (int i = 0; i < juce::jmin (ref.size(), (int) got.size()); ++i)
             worst = juce::jmax (worst, std::abs ((double) ref[i] - (double) got[size_t (i)]));
         expect (worst <= tol, what + " max diff " + juce::String (worst));
+        worstOverall = juce::jmax (worstOverall, worst);
+    }
+
+    struct Bank
+    {
+        std::span<const float> z;
+        std::span<const int> category;
+        float minWeight;
+        int maxResults;
+    };
+    /** R15: native rows equal the reference, or, where adjacent reference components a > b are near-tied (< 1e-4),
+        equal the selection recomputed from the native weights and mu with b forced ahead of a. */
+    static bool rowsAccepted (const std::vector<int>& rows, const std::vector<int>& ref,
+                              const std::vector<float>& refWeights, const std::vector<int>& refComponents,
+                              const std::vector<float>& weights, const std::vector<float>& mu, const Bank& bank,
+                              int category)
+    {
+        if (rows == ref)
+            return true;
+        for (size_t i = 0; i + 1 < refComponents.size(); ++i)
+        {
+            const auto a = size_t (refComponents[i]), b = size_t (refComponents[i + 1]);
+            if (refWeights[a] - refWeights[b] >= 1e-4f)
+                continue;
+            auto flipped = weights;
+            const auto lo = juce::jmin (weights[a], weights[b]), hi = juce::jmax (weights[a], weights[b]);
+            flipped[b] = std::nextafter (hi, 2.0f);
+            flipped[a] = lo;
+            if (rows
+                == PromptModel::select (flipped, mu, bank.z, bank.category, category, bank.minWeight, bank.maxResults))
+                return true;
+        }
+        return false;
     }
 
     void existingTokenizer()
@@ -82,6 +116,23 @@ private:
         rows = PromptModel::select (std::vector<float> { 0.45f, 0.1f, 0.45f }, mu, z, category, 1, 0.02f, 1);
         expect (rows == std::vector<int> { 1 });
         expect (PromptModel::select (std::vector<float> { 1, 0, 0 }, mu, z, category, 2, 0.02f, 8).empty());
+
+        beginTest ("R15 near-tie acceptance");
+        // Component 0 sits on row 1, component 1 on row 2: the weight order decides the row order.
+        std::vector<float> mu2 (2 * 32, 0.0f);
+        mu2[0] = 1;
+        mu2[32] = -1;
+        const Bank bank { z, category, 0.02f, 8 };
+        const std::vector<float> refW { 0.50002f, 0.49998f }, flippedW { 0.49998f, 0.50002f };
+        const std::vector<int> comps { 0, 1 };
+        const auto ref = PromptModel::select (refW, mu2, z, category, 1, 0.02f, 8);
+        const auto flippedRows = PromptModel::select (flippedW, mu2, z, category, 1, 0.02f, 8);
+        expect (ref == std::vector<int> { 1, 2 } && flippedRows == std::vector<int> { 2, 1 });
+        expect (rowsAccepted (ref, ref, refW, comps, flippedW, mu2, bank, 1), "reference order");
+        expect (rowsAccepted (flippedRows, ref, refW, comps, flippedW, mu2, bank, 1), "native flipped near-tie");
+        expect (! rowsAccepted ({ 3, 1 }, ref, refW, comps, flippedW, mu2, bank, 1), "different rows");
+        const std::vector<float> farW { 0.6f, 0.4f }; // not near-tied: a flip is a real mismatch
+        expect (! rowsAccepted (flippedRows, ref, farW, comps, flippedW, mu2, bank, 1), "flip without a near-tie");
     }
 
     void bundle()
@@ -120,6 +171,8 @@ private:
         std::vector<int> bankCategory;
         for (const auto& c : *bankJson["category"].getArray())
             bankCategory.push_back ((int) c);
+        const Bank bankRef { bankZ, bankCategory, (float) (double) meta["selection"]["min_weight"],
+                             (int) meta["selection"]["max_results"] };
 
         double worstEmb = 0, worstLogits = 0, worstWeights = 0, worstMu = 0;
         bool first = true;
@@ -156,25 +209,16 @@ private:
             std::vector<int> ref;
             for (const auto& row : *c["rows"].getArray())
                 ref.push_back ((int) row);
-            // R15: where reference weights are near-tied (< 1e-4), also accept the order with those two swapped,
-            // recomputed from the native weights and mu against bank.bin.
-            auto accepted = rows == ref;
-            const auto& comps = *c["components"].getArray();
-            for (int i = 0; ! accepted && i + 1 < comps.size(); ++i)
-            {
-                const int a = comps[i], b = comps[i + 1];
-                if ((double) c["mix_weights"][a] - (double) c["mix_weights"][b] >= 1e-4)
-                    continue;
-                auto swapped = trace.weights;
-                std::swap (swapped[size_t (a)], swapped[size_t (b)]);
-                const auto alt = PromptModel::select (swapped, trace.mu, bankZ, bankCategory, category, 0.02f, 8);
-                accepted =
-                    rows == alt
-                    && rows == PromptModel::select (trace.weights, trace.mu, bankZ, bankCategory, category, 0.02f, 8);
-                if (accepted)
-                    logMessage (name + ": near-tied components " + juce::String (a) + "/" + juce::String (b)
-                                + " swapped");
-            }
+            std::vector<float> refWeights;
+            for (const auto& w : *c["mix_weights"].getArray())
+                refWeights.push_back ((float) (double) w);
+            std::vector<int> refComponents;
+            for (const auto& k : *c["components"].getArray())
+                refComponents.push_back ((int) k);
+            const auto accepted =
+                rowsAccepted (rows, ref, refWeights, refComponents, trace.weights, trace.mu, bankRef, category);
+            if (accepted && rows != ref)
+                logMessage (name + ": accepted a flipped near-tie");
             expect (accepted, name + " rows");
             if (! accepted)
                 continue;
@@ -226,6 +270,18 @@ private:
         r = model.find ("deep sub bass", out, category);
         expect (r.wasOk(), r.getErrorMessage());
         expect (! out.empty() && out[0].row == 43 && out[0].bundleId == meta["id"].toString());
+
+        bad = juce::JSON::parse (juce::JSON::toString (meta));
+        bad.getDynamicObject()->removeProperty ("features");
+        expect (tmp.getFile().replaceWithText (juce::JSON::toString (bad)));
+        r = model.load (tmp.getFile(), lab);
+        expect (r.failed());
+        expect (r.getErrorMessage().contains ("features"), r.getErrorMessage());
+        bad.getDynamicObject()->setProperty ("features", 7);
+        bad.getDynamicObject()->removeProperty ("labels");
+        expect (tmp.getFile().replaceWithText (juce::JSON::toString (bad)));
+        expect (model.load (tmp.getFile(), lab).failed());
+        expect (model.find ("deep sub bass", out, category).wasOk() && ! out.empty() && out[0].row == 43);
     }
 };
 
