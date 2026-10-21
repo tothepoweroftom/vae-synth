@@ -233,6 +233,25 @@ public:
             expect (r.wasOk(), r.getErrorMessage());
             expect (viaModel.getSize() > 1000);
         }
+        beginTest ("builds do not depend on earlier builds");
+        {
+            const auto n = juce::jmin<size_t> (nativePlans.size(), 6);
+            SurgePatchBuilder used ((juce::File (VAE_SURGE_DATA_DIR)));
+            const auto t0 = juce::Time::getMillisecondCounterHiRes();
+            for (size_t c = 0; c < n; ++c)
+            {
+                juce::MemoryBlock fresh, afterOthers;
+                SurgePatchBuilder one ((juce::File (VAE_SURGE_DATA_DIR)));
+                expect (one.build (nativePlans[c], fresh).wasOk());
+                for (size_t o = 0; o < n; ++o)
+                    if (o != c)
+                        expect (used.build (nativePlans[o], afterOthers).wasOk());
+                expect (used.build (nativePlans[c], afterOthers).wasOk());
+                expect (fresh == afterOthers, "case " + juce::String ((int) c));
+            }
+            logMessage ("mean build incl. fresh builders: "
+                        + juce::String ((juce::Time::getMillisecondCounterHiRes() - t0) / double (n * n + n), 1) + " ms");
+        }
 #endif
         beginTest ("failed replacement leaves working model loaded");
         const auto id = model.layout().id;

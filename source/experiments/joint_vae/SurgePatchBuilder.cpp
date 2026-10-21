@@ -172,6 +172,7 @@ struct SurgePatchBuilder::Impl
     std::unique_ptr<SurgeSynthesizer> synth;
     juce::File data;
     std::map<juce::String, Parameter*> paths;
+    std::vector<FxStorage> pristineFx; // FX slots exactly as a fresh synth has them
     std::map<juce::String, juce::File> wavetables; // display name -> file, factory folder first
 
     void settle()
@@ -211,6 +212,8 @@ SurgePatchBuilder::SurgePatchBuilder (const juce::File& surgeDataDir)
     impl->synth->setSamplerate (48000.0f);
     impl->synth->time_data.tempo = 120.0;
     impl->paths = patchPaths (impl->synth->storage.getPatch());
+    for (int f = 0; f < n_fx_slots; ++f)
+        impl->pristineFx.push_back (impl->synth->storage.getPatch().fx[f]);
     for (auto folder : { "wavetables", "wavetables_3rdparty" })
         for (const auto& f : surgeDataDir.getChildFile (folder).findChildFiles (juce::File::findFiles, true))
             if (f.hasFileExtension ("wav;wt"))
@@ -226,6 +229,11 @@ juce::Result SurgePatchBuilder::build (const StudentPlan& plan, juce::MemoryBloc
     const auto templ = impl->data.getChildFile ("patches_factory/Templates/Init Saw.fxp");
     if (! templ.existsAsFile())
         return juce::Result::fail ("Surge template missing: " + templ.getFullPathName());
+    // Surge keeps per-slot FX parameter defaults/ranges from the last effect type (loadFx retypes the
+    // params in place), and a template load copies those into fxsync. Unwritten params of a retyped
+    // slot then inherit the previous build's values, so put the slots back first.
+    for (int f = 0; f < n_fx_slots; ++f)
+        synth.storage.getPatch().fx[f] = impl->pristineFx[(size_t) f];
     if (! synth.loadPatchByPath (templ.getFullPathName().toRawUTF8(), -1, "Init Saw"))
         return juce::Result::fail ("Surge could not load the template");
     impl->settle();
