@@ -35,6 +35,8 @@ public:
 
     /** Why the runtime is unavailable, or the loaded library path. */
     const juce::String& getStatus() const noexcept { return status; }
+    /** Loaded library version ("1.22.0"); empty when unavailable. */
+    const juce::String& getVersion() const noexcept { return version; }
 
     /** Valid only when isAvailable(). */
     Ort::Env& getEnv() const;
@@ -42,7 +44,7 @@ public:
 private:
     juce::DynamicLibrary library;
     std::unique_ptr<Ort::Env> env;
-    juce::String status;
+    juce::String status, version;
 };
 
 } // namespace vae::ml

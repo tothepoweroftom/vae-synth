@@ -109,3 +109,30 @@ did not map exactly. All 641 Surge factory presets convert.
 The `*_destination` / `*_depth` controls are **provisional**, with one route
 per filter EG / LFO, until the student decides how routing should appear in
 the vector. Options and factory-library statistics are in `docs/SCHEMA.md`.
+
+## Independent reference-audio backup
+
+[Reference audio retrieval](docs/RETRIEVAL.md) builds a searchable bank of Lite
+engine renders, matches a reference WAV, and exports five editable presets with
+WAV previews. Load an individual result with **Preset...** in the editor. This
+path needs no trained decoder or student deliverable. The command-line retriever
+starts from audio; the separate prompt prototype below generates that audio.
+
+[Experimental SAME-Small retrieval](docs/SAME-RETRIEVAL.md) adds frozen audio-encoder
+features and cosine search, exporting the same playable presets. It currently runs
+in an isolated Python process, outside JUCE.
+
+[Prompt-to-preset UI and native ONNX plan](docs/PROMPT-PRESETS.md) connects Stable
+Audio Small generation to SAME search in a local browser prototype. Model access
+requires Hugging Face authentication. The SAME encoder has also been exported and
+verified through the plug-in’s C++ ONNX Runtime wrapper.
+
+[Native SAME search in JUCE](docs/NATIVE-SAME.md) now provides **SAME bank...**,
+**Find from audio...**, cancellation and playable candidate selection. The generator
+remains in the separate local prototype while its native runtime is validated.
+
+### Native prompt generation
+
+The JUCE **Generate** button now supports Stable Audio 3 Small-SFX → SAME → editable presets without Python at runtime. Load **SAME bank…** and **Audio model…**, then type a prompt. See [native generator setup, validation and limitations](docs/NATIVE-GENERATOR.md). Building this route also requires Cargo for the statically linked Hugging Face tokenizer.
+
+Hackathon handoff: [ONNX, SAME and Stable Audio lessons and next steps](docs/HACKATHON-ONNX-SAME-LEARNINGS.md).

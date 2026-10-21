@@ -1,3 +1,4 @@
+#include "schema/PresetFile.h"
 #include "PluginProcessor.h"
 
 #include "BinaryData.h"
@@ -151,6 +152,29 @@ schema::Snapshot PluginProcessor::getControls() const
     return s;
 }
 
+juce::Result PluginProcessor::loadPresetFile (const juce::File& file)
+{
+    if (! file.existsAsFile() || file.getSize() > 1024 * 1024)
+        return juce::Result::fail ("Missing or oversized preset file");
+    const auto json = juce::JSON::parse (file);
+    if (json["format"].toString() != "vae-preset-1" || int (json["schema_version"]) != schema::kSchemaVersion)
+        return juce::Result::fail ("Incompatible preset format or schema");
+    const auto name = json["engine"].toString();
+    if (name != "lite" && name != "surge")
+        return juce::Result::fail ("Unknown preset engine");
+    const auto kind = name == "lite" ? EngineKind::Lite : EngineKind::Surge;
+    const auto engine = std::find (engineKinds.begin(), engineKinds.end(), kind);
+    if (engine == engineKinds.end())
+        return juce::Result::fail ("Preset engine is unavailable in this build");
+    schema::Snapshot controls;
+    const auto result = schema::readPresetValues (json, controls);
+    if (result.failed())
+        return result;
+    params.set (kEngineParamId, float (std::distance (engineKinds.begin(), engine)));
+    applyControls (controls);
+    return juce::Result::ok();
+}
+
 void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 {
     for (int i = 0; i < schema::kControlCount; ++i)
@@ -164,10 +188,7 @@ void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 
 void PluginProcessor::generateFromPrompt (const juce::String& prompt, std::function<void (const juce::String&)> done)
 {
-    {
-        const juce::ScopedLock sl (stateLock);
-        lastPrompt = prompt;
-    }
+    setLastPrompt (prompt);
     generator.generate (prompt,
                         [this, done] (const ml::PresetGenerator::Result& r)
                         {
@@ -291,3 +312,9 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor() { return new PluginE
 } // namespace vae
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new vae::PluginProcessor(); }
+
+void vae::PluginProcessor::setLastPrompt (const juce::String& prompt)
+{
+    const juce::ScopedLock sl (stateLock);
+    lastPrompt = prompt;
+}

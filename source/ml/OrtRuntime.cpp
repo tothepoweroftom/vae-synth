@@ -71,6 +71,7 @@ OrtRuntime::OrtRuntime()
     try
     {
         env = std::make_unique<Ort::Env> (ORT_LOGGING_LEVEL_WARNING, "vae-synth");
+        version = getApiBase()->GetVersionString();
         status = juce::String ("ONNX Runtime ") + getApiBase()->GetVersionString() + " (" + status + ")";
     }
     catch (const Ort::Exception& e)

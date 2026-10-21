@@ -31,6 +31,17 @@ public:
         expect (model.getInputs()[0].shape.back() == schema::kLatentDimensions);
         expect (model.getOutputs()[0].shape.back() == schema::kFeatureCount);
 
+        beginTest ("tensor input validation rejects missing data and shapes");
+        {
+            std::vector<std::vector<float>> out;
+            std::array<float, 8> values {};
+            std::array<int64_t, 2> badShape { 1, 9 };
+            expect (model.run (values, badShape, out).failed());
+            expect (model.run (std::span<const FloatTensorView> {}, out).failed());
+            const std::array<FloatTensorView, 2> extra { FloatTensorView { values, badShape }, { values, badShape } };
+            expect (model.run (extra, out).failed());
+        }
+
         beginTest ("missing model fails cleanly");
         OnnxModel missing;
         expect (missing.load (juce::File ("/definitely/not/here.onnx")).failed());

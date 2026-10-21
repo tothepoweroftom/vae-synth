@@ -1,6 +1,7 @@
 #include <juce_events/juce_events.h>
 
 #include "PluginProcessor.h"
+#include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
 
 namespace vae
@@ -62,6 +63,52 @@ public:
         const auto model = dir.getChildFile ("roundtrip_decoder.onnx");
         juce::File (VAE_STUB_DECODER_PATH).copyFileTo (model);
         juce::Random rng (99);
+
+        beginTest ("SAME invalid latents and cancelled worker callbacks");
+        {
+            ml::SameSearch::Embedding embedding;
+            expect (ml::SameSearch::pool ({}, embedding).failed());
+            std::vector<float> invalid (256 * 44, std::numeric_limits<float>::quiet_NaN());
+            expect (ml::SameSearch::pool (invalid, embedding).failed());
+            ml::SameSearchWorker worker;
+            bool stale = false, complete = false;
+            worker.load (dir.getChildFile ("missing-bank.json"), [&] (auto, auto) { stale = true; });
+            worker.cancel();
+            worker.search (dir.getChildFile ("missing.wav"),
+                           [&] (juce::Result result, auto matches)
+                           {
+                               expect (juce::MessageManager::getInstance()->isThisTheMessageThread());
+                               expect (result.failed());
+                               expect (matches.empty());
+                               complete = true;
+                           });
+            expect (pumpUntil ([&] { return complete; }));
+            expect (! stale);
+        }
+
+        beginTest ("Native generation errors do not change controls and callbacks stay on message thread");
+        {
+            ml::StableAudioGenerator generator;
+            expect (generator.load (dir.getChildFile ("missing-generator.json")).failed());
+            const auto output = dir.getChildFile ("should-not-exist.wav");
+            expect (generator.generate ("bell", 42, output).failed());
+            expect (! output.exists());
+            ml::SameSearchWorker worker;
+            bool stale = false, complete = false;
+            worker.loadGenerator (dir.getChildFile ("missing.json"), [&] (auto, auto) { stale = true; });
+            worker.cancel();
+            worker.generate ("bell", 42, output,
+                             [&] (juce::Result result, auto matches)
+                             {
+                                 expect (juce::MessageManager::getInstance()->isThisTheMessageThread());
+                                 expect (result.failed());
+                                 expect (matches.empty());
+                                 complete = true;
+                             });
+            expect (pumpUntil ([&] { return complete; }));
+            expect (! stale);
+            expect (! output.exists());
+        }
 
         beginTest ("state round trip: controls, engine, prompt, model path");
         {
@@ -151,6 +198,40 @@ public:
             for (int i = 0; i < schema::kControlCount; ++i)
                 expectWithinAbsoluteError (p.getControls()[i], expected[i], 1.0e-5f);
             settleModel (p);
+        }
+
+        beginTest ("retrieved presets load without a decoder and invalid input leaves controls unchanged");
+        {
+            PluginProcessor p;
+            settleModel (p);
+            const auto controls = randomSnapshot (rng);
+            const auto preset = dir.getChildFile ("retrieved.json");
+            auto json = schema::presetJson (controls, "Retrieved", "lite");
+            expect (preset.replaceWithText (juce::JSON::toString (json)));
+            expect (p.loadPresetFile (preset).wasOk());
+            for (int i = 0; i < schema::kControlCount; ++i)
+                expectWithinAbsoluteError (p.getControls()[i], controls[i], 1.0e-5f);
+            const auto before = p.getControls();
+            for (int failure = 0; failure < 4; ++failure)
+            {
+                json = schema::presetJson (controls, "Broken", "lite");
+                if (failure == 0)
+                    json.getDynamicObject()->setProperty ("schema_version", -1);
+                if (failure == 1)
+                    json.getDynamicObject()->setProperty ("engine", "unknown");
+                if (failure == 2)
+                    json["values"].getArray()->set (0, "not a number");
+                if (failure == 3)
+                    json["values"].getArray()->set (0, 99999);
+                expect (preset.replaceWithText (juce::JSON::toString (json)));
+                expect (p.loadPresetFile (preset).failed());
+                expect (p.getControls().values == before.values);
+            }
+            PluginProcessor restored;
+            const auto state = stateOf (p);
+            restored.setStateInformation (state.getData(), int (state.getSize()));
+            expect (restored.getControls().values == before.values);
+            settleModel (restored);
         }
 
         beginTest ("a rejected decoder keeps the previous model and its saved path");
