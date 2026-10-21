@@ -5,6 +5,8 @@ target_sources(vae_ml_tests PRIVATE
     JointVaeTests.cpp
     XyPadTests.cpp
     PromptWordsTests.cpp
+    LiteTranslationTests.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LiteTranslation.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptWords.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/XyPad.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp

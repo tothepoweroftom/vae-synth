@@ -68,6 +68,7 @@ target_sources(vae_joint_experiment INTERFACE
     source/experiments/joint_vae/JointVae.cpp
     source/experiments/joint_vae/JointVaePanel.cpp
     source/experiments/joint_vae/StudentCodec.cpp
+    source/experiments/joint_vae/LiteTranslation.cpp
     source/experiments/joint_vae/XyPad.cpp
     source/experiments/joint_vae/PromptWords.cpp)
 target_link_libraries(vae_joint_experiment INTERFACE vae_ml juce::juce_gui_basics)
