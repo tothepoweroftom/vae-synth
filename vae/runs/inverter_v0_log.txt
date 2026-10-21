@@ -1,0 +1,44 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/inverter/train.py", line 20, in <module>
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+data: 49460 train rows (1375 human), 961 synthetic val, 166 human val presets; loaded in 11s
+epoch   1 | train 47.95 | synthetic val 43.26 | human val 48.55 (mse 3.82 bce 13.63 ce 31.09) | 0/type 0.38 0/model 0.17 scene/filterblock_configuration 0.40 wsunit/type 0.58 | 449s *
+epoch   2 | train 41.45 | synthetic val 39.62 | human val 44.72 (mse 3.51 bce 12.64 ce 28.57) | 0/type 0.51 0/model 0.28 scene/filterblock_configuration 0.55 wsunit/type 0.60 | 588s *
+epoch   3 | train 38.69 | synthetic val 37.86 | human val 44.49 (mse 3.48 bce 12.36 ce 28.65) | 0/type 0.49 0/model 0.28 scene/filterblock_configuration 0.53 wsunit/type 0.59 | 475s *
+epoch   4 | train 36.69 | synthetic val 36.45 | human val 44.71 (mse 3.47 bce 12.58 ce 28.66) | 0/type 0.52 0/model 0.25 scene/filterblock_configuration 0.55 wsunit/type 0.60 | 476s
+epoch   5 | train 34.87 | synthetic val 35.35 | human val 44.75 (mse 3.49 bce 12.55 ce 28.72) | 0/type 0.56 0/model 0.25 scene/filterblock_configuration 0.52 wsunit/type 0.61 | 462s
+epoch   6 | train 33.22 | synthetic val 33.96 | human val 45.21 (mse 3.48 bce 12.63 ce 29.10) | 0/type 0.53 0/model 0.22 scene/filterblock_configuration 0.56 wsunit/type 0.60 | 462s
+epoch   7 | train 31.85 | synthetic val 33.65 | human val 44.42 (mse 3.48 bce 12.27 ce 28.67) | 0/type 0.58 0/model 0.28 scene/filterblock_configuration 0.54 wsunit/type 0.60 | 451s *
+epoch   8 | train 30.51 | synthetic val 32.96 | human val 46.25 (mse 3.50 bce 13.06 ce 29.69) | 0/type 0.57 0/model 0.25 scene/filterblock_configuration 0.53 wsunit/type 0.61 | 439s
+epoch   9 | train 29.26 | synthetic val 32.55 | human val 45.71 (mse 3.49 bce 12.90 ce 29.32) | 0/type 0.57 0/model 0.21 scene/filterblock_configuration 0.54 wsunit/type 0.60 | 431s
+epoch  10 | train 28.10 | synthetic val 31.84 | human val 45.69 (mse 3.45 bce 12.81 ce 29.44) | 0/type 0.56 0/model 0.26 scene/filterblock_configuration 0.55 wsunit/type 0.60 | 427s
+epoch  11 | train 27.07 | synthetic val 31.49 | human val 46.28 (mse 3.45 bce 12.91 ce 29.92) | 0/type 0.56 0/model 0.26 scene/filterblock_configuration 0.57 wsunit/type 0.61 | 423s
+epoch  12 | train 25.99 | synthetic val 31.25 | human val 47.01 (mse 3.44 bce 13.40 ce 30.17) | 0/type 0.56 0/model 0.25 scene/filterblock_configuration 0.54 wsunit/type 0.60 | 419s
+epoch  13 | train 25.14 | synthetic val 31.28 | human val 47.04 (mse 3.43 bce 13.42 ce 30.18) | 0/type 0.56 0/model 0.26 scene/filterblock_configuration 0.53 wsunit/type 0.58 | 441s
+epoch  14 | train 24.32 | synthetic val 31.10 | human val 47.59 (mse 3.44 bce 13.39 ce 30.76) | 0/type 0.56 0/model 0.27 scene/filterblock_configuration 0.53 wsunit/type 0.58 | 437s
+epoch  15 | train 23.67 | synthetic val 31.21 | human val 47.82 (mse 3.43 bce 13.56 ce 30.83) | 0/type 0.55 0/model 0.26 scene/filterblock_configuration 0.54 wsunit/type 0.59 | 425s
+epoch  16 | train 23.10 | synthetic val 31.29 | human val 48.25 (mse 3.43 bce 13.81 ce 31.01) | 0/type 0.54 0/model 0.28 scene/filterblock_configuration 0.52 wsunit/type 0.60 | 453s
+stopped after epoch 15 (human val rising since epoch 7; best checkpoint = epoch 7)

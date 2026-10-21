@@ -1,0 +1,109 @@
+coverage over 50421 valid renders
+  coverage: 2000/50421 (44s)
+  coverage: 4000/50421 (150s)
+  coverage: 6000/50421 (248s)
+  coverage: 8000/50421 (348s)
+  coverage: 10000/50421 (444s)
+  coverage: 12000/50421 (535s)
+  coverage: 14000/50421 (634s)
+  coverage: 16000/50421 (736s)
+  coverage: 18000/50421 (822s)
+  coverage: 20000/50421 (900s)
+  coverage: 22000/50421 (990s)
+  coverage: 24000/50421 (1094s)
+  coverage: 26000/50421 (1213s)
+  coverage: 28000/50421 (1277s)
+  coverage: 30000/50421 (1347s)
+  coverage: 32000/50421 (1410s)
+  coverage: 34000/50421 (1493s)
+  coverage: 36000/50421 (1566s)
+  coverage: 38000/50421 (1648s)
+  coverage: 40000/50421 (1744s)
+  coverage: 42000/50421 (1845s)
+  coverage: 44000/50421 (1908s)
+  coverage: 46000/50421 (1986s)
+  coverage: 48000/50421 (2046s)
+  coverage: 50000/50421 (2109s)
+  coverage: 50421/50421 (2126s)
+{
+ "recall_vs_k200": {
+  "nearest": 0.93,
+  "new_call": 1.0,
+  "k": 40,
+  "n": 100
+ },
+ "invalid": {
+  "human": 0.0,
+  "layered": 0.0424,
+  "perturb": 0.0126,
+  "vae": 0.0002
+ },
+ "hot": {
+  "human": 0.0095,
+  "layered": 0.1453,
+  "perturb": 0.0478,
+  "vae": 0.0088
+ },
+ "tail_capped": {
+  "human": 0.2109,
+  "layered": 0.2535,
+  "perturb": 0.2582,
+  "vae": 0.1096
+ }
+}
+
+coverage by source (share > 6.7 dB from every earlier render; nn = distance to the nearest earlier):
+             n    new  nn_median_db
+source                             
+human     1375  0.754         8.081
+layered  14364  0.530         6.839
+perturb  24684  0.280         5.531
+vae       9998  0.186         5.376
+
+perturb by strength:
+             n    new  nn_median_db
+strength                           
+large     7295  0.469         6.554
+medium    9928  0.285         5.739
+small     7461  0.088         3.873
+
+share new by source x category:
+source      human  layered  perturb   vae
+label                                    
+Atmosphere   0.93     0.58     0.30  0.30
+Bass         0.65     0.51     0.25  0.10
+Keys         0.87     0.53     0.35  0.27
+Lead         0.68     0.49     0.25  0.10
+Orchestral   0.74     0.51     0.21  0.16
+Pad          0.84     0.56     0.33  0.22
+Pluck        0.86     0.56     0.34  0.26
+Synth        0.62     0.48     0.21  0.08
+
+coverage curve (share new per 2,000 synthetic rows):
+source  layered  perturb   vae
+bin                           
+0          0.74     0.48  0.43
+1          0.63     0.40  0.29
+2          0.64     0.36  0.28
+3          0.60     0.34  0.25
+4          0.62     0.33  0.21
+5          0.56     0.29  0.23
+6          0.56     0.30  0.18
+7          0.50     0.31  0.17
+8          0.54     0.25  0.18
+9          0.54     0.27  0.17
+10         0.55     0.28  0.19
+11         0.47     0.26  0.18
+12         0.51     0.27  0.16
+13         0.52     0.27  0.16
+14         0.47     0.23  0.15
+15         0.50     0.25  0.15
+16         0.54     0.24  0.16
+17         0.44     0.25  0.15
+18         0.49     0.23  0.15
+19         0.49     0.23  0.13
+20         0.48     0.26  0.13
+21         0.45     0.21  0.14
+22         0.42     0.23  0.13
+23         0.47     0.22  0.12
+24         0.49     0.20  0.13

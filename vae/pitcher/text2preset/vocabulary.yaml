@@ -1,0 +1,162 @@
+# Prompt vocabulary for the text -> preset dataset (TEXT2PRESET_PLAN.md, section 2).
+# Edit freely: the generator (pitcher/text2preset/prompts.py) reads only this file.
+#
+# Every value has an id (stored as a tag with each prompt) and surface forms (near-synonyms):
+#   adj    forms placed before the noun   ("dark", "gritty")
+#   with   phrases placed after the noun  ("with a slow attack", "that slowly evolves")
+# The first adj form is the canonical one; Stable Audio prompts use it 70% of the time.
+# held_out: forms that never appear in train/val texts, only in the unseen-words test texts.
+
+suffix: "single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody"
+
+# --- categories (our 8 folder labels): weight = share of prompts; nouns = synonym groups ----------
+categories:
+  Bass:
+    weight: 1.0
+    nouns:
+      bass: [bass, synth bass, bass sound]
+      sub_bass: [sub bass, sub, deep sub]
+      reese: [reese bass, reese]
+      acid_bass: [acid bass, 303-style bass, squelchy acid bass]
+      fm_bass: [FM bass, digital FM bass]
+      wobble_bass: [wobble bass, dubstep bass]
+    prefer: [brightness:dark, body:fat, grit:gritty, length:short, colour:detuned]
+    avoid: [brightness:airy, attack:slow, movement:shimmering]
+  Lead:
+    weight: 1.0
+    nouns:
+      lead: [lead, synth lead, lead synth]
+      saw_lead: [saw lead, sawtooth lead]
+      square_lead: [square lead, square-wave lead, chiptune lead]
+      solo_lead: [solo lead, mono lead]
+    prefer: [brightness:bright, grit:gritty, colour:detuned, movement:vibrato, attack:snappy]
+    avoid: [attack:slow]
+  Pad:
+    weight: 1.2
+    nouns:
+      pad: [pad, synth pad, pad sound]
+      warm_pad: [analog pad, soft pad]
+      string_pad: [string pad, string-like pad]
+      choir_pad: [choir pad, vocal pad, synth choir]
+    prefer: [attack:slow, length:sustained, movement:evolving, brightness:warm, body:wide]
+    avoid: [attack:percussive, length:short]
+  Keys:
+    weight: 1.0
+    nouns:
+      keys: [keys, keyboard sound, synth keys]
+      epiano: [electric piano, e-piano, Rhodes-style piano]
+      organ: [organ, synth organ, drawbar organ]
+      clav: [clavinet, clav]
+    prefer: [attack:snappy, brightness:warm, colour:fm, movement:chorus_motion]
+    avoid: [attack:slow, movement:wobble]
+  Pluck:
+    weight: 1.0
+    nouns:
+      pluck: [pluck, synth pluck, plucked synth]
+      bell: [bell, bell tone, synth bell]
+      mallet: [mallet, mallet sound, marimba-like pluck]
+      harp_pluck: [harp-like pluck, plucked string synth]
+    prefer: [length:short, attack:percussive, brightness:bright, colour:fm, colour:metallic]
+    avoid: [length:sustained, attack:slow, movement:swelling]
+  Synth:
+    weight: 1.2
+    nouns:
+      synth: [synth, synth tone, synthesizer sound]
+      poly: [poly synth, polysynth]
+      stab: [synth stab, stab]
+      hoover: [hoover, hoover synth]
+      brass_synth: [brass synth, synth brass]
+    prefer: [colour:analog, colour:detuned, grit:gritty, attack:punchy]
+    avoid: []
+  Atmosphere:
+    weight: 1.3
+    nouns:
+      atmosphere: [atmosphere, atmospheric sound, ambience]
+      drone: [drone, drone tone]
+      soundscape: [soundscape, ambient texture, texture]
+      noise_atmo: [noisy atmosphere, wind-like texture]
+    prefer: [attack:slow, length:sustained, movement:evolving, movement:shimmering, brightness:dark]
+    avoid: [attack:percussive, length:short, attack:snappy]
+  Orchestral:
+    weight: 0.8
+    nouns:
+      strings: [strings, string ensemble, synth strings]
+      brass: [brass, brass section, horn]
+      orch_hit: [orchestral hit, orchestra stab]
+      solo_string: [cello-like synth, violin-like synth]
+    prefer: [attack:slow, length:sustained, brightness:warm, body:wide]
+    avoid: [colour:lofi, grit:gritty]
+
+# --- no-category prompts: character only -----------------------------------------------------------
+generic_nouns: [sound, synth sound, tone, patch, texture]
+
+# --- out of range (test only): sounds a synth can at best approximate --------------------------------
+out_of_range_nouns: [nylon guitar, acoustic piano, choir, solo violin, flute, snare drum, human voice, saxophone, church bells, kick drum]
+
+# --- descriptor slots: values with forms; opposite = the value at the other end of the axis --------
+slots:
+  brightness:
+    dark: {adj: [dark, muffled, murky, dull], with: [with a dark tone, with the highs rolled off], opposite: bright}
+    warm: {adj: [warm, mellow, round], with: [with a warm tone], opposite: cold}
+    bright: {adj: [bright, crisp, brilliant], with: [with a bright top end], opposite: dark}
+    airy: {adj: [airy, breathy, glassy], with: [with lots of air], opposite: dark}
+    cold: {adj: [cold, sterile, icy], with: [with a cold digital tone], opposite: warm}
+  body:
+    thin: {adj: [thin, narrow, small], with: [with a thin body], opposite: fat}
+    hollow: {adj: [hollow, nasal, reedy], with: [with a hollow tone], opposite: fat}
+    fat: {adj: [fat, thick, massive, heavy], with: [with a big fat body], opposite: thin}
+    wide: {adj: [wide, huge, lush], with: [with a wide stereo image], opposite: thin}
+  grit:
+    clean: {adj: [clean, pure, smooth], with: [with a clean tone], opposite: gritty}
+    gritty: {adj: [gritty, distorted, dirty, crunchy], with: [with heavy distortion, with some grit], opposite: clean}
+    aggressive: {adj: [aggressive, harsh, angry, snarling], with: [with an aggressive bite], opposite: soft}
+    soft: {adj: [soft, gentle, delicate], with: [with a soft character], opposite: aggressive}
+    buzzy: {adj: [buzzy, raspy], with: [with a buzzy edge], opposite: clean}
+  attack:
+    slow: {adj: [slow-attack, swelling, fading-in], with: [with a slow attack, that slowly fades in, that swells in], opposite: snappy}
+    snappy: {adj: [snappy, sharp], with: [with a sharp attack, with a snappy start], opposite: slow}
+    punchy: {adj: [punchy, tight], with: [with a punchy attack], opposite: slow}
+    percussive: {adj: [percussive, plucky], with: [with a percussive hit], opposite: slow}
+  length:
+    short: {adj: [short, staccato, quick], with: [with a quick decay, that dies away fast], opposite: sustained}
+    sustained: {adj: [sustained, long, held], with: [that sustains, with a long sustain], opposite: short}
+    long_release: {adj: [long-tail, lingering], with: [with a long release, with a long fading tail], opposite: short}
+  movement:
+    static: {adj: [static, steady, stable], with: [without movement], opposite: evolving}
+    evolving: {adj: [evolving, morphing, shifting], with: [that slowly evolves, that keeps changing], opposite: static}
+    opening: {adj: [opening, filter-swept], with: [with a slowly opening filter, with a filter sweep], opposite: static}
+    wobble: {adj: [wobbling, wobbly, wub-wub], with: [with a wobbling filter, with an LFO wobble], opposite: static}
+    vibrato: {adj: [vibrato, wavering], with: [with vibrato, with a gentle pitch wobble], opposite: static}
+    pulsing: {adj: [pulsing, throbbing, rhythmic], with: [with a pulsing rhythm, that pulses], opposite: static}
+    shimmering: {adj: [shimmering, sparkling, twinkling], with: [with a shimmering top], opposite: static}
+    chorus_motion: {adj: [chorused, swirling], with: [with chorus, with a swirling chorus], opposite: static}
+  colour:
+    detuned: {adj: [detuned, unison, supersaw], with: [with detuned oscillators, with lots of unison], opposite: null}
+    fm: {adj: [FM, digital, DX7-style], with: [with an FM character], opposite: analog}
+    analog: {adj: [analog, vintage, warm analog], with: [with an analog feel], opposite: fm}
+    metallic: {adj: [metallic, clangy, bell-like, ringing], with: [with a metallic ring], opposite: null}
+    lofi: {adj: [lo-fi, bitcrushed, crunchy lo-fi], with: [with a bitcrushed edge], opposite: null}
+    noisy: {adj: [noisy, breathy noise], with: [with a layer of noise], opposite: clean}
+    square: {adj: [square-wave, chiptune, 8-bit], with: [with a square-wave tone], opposite: null}
+    sine: {adj: [sine, pure sine], with: [with an almost pure sine tone], opposite: null}
+  style:
+    eighties: {adj: [80s, retro], with: [like an 80s synth], opposite: null}
+    trance: {adj: [trance], with: [like in trance music], opposite: null}
+    dubstep: {adj: [dubstep], with: [like in dubstep], opposite: null}
+    ambient: {adj: [ambient, cinematic], with: [for an ambient track], opposite: null}
+    techno: {adj: [techno, industrial], with: [like in techno], opposite: null}
+    synthwave: {adj: [synthwave], with: [like in synthwave], opposite: null}
+
+# forms never used in train/val (only in the unseen-words test texts)
+held_out: [murky, crunchy, snarling, throbbing, lush, reedy, twinkling, lingering, raspy, icy]
+
+# sentence templates for user texts ({desc} = adjectives + noun; {with} = one 'with' phrase)
+sentence_templates:
+  - "a {desc}"
+  - "a {desc} {with}"
+  - "I want a {desc}"
+  - "give me a {desc} {with}"
+  - "something like a {desc}"
+  - "{desc} {with}"
+  - "make a {desc} sound"
+  - "looking for a {desc} {with}"

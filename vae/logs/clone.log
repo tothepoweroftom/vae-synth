@@ -1,0 +1,87 @@
+Cloning into 'surge'...
+Updating files:  20% (1478/7098)Updating files:  21% (1491/7098)Updating files:  22% (1562/7098)Updating files:  23% (1633/7098)Updating files:  24% (1704/7098)Updating files:  25% (1775/7098)Updating files:  26% (1846/7098)Updating files:  27% (1917/7098)Updating files:  28% (1988/7098)Updating files:  29% (2059/7098)Updating files:  30% (2130/7098)Updating files:  31% (2201/7098)Updating files:  32% (2272/7098)Updating files:  33% (2343/7098)Updating files:  34% (2414/7098)Updating files:  35% (2485/7098)Updating files:  36% (2556/7098)Updating files:  37% (2627/7098)Updating files:  38% (2698/7098)Updating files:  39% (2769/7098)Updating files:  40% (2840/7098)Updating files:  40% (2855/7098)Updating files:  41% (2911/7098)Updating files:  42% (2982/7098)Updating files:  43% (3053/7098)Updating files:  44% (3124/7098)Updating files:  45% (3195/7098)Updating files:  46% (3266/7098)Updating files:  47% (3337/7098)Updating files:  48% (3408/7098)Updating files:  49% (3479/7098)Updating files:  50% (3549/7098)Updating files:  51% (3620/7098)Updating files:  52% (3691/7098)Updating files:  53% (3762/7098)Updating files:  54% (3833/7098)Updating files:  55% (3904/7098)Updating files:  56% (3975/7098)Updating files:  57% (4046/7098)Updating files:  58% (4117/7098)Updating files:  59% (4188/7098)Updating files:  59% (4224/7098)Updating files:  60% (4259/7098)Updating files:  61% (4330/7098)Updating files:  62% (4401/7098)Updating files:  63% (4472/7098)Updating files:  64% (4543/7098)Updating files:  65% (4614/7098)Updating files:  66% (4685/7098)Updating files:  67% (4756/7098)Updating files:  68% (4827/7098)Updating files:  69% (4898/7098)Updating files:  70% (4969/7098)Updating files:  71% (5040/7098)Updating files:  72% (5111/7098)Updating files:  73% (5182/7098)Updating files:  74% (5253/7098)Updating files:  75% (5324/7098)Updating files:  76% (5395/7098)Updating files:  77% (5466/7098)Updating files:  78% (5537/7098)Updating files:  79% (5608/7098)Updating files:  80% (5679/7098)Updating files:  80% (5735/7098)Updating files:  81% (5750/7098)Updating files:  82% (5821/7098)Updating files:  83% (5892/7098)Updating files:  84% (5963/7098)Updating files:  85% (6034/7098)Updating files:  86% (6105/7098)Updating files:  87% (6176/7098)Updating files:  87% (6202/7098)Updating files:  88% (6247/7098)Updating files:  89% (6318/7098)Updating files:  90% (6389/7098)Updating files:  91% (6460/7098)Updating files:  92% (6531/7098)Updating files:  93% (6602/7098)Updating files:  94% (6673/7098)Updating files:  95% (6744/7098)Updating files:  96% (6815/7098)Updating files:  97% (6886/7098)Updating files:  98% (6957/7098)Updating files:  99% (7028/7098)Updating files: 100% (7098/7098)Updating files: 100% (7098/7098), done.
+Submodule 'libs/JUCE' (https://github.com/surge-synthesizer/JUCE) registered for path 'libs/JUCE'
+Submodule 'libs/PEGTL' (https://github.com/taocpp/PEGTL.git) registered for path 'libs/PEGTL'
+Submodule 'libs/clap-juce-extensions' (https://github.com/free-audio/clap-juce-extensions) registered for path 'libs/clap-juce-extensions'
+Submodule 'libs/eurorack/eurorack' (https://github.com/surge-synthesizer/eurorack.git) registered for path 'libs/eurorack/eurorack'
+Submodule 'libs/fmt' (https://github.com/fmtlib/fmt.git) registered for path 'libs/fmt'
+Submodule 'libs/luajitlib/LuaJIT' (https://github.com/LuaJIT/LuaJIT.git) registered for path 'libs/luajitlib/LuaJIT'
+Submodule 'libs/luajitlib/cmake' (https://github.com/scikit-build/cmake-FindVcvars) registered for path 'libs/luajitlib/cmake'
+Submodule 'libs/melatonin_inspector' (https://github.com/sudara/melatonin_inspector.git) registered for path 'libs/melatonin_inspector'
+Submodule 'libs/oddsound-mts/MTS-ESP' (https://github.com/ODDSound/MTS-ESP) registered for path 'libs/oddsound-mts/MTS-ESP'
+Submodule 'libs/pffft' (https://github.com/surge-synthesizer/pffft.git) registered for path 'libs/pffft'
+Submodule 'libs/pybind11' (https://github.com/pybind/pybind11) registered for path 'libs/pybind11'
+Submodule 'libs/r8brain-free-src' (https://github.com/avaneev/r8brain-free-src.git) registered for path 'libs/r8brain-free-src'
+Submodule 'libs/simde' (https://github.com/simd-everywhere/simde) registered for path 'libs/simde'
+Submodule 'libs/sst/sst-basic-blocks' (https://github.com/surge-synthesizer/sst-basic-blocks.git) registered for path 'libs/sst/sst-basic-blocks'
+Submodule 'libs/sst/sst-cmake' (https://github.com/surge-synthesizer/sst-cmake.git) registered for path 'libs/sst/sst-cmake'
+Submodule 'libs/sst/sst-cpputils' (https://github.com/surge-synthesizer/sst-cpputils) registered for path 'libs/sst/sst-cpputils'
+Submodule 'libs/sst/sst-effects' (https://github.com/surge-synthesizer/sst-effects) registered for path 'libs/sst/sst-effects'
+Submodule 'libs/sst/sst-filters' (https://github.com/surge-synthesizer/sst-filters) registered for path 'libs/sst/sst-filters'
+Submodule 'libs/sst/sst-plugininfra' (https://github.com/surge-synthesizer/sst-plugininfra) registered for path 'libs/sst/sst-plugininfra'
+Submodule 'libs/sst/sst-waveshapers' (https://github.com/surge-synthesizer/sst-waveshapers) registered for path 'libs/sst/sst-waveshapers'
+Submodule 'libs/tuning-library' (https://github.com/surge-synthesizer/tuning-library) registered for path 'libs/tuning-library'
+Submodule 'libs/zstd' (https://github.com/facebook/zstd.git) registered for path 'libs/zstd'
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/JUCE'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/luajitlib/cmake'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/clap-juce-extensions'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/melatonin_inspector'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/PEGTL'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/luajitlib/LuaJIT'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/eurorack/eurorack'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/pybind11'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/fmt'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-basic-blocks'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-cmake'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-cpputils'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/pffft'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/r8brain-free-src'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-filters'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/oddsound-mts/MTS-ESP'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-waveshapers'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/tuning-library'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-plugininfra'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/simde'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/zstd'...
+Submodule path 'libs/JUCE': checked out '90e8b59126830eb0120113408ab43e10c827409d'
+Submodule path 'libs/PEGTL': checked out '64af78c6a7959cd5753ad165ec9f65591aa96f2d'
+Submodule path 'libs/clap-juce-extensions': checked out '16e9d4ca7b1e86c76e04584b2c08e85a764bcda8'
+Submodule 'clap-libs/clap' (https://github.com/free-audio/clap.git) registered for path 'libs/clap-juce-extensions/clap-libs/clap'
+Submodule 'clap-libs/clap-helpers' (https://github.com/free-audio/clap-helpers.git) registered for path 'libs/clap-juce-extensions/clap-libs/clap-helpers'
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/clap-juce-extensions/clap-libs/clap'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/clap-juce-extensions/clap-libs/clap-helpers'...
+Submodule path 'libs/clap-juce-extensions/clap-libs/clap': checked out '29ffcc273be7c7c651f6c9953b99e69700e2387a'
+Submodule path 'libs/clap-juce-extensions/clap-libs/clap-helpers': checked out 'a61bcdf0ecc2c8db1e80bfe8bf9cb7e8d9fd2bbc'
+Submodule path 'libs/eurorack/eurorack': checked out '888298b0e3ec5daabf96c5ab912ffc42825a2b4c'
+Submodule path 'libs/fmt': checked out 'e424e3f2e607da02742f73db84873b8084fc714c'
+Submodule path 'libs/luajitlib/LuaJIT': checked out '18b087cd2cd4ddc4a79782bf155383a689d5093d'
+Submodule path 'libs/luajitlib/cmake': checked out 'b859bf0ffd1ca447b09a6384c99846fcfe3e27b7'
+Submodule path 'libs/melatonin_inspector': checked out '9e91e4e3d6cc41688c8d2108ef7ed33c1a90dcc9'
+Submodule path 'libs/oddsound-mts/MTS-ESP': checked out 'ec13f5749ea8c4ad45158477ce284082f3ce4e0d'
+Submodule path 'libs/pffft': checked out 'd027f2a290ca0047d95513c2a20570d13557e381'
+Submodule path 'libs/pybind11': checked out '7c33cdc2d39c7b99a122579f53bc94c8eb3332ff'
+Submodule path 'libs/r8brain-free-src': checked out 'b3f0753d90b3325b8ea8a08fd699e8e6db26e5b5'
+Submodule path 'libs/simde': checked out '71fd833d9666141edcd1d3c109a80e228303d8d7'
+Submodule 'munit' (https://github.com/nemequ/munit.git) registered for path 'libs/simde/test/munit'
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/simde/test/munit'...
+Submodule path 'libs/simde/test/munit': checked out 'da8f73412998e4f1adf1100dc187533a51af77fd'
+Submodule path 'libs/sst/sst-basic-blocks': checked out '7209f14567b37a0db6986c7cb1680089e97c8516'
+Submodule path 'libs/sst/sst-cmake': checked out '49008aacfe82507be59b08f25809cc271cdc0bf6'
+Submodule path 'libs/sst/sst-cpputils': checked out '52c4b749c0e155077ee1df79fee5d237bef7a1a8'
+From https://github.com/surge-synthesizer/sst-effects
+ * branch            5f2bd1a8fdea77f9f2c8acad3ed71e66fd7fa41d -> FETCH_HEAD
+Submodule path 'libs/sst/sst-effects': checked out '5f2bd1a8fdea77f9f2c8acad3ed71e66fd7fa41d'
+From https://github.com/surge-synthesizer/sst-filters
+ * branch            6bcf08bb8ecd177b161281e8147f30b10f0b5db7 -> FETCH_HEAD
+Submodule path 'libs/sst/sst-filters': checked out '6bcf08bb8ecd177b161281e8147f30b10f0b5db7'
+Submodule path 'libs/sst/sst-plugininfra': checked out 'ebdaf5e936361994a30b0d51d2ff6cb750232d4b'
+Submodule 'libs/filesystem/filesystem' (https://github.com/gulrak/filesystem.git) registered for path 'libs/sst/sst-plugininfra/libs/filesystem/ghc-filesystem'
+Submodule 'libs/miniz' (https://github.com/richgel999/miniz) registered for path 'libs/sst/sst-plugininfra/libs/miniz'
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-plugininfra/libs/filesystem/ghc-filesystem'...
+Cloning into '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-plugininfra/libs/miniz'...
+Submodule path 'libs/sst/sst-plugininfra/libs/filesystem/ghc-filesystem': checked out '614bbe87b80435d87ab8791564370e0c1d13627d'
+Submodule path 'libs/sst/sst-plugininfra/libs/miniz': checked out '16413c213de38e703d883006193734e8b1178d5d'
+Submodule path 'libs/sst/sst-waveshapers': checked out 'dd12f31a5a9016c9895e52d1a00eee0e1eebe6ce'
+Submodule path 'libs/tuning-library': checked out '5a18353a0444caa068b648383cae37d156b97e1c'
+Submodule path 'libs/zstd': checked out '92505deb29bc17fe014ed918e67f15a84d70b230'

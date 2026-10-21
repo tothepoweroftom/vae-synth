@@ -1,0 +1,37 @@
+data: 49460 train rows (1375 human), 961 synthetic val, 166 human val; 435 num, 85 bool, 111 cat (20 stepped knobs); loaded in 3s
+epoch   1 | train params 64.5 sound 10.2 kl 66.1 | human: invert 72.2 hear 19.0 both 55.3/3.0 | syn: invert 67.0 hear 21.4 | 11s *
+epoch   2 | train params 45.7 sound 6.7 kl 109.2 | human: invert 71.9 hear 17.4 both 47.1/2.4 | syn: invert 64.1 hear 18.6 | 11s *
+epoch   3 | train params 38.9 sound 6.0 kl 118.2 | human: invert 72.7 hear 17.7 both 44.2/2.1 | syn: invert 63.1 hear 17.5 | 11s
+epoch   4 | train params 35.0 sound 5.6 kl 120.6 | human: invert 72.0 hear 16.9 both 43.7/1.9 | syn: invert 61.8 hear 16.4 | 12s *
+epoch   5 | train params 32.7 sound 5.3 kl 119.5 | human: invert 71.6 hear 16.1 both 42.9/1.8 | syn: invert 61.1 hear 16.7 | 11s *
+epoch   6 | train params 30.7 sound 5.1 kl 118.5 | human: invert 72.1 hear 16.0 both 42.7/1.6 | syn: invert 60.3 hear 15.2 | 12s
+epoch   7 | train params 29.6 sound 5.0 kl 116.6 | human: invert 71.7 hear 17.3 both 41.5/1.6 | syn: invert 59.7 hear 14.9 | 13s
+epoch   8 | train params 28.7 sound 4.8 kl 115.8 | human: invert 72.1 hear 18.6 both 42.0/1.6 | syn: invert 59.5 hear 15.2 | 12s
+epoch   9 | train params 27.7 sound 4.7 kl 114.8 | human: invert 72.3 hear 14.5 both 42.3/1.5 | syn: invert 58.7 hear 15.2 | 12s *
+epoch  10 | train params 27.0 sound 4.7 kl 112.9 | human: invert 71.7 hear 16.3 both 41.4/1.5 | syn: invert 58.2 hear 14.3 | 13s
+epoch  11 | train params 26.4 sound 4.5 kl 112.3 | human: invert 72.3 hear 17.4 both 41.9/1.5 | syn: invert 58.1 hear 14.0 | 14s
+epoch  12 | train params 25.7 sound 4.5 kl 111.2 | human: invert 72.7 hear 16.6 both 41.0/1.5 | syn: invert 57.8 hear 13.6 | 13s
+epoch  13 | train params 25.3 sound 4.4 kl 110.3 | human: invert 72.4 hear 15.0 both 42.0/1.5 | syn: invert 57.1 hear 13.6 | 12s
+epoch  14 | train params 24.9 sound 4.3 kl 109.9 | human: invert 72.5 hear 18.5 both 41.8/1.5 | syn: invert 57.0 hear 13.6 | 12s
+epoch  15 | train params 24.6 sound 4.3 kl 108.3 | human: invert 72.8 hear 14.5 both 41.5/1.5 | syn: invert 56.9 hear 13.4 | 12s
+epoch  16 | train params 24.3 sound 4.3 kl 108.0 | human: invert 72.2 hear 16.0 both 41.6/1.4 | syn: invert 56.4 hear 13.2 | 13s
+epoch  17 | train params 24.0 sound 4.2 kl 107.0 | human: invert 73.5 hear 17.6 both 41.4/1.5 | syn: invert 56.0 hear 13.8 | 12s
+epoch  18 | train params 23.6 sound 4.2 kl 106.0 | human: invert 72.8 hear 18.0 both 41.2/1.4 | syn: invert 55.6 hear 13.3 | 12s
+epoch  19 | train params 23.5 sound 4.2 kl 105.6 | human: invert 73.3 hear 17.8 both 41.3/1.5 | syn: invert 55.7 hear 13.4 | 13s
+epoch  20 | train params 23.2 sound 4.1 kl 105.0 | human: invert 73.3 hear 16.4 both 41.5/1.5 | syn: invert 55.2 hear 12.7 | 12s
+epoch  21 | train params 22.9 sound 4.1 kl 104.5 | human: invert 74.3 hear 16.6 both 41.7/1.5 | syn: invert 55.2 hear 12.5 | 13s
+epoch  22 | train params 22.8 sound 4.1 kl 103.5 | human: invert 72.9 hear 16.4 both 41.7/1.5 | syn: invert 54.9 hear 12.9 | 13s
+epoch  23 | train params 22.4 sound 4.0 kl 103.9 | human: invert 72.8 hear 17.7 both 41.3/1.5 | syn: invert 54.6 hear 12.8 | 12s
+epoch  24 | train params 22.3 sound 4.0 kl 103.8 | human: invert 73.0 hear 17.8 both 41.3/1.6 | syn: invert 54.4 hear 12.8 | 13s
+epoch  25 | train params 22.2 sound 3.9 kl 103.0 | human: invert 74.6 hear 15.2 both 41.8/1.5 | syn: invert 54.6 hear 12.5 | 13s
+epoch  26 | train params 22.1 sound 3.9 kl 103.3 | human: invert 74.2 hear 16.8 both 41.8/1.6 | syn: invert 54.2 hear 12.1 | 14s
+epoch  27 | train params 21.9 sound 4.0 kl 103.3 | human: invert 74.6 hear 17.5 both 41.7/1.5 | syn: invert 53.7 hear 12.9 | 12s
+epoch  28 | train params 21.7 sound 3.9 kl 103.3 | human: invert 75.1 hear 14.9 both 42.2/1.6 | syn: invert 53.5 hear 12.1 | 13s
+epoch  29 | train params 21.6 sound 3.9 kl 103.1 | human: invert 74.5 hear 15.3 both 41.9/1.5 | syn: invert 53.7 hear 12.1 | 12s
+epoch  30 | train params 21.4 sound 3.9 kl 103.0 | human: invert 74.2 hear 15.8 both 42.8/1.5 | syn: invert 53.7 hear 12.3 | 11s
+epoch  31 | train params 21.2 sound 3.8 kl 103.2 | human: invert 74.6 hear 16.4 both 42.8/1.5 | syn: invert 53.5 hear 12.3 | 11s
+epoch  32 | train params 21.0 sound 3.8 kl 102.9 | human: invert 74.9 hear 16.1 both 42.8/1.5 | syn: invert 53.3 hear 11.9 | 14s
+epoch  33 | train params 20.9 sound 3.8 kl 103.0 | human: invert 74.1 hear 16.5 both 42.2/1.6 | syn: invert 53.4 hear 12.0 | 18s
+epoch  34 | train params 20.7 sound 3.8 kl 103.0 | human: invert 74.5 hear 15.0 both 42.4/1.6 | syn: invert 52.8 hear 11.9 | 13s
+early stop: no improvement for 25 epochs
+best epoch 9, human-val score 86.87; model: /Users/matthijsvork/Documents/Pitcher/runs/joint_vae/j48w_b01/model.pt

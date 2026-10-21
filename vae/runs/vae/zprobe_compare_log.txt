@@ -1,0 +1,179 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+best score (R² for measures, accuracy for category), val + test:
+features    label  params      z  z + label  z active (6)
+target                                                   
+attack      0.394   0.589  0.152      0.439         0.121
+brightness  0.057   0.214  0.042      0.088         0.076
+category      NaN   0.506  0.331        NaN         0.317
+decay       0.014   0.713  0.011      0.058        -0.003
+length      0.160   0.870  0.341      0.395         0.308
+noisiness   0.049   0.338  0.046      0.104         0.069
+percussive -0.041   0.286 -0.004     -0.037         0.003
+
+references (R² on val + test):
+attack        0.019         0.834
+brightness   -0.290         0.933
+decay        -0.125         0.914
+length        0.364         0.996
+noisiness    -0.419         0.968
+percussive   -0.815         0.793
+
+written: /Users/matthijsvork/Documents/Pitcher/runs/vae/h256_d01/zprobe
+=== h256_d01_b0.02
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+344 renders + measurements
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+done in 107s
+
+best score (R² for measures, accuracy for category), val + test:
+features    label  params      z  z + label  z active (12)
+target                                                    
+attack      0.394   0.589  0.165      0.450          0.165
+brightness  0.057   0.214  0.085      0.122          0.085
+category      NaN   0.506  0.366        NaN          0.366
+decay       0.014   0.713  0.005      0.049          0.005
+length      0.160   0.870  0.325      0.414          0.325
+noisiness   0.049   0.338  0.081      0.100          0.081
+percussive -0.041   0.286  0.008     -0.034          0.008
+
+references (R² on val + test):
+attack       -0.105         0.834
+brightness   -0.458         0.933
+decay        -0.132         0.914
+length        0.279         0.996
+noisiness    -0.675         0.968
+percussive   -0.795         0.793
+
+written: /Users/matthijsvork/Documents/Pitcher/runs/vae/h256_d01_b0.02/zprobe
+=== h256_d01_b0.1
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+344 renders + measurements
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+done in 96s
+
+best score (R² for measures, accuracy for category), val + test:
+features    label  params      z  z + label  z active (11)
+target                                                    
+attack      0.394   0.589  0.119      0.432          0.119
+brightness  0.057   0.214  0.123      0.142          0.107
+category      NaN   0.506  0.360        NaN          0.355
+decay       0.014   0.713 -0.003      0.046         -0.002
+length      0.160   0.870  0.331      0.424          0.337
+noisiness   0.049   0.338  0.095      0.148          0.047
+percussive -0.041   0.286  0.005     -0.034          0.004
+
+references (R² on val + test):
+attack       -0.006         0.834
+brightness   -0.589         0.933
+decay        -0.001         0.914
+length        0.272         0.996
+noisiness    -0.711         0.968
+percussive   -0.481         0.793
+
+written: /Users/matthijsvork/Documents/Pitcher/runs/vae/h256_d01_b0.1/zprobe

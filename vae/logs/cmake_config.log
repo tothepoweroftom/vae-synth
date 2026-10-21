@@ -1,0 +1,182 @@
+-- The C compiler identification is AppleClang 17.0.0.17000603
+-- The CXX compiler identification is AppleClang 17.0.0.17000603
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- It's Surge XT version 1.4.0, folks!
+-- CMake build type is Release.
+-- CMake version is 4.2.0.
+-- Compiler version is 17.0.0.17000603.
+-- Targeting 64-bit configuration.
+-- The OBJC compiler identification is AppleClang 17.0.0.17000603
+-- Detecting OBJC compiler ABI info
+-- Detecting OBJC compiler ABI info - done
+-- Check for working OBJC compiler: /usr/bin/cc - skipped
+-- The OBJCXX compiler identification is AppleClang 17.0.0.17000603
+-- Detecting OBJCXX compiler ABI info
+-- Detecting OBJCXX compiler ABI info - done
+-- Check for working OBJCXX compiler: /usr/bin/c++ - skipped
+-- Enabling link-time optimization for release builds.
+-- Performing Test IS_X86
+-- Performing Test IS_X86 - Success
+-- Performing Test COMPILER_HAS_AVX_OR_IS_ARM
+-- Performing Test COMPILER_HAS_AVX_OR_IS_ARM - Failed
+-- Holding off on AVX support. See GitHub issue #4479 for the strategy.
+-- Enabling tests; compile with SURGE_BUILD_TESTRUNNER=OFF to skip
+-- Using JUCE from /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/src/../libs/JUCE
+-- Configuring juceaide
+-- Building juceaide
+-- Exporting juceaide
+-- Testing juceaide
+-- Finished setting up juceaide
+-- CMake version 4.2.0 allows CLAP build
+-- Building CLAP with CLAP_CXX_STANDARD=20
+-- CLAP version: 1.2.7
+-- ALSA/JACK : ALSA=FALSE  JACK=FALSE
+-- Building Surge XT using the following JUCE wrappers: VST3;Standalone;AU
+-- Will build all of airwindows
+-- Including local pffft
+-- {fmt} version: 12.0.0
+-- Build type: Release
+-- Performing Test HAS_NULLPTR_WARNING
+-- Performing Test HAS_NULLPTR_WARNING - Success
+-- Including local sqlite
+-- ZSTD VERSION: 1.5.8
+-- CMAKE_INSTALL_PREFIX: /usr/local
+-- CMAKE_INSTALL_LIBDIR: lib
+-- ZSTD_LEGACY_SUPPORT enabled
+-- Multi-threading support enabled
+-- Performing Test C_FLAG_WALL
+-- Performing Test C_FLAG_WALL - Success
+-- Performing Test CXX_FLAG_WALL
+-- Performing Test CXX_FLAG_WALL - Success
+-- Performing Test C_FLAG_WEXTRA
+-- Performing Test C_FLAG_WEXTRA - Success
+-- Performing Test CXX_FLAG_WEXTRA
+-- Performing Test CXX_FLAG_WEXTRA - Success
+-- Performing Test C_FLAG_WUNDEF
+-- Performing Test C_FLAG_WUNDEF - Success
+-- Performing Test CXX_FLAG_WUNDEF
+-- Performing Test CXX_FLAG_WUNDEF - Success
+-- Performing Test C_FLAG_WSHADOW
+-- Performing Test C_FLAG_WSHADOW - Success
+-- Performing Test CXX_FLAG_WSHADOW
+-- Performing Test CXX_FLAG_WSHADOW - Success
+-- Performing Test C_FLAG_WCAST_ALIGN
+-- Performing Test C_FLAG_WCAST_ALIGN - Success
+-- Performing Test CXX_FLAG_WCAST_ALIGN
+-- Performing Test CXX_FLAG_WCAST_ALIGN - Success
+-- Performing Test C_FLAG_WCAST_QUAL
+-- Performing Test C_FLAG_WCAST_QUAL - Success
+-- Performing Test CXX_FLAG_WCAST_QUAL
+-- Performing Test CXX_FLAG_WCAST_QUAL - Success
+-- Performing Test C_FLAG_WSTRICT_PROTOTYPES
+-- Performing Test C_FLAG_WSTRICT_PROTOTYPES - Success
+-- Performing Test LD_FLAG_WL_Z_NOEXECSTACK
+-- Performing Test LD_FLAG_WL_Z_NOEXECSTACK - Failed
+-- Performing Test C_FLAG_QUNUSED_ARGUMENTS
+-- Performing Test C_FLAG_QUNUSED_ARGUMENTS - Success
+-- Performing Test CXX_FLAG_QUNUSED_ARGUMENTS
+-- Performing Test CXX_FLAG_QUNUSED_ARGUMENTS - Success
+-- Performing Test C_FLAG_WA_NOEXECSTACK
+-- Performing Test C_FLAG_WA_NOEXECSTACK - Success
+-- Performing Test CXX_FLAG_WA_NOEXECSTACK
+-- Performing Test CXX_FLAG_WA_NOEXECSTACK - Success
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+CMake Warning (dev) at libs/zstd/build/cmake/lib/CMakeLists.txt:13 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'ZSTD_BUILD_STATIC'.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at libs/zstd/build/cmake/lib/CMakeLists.txt:14 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'ZSTD_BUILD_SHARED'.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- The ASM compiler identification is AppleClang
+-- Found assembler: /usr/bin/cc
+-- Building LuaJIT at CMake time right now; configure with -DSURGE_SKIP_LUA=TRUE to disable
+-- Running ./build-macos-luajit.sh "/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/libs/luajitlib/LuaJIT" in /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/luajitlib
+-- Successfully built LuaJIT: /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/libs/luajitlib/LuaJIT/bin/arm64/libluajit.a;/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/libs/luajitlib/LuaJIT/bin/libluajit.a;/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/libs/luajitlib/LuaJIT/bin/x86_64/libluajit.a
+-- CMake Omitting Native Aliases
+-- Detecting Filesystem Support
+-- Performing Test SST_PLUGININFRA_FILESYSTEM_STD_FS_FOUND
+-- Performing Test SST_PLUGININFRA_FILESYSTEM_STD_FS_FOUND - Success
+-- Using platform std::filesystem as filesystem
+-- filesystem: Using std::filesystem from <filesystem> with SST_PLUGINFRA_PLATFORM_FS
+-- Creating fs import via '/Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/libs/sst/sst-plugininfra/libs/filesystem/include/filesystem/import.h'
+-- Implementing preset support for sst-effects
+CMake Deprecation Warning at libs/PEGTL/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- OSX DEPLOYMENT IS 10.15
+-- Using CatchDiscoverTests on surge-testrunner
+-- Creating CLAP surge-fx_CLAP from surge-fx
+-- Setting Misbehaviour handler level to 'Ignore'
+-- Setting Checking handler level to 'Minimal'
+-- Setting event resolution to 0 samples (no sample-accurate automation)
+-- Setting "Always split block" to OFF
+-- Setting "Use JUCE parameter ranges" to OFF
+-- Creating CLAP surge-xt_CLAP from surge-xt
+-- Setting Misbehaviour handler level to 'Ignore'
+-- Setting Checking handler level to 'Minimal'
+-- Setting event resolution to 0 samples (no sample-accurate automation)
+-- Setting "Always split block" to OFF
+-- Custom Factory support engaged. You must implement clapJuceExtensionCustomFactory(const char *)
+-- Setting "Use JUCE parameter ranges" to OFF
+-- Including JUCE VST3 host-side context menu support...
+-- No JUCE VST3 client extensions in this version!
+-- macOS standalone includes CLI
+-- Adding surge-xt-cli to surge-xt_Packaged
+CMake Deprecation Warning at libs/pybind11/CMakeLists.txt:13 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- pybind11 v2.13.5 
+-- Found PythonInterp: /Users/matthijsvork/Documents/Pitcher/.venv/bin/python (found suitable version "3.12.12", minimum required is "3.7")
+-- Found PythonLibs: /usr/local/Caskroom/miniforge/base/lib/libpython3.12.dylib
+-- Installer Surge Version is LOCAL
+-- Validate me! Please!
+-- Creating pluginval target for plugin: Surge XT.vst3
+-- Creating pluginval target for plugin: Surge XT Effects.vst3
+-- Creating pluginval target for plugin: Surge XT.component
+-- Creating pluginval target for plugin: Surge XT Effects.component
+-- Found Git: /usr/local/bin/git (found version "2.43.0")
+-- Adding download-extra-content target from https://github.com/surge-synthesizer/surge-extra-content.git
+-- Configuring done (132.9s)
+-- Generating done (1.2s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    Python_EXECUTABLE
+
+
+-- Build files have been written to: /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy

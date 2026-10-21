@@ -1,0 +1,65 @@
+{
+ "text": "long faded dark pad",
+ "presets": [
+  {
+   "file": "1_open_texture.fxp",
+   "score": 1.1886377334594727,
+   "text_sim": 0.788956880569458,
+   "audio_text_sim": 0.39968085289001465,
+   "paraphrase": "deep texture that slowly evolves",
+   "prompt_id": 444,
+   "clip": "444_s1.flac",
+   "noun": "texture",
+   "category": "open",
+   "match_db": 6.573724863194551,
+   "octave_shift": 0,
+   "source": "retrieval",
+   "fxp_check_db": 1.4244383005941024e-05
+  },
+  {
+   "file": "2_Atmosphere_soundscape.fxp",
+   "score": 1.0942996740341187,
+   "text_sim": 0.7847883701324463,
+   "audio_text_sim": 0.30951127409935,
+   "paraphrase": "rising swelling sustained sound texture",
+   "prompt_id": 375,
+   "clip": "375_s2.flac",
+   "noun": "soundscape",
+   "category": "Atmosphere",
+   "match_db": 6.750654859022077,
+   "octave_shift": 1,
+   "source": "retrieval",
+   "fxp_check_db": 0.23607144390208007
+  },
+  {
+   "file": "3_Pad_pad.fxp",
+   "score": 1.0873727798461914,
+   "text_sim": 0.7521565556526184,
+   "audio_text_sim": 0.3352162539958954,
+   "paraphrase": "quirky dark pad sound, slow-attack",
+   "prompt_id": 99,
+   "clip": "99_s0.flac",
+   "noun": "pad",
+   "category": "Pad",
+   "match_db": 7.199168929157722,
+   "octave_shift": 0,
+   "source": "retrieval",
+   "fxp_check_db": 1.460233094262295
+  },
+  {
+   "file": "4_Pad_string_pad.fxp",
+   "score": 1.0207598209381104,
+   "text_sim": 0.7926838994026184,
+   "audio_text_sim": 0.22807595133781433,
+   "paraphrase": "ambient resonant phasing string pad",
+   "prompt_id": 105,
+   "clip": "105_s0.flac",
+   "noun": "string_pad",
+   "category": "Pad",
+   "match_db": 6.5129958454126005,
+   "octave_shift": 1,
+   "source": "retrieval",
+   "fxp_check_db": 0.7076459974181097
+  }
+ ]
+}

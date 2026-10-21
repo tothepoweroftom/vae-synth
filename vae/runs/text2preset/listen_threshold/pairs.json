@@ -1,0 +1,212 @@
+[
+ {
+  "id": "pair-01",
+  "name": "organ",
+  "label": "Keys",
+  "original": "audio/pair-01-a.mp4",
+  "rebuilt": "audio/pair-01-b.mp4"
+ },
+ {
+  "id": "pair-02",
+  "name": "sync lead",
+  "label": "Lead",
+  "original": "audio/pair-02-a.mp4",
+  "rebuilt": "audio/pair-02-b.mp4"
+ },
+ {
+  "id": "pair-03",
+  "name": "organ",
+  "label": "Keys",
+  "original": "audio/pair-03-a.mp4",
+  "rebuilt": "audio/pair-03-b.mp4"
+ },
+ {
+  "id": "pair-04",
+  "name": "noise atmo",
+  "label": "Atmosphere",
+  "original": "audio/pair-04-a.mp4",
+  "rebuilt": "audio/pair-04-b.mp4"
+ },
+ {
+  "id": "pair-05",
+  "name": "pad",
+  "label": "Pad",
+  "original": "audio/pair-05-a.mp4",
+  "rebuilt": "audio/pair-05-b.mp4"
+ },
+ {
+  "id": "pair-06",
+  "name": "strings",
+  "label": "Orchestral",
+  "original": "audio/pair-06-a.mp4",
+  "rebuilt": "audio/pair-06-b.mp4"
+ },
+ {
+  "id": "pair-07",
+  "name": "neuro bass",
+  "label": "Bass",
+  "original": "audio/pair-07-a.mp4",
+  "rebuilt": "audio/pair-07-b.mp4"
+ },
+ {
+  "id": "pair-08",
+  "name": "acid bass",
+  "label": "Bass",
+  "original": "audio/pair-08-a.mp4",
+  "rebuilt": "audio/pair-08-b.mp4"
+ },
+ {
+  "id": "pair-09",
+  "name": "soundscape",
+  "label": "Atmosphere",
+  "original": "audio/pair-09-a.mp4",
+  "rebuilt": "audio/pair-09-b.mp4"
+ },
+ {
+  "id": "pair-10",
+  "name": "bass",
+  "label": "Bass",
+  "original": "audio/pair-10-a.mp4",
+  "rebuilt": "audio/pair-10-b.mp4"
+ },
+ {
+  "id": "pair-11",
+  "name": "poly",
+  "label": "Synth",
+  "original": "audio/pair-11-a.mp4",
+  "rebuilt": "audio/pair-11-b.mp4"
+ },
+ {
+  "id": "pair-12",
+  "name": "clav",
+  "label": "Keys",
+  "original": "audio/pair-12-a.mp4",
+  "rebuilt": "audio/pair-12-b.mp4"
+ },
+ {
+  "id": "pair-13",
+  "name": "acid bass",
+  "label": "Bass",
+  "original": "audio/pair-13-a.mp4",
+  "rebuilt": "audio/pair-13-b.mp4"
+ },
+ {
+  "id": "pair-14",
+  "name": "harp pluck",
+  "label": "Pluck",
+  "original": "audio/pair-14-a.mp4",
+  "rebuilt": "audio/pair-14-b.mp4"
+ },
+ {
+  "id": "pair-15",
+  "name": "mallet",
+  "label": "Pluck",
+  "original": "audio/pair-15-a.mp4",
+  "rebuilt": "audio/pair-15-b.mp4"
+ },
+ {
+  "id": "pair-16",
+  "name": "sound",
+  "label": "open",
+  "original": "audio/pair-16-a.mp4",
+  "rebuilt": "audio/pair-16-b.mp4"
+ },
+ {
+  "id": "pair-17",
+  "name": "strings",
+  "label": "Orchestral",
+  "original": "audio/pair-17-a.mp4",
+  "rebuilt": "audio/pair-17-b.mp4"
+ },
+ {
+  "id": "pair-18",
+  "name": "pluck",
+  "label": "Pluck",
+  "original": "audio/pair-18-a.mp4",
+  "rebuilt": "audio/pair-18-b.mp4"
+ },
+ {
+  "id": "pair-19",
+  "name": "pad",
+  "label": "Pad",
+  "original": "audio/pair-19-a.mp4",
+  "rebuilt": "audio/pair-19-b.mp4"
+ },
+ {
+  "id": "pair-20",
+  "name": "strings",
+  "label": "Orchestral",
+  "original": "audio/pair-20-a.mp4",
+  "rebuilt": "audio/pair-20-b.mp4"
+ },
+ {
+  "id": "pair-21",
+  "name": "drone",
+  "label": "Atmosphere",
+  "original": "audio/pair-21-a.mp4",
+  "rebuilt": "audio/pair-21-b.mp4"
+ },
+ {
+  "id": "pair-22",
+  "name": "synth sound",
+  "label": "open",
+  "original": "audio/pair-22-a.mp4",
+  "rebuilt": "audio/pair-22-b.mp4"
+ },
+ {
+  "id": "pair-23",
+  "name": "brass",
+  "label": "Orchestral",
+  "original": "audio/pair-23-a.mp4",
+  "rebuilt": "audio/pair-23-b.mp4"
+ },
+ {
+  "id": "pair-24",
+  "name": "stab",
+  "label": "Synth",
+  "original": "audio/pair-24-a.mp4",
+  "rebuilt": "audio/pair-24-b.mp4"
+ },
+ {
+  "id": "pair-25",
+  "name": "riser",
+  "label": "Atmosphere",
+  "original": "audio/pair-25-a.mp4",
+  "rebuilt": "audio/pair-25-b.mp4"
+ },
+ {
+  "id": "pair-26",
+  "name": "neuro bass",
+  "label": "Bass",
+  "original": "audio/pair-26-a.mp4",
+  "rebuilt": "audio/pair-26-b.mp4"
+ },
+ {
+  "id": "pair-27",
+  "name": "choir pad",
+  "label": "Pad",
+  "original": "audio/pair-27-a.mp4",
+  "rebuilt": "audio/pair-27-b.mp4"
+ },
+ {
+  "id": "pair-28",
+  "name": "whistle lead",
+  "label": "Lead",
+  "original": "audio/pair-28-a.mp4",
+  "rebuilt": "audio/pair-28-b.mp4"
+ },
+ {
+  "id": "pair-29",
+  "name": "organ",
+  "label": "Keys",
+  "original": "audio/pair-29-a.mp4",
+  "rebuilt": "audio/pair-29-b.mp4"
+ },
+ {
+  "id": "pair-30",
+  "name": "strings",
+  "label": "Orchestral",
+  "original": "audio/pair-30-a.mp4",
+  "rebuilt": "audio/pair-30-b.mp4"
+ }
+]

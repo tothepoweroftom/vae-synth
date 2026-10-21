@@ -1,0 +1,41 @@
+  200/2122 presets, 20s
+  400/2122 presets, 34s
+  600/2122 presets, 49s
+  800/2122 presets, 80s
+  1000/2122 presets, 104s
+  1200/2122 presets, 114s
+  1400/2122 presets, 131s
+  1600/2122 presets, 158s
+  1800/2122 presets, 171s
+  2000/2122 presets, 187s
+
+rendered 2122 presets x 2 in 194s with 4 workers
+audio on disk: 7.67 GB
+
+[fixed] total length: median 4.0s, max 14.0s; tail capped at 12 s: 46; silent: 2; samples > 0 dBFS in 30 presets; max flush residual RMS 1.7e-03
+  per label (median hold / tail / total s):
+            hold_s  tail_s  total_s
+label                              
+Atmosphere     2.0    5.75     7.75
+Bass           2.0    0.50     2.50
+Keys           2.0    1.58     3.58
+Lead           2.0    2.25     4.25
+Orchestral     2.0    1.30     3.30
+Pad            2.0    4.97     6.98
+Pluck          2.0    1.83     3.82
+Synth          2.0    2.40     4.40
+
+[natural] total length: median 3.5s, max 16.8s; tail capped at 12 s: 39; silent: 2; samples > 0 dBFS in 31 presets; max flush residual RMS 5.8e-04
+  hold reason: {'steady': 1816, 'died': 204, 'max': 102}
+  per label (median hold / tail / total s):
+            hold_s  tail_s  total_s
+label                              
+Atmosphere    1.35    5.55     7.35
+Bass          0.85    0.50     1.70
+Keys          1.00    1.40     3.50
+Lead          0.70    2.20     3.25
+Orchestral    0.90    1.20     2.40
+Pad           1.60    5.00     6.88
+Pluck         1.45    1.27     3.72
+Synth         1.00    2.25     3.60
+exit 0

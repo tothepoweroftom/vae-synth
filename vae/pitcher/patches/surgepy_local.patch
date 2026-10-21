@@ -1,0 +1,134 @@
+diff --git a/src/common/dsp/modulators/LFOModulationSource.h b/src/common/dsp/modulators/LFOModulationSource.h
+index a02f2a511..084f1bbd5 100644
+--- a/src/common/dsp/modulators/LFOModulationSource.h
++++ b/src/common/dsp/modulators/LFOModulationSource.h
+@@ -114,6 +114,8 @@ class LFOModulationSource : public ModulationSource
+     float output_multi[Surge::Formula::max_formula_outputs] = {0};
+ 
+   public:
++    // pitcher (surgepy seedRandom): reseed the noise / S&H generator, for deterministic renders
++    void reseedRandom(uint32_t seed) { gen.seed(seed); }
+     Surge::MSEG::EvaluatorState msegstate;
+     Surge::Formula::EvaluatorState formulastate;
+ 
+diff --git a/src/surge-python/surgepy.cpp b/src/surge-python/surgepy.cpp
+index e6a853c2f..64b7aad9a 100644
+--- a/src/surge-python/surgepy.cpp
++++ b/src/surge-python/surgepy.cpp
+@@ -32,6 +32,9 @@
+ #include "SurgeSynthesizer.h"
+ #include "SurgeStorage.h"
+ #include "MSEGModulationHelper.h"
++#include "ModulationSource.h"
++#include "dsp/modulators/LFOModulationSource.h"
++#include "stmlib/utils/random.h"
+ #include "FormulaModulationHelper.h"
+ #include "version.h"
+ #include "filesystem/import.h"
+@@ -602,7 +605,10 @@ class SurgePyPatchConverter
+         auto fxi = &(patch.fx[s]);
+ #define ADD(x) addParam(res, #x, fxi->x);
+         ADD(type);
+-        ADD(return_level);
++        // Only the send slots have a real return level parameter; the others are never
++        // assigned an id and would all alias parameter 0 (Send FX 1 Return)
++        if (s == fxslot_send1 || s == fxslot_send2 || s == fxslot_send3 || s == fxslot_send4)
++            ADD(return_level);
+ #undef ADD
+ 
+         auto pars = py::list();
+@@ -749,8 +755,8 @@ class SurgePyPatchConverter
+         ADD(width);
+ 
+         py::list sl;
+-        addParam(sl, sc->send_level[0]);
+-        addParam(sl, sc->send_level[1]);
++        for (int i = 0; i < n_send_slots; ++i)
++            addParam(sl, sc->send_level[i]);
+         res["send_level"] = sl;
+ 
+         ADD(f2_cutoff_is_offset);
+@@ -1019,6 +1025,61 @@ class SurgeSynthesizerWithPythonExtensions : public SurgeSynthesizer
+         return "<error>";
+     }
+ 
++    // Reseed every random source a single-note render uses (oscillator start phases, drift, noise,
++    // S&H / String oscillators via std::rand, Twist via stmlib, the per-note random modulators), so two renders of
++    // the same patch with the same seed are identical. Call after loading, before playNote.
++    void seedRandom(uint32_t seed)
++    {
++        storage.rngGen.g.seed(seed);
++        storage.noiseRng.reseed(seed + 1);
++        std::srand(seed + 2);
++        stmlib::Random::Seed(seed + 9); // Twist oscillator (Plaits engines)
++        time_data.ppqPos = 0; // tempo-synced / free-running LFOs follow the song position
++        for (int sc = 0; sc < n_scenes; ++sc)
++        {
++            // scene LFOs live as long as the synth (voice LFOs are created per note)
++            for (int l = 0; l < n_lfos_scene; ++l)
++                if (auto *lfo = dynamic_cast<LFOModulationSource *>(
++                        storage.getPatch().scene[sc].modsources[ms_slfo1 + l]))
++                    lfo->reseedRandom(seed + 20 + 16 * sc + l);
++            for (int id : {ms_random_bipolar, ms_random_unipolar})
++                if (auto *r = dynamic_cast<RandomModulationSource *>(
++                        storage.getPatch().scene[sc].modsources[id]))
++                    r->gen.seed(seed + 3 + 2 * sc + (id == ms_random_unipolar));
++        }
++    }
++
++    int getParamCtrlType(const SurgePyNamedParam &id) { return paramPtr(id)->ctrltype; }
++
++    std::string getParamOSCName(const SurgePyNamedParam &id) { return paramPtr(id)->oscName; }
++
++    std::string getParamStorageName(const SurgePyNamedParam &id)
++    {
++        return paramPtr(id)->get_storage_name();
++    }
++
++    // fx_disable is a bitmask without a ctrltype (range +-2^31); setParamVal's float normalisation
++    // cannot represent it, so it is written directly. The engine reads val.i per audio block.
++    void setFxDisable(int mask) { storage.getPatch().fx_disable.val.i = mask; }
++
++    // temposync / extend / absolute belong to the parameter slot and survive type changes (an FX
++    // type change even restores them from fxsync). bound_value() snaps to the tempo grid whenever
++    // temposync is set, but setTempoSync refuses on a ctrltype that can't sync, so clear directly.
++    void clearParamFlags(const SurgePyNamedParam &id)
++    {
++        auto p = paramPtr(id);
++        p->temposync = false;
++        p->set_extend_range(false);
++        p->absolute = false;
++    }
++
++    std::string getWavetableName(int scene, int osc)
++    {
++        if (scene < 0 || scene >= n_scenes || osc < 0 || osc >= n_oscs)
++            throw std::out_of_range("scene or osc out of range");
++        return storage.getPatch().scene[scene].osc[osc].wavetable_display_name;
++    }
++
+     std::string getParamInfo(const SurgePyNamedParam &id)
+     {
+         const auto val = getParamVal(id);
+@@ -1868,6 +1929,21 @@ PYBIND11_MODULE(surgepy, m)
+              "Parameter current value in this Surge XT instance, as a float")
+         .def("getParamValType", &SurgeSynthesizerWithPythonExtensions::getParamValType,
+              "Parameter types float, int or bool are supported")
++        .def("seedRandom", &SurgeSynthesizerWithPythonExtensions::seedRandom,
++             "Reseed all random sources (deterministic renders); call before playNote", py::arg("seed"))
++        .def("getParamCtrlType", &SurgeSynthesizerWithPythonExtensions::getParamCtrlType,
++             "Parameter control type (index into the ctrltypes enum in Parameter.h)")
++        .def("getParamOSCName", &SurgeSynthesizerWithPythonExtensions::getParamOSCName,
++             "Parameter OSC address, e.g. /param/a/osc/1/type")
++        .def("getParamStorageName", &SurgeSynthesizerWithPythonExtensions::getParamStorageName,
++             "Parameter name as stored in the patch XML, e.g. a_osc1_param0")
++        .def("clearParamFlags", &SurgeSynthesizerWithPythonExtensions::clearParamFlags,
++             "Switch off temposync, extended range and absolute mode of a parameter, unconditionally")
++        .def("setFxDisable", &SurgeSynthesizerWithPythonExtensions::setFxDisable,
++             "Set the FX disable bitmask (bit n = FX slot n off)", py::arg("mask"))
++        .def("getWavetableName", &SurgeSynthesizerWithPythonExtensions::getWavetableName,
++             "Display name of the wavetable loaded in a scene/oscillator", py::arg("scene"),
++             py::arg("osc"))
+ 
+         .def("getParamDisplay", &SurgeSynthesizerWithPythonExtensions::getParamDisplay,
+              "Parameter value display (stringified and formatted)")

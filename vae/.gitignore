@@ -1,0 +1,35 @@
+# --- never in the repo ---
+# GPU-cluster package (local only)
+hpc/
+# credentials, wherever they end up
+hf/
+.env
+*.token
+*token*.txt
+
+# --- large / generated (kept locally) ---
+data/
+surge-rack-main/
+ignore/
+
+# models, audio, presets, arrays
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.npy
+*.npz
+*.parquet
+*.h5
+*.wav
+*.flac
+*.mp3
+*.fxp
+
+# --- Python / OS ---
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store

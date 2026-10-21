@@ -1,0 +1,194 @@
+<title>Pitcher Match Test</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single listening column; sticky progress strip; one card per pair with two players and a rating row */
+:root {
+  --bg: #f6f6f3;
+  --card: #ffffff;
+  --ink: #1d1e22;
+  --muted: #61636b;
+  --line: #e1e1dc;
+  --accent: #3d4fd1;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6e9fb;
+  --font-body: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15161a; --card: #1e2026; --ink: #ececea; --muted: #a3a5ad; --line: #2e3038;
+    --accent: #8a98ff; --accent-ink: #11131c; --accent-soft: #262b4a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15161a; --card: #1e2026; --ink: #ececea; --muted: #a3a5ad; --line: #2e3038;
+  --accent: #8a98ff; --accent-ink: #11131c; --accent-soft: #262b4a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { padding-top: 32px; display: flex; flex-direction: column; gap: 12px; }
+h1 { font-size: 1.9rem; line-height: 1.15; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.intro { color: var(--muted); margin: 0; max-width: 65ch; }
+.scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 4px 0 0; padding: 0; list-style: none; }
+.scale li { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 0.88rem; color: var(--muted); }
+.scale b { display: block; color: var(--ink); font-weight: 700; font-size: 0.92rem; }
+.strip {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-bottom: 1px solid var(--line);
+}
+.bar { flex: 1 1 200px; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+.count { font-family: var(--font-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.toggle { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; color: var(--muted); }
+.notice { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; }
+.pairs { display: flex; flex-direction: column; gap: 12px; }
+.pair { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.pair.done { border-color: var(--accent-soft); }
+.top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.num { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.2em; }
+.name { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.cat { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+.players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.play {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); font: inherit; cursor: pointer; text-align: left; position: relative; overflow: hidden;
+}
+.play:hover { border-color: var(--accent); }
+.play .icon { width: 0; height: 0; border-left: 10px solid var(--ink); border-top: 6px solid transparent; border-bottom: 6px solid transparent; flex: none; }
+.play.playing .icon { width: 10px; height: 12px; border: 0; border-left: 3px solid var(--ink); border-right: 3px solid var(--ink); }
+.play .prog { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent); }
+.rates { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.rate {
+  padding: 8px 6px; border-radius: 7px; border: 1px solid var(--line); background: transparent; color: var(--ink);
+  font: inherit; font-size: 0.88rem; cursor: pointer;
+}
+.rate:hover { border-color: var(--accent); }
+.rate[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 500; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer { color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 520px) {
+  .rates { grid-template-columns: repeat(2, 1fr); }
+  h1 { font-size: 1.55rem; }
+}
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Pitcher Match Test</h1>
+    <p class="intro">Each pair is a Stable Audio clip and the Surge XT preset the matcher found for it, played at the same note. Play both, then rate how close the Surge preset is to the clip. Use headphones at a steady volume; the pairs are in random order and don't show their distances.</p>
+    <ul class="scale">
+      <li><b>Same sound</b>No difference you'd care about</li>
+      <li><b>Same character</b>Clearly the same kind of sound, a bit plainer or different</li>
+      <li><b>Different</b>Not the same sound anymore</li>
+      <li><b>Broken</b>Silent, glitchy or unusable</li>
+    </ul>
+  </header>
+
+  <div class="strip">
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+    <span class="count" id="count">0 / 0 rated</span>
+    <label class="toggle"><input type="checkbox" id="unrated"> Unrated only</label>
+  </div>
+
+  <div class="notice" id="notice" hidden></div>
+  <div class="pairs" id="pairs"></div>
+  <footer>Ratings save as you click. You can change a rating any time; tell Claude when you're done.</footer>
+</div>
+
+<script>
+const PAIRS = [{"id": "pair-01", "name": "organ", "label": "Keys", "original": "audio/pair-01-a.mp4", "rebuilt": "audio/pair-01-b.mp4"}, {"id": "pair-02", "name": "sync lead", "label": "Lead", "original": "audio/pair-02-a.mp4", "rebuilt": "audio/pair-02-b.mp4"}, {"id": "pair-03", "name": "organ", "label": "Keys", "original": "audio/pair-03-a.mp4", "rebuilt": "audio/pair-03-b.mp4"}, {"id": "pair-04", "name": "noise atmo", "label": "Atmosphere", "original": "audio/pair-04-a.mp4", "rebuilt": "audio/pair-04-b.mp4"}, {"id": "pair-05", "name": "pad", "label": "Pad", "original": "audio/pair-05-a.mp4", "rebuilt": "audio/pair-05-b.mp4"}, {"id": "pair-06", "name": "strings", "label": "Orchestral", "original": "audio/pair-06-a.mp4", "rebuilt": "audio/pair-06-b.mp4"}, {"id": "pair-07", "name": "neuro bass", "label": "Bass", "original": "audio/pair-07-a.mp4", "rebuilt": "audio/pair-07-b.mp4"}, {"id": "pair-08", "name": "acid bass", "label": "Bass", "original": "audio/pair-08-a.mp4", "rebuilt": "audio/pair-08-b.mp4"}, {"id": "pair-09", "name": "soundscape", "label": "Atmosphere", "original": "audio/pair-09-a.mp4", "rebuilt": "audio/pair-09-b.mp4"}, {"id": "pair-10", "name": "bass", "label": "Bass", "original": "audio/pair-10-a.mp4", "rebuilt": "audio/pair-10-b.mp4"}, {"id": "pair-11", "name": "poly", "label": "Synth", "original": "audio/pair-11-a.mp4", "rebuilt": "audio/pair-11-b.mp4"}, {"id": "pair-12", "name": "clav", "label": "Keys", "original": "audio/pair-12-a.mp4", "rebuilt": "audio/pair-12-b.mp4"}, {"id": "pair-13", "name": "acid bass", "label": "Bass", "original": "audio/pair-13-a.mp4", "rebuilt": "audio/pair-13-b.mp4"}, {"id": "pair-14", "name": "harp pluck", "label": "Pluck", "original": "audio/pair-14-a.mp4", "rebuilt": "audio/pair-14-b.mp4"}, {"id": "pair-15", "name": "mallet", "label": "Pluck", "original": "audio/pair-15-a.mp4", "rebuilt": "audio/pair-15-b.mp4"}, {"id": "pair-16", "name": "sound", "label": "open", "original": "audio/pair-16-a.mp4", "rebuilt": "audio/pair-16-b.mp4"}, {"id": "pair-17", "name": "strings", "label": "Orchestral", "original": "audio/pair-17-a.mp4", "rebuilt": "audio/pair-17-b.mp4"}, {"id": "pair-18", "name": "pluck", "label": "Pluck", "original": "audio/pair-18-a.mp4", "rebuilt": "audio/pair-18-b.mp4"}, {"id": "pair-19", "name": "pad", "label": "Pad", "original": "audio/pair-19-a.mp4", "rebuilt": "audio/pair-19-b.mp4"}, {"id": "pair-20", "name": "strings", "label": "Orchestral", "original": "audio/pair-20-a.mp4", "rebuilt": "audio/pair-20-b.mp4"}, {"id": "pair-21", "name": "drone", "label": "Atmosphere", "original": "audio/pair-21-a.mp4", "rebuilt": "audio/pair-21-b.mp4"}, {"id": "pair-22", "name": "synth sound", "label": "open", "original": "audio/pair-22-a.mp4", "rebuilt": "audio/pair-22-b.mp4"}, {"id": "pair-23", "name": "brass", "label": "Orchestral", "original": "audio/pair-23-a.mp4", "rebuilt": "audio/pair-23-b.mp4"}, {"id": "pair-24", "name": "stab", "label": "Synth", "original": "audio/pair-24-a.mp4", "rebuilt": "audio/pair-24-b.mp4"}, {"id": "pair-25", "name": "riser", "label": "Atmosphere", "original": "audio/pair-25-a.mp4", "rebuilt": "audio/pair-25-b.mp4"}, {"id": "pair-26", "name": "neuro bass", "label": "Bass", "original": "audio/pair-26-a.mp4", "rebuilt": "audio/pair-26-b.mp4"}, {"id": "pair-27", "name": "choir pad", "label": "Pad", "original": "audio/pair-27-a.mp4", "rebuilt": "audio/pair-27-b.mp4"}, {"id": "pair-28", "name": "whistle lead", "label": "Lead", "original": "audio/pair-28-a.mp4", "rebuilt": "audio/pair-28-b.mp4"}, {"id": "pair-29", "name": "organ", "label": "Keys", "original": "audio/pair-29-a.mp4", "rebuilt": "audio/pair-29-b.mp4"}, {"id": "pair-30", "name": "strings", "label": "Orchestral", "original": "audio/pair-30-a.mp4", "rebuilt": "audio/pair-30-b.mp4"}];
+const LABELS = { same_sound: "Same sound", same_character: "Same character", different: "Different", broken: "Broken" };
+const ratings = {};
+let db = null, current = null;
+
+function loadLocal() { try { return JSON.parse(localStorage.getItem("pitcher-match-ratings") || "{}"); } catch (e) { return {}; } }
+function saveLocal() { try { localStorage.setItem("pitcher-match-ratings", JSON.stringify(ratings)); } catch (e) {} }
+
+function render() {
+  const list = document.getElementById("pairs");
+  list.textContent = "";
+  const onlyUnrated = document.getElementById("unrated").checked;
+  PAIRS.forEach((p, i) => {
+    if (onlyUnrated && ratings[p.id]) return;
+    const card = document.createElement("article");
+    card.className = "pair" + (ratings[p.id] ? " done" : "");
+    const top = document.createElement("div"); top.className = "top";
+    const num = document.createElement("span"); num.className = "num"; num.textContent = String(i + 1).padStart(2, "0");
+    const name = document.createElement("span"); name.className = "name"; name.textContent = p.name;
+    const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = p.label;
+    top.append(num, name, cat);
+    const players = document.createElement("div"); players.className = "players";
+    players.append(player(p.original, "Stable Audio"), player(p.rebuilt, "Surge match"));
+    const rates = document.createElement("div"); rates.className = "rates"; rates.setAttribute("role", "group");
+    rates.setAttribute("aria-label", "Rating for pair " + (i + 1));
+    Object.entries(LABELS).forEach(([key, text]) => {
+      const b = document.createElement("button"); b.className = "rate"; b.type = "button"; b.textContent = text;
+      b.setAttribute("aria-pressed", ratings[p.id] === key ? "true" : "false");
+      b.addEventListener("click", () => rate(p.id, key));
+      rates.append(b);
+    });
+    card.append(top, players, rates);
+    list.append(card);
+  });
+  const n = PAIRS.filter(p => ratings[p.id]).length;
+  document.getElementById("count").textContent = n + " / " + PAIRS.length + " rated";
+  document.getElementById("bar").style.width = (100 * n / PAIRS.length) + "%";
+}
+
+function player(src, text) {
+  const b = document.createElement("button"); b.className = "play"; b.type = "button";
+  const icon = document.createElement("span"); icon.className = "icon";
+  const label = document.createElement("span"); label.textContent = text;
+  const prog = document.createElement("span"); prog.className = "prog";
+  b.append(icon, label, prog);
+  let audio = null;
+  b.addEventListener("click", () => {
+    if (!audio) {
+      audio = new Audio(src);
+      audio.addEventListener("timeupdate", () => { prog.style.width = (100 * audio.currentTime / (audio.duration || 1)) + "%"; });
+      audio.addEventListener("ended", () => { b.classList.remove("playing"); prog.style.width = "0"; });
+      audio.addEventListener("pause", () => b.classList.remove("playing"));
+      audio.addEventListener("play", () => b.classList.add("playing"));
+    }
+    if (current && current !== audio) { current.pause(); current.currentTime = 0; }
+    if (audio.paused) { audio.currentTime = 0; audio.play().catch(() => {}); current = audio; } else { audio.pause(); }
+  });
+  return b;
+}
+
+async function rate(id, key) {
+  ratings[id] = key;
+  saveLocal();
+  render();
+  if (!db) return;
+  try {
+    await db.collection("ratings").doc(id).set({ pair: id, rating: key, at: new Date().toISOString() });
+  } catch (e) {
+    showNotice("This rating couldn't be saved for Claude (" + (e && e.code || "error") + "). It is kept in this browser.");
+  }
+}
+
+function showNotice(text) { const n = document.getElementById("notice"); n.textContent = text; n.hidden = false; }
+
+document.getElementById("unrated").addEventListener("change", render);
+Object.assign(ratings, loadLocal());
+render();
+
+(async () => {
+  db = window.claude ? await window.claude.use("db") : null;
+  if (!db) { showNotice("Ratings are kept in this browser only in this view, so Claude can't read them. Open the page from claude.ai while signed in to save them."); return; }
+  db.collection("ratings").onSnapshot(snap => {
+    snap.docs.forEach(d => { const r = d.data(); if (r && LABELS[r.rating]) ratings[d.id] = r.rating; });
+    saveLocal();
+    render();
+  }, () => showNotice("Saved ratings couldn't be loaded right now; new ratings still save."));
+})();
+</script>

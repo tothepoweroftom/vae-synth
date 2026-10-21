@@ -1,0 +1,35 @@
+  200/1857, 18s
+  400/1857, 33s
+  600/1857, 61s
+  800/1857, 95s
+  1000/1857, 113s
+  1200/1857, 130s
+  1400/1857, 149s
+  1600/1857, 164s
+  1800/1857, 184s
+
+1857 presets in 189s
+
+A1 exactness: 431892 written items, 0 mismatches, in 0 presets
+  plan warnings: 0 presets
+
+A2 sound: distance original vs rebuilt: median 3.3163, 90th pct 8.2524; original vs re-render (randomness): median 3.0579, 90th pct 7.2852
+  transparent (rebuilt <= max(1.0, 1.5 x re-render)): 89.7%
+  transparent share by FX layout changed: {'mean': {False: 0.927, True: 0.735}, 'size': {False: 1563, True: 294}}
+  transparent share by excluded FX (Airwindows etc.) present: {'mean': {False: 0.897, True: 1.0}, 'size': {False: 1856, True: 1}}
+  transparent share without excluded FX and scene A: 89.7% of 1856
+  transparent share by active scene: {'mean': {0: 0.897}, 'size': {0: 1857}}
+  transparent share by label: {'Atmosphere': 0.913, 'Bass': 0.932, 'Keys': 0.834, 'Lead': 0.918, 'Orchestral': 0.868, 'Pad': 0.895, 'Pluck': 0.859, 'Synth': 0.914}
+  level change rebuilt vs original (dB): median 0.00, 5th pct -2.68, 95th pct 4.11
+ preset_id      label                 name  d_rebuilt  d_rerender  rms_diff_db excluded_fx  active_scene
+       284 Orchestral          Double Reed     34.902       3.251      -31.916                         0
+       211       Bass          Bam Bo Bass     27.108      27.451       -0.123                         0
+       226       Lead Staccato String Land     25.563      25.107       -2.466                         0
+       179       Bass      Acid Bassline 1     21.267      21.493        1.710                         0
+       217       Bass                Ho Ho     18.855      18.067       -2.568                         0
+      1414       Bass                  Waw     18.641      18.534       -0.402                         0
+      1868        Pad               Hmm...     18.598      11.330        5.133                         0
+       218       Bass            House Fly     18.161      18.825       -1.651                         0
+       520       Bass             Ladder 4     17.923       5.980        0.054                         0
+       505 Atmosphere               Wonk 1     17.415       2.576       -0.273                         0
+exit 0

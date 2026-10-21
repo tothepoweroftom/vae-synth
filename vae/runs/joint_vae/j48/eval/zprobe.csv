@@ -1,0 +1,64 @@
+features,target,model,score
+label,brightness,linear,0.056749606900799
+label,brightness,boosted,0.056745630228205335
+label,attack,linear,0.3940629429953
+label,attack,boosted,0.39406017753271627
+label,decay,linear,0.013651258113247855
+label,decay,boosted,0.009084375326974814
+label,length,linear,0.16041937950723795
+label,length,boosted,0.15863074494106855
+label,noisiness,linear,0.048366553989374506
+label,noisiness,boosted,0.048697827236773295
+label,percussive,linear,-0.040992117339595735
+label,percussive,boosted,-0.04881766655138353
+z from params,brightness,linear,0.25965918445642977
+z from params,brightness,boosted,0.24675462000929405
+z from params,attack,linear,0.21317870640303171
+z from params,attack,boosted,0.25332429540930157
+z from params,decay,linear,0.21906199394265036
+z from params,decay,boosted,0.2720075508083233
+z from params,length,linear,0.6447536382033467
+z from params,length,boosted,0.6584893148094808
+z from params,noisiness,linear,0.3504417852169811
+z from params,noisiness,boosted,0.33791151979101175
+z from params,percussive,linear,0.04368992920096737
+z from params,percussive,boosted,-0.03596651976734
+z from params,category,linear,0.3313953488372093
+z from sound,brightness,linear,0.6882866995232317
+z from sound,brightness,boosted,0.7193093797036062
+z from sound,attack,linear,0.37541789560268557
+z from sound,attack,boosted,0.361753883556414
+z from sound,decay,linear,0.5315863251085189
+z from sound,decay,boosted,0.7751217748459291
+z from sound,length,linear,0.7851917170719906
+z from sound,length,boosted,0.8867384998672033
+z from sound,noisiness,linear,0.7503361326021585
+z from sound,noisiness,boosted,0.7901910144191071
+z from sound,percussive,linear,0.027858072377309306
+z from sound,percussive,boosted,0.08653354986552009
+z from sound,category,linear,0.44476744186046513
+z from both,brightness,linear,0.6101837212058183
+z from both,brightness,boosted,0.6873702784600163
+z from both,attack,linear,0.2817659218823796
+z from both,attack,boosted,0.3382820864579813
+z from both,decay,linear,0.4633256430316114
+z from both,decay,boosted,0.6551859291415224
+z from both,length,linear,0.7767648195910919
+z from both,length,boosted,0.8842924402319774
+z from both,noisiness,linear,0.7188315669386571
+z from both,noisiness,boosted,0.8068966258540753
+z from both,percussive,linear,0.07118893219749323
+z from both,percussive,boosted,0.06691344896841744
+z from both,category,linear,0.3488372093023256
+z from params + label,brightness,linear,0.2501813405396053
+z from params + label,brightness,boosted,0.228715029876009
+z from params + label,attack,linear,0.4603067692071142
+z from params + label,attack,boosted,0.4148504498199622
+z from params + label,decay,linear,0.24289832204358275
+z from params + label,decay,boosted,0.3134948779970973
+z from params + label,length,linear,0.6417364300758829
+z from params + label,length,boosted,0.6603165501988828
+z from params + label,noisiness,linear,0.35409458943990046
+z from params + label,noisiness,boosted,0.3500824695176106
+z from params + label,percussive,linear,0.029013940629938006
+z from params + label,percussive,boosted,-0.01225824228023864

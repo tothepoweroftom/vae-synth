@@ -1,0 +1,1883 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 0: 2/55 tasks, 7s, ETA 177s
+  chunk 0: 4/55 tasks, 10s, ETA 124s
+  chunk 0: 6/55 tasks, 11s, ETA 91s
+  chunk 0: 8/55 tasks, 16s, ETA 94s
+  chunk 0: 10/55 tasks, 17s, ETA 77s
+  chunk 0: 12/55 tasks, 27s, ETA 96s
+  chunk 0: 14/55 tasks, 33s, ETA 97s
+  chunk 0: 16/55 tasks, 37s, ETA 91s
+  chunk 0: 18/55 tasks, 42s, ETA 87s
+  chunk 0: 20/55 tasks, 46s, ETA 80s
+  chunk 0: 22/55 tasks, 48s, ETA 71s
+  chunk 0: 24/55 tasks, 51s, ETA 66s
+  chunk 0: 26/55 tasks, 52s, ETA 57s
+  chunk 0: 28/55 tasks, 55s, ETA 53s
+  chunk 0: 30/55 tasks, 56s, ETA 47s
+  chunk 0: 32/55 tasks, 59s, ETA 43s
+  chunk 0: 34/55 tasks, 60s, ETA 37s
+  chunk 0: 36/55 tasks, 64s, ETA 34s
+  chunk 0: 38/55 tasks, 66s, ETA 29s
+  chunk 0: 40/55 tasks, 69s, ETA 26s
+  chunk 0: 42/55 tasks, 71s, ETA 22s
+  chunk 0: 44/55 tasks, 73s, ETA 18s
+  chunk 0: 46/55 tasks, 75s, ETA 15s
+  chunk 0: 48/55 tasks, 79s, ETA 12s
+  chunk 0: 50/55 tasks, 81s, ETA 8s
+  chunk 0: 52/55 tasks, 85s, ETA 5s
+  chunk 0: 54/55 tasks, 86s, ETA 2s
+  chunk 0: 55/55 tasks, 88s, ETA 0s
+chunk 0: 1375/1375 rows in 88s (15.6/s); invalid 0.0%; by source {'human': 1375}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 1: 10/200 tasks, 22s, ETA 423s
+  chunk 1: 20/200 tasks, 37s, ETA 332s
+  chunk 1: 30/200 tasks, 49s, ETA 277s
+  chunk 1: 40/200 tasks, 63s, ETA 250s
+  chunk 1: 50/200 tasks, 77s, ETA 230s
+  chunk 1: 60/200 tasks, 89s, ETA 208s
+  chunk 1: 70/200 tasks, 103s, ETA 192s
+  chunk 1: 80/200 tasks, 116s, ETA 174s
+  chunk 1: 90/200 tasks, 131s, ETA 160s
+  chunk 1: 100/200 tasks, 144s, ETA 144s
+  chunk 1: 110/200 tasks, 158s, ETA 129s
+  chunk 1: 120/200 tasks, 173s, ETA 115s
+  chunk 1: 130/200 tasks, 190s, ETA 102s
+  chunk 1: 140/200 tasks, 201s, ETA 86s
+  chunk 1: 150/200 tasks, 217s, ETA 72s
+  chunk 1: 160/200 tasks, 232s, ETA 58s
+  chunk 1: 170/200 tasks, 245s, ETA 43s
+  chunk 1: 180/200 tasks, 257s, ETA 29s
+  chunk 1: 190/200 tasks, 272s, ETA 14s
+  chunk 1: 200/200 tasks, 285s, ETA 0s
+chunk 1: 5000/5000 rows in 286s (17.5/s); invalid 1.9%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 2: 10/200 tasks, 23s, ETA 429s
+  chunk 2: 20/200 tasks, 37s, ETA 337s
+  chunk 2: 30/200 tasks, 51s, ETA 290s
+  chunk 2: 40/200 tasks, 63s, ETA 251s
+  chunk 2: 50/200 tasks, 81s, ETA 243s
+  chunk 2: 60/200 tasks, 94s, ETA 219s
+  chunk 2: 70/200 tasks, 111s, ETA 205s
+  chunk 2: 80/200 tasks, 125s, ETA 188s
+  chunk 2: 90/200 tasks, 139s, ETA 170s
+  chunk 2: 100/200 tasks, 149s, ETA 149s
+  chunk 2: 110/200 tasks, 161s, ETA 132s
+  chunk 2: 120/200 tasks, 174s, ETA 116s
+  chunk 2: 130/200 tasks, 186s, ETA 100s
+  chunk 2: 140/200 tasks, 198s, ETA 85s
+  chunk 2: 150/200 tasks, 210s, ETA 70s
+  chunk 2: 160/200 tasks, 222s, ETA 56s
+  chunk 2: 170/200 tasks, 234s, ETA 41s
+  chunk 2: 180/200 tasks, 247s, ETA 27s
+  chunk 2: 190/200 tasks, 258s, ETA 14s
+  chunk 2: 200/200 tasks, 269s, ETA 0s
+chunk 2: 5000/5000 rows in 271s (18.5/s); invalid 1.6%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 3: 10/200 tasks, 20s, ETA 378s
+  chunk 3: 20/200 tasks, 32s, ETA 285s
+  chunk 3: 30/200 tasks, 45s, ETA 257s
+  chunk 3: 40/200 tasks, 58s, ETA 233s
+  chunk 3: 50/200 tasks, 69s, ETA 206s
+  chunk 3: 60/200 tasks, 81s, ETA 188s
+  chunk 3: 70/200 tasks, 94s, ETA 174s
+  chunk 3: 80/200 tasks, 105s, ETA 157s
+  chunk 3: 90/200 tasks, 116s, ETA 142s
+  chunk 3: 100/200 tasks, 128s, ETA 128s
+  chunk 3: 110/200 tasks, 141s, ETA 115s
+  chunk 3: 120/200 tasks, 151s, ETA 101s
+  chunk 3: 130/200 tasks, 162s, ETA 87s
+  chunk 3: 140/200 tasks, 174s, ETA 75s
+  chunk 3: 150/200 tasks, 186s, ETA 62s
+  chunk 3: 160/200 tasks, 199s, ETA 50s
+  chunk 3: 170/200 tasks, 209s, ETA 37s
+  chunk 3: 180/200 tasks, 220s, ETA 24s
+  chunk 3: 190/200 tasks, 234s, ETA 12s
+  chunk 3: 200/200 tasks, 244s, ETA 0s
+chunk 3: 5000/5000 rows in 246s (20.3/s); invalid 1.8%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 4: 10/200 tasks, 19s, ETA 362s
+  chunk 4: 20/200 tasks, 31s, ETA 283s
+  chunk 4: 30/200 tasks, 44s, ETA 251s
+  chunk 4: 40/200 tasks, 54s, ETA 214s
+  chunk 4: 50/200 tasks, 67s, ETA 202s
+  chunk 4: 60/200 tasks, 79s, ETA 184s
+  chunk 4: 70/200 tasks, 91s, ETA 169s
+  chunk 4: 80/200 tasks, 102s, ETA 153s
+  chunk 4: 90/200 tasks, 113s, ETA 138s
+  chunk 4: 100/200 tasks, 125s, ETA 125s
+  chunk 4: 110/200 tasks, 137s, ETA 112s
+  chunk 4: 120/200 tasks, 149s, ETA 99s
+  chunk 4: 130/200 tasks, 160s, ETA 86s
+  chunk 4: 140/200 tasks, 171s, ETA 73s
+  chunk 4: 150/200 tasks, 185s, ETA 62s
+  chunk 4: 160/200 tasks, 195s, ETA 49s
+  chunk 4: 170/200 tasks, 205s, ETA 36s
+  chunk 4: 180/200 tasks, 217s, ETA 24s
+  chunk 4: 190/200 tasks, 231s, ETA 12s
+  chunk 4: 200/200 tasks, 244s, ETA 0s
+chunk 4: 5000/5000 rows in 245s (20.4/s); invalid 1.8%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 5: 10/200 tasks, 19s, ETA 367s
+  chunk 5: 20/200 tasks, 33s, ETA 293s
+  chunk 5: 30/200 tasks, 45s, ETA 256s
+  chunk 5: 40/200 tasks, 56s, ETA 224s
+  chunk 5: 50/200 tasks, 67s, ETA 200s
+  chunk 5: 60/200 tasks, 82s, ETA 190s
+  chunk 5: 70/200 tasks, 92s, ETA 170s
+  chunk 5: 80/200 tasks, 104s, ETA 156s
+  chunk 5: 90/200 tasks, 114s, ETA 140s
+  chunk 5: 100/200 tasks, 128s, ETA 128s
+  chunk 5: 110/200 tasks, 138s, ETA 113s
+  chunk 5: 120/200 tasks, 149s, ETA 100s
+  chunk 5: 130/200 tasks, 160s, ETA 86s
+  chunk 5: 140/200 tasks, 173s, ETA 74s
+  chunk 5: 150/200 tasks, 185s, ETA 62s
+  chunk 5: 160/200 tasks, 197s, ETA 49s
+  chunk 5: 170/200 tasks, 206s, ETA 36s
+  chunk 5: 180/200 tasks, 219s, ETA 24s
+  chunk 5: 190/200 tasks, 234s, ETA 12s
+  chunk 5: 200/200 tasks, 243s, ETA 0s
+chunk 5: 5000/5000 rows in 245s (20.4/s); invalid 1.9%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 6: 10/200 tasks, 20s, ETA 372s
+  chunk 6: 20/200 tasks, 33s, ETA 296s
+  chunk 6: 30/200 tasks, 44s, ETA 248s
+  chunk 6: 40/200 tasks, 56s, ETA 223s
+  chunk 6: 50/200 tasks, 66s, ETA 199s
+  chunk 6: 60/200 tasks, 81s, ETA 188s
+  chunk 6: 70/200 tasks, 92s, ETA 171s
+  chunk 6: 80/200 tasks, 104s, ETA 157s
+  chunk 6: 90/200 tasks, 116s, ETA 141s
+  chunk 6: 100/200 tasks, 130s, ETA 130s
+  chunk 6: 110/200 tasks, 141s, ETA 115s
+  chunk 6: 120/200 tasks, 153s, ETA 102s
+  chunk 6: 130/200 tasks, 164s, ETA 89s
+  chunk 6: 140/200 tasks, 177s, ETA 76s
+  chunk 6: 150/200 tasks, 188s, ETA 63s
+  chunk 6: 160/200 tasks, 199s, ETA 50s
+  chunk 6: 170/200 tasks, 209s, ETA 37s
+  chunk 6: 180/200 tasks, 223s, ETA 25s
+  chunk 6: 190/200 tasks, 234s, ETA 12s
+  chunk 6: 200/200 tasks, 246s, ETA 0s
+chunk 6: 5000/5000 rows in 248s (20.2/s); invalid 2.0%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 7: 10/200 tasks, 18s, ETA 342s
+  chunk 7: 20/200 tasks, 32s, ETA 290s
+  chunk 7: 30/200 tasks, 44s, ETA 248s
+  chunk 7: 40/200 tasks, 54s, ETA 217s
+  chunk 7: 50/200 tasks, 67s, ETA 201s
+  chunk 7: 60/200 tasks, 78s, ETA 182s
+  chunk 7: 70/200 tasks, 91s, ETA 169s
+  chunk 7: 80/200 tasks, 103s, ETA 154s
+  chunk 7: 90/200 tasks, 114s, ETA 140s
+  chunk 7: 100/200 tasks, 126s, ETA 126s
+  chunk 7: 110/200 tasks, 138s, ETA 113s
+  chunk 7: 120/200 tasks, 151s, ETA 101s
+  chunk 7: 130/200 tasks, 162s, ETA 87s
+  chunk 7: 140/200 tasks, 174s, ETA 74s
+  chunk 7: 150/200 tasks, 186s, ETA 62s
+  chunk 7: 160/200 tasks, 197s, ETA 49s
+  chunk 7: 170/200 tasks, 210s, ETA 37s
+  chunk 7: 180/200 tasks, 220s, ETA 24s
+  chunk 7: 190/200 tasks, 232s, ETA 12s
+  chunk 7: 200/200 tasks, 245s, ETA 0s
+chunk 7: 5000/5000 rows in 246s (20.3/s); invalid 1.9%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 8: 10/200 tasks, 19s, ETA 355s
+  chunk 8: 20/200 tasks, 31s, ETA 282s
+  chunk 8: 30/200 tasks, 43s, ETA 244s
+  chunk 8: 40/200 tasks, 54s, ETA 217s
+  chunk 8: 50/200 tasks, 65s, ETA 196s
+  chunk 8: 60/200 tasks, 77s, ETA 179s
+  chunk 8: 70/200 tasks, 90s, ETA 167s
+  chunk 8: 80/200 tasks, 100s, ETA 150s
+  chunk 8: 90/200 tasks, 112s, ETA 137s
+  chunk 8: 100/200 tasks, 125s, ETA 125s
+  chunk 8: 110/200 tasks, 140s, ETA 114s
+  chunk 8: 120/200 tasks, 150s, ETA 100s
+  chunk 8: 130/200 tasks, 161s, ETA 87s
+  chunk 8: 140/200 tasks, 172s, ETA 74s
+  chunk 8: 150/200 tasks, 184s, ETA 61s
+  chunk 8: 160/200 tasks, 197s, ETA 49s
+  chunk 8: 170/200 tasks, 208s, ETA 37s
+  chunk 8: 180/200 tasks, 218s, ETA 24s
+  chunk 8: 190/200 tasks, 230s, ETA 12s
+  chunk 8: 200/200 tasks, 242s, ETA 0s
+chunk 8: 5000/5000 rows in 243s (20.5/s); invalid 2.0%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 9: 10/200 tasks, 18s, ETA 346s
+  chunk 9: 20/200 tasks, 32s, ETA 286s
+  chunk 9: 30/200 tasks, 43s, ETA 242s
+  chunk 9: 40/200 tasks, 55s, ETA 219s
+  chunk 9: 50/200 tasks, 65s, ETA 194s
+  chunk 9: 60/200 tasks, 77s, ETA 180s
+  chunk 9: 70/200 tasks, 91s, ETA 169s
+  chunk 9: 80/200 tasks, 101s, ETA 152s
+  chunk 9: 90/200 tasks, 112s, ETA 137s
+  chunk 9: 100/200 tasks, 125s, ETA 125s
+  chunk 9: 110/200 tasks, 136s, ETA 111s
+  chunk 9: 120/200 tasks, 148s, ETA 99s
+  chunk 9: 130/200 tasks, 157s, ETA 85s
+  chunk 9: 140/200 tasks, 171s, ETA 73s
+  chunk 9: 150/200 tasks, 181s, ETA 60s
+  chunk 9: 160/200 tasks, 195s, ETA 49s
+  chunk 9: 170/200 tasks, 204s, ETA 36s
+  chunk 9: 180/200 tasks, 216s, ETA 24s
+  chunk 9: 190/200 tasks, 229s, ETA 12s
+  chunk 9: 200/200 tasks, 239s, ETA 0s
+chunk 9: 5000/5000 rows in 241s (20.8/s); invalid 1.9%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "<string>", line 1, in <module>
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/spawn.py", line 135, in _main
+    return self._bootstrap(parent_sentinel)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/Caskroom/miniforge/base/lib/python3.12/multiprocessing/pool.py", line 109, in worker
+    initializer(*initargs)
+  File "/Users/matthijsvork/Documents/Pitcher/pitcher/synth_data/stage1.py", line 66, in init_worker
+    import torch
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/__init__.py", line 1477, in <module>
+    from .functional import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/functional.py", line 9, in <module>
+    import torch.nn.functional as F
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/__init__.py", line 1, in <module>
+    from .modules import *  # noqa: F403
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/__init__.py", line 35, in <module>
+    from .transformer import TransformerEncoder, TransformerDecoder, \
+  File "/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py", line 20, in <module>
+    device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+/Users/matthijsvork/Documents/Pitcher/.venv/lib/python3.12/site-packages/torch/nn/modules/transformer.py:20: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  chunk 10: 10/200 tasks, 19s, ETA 365s
+  chunk 10: 20/200 tasks, 32s, ETA 284s
+  chunk 10: 30/200 tasks, 44s, ETA 250s
+  chunk 10: 40/200 tasks, 56s, ETA 222s
+  chunk 10: 50/200 tasks, 66s, ETA 199s
+  chunk 10: 60/200 tasks, 81s, ETA 190s
+  chunk 10: 70/200 tasks, 93s, ETA 172s
+  chunk 10: 80/200 tasks, 104s, ETA 155s
+  chunk 10: 90/200 tasks, 116s, ETA 142s
+  chunk 10: 100/200 tasks, 132s, ETA 132s
+  chunk 10: 110/200 tasks, 142s, ETA 116s
+  chunk 10: 120/200 tasks, 155s, ETA 103s
+  chunk 10: 130/200 tasks, 168s, ETA 91s
+  chunk 10: 140/200 tasks, 181s, ETA 77s
+  chunk 10: 150/200 tasks, 192s, ETA 64s
+  chunk 10: 160/200 tasks, 205s, ETA 51s
+  chunk 10: 170/200 tasks, 216s, ETA 38s
+  chunk 10: 180/200 tasks, 231s, ETA 26s
+  chunk 10: 190/200 tasks, 244s, ETA 13s
+  chunk 10: 200/200 tasks, 254s, ETA 0s
+chunk 10: 5000/5000 rows in 255s (19.6/s); invalid 2.3%; by source {'perturb': 2500, 'layered': 1500, 'vae': 1000}
+coverage over 50421 valid renders
+  coverage: 2000/50421 (6s)
+  coverage: 4000/50421 (24s)
+  coverage: 6000/50421 (39s)
+  coverage: 8000/50421 (53s)
+  coverage: 10000/50421 (67s)
+  coverage: 12000/50421 (81s)
+  coverage: 14000/50421 (97s)
+  coverage: 16000/50421 (112s)
+  coverage: 18000/50421 (128s)
+  coverage: 20000/50421 (143s)
+  coverage: 22000/50421 (161s)
+  coverage: 24000/50421 (175s)
+  coverage: 26000/50421 (189s)
+  coverage: 28000/50421 (205s)
+  coverage: 30000/50421 (222s)
+  coverage: 32000/50421 (236s)
+  coverage: 34000/50421 (254s)
+  coverage: 36000/50421 (270s)
+  coverage: 38000/50421 (285s)
+  coverage: 40000/50421 (303s)
+  coverage: 42000/50421 (320s)
+  coverage: 44000/50421 (336s)
+  coverage: 46000/50421 (351s)
+  coverage: 48000/50421 (370s)
+  coverage: 50000/50421 (385s)
+  coverage: 50421/50421 (390s)
+{
+ "recall_k10_vs_k200": 0.86,
+ "invalid": {
+  "human": 0.0,
+  "layered": 0.0424,
+  "perturb": 0.0126,
+  "vae": 0.0002
+ },
+ "hot": {
+  "human": 0.0095,
+  "layered": 0.1453,
+  "perturb": 0.0478,
+  "vae": 0.0088
+ },
+ "tail_capped": {
+  "human": 0.2109,
+  "layered": 0.2535,
+  "perturb": 0.2582,
+  "vae": 0.1096
+ }
+}
+
+coverage by source (share > 6.7 dB from every earlier render; nn = distance to the nearest earlier):
+             n    new  nn_median_db
+source                             
+human     1375  0.757         8.103
+layered  14364  0.551         6.939
+perturb  24684  0.291         5.579
+vae       9998  0.193         5.404
+
+perturb by strength:
+             n    new  nn_median_db
+strength                           
+large     7295  0.486         6.635
+medium    9928  0.298         5.776
+small     7461  0.090         3.886
+
+share new by source x category:
+source      human  layered  perturb   vae
+label                                    
+Atmosphere   0.93     0.60     0.31  0.30
+Bass         0.65     0.54     0.27  0.11
+Keys         0.89     0.56     0.36  0.29
+Lead         0.68     0.51     0.25  0.10
+Orchestral   0.74     0.53     0.22  0.16
+Pad          0.84     0.57     0.33  0.22
+Pluck        0.86     0.58     0.36  0.27
+Synth        0.62     0.51     0.22  0.09
+
+coverage curve (share new per 2,000 synthetic rows):
+source  layered  perturb   vae
+bin                           
+0          0.75     0.48  0.44
+1          0.65     0.40  0.29
+2          0.66     0.37  0.29
+3          0.62     0.35  0.25
+4          0.63     0.33  0.22
+5          0.58     0.31  0.24
+6          0.58     0.32  0.19
+7          0.52     0.32  0.17
+8          0.56     0.27  0.19
+9          0.56     0.28  0.17
+10         0.58     0.30  0.19
+11         0.51     0.27  0.19
+12         0.53     0.28  0.17
+13         0.54     0.29  0.17
+14         0.50     0.24  0.16
+15         0.52     0.26  0.15
+16         0.55     0.25  0.17
+17         0.46     0.26  0.16
+18         0.51     0.24  0.17
+19         0.51     0.24  0.14
+20         0.51     0.27  0.14
+21         0.48     0.22  0.14
+22         0.44     0.25  0.14
+23         0.50     0.23  0.12
+24         0.51     0.21  0.13

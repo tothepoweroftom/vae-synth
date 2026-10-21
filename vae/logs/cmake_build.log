@@ -1,0 +1,407 @@
+[  0%] Generating sst-effects-presets resource loader
+[  0%] Generating LuaSources.cpp, include/lua/LuaSources.h
+[  0%] Building CXX object src/platform/CMakeFiles/surge-platform.dir/macos/cpp17-aligned-new.cpp.o
+[  0%] Building C object libs/pffft/CMakeFiles/pffft.dir/pffft.c.o
+[  2%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/correlator.cc.o
+[  2%] Building C object libs/binn/CMakeFiles/binn.dir/binn.c.o
+[  2%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/AirWinBaseClass_pluginRegistry.cpp.o
+-- Found Git: /usr/local/bin/git (found version "2.43.0")
+[  2%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects/presets/voice-effects/3op-pm/Hit Me with an EG.vcfx
+[  2%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects/presets/voice-effects/README.md
+[  2%] Building CXX object src/lua/CMakeFiles/surge-lua-src.dir/LuaSources.cpp.o
+[  2%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects/presets/voice-effects/osc-ebwf/SuperSaw.vcfx
+[  2%] Linking CXX static library libsurge-platform.a
+[  2%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects/presets/voice-effects/osc-ebwf/SuperTri.vcfx
+[  2%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/libs/sst/sst-effects/presets/voice-effects/osc-ebwf/SyncSine.vcfx
+-- Setting up surge version
+--   git hash is d8b4a7bf9 and branch is main
+--   buildhost is MacBook-Pro-van-Matthijs-2.local
+--   buildarch is x86_64
+-- Developer Local Build
+-- Using SURGE_VERSION=1.4.main.d8b4a7bf9
+-- Configuring /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/ignore/bpy/geninclude/version.cpp
+[  2%] Built target version-info
+[  2%] Building CXX object libs/pffft/CMakeFiles/pffft.dir/fft_convolve.cpp.o
+[  2%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/lib.cpp.o
+[  2%] Built target surge-platform
+[  2%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/granular_processor.cc.o
+[  2%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/intermediate/presets/voice-effects/3op-pm/Hit_Me_with_an_EG.vcfx.cpp.o
+[  2%] Linking C static library libbinn.a
+[  2%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ADClip7.cpp.o
+[  2%] Built target binn
+[  2%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/mu_law.cc.o
+[  2%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/pvoc/frame_transformation.cc.o
+[  4%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/intermediate/presets/voice-effects/README.md.cpp.o
+[  4%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/intermediate/presets/voice-effects/osc-ebwf/SuperSaw.vcfx.cpp.o
+[  4%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ADClip7Proc.cpp.o
+[  4%] Linking CXX static library libsurge-lua-src.a
+[  4%] Built target surge-lua-src
+[  4%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/pvoc/phase_vocoder.cc.o
+[  4%] Building CXX object libs/fmt/CMakeFiles/fmt.dir/src/format.cc.o
+[  4%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/intermediate/presets/voice-effects/osc-ebwf/SuperTri.vcfx.cpp.o
+[  4%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-presets.dir/__cmrc_sst-effects-presets/intermediate/presets/voice-effects/osc-ebwf/SyncSine.vcfx.cpp.o
+[  4%] Building CXX object libs/oddsound-mts/CMakeFiles/oddsound-mts.dir/MTS-ESP/Client/libMTSClient.cpp.o
+[  4%] Building CXX object libs/fmt/CMakeFiles/fmt.dir/src/os.cc.o
+[  4%] Linking CXX static library libsst-effects-presets.a
+[  4%] Built target sst-effects-presets
+[  4%] Linking CXX static library libpffft.a
+[  4%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Air.cpp.o
+[  6%] Building CXX object libs/oddsound-mts/CMakeFiles/oddsound-mts.dir/MTS-ESP/Master/libMTSMaster.cpp.o
+[  6%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/dsp/pvoc/stft.cc.o
+[  6%] Built target pffft
+[  6%] Linking CXX static library liboddsound-mts.a
+[  6%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/AirProc.cpp.o
+[  6%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/clouds/resources.cc.o
+[  6%] Built target oddsound-mts
+[  6%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Apicolypse.cpp.o
+[  6%] Building C object libs/sqlite-3.23.3/CMakeFiles/sqlite.dir/sqlite3.c.o
+[  6%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/voice.cc.o
+[  6%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/debug.c.o
+[  6%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ApicolypseProc.cpp.o
+[  6%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/entropy_common.c.o
+[  6%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/error_private.c.o
+[  6%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/fse_decompress.c.o
+[  6%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/pool.c.o
+[  6%] Building CXX object libs/sst/sst-plugininfra/libs/strnatcmp/CMakeFiles/strnatcmp.dir/strnatcmp.cpp.o
+[  9%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/lpc_speech_synth_phonemes.cc.o
+[  9%] Linking CXX static library libstrnatcmp.a
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/threading.c.o
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/xxhash.c.o
+[ 11%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/lpc_speech_synth_controller.cc.o
+[ 11%] Building CXX object libs/sst/sst-plugininfra/libs/tinyxml/CMakeFiles/tinyxml.dir/src/tinystr.cpp.o
+[ 11%] Built target strnatcmp
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/common/zstd_common.c.o
+[ 11%] Building CXX object libs/sst/sst-plugininfra/libs/tinyxml/CMakeFiles/tinyxml.dir/src/tinyxml.cpp.o
+[ 11%] Generating surge-common-binary resource loader
+[ 11%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/README_UserArea.txt
+[ 11%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/lpc_speech_synth.cc.o
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/fse_compress.c.o
+[ 11%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/configuration.xml
+[ 11%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/memoryWavetable.wt
+[ 11%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/oscspecification.html
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/hist.c.o
+[ 11%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/huf_compress.c.o
+[ 13%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/paramdocumentation.xml
+[ 13%] Generating intermediate file for /Users/matthijsvork/Documents/Pitcher/surge-rack-main/surge/resources/surge-shared/windows.wt
+[ 13%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BassDrive.cpp.o
+[ 13%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/lib.cpp.o
+[ 13%] Building CXX object libs/sst/sst-plugininfra/libs/tinyxml/CMakeFiles/tinyxml.dir/src/tinyxmlerror.cpp.o
+[ 13%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_compress.c.o
+[ 13%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/naive_speech_synth.cc.o
+[ 13%] Linking CXX static library libfmt.a
+[ 13%] Built target fmt
+[ 13%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/configuration.xml.cpp.o
+[ 15%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BassDriveProc.cpp.o
+[ 15%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/lpc_speech_synth_words.cc.o
+[ 15%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/speech/sam_speech_synth.cc.o
+[ 15%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_compress_literals.c.o
+[ 15%] Building CXX object libs/sst/sst-effects/CMakeFiles/sst-effects-preset-api.dir/src/preset-api.cpp.o
+[ 18%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_compress_sequences.c.o
+[ 18%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_compress_superblock.c.o
+[ 18%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/physical_modelling/string.cc.o
+[ 18%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/memoryWavetable.wt.cpp.o
+[ 18%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/oscspecification.html.cpp.o
+[ 18%] Building CXX object libs/sst/sst-plugininfra/libs/tinyxml/CMakeFiles/tinyxml.dir/src/tinyxmlparser.cpp.o
+[ 18%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_double_fast.c.o
+[ 18%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/paramdocumentation.xml.cpp.o
+[ 20%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/README_UserArea.txt.cpp.o
+[ 20%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BitGlitter.cpp.o
+[ 20%] Building CXX object src/common/CMakeFiles/surge-common-binary.dir/__cmrc_surge-common-binary/intermediate/windows.wt.cpp.o
+[ 20%] Linking CXX static library libsurge-common-binary.a
+[ 20%] Built target surge-common-binary
+[ 20%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_fast.c.o
+[ 20%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/physical_modelling/resonator.cc.o
+[ 20%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_lazy.c.o
+[ 20%] Building CXX object libs/sst/sst-plugininfra/CMakeFiles/sst-plugininfra.dir/__/__/__/gen/paths_subst.cpp.o
+[ 20%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/physical_modelling/string_voice.cc.o
+[ 20%] Building CXX object libs/sst/sst-plugininfra/CMakeFiles/sst-plugininfra.dir/src/cpufeatures.cpp.o
+[ 22%] Linking CXX static library libsst-effects-preset-api.a
+[ 22%] Built target sst-effects-preset-api
+[ 22%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_ldm.c.o
+[ 22%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BitGlitterProc.cpp.o
+[ 25%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/physical_modelling/modal_voice.cc.o
+[ 25%] Linking CXX static library libtinyxml.a
+[ 25%] Built target tinyxml
+[ 25%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BlockParty.cpp.o
+[ 25%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_opt.c.o
+[ 25%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BlockPartyProc.cpp.o
+[ 25%] Building OBJCXX object libs/sst/sst-plugininfra/CMakeFiles/sst-plugininfra.dir/src/paths_macos.mm.o
+[ 25%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/fm_engine.cc.o
+[ 25%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/swarm_engine.cc.o
+[ 25%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BrightAmbience2.cpp.o
+[ 27%] Building OBJCXX object libs/sst/sst-plugininfra/CMakeFiles/sst-plugininfra.dir/src/misc_macos.mm.o
+[ 27%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstd_preSplit.c.o
+[ 27%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/compress/zstdmt_compress.c.o
+[ 27%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/wavetable_engine.cc.o
+[ 29%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/decompress/huf_decompress.c.o
+[ 29%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BrightAmbience2Proc.cpp.o
+[ 29%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/particle_engine.cc.o
+[ 29%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/decompress/zstd_ddict.c.o
+[ 29%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BussColors4.cpp.o
+[ 29%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/decompress/zstd_decompress.c.o
+[ 29%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/decompress/zstd_decompress_block.c.o
+[ 29%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/noise_engine.cc.o
+[ 31%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/BussColors4Proc.cpp.o
+[ 31%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/dictBuilder/cover.c.o
+[ 31%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/dictBuilder/divsufsort.c.o
+[ 31%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/hi_hat_engine.cc.o
+[ 31%] Linking CXX static library libsst-plugininfra.a
+[ 31%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ButterComp2.cpp.o
+[ 31%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/dictBuilder/fastcover.c.o
+[ 31%] Built target sst-plugininfra
+[ 31%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ButterComp2Proc.cpp.o
+[ 31%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/chord_engine.cc.o
+[ 31%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Cabs.cpp.o
+[ 31%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/dictBuilder/zdict.c.o
+[ 31%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CabsProc.cpp.o
+[ 34%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v01.c.o
+[ 34%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Capacitor.cpp.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/waveshaping_engine.cc.o
+[ 36%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v02.c.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/string_engine.cc.o
+[ 36%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CapacitorProc.cpp.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/modal_engine.cc.o
+[ 36%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v03.c.o
+[ 36%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Chamber.cpp.o
+[ 36%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v04.c.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/grain_engine.cc.o
+[ 36%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v05.c.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/bass_drum_engine.cc.o
+[ 36%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ChamberProc.cpp.o
+[ 36%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v06.c.o
+[ 36%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/speech_engine.cc.o
+[ 38%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ChromeOxide.cpp.o
+[ 38%] Building C object libs/zstd/build/cmake/lib/CMakeFiles/libzstd_static.dir/__/__/__/lib/legacy/zstd_v07.c.o
+[ 38%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ChromeOxideProc.cpp.o
+[ 38%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Cojones.cpp.o
+[ 38%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/additive_engine.cc.o
+[ 38%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CojonesProc.cpp.o
+[ 38%] Linking C static library libzstd.a
+[ 38%] Built target libzstd_static
+[ 38%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/virtual_analog_engine.cc.o
+[ 38%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/dsp/engine/snare_drum_engine.cc.o
+[ 38%] Linking C static library libsqlite.a
+[ 38%] Built target sqlite
+[ 40%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/plaits/resources.cc.o
+[ 40%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Compresaturator.cpp.o
+[ 40%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/stmlib/dsp/units.cc.o
+[ 40%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CompresaturatorProc.cpp.o
+[ 40%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CrunchyGrooveWear.cpp.o
+[ 40%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/CrunchyGrooveWearProc.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeBess.cpp.o
+[ 43%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/stmlib/dsp/atan.cc.o
+[ 43%] Building CXX object libs/eurorack/CMakeFiles/eurorack.dir/eurorack/stmlib/utils/random.cc.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeBessProc.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeEss.cpp.o
+[ 43%] Linking CXX static library libeurorack.a
+[ 43%] Built target eurorack
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeEssProc.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeRez2.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeRez2Proc.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeckWrecka.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DeckWreckaProc.cpp.o
+[ 43%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Density.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DensityProc.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Drive.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DriveProc.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DrumSlam.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DrumSlamProc.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DubSub.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DubSubProc.cpp.o
+[ 45%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DubCenter.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DubCenterProc.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DustBunny.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/DustBunnyProc.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/FireAmp.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/FireAmpProc.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Focus.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/FocusProc.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Fracture.cpp.o
+[ 47%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/FractureProc.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Galactic.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/GalacticProc.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/GlitchShifter.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/GlitchShifterProc.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/GrooveWear.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/GrooveWearProc.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/HardVacuum.cpp.o
+[ 50%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/HardVacuumProc.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Hombre.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/HombreProc.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Infinity.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/InfinityProc.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/IronOxide5.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/IronOxide5Proc.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Logical4.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Logical4Proc.cpp.o
+[ 52%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Loud.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/LoudProc.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Mackity.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MackityProc.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MackEQ.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MackEQProc.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MatrixVerb.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MatrixVerbProc.cpp.o
+[ 54%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Melt.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MeltProc.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Mojo.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/MojoProc.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/NCSeventeen.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/NCSeventeenProc.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Noise.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/NoiseProc.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/NonlinearSpace.cpp.o
+[ 56%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/NonlinearSpaceProc.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/OneCornerClip.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/OneCornerClipProc.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Pafnuty.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PafnutyProc.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PocketVerbs.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PocketVerbsProc.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Point.cpp.o
+[ 59%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PointProc.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Pop.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PopProc.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PowerSag.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PowerSagProc.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Pressure4.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Pressure4Proc.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PyeWacket.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/PyeWacketProc.cpp.o
+[ 61%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/SingleEndedTriode.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/SingleEndedTriodeProc.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Slew.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Slew2.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Slew2Proc.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/SlewProc.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Spiral2.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Spiral2Proc.cpp.o
+[ 63%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/StarChild.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/StarChildProc.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Surge.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/SurgeProc.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/TapeDust.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/TapeDustProc.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ToTape6.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ToTape6Proc.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ToVinyl4.cpp.o
+[ 65%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ToVinyl4Proc.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/TripleSpread.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/TripleSpreadProc.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/UnBox.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/UnBoxProc.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/Verbity.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/VerbityProc.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/VariMu.cpp.o
+[ 68%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/VariMuProc.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/VoiceOfTheStarship.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/VoiceOfTheStarshipProc.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YBandpass.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YBandpassProc.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YHighpass.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YHighpassProc.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YLowpass.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YLowpassProc.cpp.o
+[ 70%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YNotch.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/YNotchProc.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZBandpass2.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZBandpass2Proc.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZHighpass2.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZHighpass2Proc.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZLowpass2.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZLowpass2Proc.cpp.o
+[ 72%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZNotch2.cpp.o
+[ 75%] Building CXX object libs/airwindows/CMakeFiles/airwindows.dir/src/ZNotch2Proc.cpp.o
+[ 75%] Linking CXX static library libairwindows.a
+[ 75%] Built target airwindows
+[ 75%] Building CXX object src/common/CMakeFiles/surge-common.dir/LuaSupport.cpp.o
+[ 75%] Building CXX object src/common/CMakeFiles/surge-common.dir/ModulatorPresetManager.cpp.o
+[ 75%] Building CXX object src/common/CMakeFiles/surge-common.dir/FxPresetAndClipboardManager.cpp.o
+[ 75%] Building CXX object src/common/CMakeFiles/surge-common.dir/ModulationSource.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/MTSESPTuning.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/DebugHelpers.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/PatchDB.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/Parameter.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/PatchDBQueryParser.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/SkinColors.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/SkinFonts.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/SkinModel.cpp.o
+[ 77%] Building CXX object src/common/CMakeFiles/surge-common.dir/SkinModelImpl.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/SurgePatch.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/SurgeStorage.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/SurgeSynthesizer.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/SurgeSynthesizerIO.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/UserDefaults.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/WAVFileSupport.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/Effect.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/Oscillator.cpp.o
+[ 79%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/QuadFilterChain.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/SurgeVoice.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/TiltNoiseAdapter.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/Wavetable.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/WavetableScriptEvaluator.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/WtGenService.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/BBDEnsembleEffect.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/BonsaiEffect.cpp.o
+[ 81%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/CombulatorEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/ConditionerEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/ConvolutionEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/DelayEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/DistortionEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/FlangerEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/FloatyDelayEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/FrequencyShifterEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/GraphicEQ11BandEffect.cpp.o
+[ 84%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/MSToolEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/NimbusEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/ParametricEQ3BandEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/PhaserEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/ResonatorEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/Reverb1Effect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/Reverb2Effect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/RingModulatorEffect.cpp.o
+[ 86%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/RotarySpeakerEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/TreemonsterEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/VocoderEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/WaveShaperEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/airwindows/AirWindowsEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/CHOWEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/ExciterEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/NeuronEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/SpringReverbEffect.cpp.o
+[ 88%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/TapeEffect.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/bbd_utils/BBDDelayLine.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/exciter/LevelDetector.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/shared/StateVariableFilter.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/spring_reverb/SpringReverbProc.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/ChewProcessor.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/DegradeProcessor.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/HysteresisProcessing.cpp.o
+[ 90%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/HysteresisProcessor.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/LossFilter.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/chowdsp/tape/ToneControl.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/effects/AudioInputEffect.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/filters/VectorizedSVFilter.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/modulators/FormulaModulationHelper.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/modulators/LFOModulationSource.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/modulators/MSEGModulationHelper.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/AliasOscillator.cpp.o
+[ 93%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/AudioInputOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/ClassicOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/FM2Oscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/FM3Oscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/ModernOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/SampleAndHoldOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/SineOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/StringOscillator.cpp.o
+[ 95%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/TwistOscillator.cpp.o
+[ 97%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/WavetableOscillator.cpp.o
+[ 97%] Building CXX object src/common/CMakeFiles/surge-common.dir/dsp/oscillators/WindowOscillator.cpp.o
+[ 97%] Building CXX object src/common/CMakeFiles/surge-common.dir/__/__/geninclude/version.cpp.o
+[ 97%] Building CXX object src/common/CMakeFiles/surge-common.dir/__/__/libs/r8brain-free-src/r8bbase.cpp.o
+[ 97%] Linking CXX static library libsurge-common.a
+[ 97%] Built target surge-common
+[ 97%] Building CXX object src/surge-python/CMakeFiles/surgepy.dir/surgepy.cpp.o
+[100%] Linking CXX shared module surgepy.cpython-312-darwin.so
+[100%] Built target surgepy
+exit 0

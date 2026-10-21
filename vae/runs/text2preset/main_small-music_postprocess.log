@@ -1,0 +1,1105 @@
+48000 clips, 12000 prompts
+  300 Surge controls analysed, 60 s
+  analysed 200/48000, 121 s
+  analysed 400/48000, 165 s
+  analysed 600/48000, 210 s
+  analysed 800/48000, 257 s
+  analysed 1000/48000, 303 s
+  analysed 1200/48000, 347 s
+  analysed 1400/48000, 394 s
+  analysed 1600/48000, 440 s
+  analysed 1800/48000, 487 s
+  analysed 2000/48000, 538 s
+  analysed 2200/48000, 585 s
+  analysed 2400/48000, 631 s
+  analysed 2600/48000, 679 s
+  analysed 2800/48000, 727 s
+  analysed 3000/48000, 778 s
+  analysed 3200/48000, 827 s
+  analysed 3400/48000, 877 s
+  analysed 3600/48000, 924 s
+  analysed 3800/48000, 977 s
+  analysed 4000/48000, 1024 s
+  analysed 4200/48000, 1068 s
+  analysed 4400/48000, 1112 s
+  analysed 4600/48000, 1159 s
+  analysed 4800/48000, 1205 s
+  analysed 5000/48000, 1251 s
+  analysed 5200/48000, 1295 s
+  analysed 5400/48000, 1346 s
+  analysed 5600/48000, 1399 s
+  analysed 5800/48000, 1446 s
+  analysed 6000/48000, 1489 s
+  analysed 6200/48000, 1537 s
+  analysed 6400/48000, 1597 s
+  analysed 6600/48000, 1654 s
+  analysed 6800/48000, 1714 s
+  analysed 7000/48000, 1769 s
+  analysed 7200/48000, 1815 s
+  analysed 7400/48000, 1862 s
+  analysed 7600/48000, 1908 s
+  analysed 7800/48000, 1959 s
+  analysed 8000/48000, 2005 s
+  analysed 8200/48000, 2050 s
+  analysed 8400/48000, 2096 s
+  analysed 8600/48000, 2140 s
+  analysed 8800/48000, 2187 s
+  analysed 9000/48000, 2235 s
+  analysed 9200/48000, 2279 s
+  analysed 9400/48000, 2324 s
+  analysed 9600/48000, 2367 s
+  analysed 9800/48000, 2412 s
+  analysed 10000/48000, 2457 s
+  analysed 10200/48000, 2500 s
+  analysed 10400/48000, 2547 s
+  analysed 10600/48000, 2595 s
+  analysed 10800/48000, 2659 s
+  analysed 11000/48000, 2717 s
+  analysed 11200/48000, 2765 s
+  analysed 11400/48000, 2808 s
+  analysed 11600/48000, 2852 s
+  analysed 11800/48000, 2899 s
+  analysed 12000/48000, 2942 s
+  analysed 12200/48000, 2986 s
+  analysed 12400/48000, 3027 s
+  analysed 12600/48000, 3073 s
+  analysed 12800/48000, 3116 s
+  analysed 13000/48000, 3161 s
+  analysed 13200/48000, 3207 s
+  analysed 13400/48000, 3250 s
+  analysed 13600/48000, 3294 s
+  analysed 13800/48000, 3339 s
+  analysed 14000/48000, 3388 s
+  analysed 14200/48000, 3433 s
+  analysed 14400/48000, 3491 s
+  analysed 14600/48000, 3535 s
+  analysed 14800/48000, 3585 s
+  analysed 15000/48000, 3629 s
+  analysed 15200/48000, 3676 s
+  analysed 15400/48000, 3724 s
+  analysed 15600/48000, 3769 s
+  analysed 15800/48000, 3819 s
+  analysed 16000/48000, 3871 s
+  analysed 16200/48000, 3922 s
+  analysed 16400/48000, 3967 s
+  analysed 16600/48000, 4012 s
+  analysed 16800/48000, 4056 s
+  analysed 17000/48000, 4100 s
+  analysed 17200/48000, 4152 s
+  analysed 17400/48000, 4194 s
+  analysed 17600/48000, 4237 s
+  analysed 17800/48000, 4279 s
+  analysed 18000/48000, 4330 s
+  analysed 18200/48000, 4374 s
+  analysed 18400/48000, 4418 s
+  analysed 18600/48000, 4465 s
+  analysed 18800/48000, 4509 s
+  analysed 19000/48000, 4554 s
+  analysed 19200/48000, 4597 s
+  analysed 19400/48000, 4642 s
+  analysed 19600/48000, 4686 s
+  analysed 19800/48000, 4728 s
+  analysed 20000/48000, 4771 s
+  analysed 20200/48000, 4812 s
+  analysed 20400/48000, 4857 s
+  analysed 20600/48000, 4903 s
+  analysed 20800/48000, 4949 s
+  analysed 21000/48000, 4995 s
+  analysed 21200/48000, 5040 s
+  analysed 21400/48000, 5083 s
+  analysed 21600/48000, 5126 s
+  analysed 21800/48000, 5170 s
+  analysed 22000/48000, 5214 s
+  analysed 22200/48000, 5257 s
+  analysed 22400/48000, 5301 s
+  analysed 22600/48000, 5343 s
+  analysed 22800/48000, 5386 s
+  analysed 23000/48000, 5429 s
+  analysed 23200/48000, 5472 s
+  analysed 23400/48000, 5514 s
+  analysed 23600/48000, 5560 s
+  analysed 23800/48000, 5601 s
+  analysed 24000/48000, 5645 s
+  analysed 24200/48000, 5687 s
+  analysed 24400/48000, 5730 s
+  analysed 24600/48000, 5774 s
+  analysed 24800/48000, 5817 s
+  analysed 25000/48000, 5862 s
+  analysed 25200/48000, 5909 s
+  analysed 25400/48000, 5952 s
+  analysed 25600/48000, 5995 s
+  analysed 25800/48000, 6041 s
+  analysed 26000/48000, 6087 s
+  analysed 26200/48000, 6133 s
+  analysed 26400/48000, 6181 s
+  analysed 26600/48000, 6231 s
+  analysed 26800/48000, 6277 s
+  analysed 27000/48000, 6321 s
+  analysed 27200/48000, 6368 s
+  analysed 27400/48000, 6413 s
+  analysed 27600/48000, 6462 s
+  analysed 27800/48000, 6505 s
+  analysed 28000/48000, 6550 s
+  analysed 28200/48000, 6597 s
+  analysed 28400/48000, 6641 s
+  analysed 28600/48000, 6685 s
+  analysed 28800/48000, 6730 s
+  analysed 29000/48000, 6776 s
+  analysed 29200/48000, 6825 s
+  analysed 29400/48000, 6870 s
+  analysed 29600/48000, 6915 s
+  analysed 29800/48000, 6960 s
+  analysed 30000/48000, 7009 s
+  analysed 30200/48000, 7059 s
+  analysed 30400/48000, 7110 s
+  analysed 30600/48000, 7157 s
+  analysed 30800/48000, 7207 s
+  analysed 31000/48000, 7262 s
+  analysed 31200/48000, 7311 s
+  analysed 31400/48000, 7356 s
+  analysed 31600/48000, 7404 s
+  analysed 31800/48000, 7450 s
+  analysed 32000/48000, 7497 s
+  analysed 32200/48000, 7560 s
+  analysed 32400/48000, 7615 s
+  analysed 32600/48000, 7670 s
+  analysed 32800/48000, 7720 s
+  analysed 33000/48000, 7778 s
+  analysed 33200/48000, 7831 s
+  analysed 33400/48000, 7881 s
+  analysed 33600/48000, 7935 s
+  analysed 33800/48000, 7997 s
+  analysed 34000/48000, 8044 s
+  analysed 34200/48000, 8089 s
+  analysed 34400/48000, 8135 s
+  analysed 34600/48000, 8183 s
+  analysed 34800/48000, 8229 s
+  analysed 35000/48000, 8275 s
+  analysed 35200/48000, 8322 s
+  analysed 35400/48000, 8368 s
+  analysed 35600/48000, 8414 s
+  analysed 35800/48000, 8463 s
+  analysed 36000/48000, 8512 s
+  analysed 36200/48000, 8558 s
+  analysed 36400/48000, 8605 s
+  analysed 36600/48000, 8652 s
+  analysed 36800/48000, 8697 s
+  analysed 37000/48000, 8744 s
+  analysed 37200/48000, 8795 s
+  analysed 37400/48000, 8855 s
+  analysed 37600/48000, 8901 s
+  analysed 37800/48000, 8952 s
+  analysed 38000/48000, 9002 s
+  analysed 38200/48000, 9056 s
+  analysed 38400/48000, 9119 s
+  analysed 38600/48000, 9173 s
+  analysed 38800/48000, 9235 s
+  analysed 39000/48000, 9296 s
+  analysed 39200/48000, 9355 s
+  analysed 39400/48000, 9405 s
+  analysed 39600/48000, 9457 s
+  analysed 39800/48000, 9513 s
+  analysed 40000/48000, 9556 s
+  analysed 40200/48000, 9602 s
+  analysed 40400/48000, 9647 s
+  analysed 40600/48000, 9691 s
+  analysed 40800/48000, 9736 s
+  analysed 41000/48000, 9780 s
+  analysed 41200/48000, 9824 s
+  analysed 41400/48000, 9872 s
+  analysed 41600/48000, 9917 s
+  analysed 41800/48000, 9962 s
+  analysed 42000/48000, 10006 s
+  analysed 42200/48000, 10050 s
+  analysed 42400/48000, 10094 s
+  analysed 42600/48000, 10140 s
+  analysed 42800/48000, 10185 s
+  analysed 43000/48000, 10230 s
+  analysed 43200/48000, 10278 s
+  analysed 43400/48000, 10320 s
+  analysed 43600/48000, 10365 s
+  analysed 43800/48000, 10411 s
+  analysed 44000/48000, 10455 s
+  analysed 44200/48000, 10501 s
+  analysed 44400/48000, 10548 s
+  analysed 44600/48000, 10591 s
+  analysed 44800/48000, 10636 s
+  analysed 45000/48000, 10680 s
+  analysed 45200/48000, 10725 s
+  analysed 45400/48000, 10769 s
+  analysed 45600/48000, 10811 s
+  analysed 45800/48000, 10858 s
+  analysed 46000/48000, 10906 s
+  analysed 46200/48000, 10951 s
+  analysed 46400/48000, 10996 s
+  analysed 46600/48000, 11039 s
+  analysed 46800/48000, 11087 s
+  analysed 47000/48000, 11131 s
+  analysed 47200/48000, 11173 s
+  analysed 47400/48000, 11218 s
+  analysed 47600/48000, 11260 s
+  analysed 47800/48000, 11303 s
+  analysed 48000/48000, 11345 s
+
+
+
+  device: torch.device = torch.device(torch._C._get_default_device()),  # torch.device('cpu'),
+  CLAP 64/48000
+  CLAP 128/48000
+  CLAP 192/48000
+  CLAP 256/48000
+  CLAP 320/48000
+  CLAP 384/48000
+  CLAP 448/48000
+  CLAP 512/48000
+  CLAP 576/48000
+  CLAP 640/48000
+  CLAP 704/48000
+  CLAP 768/48000
+  CLAP 832/48000
+  CLAP 896/48000
+  CLAP 960/48000
+  CLAP 1024/48000
+  CLAP 1088/48000
+  CLAP 1152/48000
+  CLAP 1216/48000
+  CLAP 1280/48000
+  CLAP 1344/48000
+  CLAP 1408/48000
+  CLAP 1472/48000
+  CLAP 1536/48000
+  CLAP 1600/48000
+  CLAP 1664/48000
+  CLAP 1728/48000
+  CLAP 1792/48000
+  CLAP 1856/48000
+  CLAP 1920/48000
+  CLAP 1984/48000
+  CLAP 2048/48000
+  CLAP 2112/48000
+  CLAP 2176/48000
+  CLAP 2240/48000
+  CLAP 2304/48000
+  CLAP 2368/48000
+  CLAP 2432/48000
+  CLAP 2496/48000
+  CLAP 2560/48000
+  CLAP 2624/48000
+  CLAP 2688/48000
+  CLAP 2752/48000
+  CLAP 2816/48000
+  CLAP 2880/48000
+  CLAP 2944/48000
+  CLAP 3008/48000
+  CLAP 3072/48000
+  CLAP 3136/48000
+  CLAP 3200/48000
+  CLAP 3264/48000
+  CLAP 3328/48000
+  CLAP 3392/48000
+  CLAP 3456/48000
+  CLAP 3520/48000
+  CLAP 3584/48000
+  CLAP 3648/48000
+  CLAP 3712/48000
+  CLAP 3776/48000
+  CLAP 3840/48000
+  CLAP 3904/48000
+  CLAP 3968/48000
+  CLAP 4032/48000
+  CLAP 4096/48000
+  CLAP 4160/48000
+  CLAP 4224/48000
+  CLAP 4288/48000
+  CLAP 4352/48000
+  CLAP 4416/48000
+  CLAP 4480/48000
+  CLAP 4544/48000
+  CLAP 4608/48000
+  CLAP 4672/48000
+  CLAP 4736/48000
+  CLAP 4800/48000
+  CLAP 4864/48000
+  CLAP 4928/48000
+  CLAP 4992/48000
+  CLAP 5056/48000
+  CLAP 5120/48000
+  CLAP 5184/48000
+  CLAP 5248/48000
+  CLAP 5312/48000
+  CLAP 5376/48000
+  CLAP 5440/48000
+  CLAP 5504/48000
+  CLAP 5568/48000
+  CLAP 5632/48000
+  CLAP 5696/48000
+  CLAP 5760/48000
+  CLAP 5824/48000
+  CLAP 5888/48000
+  CLAP 5952/48000
+  CLAP 6016/48000
+  CLAP 6080/48000
+  CLAP 6144/48000
+  CLAP 6208/48000
+  CLAP 6272/48000
+  CLAP 6336/48000
+  CLAP 6400/48000
+  CLAP 6464/48000
+  CLAP 6528/48000
+  CLAP 6592/48000
+  CLAP 6656/48000
+  CLAP 6720/48000
+  CLAP 6784/48000
+  CLAP 6848/48000
+  CLAP 6912/48000
+  CLAP 6976/48000
+  CLAP 7040/48000
+  CLAP 7104/48000
+  CLAP 7168/48000
+  CLAP 7232/48000
+  CLAP 7296/48000
+  CLAP 7360/48000
+  CLAP 7424/48000
+  CLAP 7488/48000
+  CLAP 7552/48000
+  CLAP 7616/48000
+  CLAP 7680/48000
+  CLAP 7744/48000
+  CLAP 7808/48000
+  CLAP 7872/48000
+  CLAP 7936/48000
+  CLAP 8000/48000
+  CLAP 8064/48000
+  CLAP 8128/48000
+  CLAP 8192/48000
+  CLAP 8256/48000
+  CLAP 8320/48000
+  CLAP 8384/48000
+  CLAP 8448/48000
+  CLAP 8512/48000
+  CLAP 8576/48000
+  CLAP 8640/48000
+  CLAP 8704/48000
+  CLAP 8768/48000
+  CLAP 8832/48000
+  CLAP 8896/48000
+  CLAP 8960/48000
+  CLAP 9024/48000
+  CLAP 9088/48000
+  CLAP 9152/48000
+  CLAP 9216/48000
+  CLAP 9280/48000
+  CLAP 9344/48000
+  CLAP 9408/48000
+  CLAP 9472/48000
+  CLAP 9536/48000
+  CLAP 9600/48000
+  CLAP 9664/48000
+  CLAP 9728/48000
+  CLAP 9792/48000
+  CLAP 9856/48000
+  CLAP 9920/48000
+  CLAP 9984/48000
+  CLAP 10048/48000
+  CLAP 10112/48000
+  CLAP 10176/48000
+  CLAP 10240/48000
+  CLAP 10304/48000
+  CLAP 10368/48000
+  CLAP 10432/48000
+  CLAP 10496/48000
+  CLAP 10560/48000
+  CLAP 10624/48000
+  CLAP 10688/48000
+  CLAP 10752/48000
+  CLAP 10816/48000
+  CLAP 10880/48000
+  CLAP 10944/48000
+  CLAP 11008/48000
+  CLAP 11072/48000
+  CLAP 11136/48000
+  CLAP 11200/48000
+  CLAP 11264/48000
+  CLAP 11328/48000
+  CLAP 11392/48000
+  CLAP 11456/48000
+  CLAP 11520/48000
+  CLAP 11584/48000
+  CLAP 11648/48000
+  CLAP 11712/48000
+  CLAP 11776/48000
+  CLAP 11840/48000
+  CLAP 11904/48000
+  CLAP 11968/48000
+  CLAP 12032/48000
+  CLAP 12096/48000
+  CLAP 12160/48000
+  CLAP 12224/48000
+  CLAP 12288/48000
+  CLAP 12352/48000
+  CLAP 12416/48000
+  CLAP 12480/48000
+  CLAP 12544/48000
+  CLAP 12608/48000
+  CLAP 12672/48000
+  CLAP 12736/48000
+  CLAP 12800/48000
+  CLAP 12864/48000
+  CLAP 12928/48000
+  CLAP 12992/48000
+  CLAP 13056/48000
+  CLAP 13120/48000
+  CLAP 13184/48000
+  CLAP 13248/48000
+  CLAP 13312/48000
+  CLAP 13376/48000
+  CLAP 13440/48000
+  CLAP 13504/48000
+  CLAP 13568/48000
+  CLAP 13632/48000
+  CLAP 13696/48000
+  CLAP 13760/48000
+  CLAP 13824/48000
+  CLAP 13888/48000
+  CLAP 13952/48000
+  CLAP 14016/48000
+  CLAP 14080/48000
+  CLAP 14144/48000
+  CLAP 14208/48000
+  CLAP 14272/48000
+  CLAP 14336/48000
+  CLAP 14400/48000
+  CLAP 14464/48000
+  CLAP 14528/48000
+  CLAP 14592/48000
+  CLAP 14656/48000
+  CLAP 14720/48000
+  CLAP 14784/48000
+  CLAP 14848/48000
+  CLAP 14912/48000
+  CLAP 14976/48000
+  CLAP 15040/48000
+  CLAP 15104/48000
+  CLAP 15168/48000
+  CLAP 15232/48000
+  CLAP 15296/48000
+  CLAP 15360/48000
+  CLAP 15424/48000
+  CLAP 15488/48000
+  CLAP 15552/48000
+  CLAP 15616/48000
+  CLAP 15680/48000
+  CLAP 15744/48000
+  CLAP 15808/48000
+  CLAP 15872/48000
+  CLAP 15936/48000
+  CLAP 16000/48000
+  CLAP 16064/48000
+  CLAP 16128/48000
+  CLAP 16192/48000
+  CLAP 16256/48000
+  CLAP 16320/48000
+  CLAP 16384/48000
+  CLAP 16448/48000
+  CLAP 16512/48000
+  CLAP 16576/48000
+  CLAP 16640/48000
+  CLAP 16704/48000
+  CLAP 16768/48000
+  CLAP 16832/48000
+  CLAP 16896/48000
+  CLAP 16960/48000
+  CLAP 17024/48000
+  CLAP 17088/48000
+  CLAP 17152/48000
+  CLAP 17216/48000
+  CLAP 17280/48000
+  CLAP 17344/48000
+  CLAP 17408/48000
+  CLAP 17472/48000
+  CLAP 17536/48000
+  CLAP 17600/48000
+  CLAP 17664/48000
+  CLAP 17728/48000
+  CLAP 17792/48000
+  CLAP 17856/48000
+  CLAP 17920/48000
+  CLAP 17984/48000
+  CLAP 18048/48000
+  CLAP 18112/48000
+  CLAP 18176/48000
+  CLAP 18240/48000
+  CLAP 18304/48000
+  CLAP 18368/48000
+  CLAP 18432/48000
+  CLAP 18496/48000
+  CLAP 18560/48000
+  CLAP 18624/48000
+  CLAP 18688/48000
+  CLAP 18752/48000
+  CLAP 18816/48000
+  CLAP 18880/48000
+  CLAP 18944/48000
+  CLAP 19008/48000
+  CLAP 19072/48000
+  CLAP 19136/48000
+  CLAP 19200/48000
+  CLAP 19264/48000
+  CLAP 19328/48000
+  CLAP 19392/48000
+  CLAP 19456/48000
+  CLAP 19520/48000
+  CLAP 19584/48000
+  CLAP 19648/48000
+  CLAP 19712/48000
+  CLAP 19776/48000
+  CLAP 19840/48000
+  CLAP 19904/48000
+  CLAP 19968/48000
+  CLAP 20032/48000
+  CLAP 20096/48000
+  CLAP 20160/48000
+  CLAP 20224/48000
+  CLAP 20288/48000
+  CLAP 20352/48000
+  CLAP 20416/48000
+  CLAP 20480/48000
+  CLAP 20544/48000
+  CLAP 20608/48000
+  CLAP 20672/48000
+  CLAP 20736/48000
+  CLAP 20800/48000
+  CLAP 20864/48000
+  CLAP 20928/48000
+  CLAP 20992/48000
+  CLAP 21056/48000
+  CLAP 21120/48000
+  CLAP 21184/48000
+  CLAP 21248/48000
+  CLAP 21312/48000
+  CLAP 21376/48000
+  CLAP 21440/48000
+  CLAP 21504/48000
+  CLAP 21568/48000
+  CLAP 21632/48000
+  CLAP 21696/48000
+  CLAP 21760/48000
+  CLAP 21824/48000
+  CLAP 21888/48000
+  CLAP 21952/48000
+  CLAP 22016/48000
+  CLAP 22080/48000
+  CLAP 22144/48000
+  CLAP 22208/48000
+  CLAP 22272/48000
+  CLAP 22336/48000
+  CLAP 22400/48000
+  CLAP 22464/48000
+  CLAP 22528/48000
+  CLAP 22592/48000
+  CLAP 22656/48000
+  CLAP 22720/48000
+  CLAP 22784/48000
+  CLAP 22848/48000
+  CLAP 22912/48000
+  CLAP 22976/48000
+  CLAP 23040/48000
+  CLAP 23104/48000
+  CLAP 23168/48000
+  CLAP 23232/48000
+  CLAP 23296/48000
+  CLAP 23360/48000
+  CLAP 23424/48000
+  CLAP 23488/48000
+  CLAP 23552/48000
+  CLAP 23616/48000
+  CLAP 23680/48000
+  CLAP 23744/48000
+  CLAP 23808/48000
+  CLAP 23872/48000
+  CLAP 23936/48000
+  CLAP 24000/48000
+  CLAP 24064/48000
+  CLAP 24128/48000
+  CLAP 24192/48000
+  CLAP 24256/48000
+  CLAP 24320/48000
+  CLAP 24384/48000
+  CLAP 24448/48000
+  CLAP 24512/48000
+  CLAP 24576/48000
+  CLAP 24640/48000
+  CLAP 24704/48000
+  CLAP 24768/48000
+  CLAP 24832/48000
+  CLAP 24896/48000
+  CLAP 24960/48000
+  CLAP 25024/48000
+  CLAP 25088/48000
+  CLAP 25152/48000
+  CLAP 25216/48000
+  CLAP 25280/48000
+  CLAP 25344/48000
+  CLAP 25408/48000
+  CLAP 25472/48000
+  CLAP 25536/48000
+  CLAP 25600/48000
+  CLAP 25664/48000
+  CLAP 25728/48000
+  CLAP 25792/48000
+  CLAP 25856/48000
+  CLAP 25920/48000
+  CLAP 25984/48000
+  CLAP 26048/48000
+  CLAP 26112/48000
+  CLAP 26176/48000
+  CLAP 26240/48000
+  CLAP 26304/48000
+  CLAP 26368/48000
+  CLAP 26432/48000
+  CLAP 26496/48000
+  CLAP 26560/48000
+  CLAP 26624/48000
+  CLAP 26688/48000
+  CLAP 26752/48000
+  CLAP 26816/48000
+  CLAP 26880/48000
+  CLAP 26944/48000
+  CLAP 27008/48000
+  CLAP 27072/48000
+  CLAP 27136/48000
+  CLAP 27200/48000
+  CLAP 27264/48000
+  CLAP 27328/48000
+  CLAP 27392/48000
+  CLAP 27456/48000
+  CLAP 27520/48000
+  CLAP 27584/48000
+  CLAP 27648/48000
+  CLAP 27712/48000
+  CLAP 27776/48000
+  CLAP 27840/48000
+  CLAP 27904/48000
+  CLAP 27968/48000
+  CLAP 28032/48000
+  CLAP 28096/48000
+  CLAP 28160/48000
+  CLAP 28224/48000
+  CLAP 28288/48000
+  CLAP 28352/48000
+  CLAP 28416/48000
+  CLAP 28480/48000
+  CLAP 28544/48000
+  CLAP 28608/48000
+  CLAP 28672/48000
+  CLAP 28736/48000
+  CLAP 28800/48000
+  CLAP 28864/48000
+  CLAP 28928/48000
+  CLAP 28992/48000
+  CLAP 29056/48000
+  CLAP 29120/48000
+  CLAP 29184/48000
+  CLAP 29248/48000
+  CLAP 29312/48000
+  CLAP 29376/48000
+  CLAP 29440/48000
+  CLAP 29504/48000
+  CLAP 29568/48000
+  CLAP 29632/48000
+  CLAP 29696/48000
+  CLAP 29760/48000
+  CLAP 29824/48000
+  CLAP 29888/48000
+  CLAP 29952/48000
+  CLAP 30016/48000
+  CLAP 30080/48000
+  CLAP 30144/48000
+  CLAP 30208/48000
+  CLAP 30272/48000
+  CLAP 30336/48000
+  CLAP 30400/48000
+  CLAP 30464/48000
+  CLAP 30528/48000
+  CLAP 30592/48000
+  CLAP 30656/48000
+  CLAP 30720/48000
+  CLAP 30784/48000
+  CLAP 30848/48000
+  CLAP 30912/48000
+  CLAP 30976/48000
+  CLAP 31040/48000
+  CLAP 31104/48000
+  CLAP 31168/48000
+  CLAP 31232/48000
+  CLAP 31296/48000
+  CLAP 31360/48000
+  CLAP 31424/48000
+  CLAP 31488/48000
+  CLAP 31552/48000
+  CLAP 31616/48000
+  CLAP 31680/48000
+  CLAP 31744/48000
+  CLAP 31808/48000
+  CLAP 31872/48000
+  CLAP 31936/48000
+  CLAP 32000/48000
+  CLAP 32064/48000
+  CLAP 32128/48000
+  CLAP 32192/48000
+  CLAP 32256/48000
+  CLAP 32320/48000
+  CLAP 32384/48000
+  CLAP 32448/48000
+  CLAP 32512/48000
+  CLAP 32576/48000
+  CLAP 32640/48000
+  CLAP 32704/48000
+  CLAP 32768/48000
+  CLAP 32832/48000
+  CLAP 32896/48000
+  CLAP 32960/48000
+  CLAP 33024/48000
+  CLAP 33088/48000
+  CLAP 33152/48000
+  CLAP 33216/48000
+  CLAP 33280/48000
+  CLAP 33344/48000
+  CLAP 33408/48000
+  CLAP 33472/48000
+  CLAP 33536/48000
+  CLAP 33600/48000
+  CLAP 33664/48000
+  CLAP 33728/48000
+  CLAP 33792/48000
+  CLAP 33856/48000
+  CLAP 33920/48000
+  CLAP 33984/48000
+  CLAP 34048/48000
+  CLAP 34112/48000
+  CLAP 34176/48000
+  CLAP 34240/48000
+  CLAP 34304/48000
+  CLAP 34368/48000
+  CLAP 34432/48000
+  CLAP 34496/48000
+  CLAP 34560/48000
+  CLAP 34624/48000
+  CLAP 34688/48000
+  CLAP 34752/48000
+  CLAP 34816/48000
+  CLAP 34880/48000
+  CLAP 34944/48000
+  CLAP 35008/48000
+  CLAP 35072/48000
+  CLAP 35136/48000
+  CLAP 35200/48000
+  CLAP 35264/48000
+  CLAP 35328/48000
+  CLAP 35392/48000
+  CLAP 35456/48000
+  CLAP 35520/48000
+  CLAP 35584/48000
+  CLAP 35648/48000
+  CLAP 35712/48000
+  CLAP 35776/48000
+  CLAP 35840/48000
+  CLAP 35904/48000
+  CLAP 35968/48000
+  CLAP 36032/48000
+  CLAP 36096/48000
+  CLAP 36160/48000
+  CLAP 36224/48000
+  CLAP 36288/48000
+  CLAP 36352/48000
+  CLAP 36416/48000
+  CLAP 36480/48000
+  CLAP 36544/48000
+  CLAP 36608/48000
+  CLAP 36672/48000
+  CLAP 36736/48000
+  CLAP 36800/48000
+  CLAP 36864/48000
+  CLAP 36928/48000
+  CLAP 36992/48000
+  CLAP 37056/48000
+  CLAP 37120/48000
+  CLAP 37184/48000
+  CLAP 37248/48000
+  CLAP 37312/48000
+  CLAP 37376/48000
+  CLAP 37440/48000
+  CLAP 37504/48000
+  CLAP 37568/48000
+  CLAP 37632/48000
+  CLAP 37696/48000
+  CLAP 37760/48000
+  CLAP 37824/48000
+  CLAP 37888/48000
+  CLAP 37952/48000
+  CLAP 38016/48000
+  CLAP 38080/48000
+  CLAP 38144/48000
+  CLAP 38208/48000
+  CLAP 38272/48000
+  CLAP 38336/48000
+  CLAP 38400/48000
+  CLAP 38464/48000
+  CLAP 38528/48000
+  CLAP 38592/48000
+  CLAP 38656/48000
+  CLAP 38720/48000
+  CLAP 38784/48000
+  CLAP 38848/48000
+  CLAP 38912/48000
+  CLAP 38976/48000
+  CLAP 39040/48000
+  CLAP 39104/48000
+  CLAP 39168/48000
+  CLAP 39232/48000
+  CLAP 39296/48000
+  CLAP 39360/48000
+  CLAP 39424/48000
+  CLAP 39488/48000
+  CLAP 39552/48000
+  CLAP 39616/48000
+  CLAP 39680/48000
+  CLAP 39744/48000
+  CLAP 39808/48000
+  CLAP 39872/48000
+  CLAP 39936/48000
+  CLAP 40000/48000
+  CLAP 40064/48000
+  CLAP 40128/48000
+  CLAP 40192/48000
+  CLAP 40256/48000
+  CLAP 40320/48000
+  CLAP 40384/48000
+  CLAP 40448/48000
+  CLAP 40512/48000
+  CLAP 40576/48000
+  CLAP 40640/48000
+  CLAP 40704/48000
+  CLAP 40768/48000
+  CLAP 40832/48000
+  CLAP 40896/48000
+  CLAP 40960/48000
+  CLAP 41024/48000
+  CLAP 41088/48000
+  CLAP 41152/48000
+  CLAP 41216/48000
+  CLAP 41280/48000
+  CLAP 41344/48000
+  CLAP 41408/48000
+  CLAP 41472/48000
+  CLAP 41536/48000
+  CLAP 41600/48000
+  CLAP 41664/48000
+  CLAP 41728/48000
+  CLAP 41792/48000
+  CLAP 41856/48000
+  CLAP 41920/48000
+  CLAP 41984/48000
+  CLAP 42048/48000
+  CLAP 42112/48000
+  CLAP 42176/48000
+  CLAP 42240/48000
+  CLAP 42304/48000
+  CLAP 42368/48000
+  CLAP 42432/48000
+  CLAP 42496/48000
+  CLAP 42560/48000
+  CLAP 42624/48000
+  CLAP 42688/48000
+  CLAP 42752/48000
+  CLAP 42816/48000
+  CLAP 42880/48000
+  CLAP 42944/48000
+  CLAP 43008/48000
+  CLAP 43072/48000
+  CLAP 43136/48000
+  CLAP 43200/48000
+  CLAP 43264/48000
+  CLAP 43328/48000
+  CLAP 43392/48000
+  CLAP 43456/48000
+  CLAP 43520/48000
+  CLAP 43584/48000
+  CLAP 43648/48000
+  CLAP 43712/48000
+  CLAP 43776/48000
+  CLAP 43840/48000
+  CLAP 43904/48000
+  CLAP 43968/48000
+  CLAP 44032/48000
+  CLAP 44096/48000
+  CLAP 44160/48000
+  CLAP 44224/48000
+  CLAP 44288/48000
+  CLAP 44352/48000
+  CLAP 44416/48000
+  CLAP 44480/48000
+  CLAP 44544/48000
+  CLAP 44608/48000
+  CLAP 44672/48000
+  CLAP 44736/48000
+  CLAP 44800/48000
+  CLAP 44864/48000
+  CLAP 44928/48000
+  CLAP 44992/48000
+  CLAP 45056/48000
+  CLAP 45120/48000
+  CLAP 45184/48000
+  CLAP 45248/48000
+  CLAP 45312/48000
+  CLAP 45376/48000
+  CLAP 45440/48000
+  CLAP 45504/48000
+  CLAP 45568/48000
+  CLAP 45632/48000
+  CLAP 45696/48000
+  CLAP 45760/48000
+  CLAP 45824/48000
+  CLAP 45888/48000
+  CLAP 45952/48000
+  CLAP 46016/48000
+  CLAP 46080/48000
+  CLAP 46144/48000
+  CLAP 46208/48000
+  CLAP 46272/48000
+  CLAP 46336/48000
+  CLAP 46400/48000
+  CLAP 46464/48000
+  CLAP 46528/48000
+  CLAP 46592/48000
+  CLAP 46656/48000
+  CLAP 46720/48000
+  CLAP 46784/48000
+  CLAP 46848/48000
+  CLAP 46912/48000
+  CLAP 46976/48000
+  CLAP 47040/48000
+  CLAP 47104/48000
+  CLAP 47168/48000
+  CLAP 47232/48000
+  CLAP 47296/48000
+  CLAP 47360/48000
+  CLAP 47424/48000
+  CLAP 47488/48000
+  CLAP 47552/48000
+  CLAP 47616/48000
+  CLAP 47680/48000
+  CLAP 47744/48000
+  CLAP 47808/48000
+  CLAP 47872/48000
+  CLAP 47936/48000
+  CLAP 48000/48000
+wrote data/text2preset/main_small-music/ (20226 s)
+# Stable Audio pilot report: main_small-music
+
+48000 clips (12000 prompts × 4 seeds). Generated by `pitcher/text2preset/postprocess.py` + `pilot_report.py`.
+
+## 1. Filter
+
+**Kept: 96.3%** (46220 clips). Thresholds calibrated on 300 Surge renders analysed with the same code.
+
+| Flag | Meaning | Rejects? | Stable Audio | Surge renders |
+|---|---|---|---|---|
+| silent | loudest 50 ms below -50 dBFS | yes | 0.0% | – |
+| multi_note | two or more distinct held notes (melody, arpeggio, chord change) | yes | 3.7% | 5.7% |
+| rhythmic | percussive share and onsets both above the Surge 98th percentile (drums, loops) | yes | 0.0% | 0.0% |
+| off_pitch | tonal, main note more than 1 semitone from any C | no, marked | 5.0% | 10.7% |
+| chord_like | partials don't fit one note (harmonic fit below the Surge 5th percentile): chord or inharmonic | no, marked | 1.6% | 5.0% |
+| cut_off | still within 20 dB of its peak at the end of the 6 s clip | no, marked | 2.2% | – |
+| clipped | more than 10 samples at full scale | no, marked | 2.6% | – |
+
+By kind:
+
+| kind         |   clips |   kept | tagged_top   |
+|:-------------|--------:|-------:|:-------------|
+| generic      |    5760 |   0.95 | Keys         |
+| main         |   39840 |   0.97 | Keys         |
+| out_of_range |    2400 |   0.96 | Keys         |
+
+## 2. Pitch (asked: C3)
+
+Tonal clips: 99.9%. Within ±1 semitone of **any C**: **95.0%** (Surge renders, all played on the C3 key: 89.3%). Within ±1 semitone of C3 itself: 31.2% (Surge: 34.7%; many Surge presets have octave switches, so a bass played on the C3 key often sounds at C1 or C2). Median: +12.0 semitones from C3.
+
+![pitch](pitch.png)
+
+## 3. Category (kept main clips, tagger trained on Surge presets)
+
+Balanced agreement with the prompt's category: raw fingerprints 23.7%; **after domain alignment 32.7%** (the same tagger on real, unseen Surge presets: 51.9%; chance 12.5%). Domain gap: the mean Stable Audio fingerprint and the mean Surge fingerprint have cosine 0.44, so the raw tagger sees most clips as one category; the alignment shifts all clips by the difference of the two means (no labels used; the same gain holds when the shift is estimated on half of the prompts). Matrix below: aligned.
+
+![confusion](confusion.png)
+
+## 4. Per category
+
+| category   |   clips |   kept |   multi_note |   rhythmic |   off_pitch |   chord_like |   tagger_recall |   recall_aligned |   median_semis_from_c3 |   text_rank |   surge_nn |
+|:-----------|--------:|-------:|-------------:|-----------:|------------:|-------------:|----------------:|-----------------:|-----------------------:|------------:|-----------:|
+| Bass       |    4688 |   0.95 |         0.05 |       0.00 |        0.07 |         0.02 |            0.12 |             0.54 |                  -0.00 |     1928.00 |       0.70 |
+| Lead       |    4688 |   0.97 |         0.03 |       0.00 |        0.09 |         0.01 |            0.01 |             0.27 |                  12.00 |     4627.00 |       0.62 |
+| Pad        |    5624 |   0.99 |         0.01 |       0.00 |        0.01 |         0.00 |            0.60 |             0.68 |                  12.00 |     1418.00 |       0.64 |
+| Keys       |    4688 |   0.97 |         0.03 |       0.00 |        0.04 |         0.02 |            0.72 |             0.21 |                  12.00 |     3307.00 |       0.66 |
+| Pluck      |    4688 |   0.96 |         0.04 |       0.00 |        0.03 |         0.02 |            0.06 |             0.35 |                  12.00 |     2152.50 |       0.64 |
+| Synth      |    5624 |   0.97 |         0.03 |       0.00 |        0.03 |         0.01 |            0.11 |             0.22 |                  12.00 |     4868.00 |       0.67 |
+| Atmosphere |    6092 |   0.93 |         0.07 |       0.00 |        0.08 |         0.03 |            0.09 |             0.11 |                  12.00 |     5427.00 |       0.65 |
+| Orchestral |    3748 |   0.98 |         0.02 |       0.00 |        0.03 |         0.00 |            0.19 |             0.23 |                  12.00 |     3409.00 |       0.64 |
+
+## 5. Does the description match? (CLAP text ↔ audio)
+
+Rank of the clip's own description among all 12000: median **3436** (random: 6000); in the top 10%: 25.6%. By kind: generic 5442, main 3288, out_of_range 2006. CLAP text matching is weak on our sounds (Round 18: 20% zero-shot), so this is a coarse check.
+
+## 6. Descriptor words → measured sound (kept main clips)
+
+| slot       | value        |    n | measure                                |   measured |   without_slot |
+|:-----------|:-------------|-----:|:---------------------------------------|-----------:|---------------:|
+| brightness | airy         | 1293 | brightness: octaves vs category median |      0.118 |          0.001 |
+| brightness | bright       | 2003 | brightness: octaves vs category median |      0.202 |          0.001 |
+| brightness | cold         | 1608 | brightness: octaves vs category median |     -0.019 |          0.001 |
+| brightness | dark         | 2188 | brightness: octaves vs category median |     -0.289 |          0.001 |
+| brightness | piercing     | 1721 | brightness: octaves vs category median |      0.234 |          0.001 |
+| brightness | warm         | 2427 | brightness: octaves vs category median |     -0.080 |          0.001 |
+| attack     | percussive   | 2090 | attack time (s), 75th percentile       |      0.000 |          0.110 |
+| attack     | punchy       | 2681 | attack time (s), 75th percentile       |      0.110 |          0.110 |
+| attack     | slow         | 2710 | attack time (s), 75th percentile       |      0.360 |          0.110 |
+| attack     | snappy       | 2990 | attack time (s), 75th percentile       |      0.040 |          0.110 |
+| length     | decaying     | 2726 | level after 2 s (dB vs peak)           |    -11.860 |        -12.935 |
+| length     | long_release | 2090 | level after 2 s (dB vs peak)           |    -11.029 |        -12.935 |
+| length     | short        | 2177 | level after 2 s (dB vs peak)           |    -14.151 |        -12.935 |
+| length     | sustained    | 3410 | level after 2 s (dB vs peak)           |     -7.320 |        -12.935 |
+| grit       | aggressive   | 1738 | noisiness: spectral flatness (dB)      |    -43.947 |        -48.004 |
+| grit       | buzzy        | 1676 | noisiness: spectral flatness (dB)      |    -45.769 |        -48.004 |
+| grit       | clean        | 1663 | noisiness: spectral flatness (dB)      |    -50.058 |        -48.004 |
+| grit       | gritty       | 2379 | noisiness: spectral flatness (dB)      |    -48.724 |        -48.004 |
+| grit       | rough        | 1740 | noisiness: spectral flatness (dB)      |    -47.794 |        -48.004 |
+| grit       | soft         | 1688 | noisiness: spectral flatness (dB)      |    -49.407 |        -48.004 |
+
+## 7. Can Surge reach these sounds?
+
+CLAP similarity to the nearest Surge preset (raw fingerprints, plot): median **0.653**; a real unseen Surge preset to its nearest train preset: 0.875. Clips at least as close as the 10th percentile of that reference: 0.8%. After domain alignment: median 0.798 (partly by construction, since the shift moves the clips towards the Surge set). Much of the raw gap is the domain difference (section 3); how far Surge can really reach these sounds is a question for version A and a listening test.
+
+![reach](reach.png)
+
+## 8. Seeds
+
+Mean CLAP similarity between the 4 seeds of a prompt: median 0.820.
+
+## 9. Prompts with the fewest kept clips
+
+|   prompt_id |   kept | prompt                                                                                                                                         |
+|------------:|-------:|:-----------------------------------------------------------------------------------------------------------------------------------------------|
+|        2039 |   0.00 | Aggressive G-funk-style lead with a sharp attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                  |
+|        1621 |   0.00 | Playful 90s piercing deep whistle lead with chorus, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                |
+|        5116 |   0.00 | Synthwave kalimba-like pluck with a slowly opening filter, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody         |
+|         142 |   0.00 | Calm thick neuro bass with tremolo and a percussive hit, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody           |
+|         670 |   0.00 | Cinematic fat percussive neurofunk bass, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                           |
+|         311 |   0.00 | Lo-fi zappy neuro bass with a sharp attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                        |
+|         396 |   0.00 | Eerie round fat neuro bass with a growl, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                           |
+|        6409 |   0.00 | Dark resonant poly synth with a punchy attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                     |
+|        9571 |   0.00 | 80s buzzy violin-like synth with a rising pitch and a slow attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody |
+|        1842 |   0.25 | Bright degraded square lead with a punchy attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                  |
+|        2493 |   0.25 | Ambient sterile synth pad that slowly decays, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                      |
+|         956 |   0.25 | Glassy sub with a punchy attack, single note, C3, one-shot, dry, no reverb, synthesizer, no drums, no melody                                   |
+
+wrote runs/text2preset/main_small-music/report.md
