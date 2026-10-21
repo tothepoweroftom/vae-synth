@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Copy the models to where the plugin loads them on first use. Each part is installed when its source exists:
 #   SAME bank + Stable Audio package (Prompt tab)  from [build dir]/native-same, native-generator
-#   joint VAE bundle (VAE Lab tab)                 from models/joint-vae-j48 (tools/joint_vae/export_bundle.py)
+#   joint VAE bundle (VAE Lab tab)                 from models/joint-vae-j48w_b05 (export_bundle.py, export_xypad.py, codec_parity.py)
+#   p0 prompt bundle (Lab prompt box)              from models/prompt-p0 (export_prompt.py), when present
 #   Surge template + the bundle's wavetables       from build-surge's Surge checkout (VAE Lab playback)
 # Usage: scripts/install-models.sh [build dir holding native-same/ and native-generator/]
 set -euo pipefail
 src="${1:-build-lite-au}"
-bundle="models/joint-vae-j48"
+bundle="models/joint-vae-j48w_b05"
+prompt="models/prompt-p0"
 surge="build-surge/_deps/surge-src/resources/data"
 dest="$HOME/Library/Application Support/VAE Synth/models"
 
@@ -20,7 +22,13 @@ fi
 if [ -f "$bundle/bundle.json" ]; then
     mkdir -p "$dest/joint-vae"
     cp -p "$bundle/"* "$dest/joint-vae/"
-    echo "Installed joint VAE bundle"
+    echo "Installed joint VAE bundle ($bundle)"
+fi
+
+if [ -f "$prompt/prompt.json" ]; then
+    mkdir -p "$dest/prompt-p0"
+    cp -p "$prompt/"* "$dest/prompt-p0/"
+    echo "Installed p0 prompt bundle"
 fi
 
 if [ -d "$surge" ] && [ -f "$bundle/schema.json" ]; then
