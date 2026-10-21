@@ -1,6 +1,6 @@
 /*
-  Look and feel: Swiss modern, inverted: black paper, white ink, one signal green for values
-  and "on" states. Hairline rules, no fills or gradients, Inter throughout.
+  Look and feel: dark minimal: near-black paper, white ink, one signal yellow for values
+  and "on" states. Hairline rules, no fills or gradients, Space Mono throughout.
 */
 
 #pragma once
@@ -16,19 +16,21 @@ class VaeLookAndFeel final : public juce::LookAndFeel_V4
 public:
     VaeLookAndFeel();
 
-    static inline const juce::Colour paper { 0xff000000 };
+    static inline const juce::Colour paper { 0xff121212 };
     static inline const juce::Colour ink { 0xffffffff };
-    static inline const juce::Colour green { 0xff00d26a };        // brighter than on white, same hue
-    static inline const juce::Colour faint { 0xff2a2a2a };        // knob tracks, guide lines
+    static inline const juce::Colour accent { 0xffffff07 };
+    static inline const juce::Colour faint { 0xff333333 };        // knob tracks, guide lines
     static juce::Colour quiet() { return ink.withAlpha (0.45f); } // secondary text
 
-    /** Uppercase label font with a little tracking. */
+    /** Label font (callers uppercase the text). */
     static juce::FontOptions labelFont (float size, bool bold = false);
 
     juce::Typeface::Ptr getTypefaceForFont (const juce::Font&) override;
 
     void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h, float pos, float startAngle, float endAngle,
                            juce::Slider&) override;
+    void drawLinearSlider (juce::Graphics&, int x, int y, int w, int h, float pos, float minPos, float maxPos,
+                           juce::Slider::SliderStyle, juce::Slider&) override;
     void drawToggleButton (juce::Graphics&, juce::ToggleButton&, bool highlighted, bool down) override;
     void drawComboBox (juce::Graphics&, int w, int h, bool down, int bx, int by, int bw, int bh,
                        juce::ComboBox&) override;
@@ -55,11 +57,11 @@ public:
     void drawBlackNote (int, juce::Graphics& g, juce::Rectangle<float> area, bool isDown, bool isOver,
                         juce::Colour) override
     {
-        g.setColour (isDown ? VaeLookAndFeel::green : VaeLookAndFeel::ink);
+        g.setColour (isDown ? VaeLookAndFeel::accent : VaeLookAndFeel::ink);
         g.fillRect (area);
         if (isOver && ! isDown)
         {
-            g.setColour (VaeLookAndFeel::green.withAlpha (0.5f));
+            g.setColour (VaeLookAndFeel::accent.withAlpha (0.5f));
             g.fillRect (area);
         }
     }

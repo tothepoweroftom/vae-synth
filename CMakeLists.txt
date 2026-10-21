@@ -90,8 +90,8 @@ juce_add_plugin(VAESynth
 juce_add_binary_data(VAESynthAssets
     NAMESPACE BinaryData
     SOURCES
-        assets/fonts/Inter-Regular.ttf
-        assets/fonts/Inter-Bold.ttf
+        assets/fonts/SpaceMono-Regular.ttf
+        assets/fonts/SpaceMono-Bold.ttf
         models/stub_decoder.onnx)
 
 target_sources(VAESynth PRIVATE
