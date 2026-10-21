@@ -533,3 +533,41 @@ public:
 - [ ] **Step 1: Profile.** Hold a note in the standalone and run 20 prompts, half of them while dragging. Record cold and warm latency, peak memory and audio underruns.
 - [ ] **Step 2: Compare by ear.** Use a fixed prompt set: the contrasting pairs dark/bright bass, short/long pad and soft/sharp lead, plus 6 more. Compare p0 Find sounds against the category-only and word-list starts. Render each through Lite and Surge with the existing render path. Record coverage and failures in `docs/P0-PROMPT-EVAL.md`. If the results don't support semantic claims, label the feature "experimental" in the UI and the docs.
 - [ ] **Step 3:** Update the docs: bundle contents, export order, the two prompt actions, bank mode and its limits. Then commit.
+
+---
+
+### Task 16: One sound across the Lab and Synth views; remove the Prompt tab
+
+*User decisions (21 Oct 2026). They supersede the spec's "Synth and Prompt tabs behave as before" and the p0 spec's "no changes to the Prompt tab". Runs after Task 11 and before Task 14.*
+
+**Files:**
+- Modify: `source/plugin/PluginEditor.{h,cpp}`, `JointVaePanel.{h,cpp}`, and `PluginProcessor.{h,cpp}` if the edited-state flag lives there.
+- Test: `tests/plugin/PluginTests.cpp`
+
+**Behaviour:**
+- **Shared views (option b).** Only two views remain: **Lab** and **Synth**. They show the same sound.
+  - The Lab already plays by writing the 93 Lite parameters, so the Synth view's knobs show the Lab's preset. Tweaking there works normally.
+- **Synth edits carry back.** When any of the 93 parameters changes from a source other than the Lab, through a Synth-view knob or host automation, the Lab marks the sound **edited**:
+  - The status line reads "Edited in Synth view".
+  - The next Lab sound edit (pad, slider, Z, prompt nudge or base change) asks once: "Replace your Synth edits?" The two answers are Replace and Keep editing.
+  - Keep editing leaves the sound and the Lab state unchanged.
+  - Choosing a dot or a base also asks.
+  - Lab-originated writes never set the edited flag. Tag them (a flag set around `playLiteControls`, or a comparison against the last Lab snapshot) so the flag can't be raised by the Lab itself.
+- **After Send to Surge** the Synth view's knobs don't control Surge's full patch, which is the existing behaviour. The Synth view shows a one-line banner, "Playing the full Surge patch from the Lab. Knobs return to Lite", and the first knob move returns to Lite (the existing `applyControls` path).
+- **Prompt tab removed.**
+  - Remove its button and panel from the editor.
+  - Wrap the Prompt-tab UI and its wiring (button, panel member, `generateFromPrompt` callers in the editor) in `#if VAE_PROMPT_TAB` (default 0) rather than deleting it. Leave a one-line comment pointing at this task.
+  - The processor-side Stable Audio / SAME code keeps compiling and stays unused by the UI.
+  - Existing Prompt-tab tests are guarded the same way.
+  - *My call:* an `#if` guard instead of commented-out code, so the code keeps compiling-checkable and can be re-enabled with one define.
+
+- [ ] **Step 1: Write failing tests:**
+  - `"two views only"`: the editor has Lab and Synth buttons and no Prompt button.
+  - `"lab preset shows in synth view"`: after a Lab pad move, the Synth view's control values equal the Lab's `lite` snapshot.
+  - `"synth edit marks lab edited"`: change one parameter through the store as a user would, and the Lab reports edited. A Lab pad move then asks; Keep editing leaves the parameters unchanged, Replace applies the new point.
+  - `"lab writes do not mark edited"`.
+  - `"prompt tab compiled out"`: with `VAE_PROMPT_TAB` 0, the build has no Prompt view.
+- [ ] **Step 2:** Run them. Expected: FAIL.
+- [ ] **Step 3:** Implement.
+- [ ] **Step 4:** Run them, plus the full ctest with and without Surge. Expected: PASS.
+- [ ] **Step 5:** Commit.
