@@ -22,6 +22,7 @@ public:
     void setPosition(std::array<float, 3>);
     std::array<float, 3> getPosition() const { return position; }
     void resetCamera();
+    OrbitMath::Camera getCamera() const { return camera; } // hosts project their own overlays and hit tests
     void setLabelFont(juce::Font font) { labelFont=std::move(font);repaint(); }
     void zoom(float factor);
     double lastPaintMs() const { return paintMilliseconds; }

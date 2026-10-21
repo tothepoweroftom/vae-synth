@@ -63,18 +63,21 @@ target_sources(vae_retrieval INTERFACE source/ml/SameSearch.cpp source/ml/Stable
 target_link_libraries(vae_retrieval INTERFACE vae_tokenizer vae_ml juce::juce_audio_formats juce::juce_cryptography)
 
 # --- isolated joint VAE experiment ---------------------------------------------
+# The Lab's look: the design study's reusable controls and orbit view (no study data or model code).
+add_subdirectory(design-study/juce/Source/ui pitcher-ui)
 add_library(vae_joint_experiment INTERFACE)
 target_sources(vae_joint_experiment INTERFACE
     source/experiments/joint_vae/JointVae.cpp
     source/experiments/joint_vae/JointVaePanel.cpp
     source/experiments/joint_vae/LabPad.cpp
+    source/experiments/joint_vae/LabOrbit.cpp
     source/experiments/joint_vae/LabAxisList.cpp
     source/experiments/joint_vae/StudentCodec.cpp
     source/experiments/joint_vae/LiteTranslation.cpp
     source/experiments/joint_vae/XyPad.cpp
     source/experiments/joint_vae/PromptWords.cpp
     source/experiments/joint_vae/PromptModel.cpp)
-target_link_libraries(vae_joint_experiment INTERFACE vae_ml vae_tokenizer juce::juce_gui_basics)
+target_link_libraries(vae_joint_experiment INTERFACE vae_ml vae_tokenizer juce::juce_gui_basics pitcher_study_ui)
 if(VAE_WITH_SURGE)
     target_sources(vae_joint_experiment INTERFACE source/experiments/joint_vae/SurgePatchBuilder.cpp)
     target_link_libraries(vae_joint_experiment INTERFACE vae::surge)
@@ -110,6 +113,8 @@ juce_add_binary_data(VAESynthAssets
     SOURCES
         assets/fonts/SpaceMono-Regular.ttf
         assets/fonts/SpaceMono-Bold.ttf
+        assets/fonts/Inter-Regular.ttf
+        assets/fonts/Inter-Bold.ttf
         models/stub_decoder.onnx)
 
 target_sources(VAESynth PRIVATE

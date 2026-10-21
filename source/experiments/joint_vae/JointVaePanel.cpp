@@ -1,17 +1,15 @@
 #include "JointVaePanel.h"
-#include "plugin/ui/VaeLookAndFeel.h"
 
 namespace vae::experimental
 {
-using LF = VaeLookAndFeel;
-
 #if ! VAE_WITH_SURGE
-JointVaePanel::JointVaePanel()
+JointVaePanel::JointVaePanel (juce::MidiKeyboardState&, juce::Typeface::Ptr, juce::Typeface::Ptr, juce::Typeface::Ptr)
 {
     note.setText ("VAE Lab needs a Surge build", juce::dontSendNotification);
     note.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (note);
 }
+JointVaePanel::~JointVaePanel() = default;
 void JointVaePanel::loadBundle (const juce::File&) {}
 void JointVaePanel::markEdited() {}
 void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
@@ -19,17 +17,28 @@ void JointVaePanel::paint (juce::Graphics&) {}
 #else
 namespace
 {
-constexpr int kRandomBase = 100, kToolbarH = 28, kGap = 8, kReadoutH = 120, kPromptH = 76, kPromptRowH = 26,
-              kChipRowH = 22, kXLabelH = 18, kZRowH = 24, kYLabelW = 18, kEyebrowH = 13, kAskH = 34;
+constexpr int kRandomBase = 100, kRowH = 26, kRowGap = 6, kChipRowH = 22, kAskH = 46, kGap = 8, kSpectrumH = 124,
+              kTabH = 38;
 const juce::String kAsking ("Replace your Synth edits? Answer above the prompt box.");
-// Background menu (page bgSel, latent mode): ids 1.. in this order
-const char* const mapKinds[][2] = { { "cat", "Category guess" }, { "brightness", "Brightness" }, { "length", "Length" },
-                                    { "attack", "Attack" },      { "noise", "Noise" },           { "none", "None" } };
 const juce::String dotSep (juce::CharPointer_UTF8 (" \xc2\xb7 "));
 juce::String quoted (const juce::String& name)
 {
     return juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9c")) + name
            + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x9d"));
+}
+juce::Font bodyFont (juce::Component& c, float size, bool bold = false)
+{
+    if (auto* look = dynamic_cast<PitcherLookAndFeel*> (&c.getLookAndFeel()))
+        if (auto face = bold ? look->bold : look->body)
+            return juce::Font (juce::FontOptions (face)).withHeight (size);
+    return juce::FontOptions (size, bold ? juce::Font::bold : juce::Font::plain);
+}
+/** One label: value row of the spectrogram's details, the value right-aligned (the tooltip is monospaced). */
+juce::String detailRow (const juce::String& key, const juce::String& value)
+{
+    constexpr int width = 44;
+    return key + juce::String::repeatedString (" ", juce::jmax (1, width - key.length() - value.length())) + value
+           + "\n";
 }
 juce::String presetName (const XyPadData& xy, size_t k)
 {
@@ -38,35 +47,65 @@ juce::String presetName (const XyPadData& xy, size_t k)
 }
 } // namespace
 
-JointVaePanel::JointVaePanel()
+JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr body, juce::Typeface::Ptr bold,
+                              juce::Typeface::Ptr mono)
+    : look (std::move (body), std::move (bold), std::move (mono))
+    , keyboard (keys)
 {
+    // The study's look covers buttons, sliders and the prompt; these are the colours it leaves to JUCE
+    look.setColour (juce::TextEditor::highlightColourId, lab::green.withAlpha (0.25f));
+    look.setColour (juce::CaretComponent::caretColourId, lab::green);
+    look.setColour (juce::ScrollBar::thumbColourId, lab::line);
+    setLookAndFeel (&look);
+    base.setLookAndFeel (&comboLook);
+    category.setLookAndFeel (&comboLook);
+
     for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
-                                                             &resetButton, &dotsButton, &sendButton, &background, &pad,
-                                                             &listView, &status, &promptBox, &promptGo, &nudgeButton })
+                                                             &resetButton, &sendButton, &spectrum, &orbit, &listView,
+                                                             &status, &promptBox, &promptGo, &nudgeButton, &keyboard })
         addAndMakeVisible (c);
-    addChildComponent (zSlider);
+    addChildComponent (pad);
     addChildComponent (findButton);
     addChildComponent (experimentalTag);
+    for (size_t i = 0; i < categoryRows.size(); ++i)
+    {
+        auto& row = categoryRows[i];
+        row.index = (int) i;
+        row.setButtonText (jointLabels[i]); // its accessible name
+        row.setTooltip ("Highlight these presets in the cloud; the sound stays");
+        row.onClick = [this, i]
+        {
+            // A visual filter only: the decoder's category and the sound stay (handoff, left sidebar)
+            highlighted = highlighted == (int) i ? -1 : (int) i;
+            for (auto& r : categoryRows)
+                r.setToggleState (r.index == highlighted, juce::dontSendNotification);
+            orbit.setCategoryHighlight (highlighted);
+        };
+        addAndMakeVisible (row);
+    }
     for (auto* c : std::initializer_list<juce::Component*> { &askNote, &askReplace, &askKeep })
         addChildComponent (c);
-    askNote.setFont (LF::labelFont (10.5f));
-    askNote.setColour (juce::Label::textColourId, LF::ink);
-    askNote.setMinimumHorizontalScale (0.8f);
+    askNote.setFont (bodyFont (*this, 11.5f));
+    askNote.setColour (juce::Label::textColourId, lab::ink);
+    askNote.setMinimumHorizontalScale (1.0f); // wraps onto a second line instead of squeezing
+    askNote.setJustificationType (juce::Justification::centredLeft);
     askReplace.onClick = [this] { answerReplace (true); };
     askKeep.onClick = [this] { answerReplace (false); };
-    experimentalTag.setFont (juce::FontOptions (11.0f));
-    experimentalTag.setColour (juce::Label::textColourId, LF::quiet());
+    experimentalTag.setFont (look.monoFont (10.0f));
+    experimentalTag.setColour (juce::Label::textColourId, lab::muted);
     experimentalTag.setTooltip ("Learned prompt search is unproven: see docs/PROMPT-EVAL.md");
     for (size_t i = 0; i < chips.size(); ++i)
     {
         addChildComponent (chips[i]);
         chips[i].onClick = [this, i] { selectCandidate ((int) i); };
         chips[i].setTooltip (
-            "A preset from the prompt bundle's bank, numbered on the pad; selecting it plays its exact "
+            "A preset from the prompt bundle's bank, numbered in the cloud; selecting it plays its exact "
             "settings, and the next move explores from it");
     }
     latentButton.setToggleState (true, juce::dontSendNotification);
     knobButton.setEnabled (false);
+    latentButton.setTooltip ("Move through the latent space: the orbit view");
+    knobButton.setTooltip ("Move two knob groups on a flat pad");
     latentButton.onClick = [this]
     {
         if (knobMode)
@@ -77,25 +116,24 @@ JointVaePanel::JointVaePanel()
         category.addItem (jointLabels[i], i + 1);
     category.setTooltip ("Category the decoder is conditioned on");
     base.setTooltip ("Start from");
-    lockButton.setTooltip ("Keep oscillator types, effects and other switches fixed while dragging");
-    dotsButton.setTooltip ("Real presets as dots (colour = category)");
-    dotsButton.setClickingTogglesState (true);
-    dotsButton.setToggleState (true, juce::dontSendNotification); // page default: checked
-    for (int i = 0; i < 6; ++i)
-        background.addItem (mapKinds[i][1], i + 1);
-    background.setSelectedId (2, juce::dontSendNotification); // page default in latent mode: brightness
-    background.setTooltip ("Background: what the map shows at each point");
-    background.onChange = [this] { scheduleMap(); };
+    lockButton.setTooltip ("Keep oscillator types, effects and other switches fixed while moving");
+    resetButton.setTooltip ("Back to the start point");
     listView.setViewedComponent (&list, false);
     listView.setScrollBarsShown (true, false);
-    zSlider.setRange (0.0, 1.0, 0.001);
-    zSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-    zSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
-    status.setFont (LF::labelFont (10.0f));
-    status.setColour (juce::Label::textColourId, LF::quiet());
-    status.setJustificationType (juce::Justification::topLeft);
+    listView.setScrollBarThickness (6);
+    status.setFont (look.monoFont (10.0f));
+    status.setColour (juce::Label::textColourId, lab::muted);
+    status.setJustificationType (juce::Justification::centredLeft);
+    status.setMinimumHorizontalScale (1.0f);
+    orbit.setLabelFont (look.monoFont (10.0f));
+    spectrum.setTitle ("Expected sound");
 
-    promptBox.setTextToShowWhenEmpty ("Describe a sound: dark bass, then brighter", LF::quiet());
+    // Single line, as the study: monospaced, left-aligned, vertically centred, 12 px inset
+    promptBox.setFont (look.monoFont (14.4f));
+    promptBox.setMultiLine (false);
+    promptBox.setJustification (juce::Justification::centredLeft);
+    promptBox.setBorder (juce::BorderSize<int> (1));
+    promptBox.setIndents (12, 0);
     promptBox.setSelectAllWhenFocused (true);
     promptBox.onReturnKey = promptGo.onClick = [this] { submitPrompt (promptBox.getText()); };
     for (auto* b : { &findButton, &nudgeButton })
@@ -112,7 +150,33 @@ JointVaePanel::JointVaePanel()
         promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
     updatePromptUi();
 
-    pad.picked = [this] (int i) { selectCandidate (i); };
+    // The study's 3-octave keyboard, C3 (MIDI 48) to C6 (MIDI 84): 22 white and 15 black keys
+    keyboard.setAvailableRange (48, 84);
+    keyboard.setLowestVisibleKey (48);
+    keyboard.setBlackNoteLengthProportion (34.0f / 56.0f);
+    keyboard.setScrollButtonsVisible (false);
+    keyboard.setKeyPressBaseOctave (4);
+    keyboard.setColour (juce::MidiKeyboardComponent::shadowColourId, juce::Colours::transparentBlack);
+    keyboard.setTitle ("Keyboard, C3 to C6");
+
+    orbit.picked = [this] (int i) { selectCandidate (i); };
+    orbit.jumped = [this] (int k) { edit ([this, k] { jumpToPreset (k); }); };
+    orbit.moved = [this] (LabOrbit::Position p)
+    {
+        edit (
+            [this, p]
+            {
+                userActed = true;
+                leaveBank();
+                // The handle is clamped to the volume: an axis it did not move keeps its exact position
+                for (size_t i = 0; i < 3; ++i)
+                    if (! juce::exactlyEqual (p[i], juce::jlimit (0.0f, 1.0f, pos[i])))
+                        pos[i] = p[i];
+                applyPositions();
+                refresh();
+                decode();
+            });
+    };
     pad.moved = [this] (juce::Point<float> p)
     {
         edit (
@@ -127,37 +191,26 @@ JointVaePanel::JointVaePanel()
                 decode();
             });
     };
-    zSlider.onValueChange = [this]
-    {
-        edit (
-            [this, v = (float) zSlider.getValue()]
-            {
-                userActed = true;
-                leaveBank();
-                pos[2] = v;
-                applyPositions (4);
-                refresh();
-                decode();
-            });
-    };
-    pad.tapped = [this] (juce::Point<float> p)
-    {
-        // A tap's mouse-down already moved (and may be asking): the dot jump follows that move
-        if (pendingEdit)
-            pendingEdit = [this, p, move = std::move (pendingEdit)]
-            {
-                move();
-                jumpToDot (p);
-            };
-        else
-            edit ([this, p] { jumpToDot (p); });
-    };
     list.assign = [this] (int slot, const juce::String& id) { assign (slot, id); };
     list.slid = [this] (const LatentAxis& slid, float p)
     {
         edit (
             [this, id = slid.id, p]
             {
+                if (knobMode)
+                {
+                    // A knob group's slider moves the pad slot it is on
+                    for (int i = 0; i < 3; ++i)
+                        if (axes[(size_t) i] == id && groupOn (i) >= 0)
+                        {
+                            userActed = true;
+                            pos[(size_t) i] = p;
+                            applyPositions (1 << i);
+                            refresh();
+                            decode();
+                        }
+                    return;
+                }
                 auto* found = xy ? xy->find (id) : nullptr; // by id: a bundle may load while asking
                 if (found == nullptr)
                     return;
@@ -218,7 +271,6 @@ JointVaePanel::JointVaePanel()
                 decode();
             });
     };
-    dotsButton.onClick = [this] { updateDots(); };
     sendButton.onClick = [this]
     {
         if (! outputValid || current.patch.isEmpty())
@@ -229,17 +281,53 @@ JointVaePanel::JointVaePanel()
                              : r.getErrorMessage(),
                    r.failed());
     };
-    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton,
-                                                             &sendButton, &background, &pad, &zSlider })
+    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &sendButton,
+                                                             &orbit, &pad, &promptBox, &promptGo })
         c->setEnabled (false);
-    promptBox.setEnabled (false);
-    promptGo.setEnabled (false);
 
     // Installed by scripts/install-models.sh, like the Prompt tab's models
     if (const auto installed = ml::appDataDir().getChildFile ("models/joint-vae/bundle.json"); installed.existsAsFile())
         loadBundle (installed);
     else
         setStatus ("No VAE bundle installed: run scripts/install-models.sh");
+}
+
+JointVaePanel::~JointVaePanel()
+{
+    base.setLookAndFeel (nullptr);
+    category.setLookAndFeel (nullptr);
+    setLookAndFeel (nullptr);
+}
+
+JointVaePanel::ComboLook::ComboLook (juce::Font f)
+    : font (std::move (f))
+{
+    setColour (juce::ComboBox::textColourId, lab::ink);
+    setColour (juce::PopupMenu::backgroundColourId, lab::dialog);
+    setColour (juce::PopupMenu::textColourId, lab::ink);
+    setColour (juce::PopupMenu::highlightedBackgroundColourId, lab::green);
+    setColour (juce::PopupMenu::highlightedTextColourId, lab::onGreen);
+}
+
+void JointVaePanel::ComboLook::drawComboBox (juce::Graphics& g, int w, int h, bool, int, int, int, int,
+                                             juce::ComboBox& box)
+{
+    g.setColour (box.hasKeyboardFocus (true) || box.isMouseOver (true) ? lab::green : lab::line);
+    g.drawRect (0, 0, w, h, 1);
+    const float cx = (float) w - 12.0f, cy = (float) h * 0.5f;
+    juce::Path chevron;
+    chevron.startNewSubPath (cx - 3.5f, cy - 1.5f);
+    chevron.lineTo (cx, cy + 2.0f);
+    chevron.lineTo (cx + 3.5f, cy - 1.5f);
+    g.setColour (box.isEnabled() ? lab::muted : lab::line);
+    g.strokePath (chevron, juce::PathStrokeType (1.2f));
+}
+
+void JointVaePanel::ComboLook::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
+{
+    label.setBounds (8, 0, box.getWidth() - 28, box.getHeight());
+    label.setBorderSize ({});
+    label.setFont (font);
 }
 
 void JointVaePanel::markEdited()
@@ -299,6 +387,8 @@ void JointVaePanel::resolveReplace (bool replace)
 
 void JointVaePanel::setStatus (const juce::String& text, bool error)
 {
+    if (pendingEdit && text != kAsking)
+        return; // the question stays readable until it is answered
     errorShown = error;
     mapError = false;
     status.setText (text, juce::dontSendNotification);
@@ -318,21 +408,6 @@ int JointVaePanel::groupOn (int slot) const
     return -1;
 }
 
-void JointVaePanel::fillBackground()
-{
-    background.clear (juce::dontSendNotification);
-    if (knobMode)
-    {
-        background.addItem ("Category guess", 1);
-        background.addItem ("None", 2);
-        background.setSelectedId (1, juce::dontSendNotification);
-        return;
-    }
-    for (int i = 0; i < 6; ++i)
-        background.addItem (mapKinds[i][1], i + 1);
-    background.setSelectedId (latBackground, juce::dontSendNotification);
-}
-
 void JointVaePanel::setKnobMode (bool knob)
 {
     if (! xy || ! kg || knob == knobMode)
@@ -341,7 +416,6 @@ void JointVaePanel::setKnobMode (bool knob)
         return;
     if (knob)
     {
-        latBackground = background.getSelectedId();
         latAxes = axes;
         knobVals = current.knobs;
         knobCodes = current.codes;
@@ -355,9 +429,12 @@ void JointVaePanel::setKnobMode (bool knob)
     knobMode = knob;
     latentButton.setToggleState (! knob, juce::dontSendNotification);
     knobButton.setToggleState (knob, juce::dontSendNotification);
-    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton })
+    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton })
         c->setEnabled (! knob);
-    fillBackground();
+    orbit.setVisible (! knob);
+    pad.setVisible (knob);
+    if (! knob)
+        pad.setMap ({}); // the next knob pad computes its own map
     promptBox.setEnabled (! knob);
     promptGo.setEnabled (! knob);
     promptBox.setTooltip (knob ? "The prompt works on the latent pad" : "");
@@ -397,7 +474,8 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.knobMode = false;
                          self.latentButton.setToggleState (true, juce::dontSendNotification);
                          self.knobButton.setToggleState (false, juce::dontSendNotification);
-                         self.fillBackground();
+                         self.orbit.setVisible (true);
+                         self.pad.setVisible (false);
                      }
                      for (size_t i = 0; i < 3; ++i)
                          self.knobAxes[i] = i < self.kg->groups.size() ? self.kg->groups[i].name : juce::String();
@@ -415,8 +493,17 @@ void JointVaePanel::loadBundle (const juce::File& file)
                      self.axes = { self.xy->find ("s:brightness") ? "s:brightness" : all[0].id,
                                    self.xy->find ("s:length") ? "s:length" : all[1].id,
                                    firstDim != all.end() ? firstDim->id : juce::String() };
-                     if (self.axes[2] == self.axes[0] || self.axes[2] == self.axes[1])
+                     // Orbit needs a Z: the first latent dimension, else the first axis not on X or Y
+                     if (self.axes[2].isEmpty() || self.axes[2] == self.axes[0] || self.axes[2] == self.axes[1])
+                     {
                          self.axes[2] = {};
+                         for (const auto& a : all)
+                             if (a.id != self.axes[0] && a.id != self.axes[1])
+                             {
+                                 self.axes[2] = a.id;
+                                 break;
+                             }
+                     }
                      self.list.setAxes (all);
                      self.base.clear (juce::dontSendNotification);
                      for (int i = 0; i < 8; ++i)
@@ -425,9 +512,8 @@ void JointVaePanel::loadBundle (const juce::File& file)
                      if (! self.xy->presetZ.empty())
                          self.base.addItem ("Random real preset", kRandomBase);
                      for (auto* c : std::initializer_list<juce::Component*> {
-                              &self.base, &self.category, &self.lockButton, &self.resetButton, &self.dotsButton,
-                              &self.background, &self.pad, &self.zSlider, &self.promptBox, &self.promptGo,
-                              &self.knobButton })
+                              &self.base, &self.category, &self.lockButton, &self.resetButton, &self.orbit, &self.pad,
+                              &self.promptBox, &self.promptGo, &self.knobButton })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
@@ -494,8 +580,9 @@ void JointVaePanel::updatePromptUi()
     if (! promptReady)
         nudgeButton.setToggleState (true, juce::dontSendNotification);
     const bool find = promptReady && findButton.getToggleState();
-    promptBox.setTextToShowWhenEmpty (
-        find ? "Find sounds: describe one, like deep sub bass" : "Word list: dark bass, then brighter", LF::quiet());
+    promptBox.setTextToShowWhenEmpty (find ? "Describe a sound to find, like deep sub bass"
+                                           : "Describe a sound: dark bass, then brighter",
+                                      lab::muted);
     if (! knobMode)
         promptGo.setTooltip (find ? "Find presets for this description" : "Apply the word list");
     for (size_t i = 0; i < chips.size(); ++i)
@@ -672,11 +759,12 @@ void JointVaePanel::nudge (const juce::String& text)
 
 void JointVaePanel::assign (int slot, const juce::String& id)
 {
-    // Page assign(): swap when the axis is on another slot; Z again clears Z. X and Y never go empty.
+    // Page assign(): swap when the axis is on another slot. On the knob pad Z again clears Z; X, Y and
+    // Orbit's Z never go empty.
     auto next = axes;
     if (next[(size_t) slot] == id)
     {
-        if (slot != 2)
+        if (slot != 2 || ! knobMode)
             return;
         next[2] = {};
     }
@@ -743,65 +831,54 @@ void JointVaePanel::applyPositions (int slots)
 
 void JointVaePanel::refresh (const LatentAxis* dragged)
 {
-    pad.setDot ({ pos[0], pos[1] });
-    zSlider.setValue (juce::jlimit (0.0f, 1.0f, pos[2]), juce::dontSendNotification);
+    // The handle sits at the assigned axes' positions of the current z (syncPositions)
+    if (knobMode)
+        pad.setDot ({ pos[0], pos[1] });
+    else
+        orbit.setHandle (pos);
     list.setAssigned (axes);
-    if (! knobMode)
+    if (knobMode)
+        list.setSlotPositions (pos);
+    else
         list.setPositions (z, dragged);
     repaint();
 }
 
 void JointVaePanel::updateDots()
 {
-    std::vector<std::tuple<float, float, int>> dots;
     if (knobMode) // shortcut: no preset dots on the knob pad (the bundle holds no knob values per preset)
-    {
-        pad.setPresetDots ({}, -1);
-        pad.setHighlights ({}, -1);
         return;
-    }
-    auto *ax = axisOn (0), *ay = axisOn (1);
-    if (dotsButton.getToggleState() && ax && ay)
-        for (size_t i = 0; i < xy->presetZ.size(); ++i)
-            dots.emplace_back (axisPosition (*ax, xy->presetZ[i]), axisPosition (*ay, xy->presetZ[i]),
-                               xy->presetLabel[i]);
-    pad.setPresetDots (std::move (dots), category.getSelectedId() - 1);
-    // Find's matches at their bank z, whether or not the preset dots show
-    std::vector<juce::Point<float>> marks;
-    if (ax && ay)
+    const LatentAxis* on[3] = { axisOn (0), axisOn (1), axisOn (2) };
+    const auto at = [&] (const JointLatent& p)
+    {
+        LabOrbit::Position r;
+        for (size_t i = 0; i < 3; ++i)
+            r[i] = on[i] ? axisPosition (*on[i], p) : pos[i];
+        return r;
+    };
+    std::vector<LabOrbit::Position> dots;
+    if (xy && on[0] && on[1])
+        for (const auto& p : xy->presetZ)
+            dots.push_back (at (p));
+    orbit.setPresets (std::move (dots), xy ? xy->presetLabel : std::vector<int>(), category.getSelectedId() - 1);
+    // Find's matches at their bank z
+    std::vector<LabOrbit::Position> marks;
+    if (on[0] && on[1])
         for (const auto& c : candidates)
-            marks.push_back ({ axisPosition (*ax, c.z), axisPosition (*ay, c.z) });
-    pad.setHighlights (std::move (marks), selected);
+            marks.push_back (at (c.z));
+    orbit.setHighlights (std::move (marks), selected);
 }
 
-void JointVaePanel::jumpToDot (juce::Point<float> p)
+void JointVaePanel::jumpToPreset (int k)
 {
-    auto *ax = axisOn (0), *ay = axisOn (1);
-    if (! dotsButton.getToggleState() || ! ax || ! ay)
-        return;
-    const int label = category.getSelectedId() - 1;
-    const auto w = (float) pad.getWidth(), h = (float) pad.getHeight();
-    float best = 7.0f * 7.0f;
-    int hit = -1;
-    for (size_t i = 0; i < xy->presetZ.size(); ++i)
-    {
-        if (xy->presetLabel[i] != label)
-            continue;
-        const auto dx = (axisPosition (*ax, xy->presetZ[i]) - p.x) * w,
-                   dy = (axisPosition (*ay, xy->presetZ[i]) - p.y) * h;
-        if (dx * dx + dy * dy < best)
-        {
-            best = dx * dx + dy * dy;
-            hit = (int) i;
-        }
-    }
-    if (hit < 0)
+    if (! xy || k < 0 || (size_t) k >= xy->presetZ.size())
         return;
     userActed = true; // a dot click is a user action (ruling R14)
-    z = xy->presetZ[(size_t) hit];
-    const int l = juce::jlimit (0, 8, xy->presetLabel[(size_t) hit]);
+    leaveBank();
+    z = xy->presetZ[(size_t) k];
+    const int l = juce::jlimit (0, 8, xy->presetLabel[(size_t) k]);
     category.setSelectedId (l + 1, juce::dontSendNotification);
-    setStatus ("Jumped to the real preset " + quoted (presetName (*xy, (size_t) hit)) + " (" + jointLabels[l] + ").");
+    setStatus ("Jumped to the real preset " + quoted (presetName (*xy, (size_t) k)) + " (" + jointLabels[l] + ").");
     syncPositions();
     refresh();
     updateDots();
@@ -810,23 +887,16 @@ void JointVaePanel::jumpToDot (juce::Point<float> p)
 
 void JointVaePanel::requestMap()
 {
-    if (! xy)
+    if (! xy || ! knobMode) // the knob pad's category map; the worker's latent maps are unused (Orbit only)
         return;
     MapRequest request;
     request.z = z;
     request.category = category.getSelectedId() - 1;
-    for (int i = 0; i < 3; ++i)
-        if (axisOn (i))
-            request.axisIds.push_back (axes[(size_t) i]);
     request.zPos = pos[2];
-    request.kind = mapKinds[juce::jlimit (0, 5, background.getSelectedId() - 1)][0];
-    if (knobMode)
-    {
-        request.kind = background.getSelectedId() == 2 ? "none" : "cat";
-        request.knobs = knobVals;
-        request.groupX = groupOn (0);
-        request.groupY = groupOn (1);
-    }
+    request.kind = "cat";
+    request.knobs = knobVals;
+    request.groupX = groupOn (0);
+    request.groupY = groupOn (1);
     request.lockedTail = lockedTail;
     worker.map (std::move (request),
                 [safe = juce::Component::SafePointer (this)] (juce::Result r, MapResult m)
@@ -854,8 +924,8 @@ void JointVaePanel::requestMap()
                         {
                             const int c = juce::jlimit (0, 8, m.cells[(size_t) k]);
                             image.setPixelAt (k % n, k / n,
-                                              labCategoryColours[c].withAlpha (juce::jmin (
-                                                  1.0f, labMapAlpha * (0.45f + 0.9f * m.conf[(size_t) k]))));
+                                              lab::categories[c].withAlpha (juce::jmin (
+                                                  1.0f, lab::mapAlpha * (0.45f + 0.9f * m.conf[(size_t) k]))));
                             ++count[(size_t) c];
                             sx[(size_t) c] += (float) (k % n);
                             sy[(size_t) c] += (float) (k / n);
@@ -865,16 +935,6 @@ void JointVaePanel::requestMap()
                                 labels.push_back ({ jointLabels[c],
                                                     { (sx[c] / (float) count[c] + 0.5f) / (float) n,
                                                       1.0f - (sy[c] / (float) count[c] + 0.5f) / (float) n } });
-                    }
-                    else if (m.val.size() == (size_t) (n * n))
-                    {
-                        image = juce::Image (juce::Image::ARGB, n, n, true);
-                        const auto span = m.hi > m.lo ? m.hi - m.lo : 1.0f;
-                        for (int k = 0; k < n * n; ++k)
-                            image.setPixelAt (
-                                k % n, k / n,
-                                labHeat.withAlpha (
-                                    0.03f + 0.72f * juce::jlimit (0.0f, 1.0f, (m.val[(size_t) k] - m.lo) / span)));
                     }
                     safe->pad.setMap (image, std::move (labels));
                     if (safe->onMapShown)
@@ -897,266 +957,232 @@ void JointVaePanel::decode()
         request.codes = knobCodes;
     else if (bankMode)
         request.codes = bankCodes; // no decoder: the stored preset plays exactly
-    worker.lab (
-        std::move (request),
-        [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
-        {
-            if (! safe)
-                return;
-            if (r.failed())
-            {
-                safe->setStatus (r.getErrorMessage(), true);
-                return;
-            }
-            auto& self = *safe;
-            self.current = std::move (out);
-            self.outputValid = true;
-            // Page specCanvas: ((mel + 70) / 70)^0.8, accent over the well, low bands at the bottom
-            const auto bands = (int) self.xy->bandHz.size();
-            const auto frames = bands > 0 ? (int) self.current.mel.size() / bands : 0;
-            self.spec = frames > 0 ? juce::Image (juce::Image::RGB, frames, bands, false) : juce::Image();
-            for (int t = 0; t < frames; ++t)
-                for (int b = 0; b < bands; ++b)
-                    self.spec.setPixelAt (
-                        t, bands - 1 - b,
-                        labWell.interpolatedWith (
-                            labHeat,
-                            std::pow (juce::jlimit (0.0f, 1.0f, (self.current.mel[(size_t) (t * bands + b)] + 70) / 70),
-                                      0.8f)));
-            self.sound = measures (*self.xy, self.current.mel);
-            self.repaint();
-            const bool playable = safe->current.patchResult.wasOk();
-            safe->sendButton.setEnabled (playable);
-            if (! playable)
-                safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
-            else
-            {
-                if (safe->errorShown)
-                    safe->setStatus ({});
-                // Bundle load and showing the tab decode for display only (ruling R14)
-                if (safe->userActed && safe->onLite)
-                    safe->onLite (safe->current.lite);
-            }
-        });
+    worker.lab (std::move (request),
+                [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
+                {
+                    if (! safe)
+                        return;
+                    if (r.failed())
+                    {
+                        safe->setStatus (r.getErrorMessage(), true);
+                        return;
+                    }
+                    auto& self = *safe;
+                    self.current = std::move (out);
+                    self.outputValid = true;
+                    self.showOutput();
+                    const bool playable = safe->current.patchResult.wasOk();
+                    safe->sendButton.setEnabled (playable);
+                    if (! playable)
+                        safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
+                    else
+                    {
+                        if (safe->errorShown)
+                            safe->setStatus ({});
+                        // Bundle load and showing the tab decode for display only (ruling R14)
+                        if (safe->userActed && safe->onLite)
+                            safe->onLite (safe->current.lite);
+                    }
+                });
+}
+
+void JointVaePanel::showOutput()
+{
+    // Page specCanvas: ((mel + 70) / 70)^0.8, green over the inset floor, low bands at the bottom
+    const auto bands = (int) xy->bandHz.size();
+    const auto frames = bands > 0 ? (int) current.mel.size() / bands : 0;
+    juce::Image image = frames > 0 ? juce::Image (juce::Image::RGB, frames, bands, false) : juce::Image();
+    for (int t = 0; t < frames; ++t)
+        for (int b = 0; b < bands; ++b)
+            image.setPixelAt (
+                t, bands - 1 - b,
+                lab::inset.interpolatedWith (
+                    lab::green,
+                    std::pow (juce::jlimit (0.0f, 1.0f, (current.mel[(size_t) (t * bands + b)] + 70) / 70), 0.8f)));
+    spectrum.image = image;
+    // The details popover: the same snapshot as the image (handoff, left sidebar)
+    const auto sound = measures (*xy, current.mel);
+    juce::String tip = "EXPECTED SOUND\n";
+    tip << detailRow ("Brightness", juce::String (sound.brightness, 1) + " oct above the note")
+        << detailRow ("Attack", sound.attack < 0.05f ? juce::String ("< 50 ms")
+                                                     : juce::String (juce::roundToInt (sound.attack * 1000)) + " ms")
+        << detailRow ("Length", juce::String (sound.length, 1) + " s")
+        << detailRow ("Noise", juce::String (juce::roundToInt (sound.noise * 100)) + "%") << "\nDECODED PRESET"
+        << (lockedTail ? dotSep + "structure locked" : juce::String()) << "\n";
+    for (const auto& [k, v] : current.preset)
+        tip << detailRow (k, v);
+    tip << "\nA model prediction, not live audio.";
+    spectrum.setTooltip (tip);
+    spectrum.repaint();
+    // CATEGORY MATCH: the knob forest's guess at this sound
+    const auto top = (int) (std::max_element (current.guess.begin(), current.guess.end()) - current.guess.begin());
+    for (auto& row : categoryRows)
+    {
+        row.match = current.guess[(size_t) row.index];
+        row.closest = row.index == top;
+        row.repaint();
+    }
+    repaint (categoryArea);
+}
+
+void JointVaePanel::CategoryRow::paintButton (juce::Graphics& g, bool over, bool)
+{
+    auto r = getLocalBounds().toFloat();
+    if (getToggleState())
+    {
+        g.setColour (lab::green.withAlpha (0.07f));
+        g.fillRect (r);
+    }
+    if (getToggleState() || hasKeyboardFocus (false))
+    {
+        g.setColour (lab::green);
+        g.drawRect (r, 1.0f);
+    }
+    else if (over)
+    {
+        g.setColour (lab::line);
+        g.drawRect (r, 1.0f);
+    }
+    r.reduce (6, 5);
+    const auto bar = r.removeFromBottom (3);
+    g.setFont (bodyFont (*this, 11.0f, closest));
+    g.setColour (closest ? lab::green : lab::ink);
+    g.drawText (getButtonText(), r, juce::Justification::centredLeft);
+    g.drawText (juce::String (juce::roundToInt (match * 100)) + "%", r, juce::Justification::centredRight);
+    g.setColour (lab::line);
+    g.fillRect (bar);
+    g.setColour (lab::categories[index]);
+    g.fillRect (bar.withWidth (bar.getWidth() * juce::jlimit (0.0f, 1.0f, match)));
 }
 
 void JointVaePanel::paint (juce::Graphics& g)
 {
-    struct Label
+    g.fillAll (lab::workspace);
+    // Separators, not panels: one continuous workspace (handoff, layout contract)
+    g.setColour (lab::line);
+    g.drawVerticalLine (layout.left.getRight(), (float) layout.left.getY(), (float) layout.left.getBottom());
+    g.drawVerticalLine (layout.right.getX(), (float) layout.right.getY(), (float) layout.right.getBottom());
+
+    // Identity: the green swish mark and the lowercase wordmark
+    const auto x = (float) layout.left.getX(), y = (float) layout.left.getY();
+    juce::Path mark;
+    mark.addArc (x + 2, y + 2, 29, 29, 0.45f, 5.8f, true);
+    mark.startNewSubPath (x + 3, y + 23);
+    mark.cubicTo (x + 10, y + 3, x + 24, y + 1, x + 33, y + 7);
+    mark.startNewSubPath (x + 5, y + 29);
+    mark.cubicTo (x + 16, y + 10, x + 27, y + 9, x + 34, y + 13);
+    g.setColour (lab::green);
+    g.strokePath (mark, juce::PathStrokeType (2.0f));
+    g.setColour (lab::ink);
+    g.setFont (bodyFont (*this, 25.0f, true));
+    g.drawText ("pitcher", (int) x + 43, (int) y - 2, 180, 38, juce::Justification::centredLeft);
+
+    auto heading = categoryArea;
+    g.setFont (look.monoFont (15.0f).boldened());
+    g.drawText ("CATEGORY MATCH", heading.removeFromTop (24), juce::Justification::centredLeft);
+    if (outputValid)
     {
-        juce::String name, low, high;
-    };
-    const auto label = [this] (int slot) -> Label
-    {
-        if (knobMode)
-            return groupOn (slot) >= 0 ? Label { kg->groups[(size_t) groupOn (slot)].name, "low", "high" } : Label();
-        auto* a = axisOn (slot);
-        return a ? Label { a->name, a->low, a->high } : Label();
-    };
-    g.setFont (LF::labelFont (10.0f));
-    if (const auto ax = label (0); ax.name.isNotEmpty())
-    {
-        g.setColour (LF::quiet());
-        g.drawText (ax.low, xLabelArea, juce::Justification::centredLeft);
-        g.drawText (ax.high, xLabelArea, juce::Justification::centredRight);
-        g.setColour (LF::ink);
-        g.drawText ("X " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + ax.name, xLabelArea,
-                    juce::Justification::centred);
+        const auto top = (int) (std::max_element (current.guess.begin(), current.guess.end()) - current.guess.begin());
+        g.setFont (look.monoFont (10.0f));
+        g.setColour (lab::green);
+        g.drawText ("Closest: " + juce::String (jointLabels[top]) + dotSep
+                        + juce::String (juce::roundToInt (current.guess[(size_t) top] * 100)) + "%",
+                    heading, juce::Justification::centredLeft);
     }
-    if (const auto ay = label (1); ay.name.isNotEmpty() && ! yLabelArea.isEmpty())
-    {
-        // Rotated a quarter turn: reads bottom to top, low end at the bottom
-        juce::Graphics::ScopedSaveState save (g);
-        const auto c = yLabelArea.getCentre().toFloat();
-        g.addTransform (juce::AffineTransform::rotation (-juce::MathConstants<float>::halfPi, c.x, c.y));
-        const auto r = juce::Rectangle<int> (yLabelArea.getHeight(), yLabelArea.getWidth()).withCentre (c.toInt());
-        g.setColour (LF::quiet());
-        g.drawText (ay.low, r, juce::Justification::centredLeft);
-        g.drawText (ay.high, r, juce::Justification::centredRight);
-        g.setColour (LF::ink);
-        g.drawText ("Y " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + ay.name, r,
-                    juce::Justification::centred);
-    }
-    if (zSlider.isVisible())
-    {
-        g.setColour (LF::ink);
-        g.drawFittedText ("Z " + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7 ")) + label (2).name, zLabelArea,
-                          juce::Justification::centredLeft, 1, 0.7f);
-    }
+
+    // The right sidebar's one tab: no Presets tab (Task 17 decision 3)
+    g.setFont (look.monoFont (11.0f));
+    g.setColour (lab::green);
+    g.drawText (knobMode ? "KNOB GROUPS" : "AXES", axesTab.reduced (4, 0), juce::Justification::centredLeft);
+    g.fillRect (axesTab.removeFromBottom (2));
+
     if (! askArea.isEmpty())
     {
-        g.setColour (labAsk.withAlpha (0.12f));
-        g.fillRoundedRectangle (askArea.toFloat(), 5);
-        g.setColour (labAsk);
-        g.drawRoundedRectangle (askArea.toFloat().reduced (0.5f), 5, 1);
-    }
-    paintReadouts (g);
-}
-
-void JointVaePanel::paintReadouts (juce::Graphics& g)
-{
-    // Page drawReadouts (latent mode), laid out as one strip
-    g.setColour (LF::faint);
-    g.drawRoundedRectangle (readoutArea.toFloat().reduced (0.5f), 5, 1);
-    const auto eyebrow = [&g] (juce::Rectangle<int>& area, const juce::String& text)
-    {
-        g.setColour (LF::quiet());
-        g.setFont (LF::labelFont (9.5f, true));
-        g.drawText (text.toUpperCase(), area.removeFromTop (kEyebrowH), juce::Justification::topLeft);
-    };
-    const auto rows =
-        [&g] (juce::Rectangle<int> area, const std::vector<std::pair<juce::String, juce::String>>& items, int keyW)
-    {
-        const int h = items.empty() ? 0 : juce::jmin (14, area.getHeight() / (int) items.size());
-        g.setFont (LF::labelFont (10.0f));
-        for (const auto& [k, v] : items)
-        {
-            auto row = area.removeFromTop (h);
-            g.setColour (LF::quiet());
-            g.drawText (k, row.removeFromLeft (keyW), juce::Justification::centredLeft);
-            g.setColour (LF::ink);
-            g.drawFittedText (v, row, juce::Justification::centredRight, 1, 0.75f);
-        }
-    };
-    auto area = specArea;
-    eyebrow (area, "Expected sound at the dot");
-    auto caption = area.removeFromBottom (12);
-    g.setColour (labWell);
-    g.fillRoundedRectangle (area.toFloat(), 4);
-    if (outputValid && spec.isValid())
-        g.drawImage (spec, area.toFloat().reduced (1), juce::RectanglePlacement::stretchToFit);
-    g.setColour (LF::faint);
-    g.drawRoundedRectangle (area.toFloat().reduced (0.5f), 4, 1);
-    g.setColour (LF::quiet());
-    g.setFont (LF::labelFont (9.0f));
-    g.drawText ("0 s", caption, juce::Justification::bottomLeft);
-    g.drawText ("note off 2 s", caption, juce::Justification::centredBottom);
-    g.drawText ("6 s", caption, juce::Justification::bottomRight);
-    if (! outputValid)
-        return;
-
-    area = measureArea.withTrimmedTop (kEyebrowH);
-    rows (area,
-          { { "Brightness", juce::String (sound.brightness, 1) + " oct above the note" },
-            { "Attack", sound.attack < 0.05f ? juce::String ("< 50 ms")
-                                             : juce::String (juce::roundToInt (sound.attack * 1000)) + " ms" },
-            { "Length", juce::String (sound.length, 1) + " s" },
-            { "Noise", juce::String (juce::roundToInt (sound.noise * 100)) + "%" } },
-          64);
-
-    area = presetArea;
-    eyebrow (area, juce::String ("Decoded preset") + (lockedTail ? dotSep + "structure locked" : juce::String()));
-    rows (area, current.preset, 96);
-
-    area = guessArea;
-    eyebrow (area, "Category guess at the dot");
-    const auto top = (int) (std::max_element (current.guess.begin(), current.guess.end()) - current.guess.begin());
-    const int h = area.getHeight() / 8;
-    for (int c = 0; c < 8; ++c)
-    {
-        auto row = area.removeFromTop (h);
-        const auto p = current.guess[(size_t) c];
-        g.setColour (c == top ? LF::ink : LF::quiet());
-        g.setFont (LF::labelFont (9.5f, c == top));
-        g.drawText (jointLabels[c], row.removeFromLeft (66), juce::Justification::centredLeft);
-        g.setColour (LF::quiet());
-        g.drawText (juce::String (juce::roundToInt (p * 100)) + "%", row.removeFromRight (32),
-                    juce::Justification::centredRight);
-        const auto bar = row.reduced (4, 0).withSizeKeepingCentre (row.getWidth() - 8, 6).toFloat();
-        g.setColour (LF::faint);
-        g.fillRoundedRectangle (bar, 3);
-        g.setColour (labCategoryColours[c]);
-        g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * juce::jlimit (0.0f, 1.0f, p)), 3);
+        g.setColour (lab::green.withAlpha (0.07f));
+        g.fillRect (askArea);
+        g.setColour (lab::green);
+        g.drawRect (askArea, 1);
     }
 }
 
 void JointVaePanel::resized()
 {
-    auto r = getLocalBounds();
-    auto bar = r.removeFromTop (kToolbarH);
-    r.removeFromTop (kGap);
-    const auto put = [&bar] (juce::Component& c, int w)
-    {
-        c.setBounds (bar.removeFromLeft (w));
-        bar.removeFromLeft (6);
-    };
-    put (latentButton, 92);
-    put (knobButton, 84);
-    bar.removeFromLeft (10);
-    put (base, 180);
-    put (category, 120);
-    put (lockButton, 124);
-    put (resetButton, 64);
-    put (dotsButton, 104);
-    put (sendButton, 120);
-    put (background, 130);
+    layout = PitcherLayout::calculate (getLocalBounds());
 
-    auto left = r.removeFromLeft (r.getWidth() * 2 / 3);
-    left.removeFromRight (12);
-    listView.setBounds (r);
+    // Left: identity, category match, the controls (Task 17 decision 2), the spectrogram at the bottom
+    auto left = layout.left.withTrimmedRight (20);
+    left.removeFromTop (52);
+    categoryArea = left.removeFromTop (44);
+    spectrum.setBounds (left.removeFromBottom (kSpectrumH));
+    left.removeFromBottom (12);
+    constexpr int controlsH = 5 * kRowH + 4 * kRowGap;
+    const int rowH = juce::jlimit (22, 32, (left.getHeight() - controlsH - 12) / 8);
+    for (auto& row : categoryRows)
+        row.setBounds (left.removeFromTop (rowH));
+    left.removeFromTop (12);
+    const auto controlRow = [&left]
+    {
+        auto r = left.removeFromTop (kRowH);
+        left.removeFromTop (kRowGap);
+        return r;
+    };
+    auto modes = controlRow();
+    latentButton.setBounds (modes.removeFromLeft (modes.getWidth() / 2).withTrimmedRight (3));
+    knobButton.setBounds (modes.withTrimmedLeft (3));
+    base.setBounds (controlRow());
+    category.setBounds (controlRow());
+    auto lockRow = controlRow();
+    lockButton.setBounds (lockRow.removeFromLeft (lockRow.getWidth() * 3 / 5).withTrimmedRight (3));
+    resetButton.setBounds (lockRow.withTrimmedLeft (3));
+    sendButton.setBounds (controlRow());
+
+    // Right: the axis list, scrolling within its height
+    auto right = layout.right.withTrimmedLeft (20);
+    axesTab = right.removeFromTop (kTabH);
+    right.removeFromTop (10);
+    listView.setBounds (right);
     list.layOut (listView.getWidth() - listView.getScrollBarThickness()); // rows never sit under the scroll bar
 
-    readoutArea = left.removeFromBottom (kReadoutH);
-    {
-        auto strip = readoutArea.reduced (8);
-        const auto w = strip.getWidth();
-        specArea = strip.removeFromLeft (w * 22 / 100);
-        strip.removeFromLeft (12);
-        measureArea = strip.removeFromLeft (w * 25 / 100);
-        strip.removeFromLeft (12);
-        guessArea = strip.removeFromRight (w * 22 / 100);
-        strip.removeFromRight (12);
-        presetArea = strip;
-    }
-    left.removeFromBottom (kGap);
-    // One prompt line, the candidates when there are any, then the status line
-    const bool chipRow = ! candidates.empty();
-    promptArea = left.removeFromBottom (kPromptH + (chipRow ? kChipRowH + 4 : 0));
-    auto promptRow = promptArea.removeFromTop (kPromptRowH);
+    // Centre: the view, the Replace question and Find's chips, the prompt and its status, the keyboard
+    keyboard.setBounds (layout.keyboard);
+    keyboard.setKeyWidth ((float) layout.keyboard.getWidth() / 22.0f);
+    promptBox.setBounds (layout.prompt);
+    promptGo.setBounds (layout.submit);
+    auto line = layout.status;
     if (findButton.isVisible())
     {
-        findButton.setBounds (promptRow.removeFromLeft (88));
-        experimentalTag.setBounds (promptRow.removeFromLeft (70));
+        findButton.setBounds (line.removeFromLeft (92));
+        line.removeFromLeft (4);
     }
-    nudgeButton.setBounds (promptRow.removeFromLeft (76));
-    promptRow.removeFromLeft (6);
-    promptGo.setBounds (promptRow.removeFromRight (kPromptRowH + 8));
-    promptRow.removeFromRight (4);
-    promptBox.setBounds (promptRow);
-    promptArea.removeFromTop (4);
-    if (chipRow)
+    nudgeButton.setBounds (line.removeFromLeft (80));
+    line.removeFromLeft (8);
+    if (experimentalTag.isVisible())
+        experimentalTag.setBounds (line.removeFromLeft (92));
+    status.setBounds (line);
+
+    auto view = layout.orbit;
+    if (! candidates.empty())
     {
-        auto row = promptArea.removeFromTop (kChipRowH);
-        const auto w = juce::jmin (88, candidates.empty() ? 0 : row.getWidth() / (int) candidates.size());
+        auto row = view.removeFromBottom (kChipRowH);
+        view.removeFromBottom (kGap);
+        const auto w = juce::jmin (96, row.getWidth() / (int) candidates.size());
         for (size_t i = 0; i < candidates.size() && i < chips.size(); ++i)
             chips[i].setBounds (row.removeFromLeft (w).withTrimmedRight (4));
-        promptArea.removeFromTop (4);
     }
-    status.setBounds (promptArea);
-    left.removeFromBottom (kGap);
     askArea = {};
-    if (pendingEdit) // the Replace question, between the pad and the prompt
+    if (pendingEdit)
     {
-        askArea = left.removeFromBottom (kAskH);
-        left.removeFromBottom (kGap);
-        auto row = askArea.reduced (8, 5);
-        askKeep.setBounds (row.removeFromRight (104));
+        askArea = view.removeFromBottom (kAskH);
+        view.removeFromBottom (kGap);
+        auto row = askArea.reduced (10, 5);
+        askKeep.setBounds (row.removeFromRight (104).withSizeKeepingCentre (104, kRowH));
         row.removeFromRight (6);
-        askReplace.setBounds (row.removeFromRight (80));
-        row.removeFromRight (8);
+        askReplace.setBounds (row.removeFromRight (80).withSizeKeepingCentre (80, kRowH));
+        row.removeFromRight (10);
         askNote.setBounds (row);
     }
-    const bool hasZ = hasSlot (2);
-    zSlider.setVisible (hasZ);
-    if (hasZ)
-    {
-        auto row = left.removeFromBottom (kZRowH).withTrimmedLeft (kYLabelW);
-        zLabelArea = row.removeFromLeft (row.getWidth() / 3);
-        zSlider.setBounds (row);
-    }
-    xLabelArea = left.removeFromBottom (kXLabelH).withTrimmedLeft (kYLabelW);
-    yLabelArea = left.removeFromLeft (kYLabelW);
-    pad.setBounds (left);
+    orbit.setBounds (view);
+    pad.setBounds (view);
 }
 #endif
 } // namespace vae::experimental

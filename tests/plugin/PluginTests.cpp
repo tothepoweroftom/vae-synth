@@ -4,7 +4,9 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "experiments/joint_vae/LabOrbit.h"
 #include "experiments/joint_vae/LabPad.h"
+#include "PitcherControls.h"
 #include "schema/PresetFile.h"
 #include "../engine/EngineTestUtils.h"
 #include "engine/lite/LiteEngine.h"
@@ -252,6 +254,32 @@ DragStats playDrag (const std::vector<schema::Snapshot>& results)
     return stats;
 }
 #endif
+
+#if VAE_WITH_SURGE
+/** The Lab's orbit handle moved to x, y with Z kept, as a handle drag reports it. */
+void moveHandle (experimental::LabOrbit& orbit, float x, float y) { orbit.moved ({ x, y, orbit.getHandle()[2] }); }
+
+/** A mouse event on `c` at `at` (local); `dragged` marks a release after a drag. */
+juce::MouseEvent mouseAt (juce::Component& c, juce::Point<float> at, juce::Point<float> down, bool dragged = false)
+{
+    const auto now = juce::Time::getCurrentTime();
+    return { juce::Desktop::getInstance().getMainMouseSource(),
+             at,
+             juce::ModifierKeys::leftButtonModifier,
+             0,
+             0,
+             0,
+             0,
+             0,
+             &c,
+             &c,
+             now,
+             down,
+             now,
+             1,
+             dragged };
+}
+#endif
 } // namespace
 
 class PluginTests final : public juce::UnitTest
@@ -327,11 +355,8 @@ public:
             if (t->lab == nullptr)
                 return t;
             t->lab->onLite = [p = t.get()] (const schema::Snapshot&) { ++p->played; };
-            bool shown = false;
-            t->lab->onMapShown = [&shown] { shown = true; };
             t->lab->loadBundle (juce::File (bundle));
-            expect (pumpUntil ([&] { return shown; }, 60000), "Lab bundle loaded");
-            t->lab->onMapShown = nullptr;
+            expect (pumpUntil ([&] { return t->lab->hasOutput(); }, 60000), "Lab bundle loaded");
             t->lab->loadPromptBundle (prompt);
             expect (pumpUntil ([&] { return t->lab->isPromptReady(); }, 60000), "Find offered");
             return t;
@@ -392,10 +417,13 @@ public:
                 expect (playing (lab, bankCodes (bassRows[0])), "the bank row's codes reach lab()");
                 expect (pumpUntil ([&] { return t->played > 0; }, 5000), "it plays on Lite");
                 expect (lab.latent() == bankZ (bassRows[0]), "the dot sits at the bank z");
-                if (auto* pad = findChild<experimental::LabPad> (lab); pad && lab.padData())
+                if (auto* orbit = findChild<experimental::LabOrbit> (lab); orbit && lab.padData())
                 {
                     const auto* x = lab.padData()->find ("s:brightness");
-                    expect (x != nullptr && std::abs (pad->getDot().x - axisPosition (*x, lab.latent())) < 1e-4f);
+                    expect (
+                        x != nullptr
+                        && std::abs (orbit->getHandle()[0] - juce::jlimit (0.0f, 1.0f, axisPosition (*x, lab.latent())))
+                               < 1e-4f);
                 }
                 expectEquals (lab.statusText(),
                               juce::String (juce::CharPointer_UTF8 ("Selected a bank preset \xc2\xb7 Lite preview")));
@@ -468,28 +496,25 @@ public:
             }
         }
 
-        // A click on the pad at a 0..1 point (y up) that does not drag
-        const auto click = [] (experimental::LabPad& pad, juce::Point<float> p)
+        // A click on the orbit at a normalised XYZ point that does not drag
+        const auto click = [] (experimental::LabOrbit& orbit, experimental::LabOrbit::Position p)
         {
-            if (auto* lab = pad.getParentComponent(); lab && pad.getWidth() == 0)
-                lab->setSize (1100, 760); // the Lab tab is hidden: lay it out
-            const juce::Point<float> px { p.x * (float) pad.getWidth(), (1 - p.y) * (float) pad.getHeight() };
-            const auto now = juce::Time::getCurrentTime();
-            const juce::MouseEvent e (juce::Desktop::getInstance().getMainMouseSource(), px,
-                                      juce::ModifierKeys::leftButtonModifier, 0, 0, 0, 0, 0, &pad, &pad, now, px, now,
-                                      1, false);
-            pad.mouseDown (e);
-            pad.mouseUp (e);
+            if (auto* lab = orbit.getParentComponent(); lab && orbit.getWidth() == 0)
+                lab->setSize (1240, 700); // the Lab tab is hidden: lay it out
+            const auto px = orbit.project (p);
+            const auto e = mouseAt (orbit, px, px);
+            orbit.mouseDown (e);
+            orbit.mouseUp (e);
         };
-        const auto near = [] (juce::Point<float> a, juce::Point<float> b)
-        { return std::abs (a.x - b.x) < 1e-4f && std::abs (a.y - b.y) < 1e-4f; };
+        const auto near = [] (experimental::LabOrbit::Position a, experimental::LabOrbit::Position b)
+        { return std::abs (a[0] - b[0]) < 1e-4f && std::abs (a[1] - b[1]) < 1e-4f && std::abs (a[2] - b[2]) < 1e-4f; };
         const auto progress = [] (const juce::String& s)
         { return s.startsWith ("Loading prompt model") || s.startsWith ("Finding sounds"); };
 
         beginTest ("find highlights candidates");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -499,11 +524,13 @@ public:
                 {
                     const auto* ax = lab.padData()->find (x);
                     const auto* ay = lab.padData()->find (y);
+                    const auto* az = lab.padData()->find (lab.assignedAxes()[2]);
                     const auto& c = lab.promptCandidates();
                     const auto& h = pad->getHighlights();
                     expectEquals ((int) h.size(), (int) c.size());
-                    for (size_t i = 0; i < c.size() && i < h.size() && ax && ay; ++i)
-                        expect (near (h[i], { axisPosition (*ax, c[i].z), axisPosition (*ay, c[i].z) }),
+                    for (size_t i = 0; i < c.size() && i < h.size() && ax && ay && az; ++i)
+                        expect (near (h[i], { axisPosition (*ax, c[i].z), axisPosition (*ay, c[i].z),
+                                              axisPosition (*az, c[i].z) }),
                                 "highlight at the bank z");
                 };
                 check ("s:brightness", "s:length");
@@ -522,7 +549,7 @@ public:
         beginTest ("dot click selects candidate");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -539,7 +566,13 @@ public:
                     expect (playing (lab, bankCodes (bassRows[2])), "row 2's exact codes");
                     pumpUntil ([] { return false; }, 300);
                     expect (same (lab.output().codes, bankCodes (bassRows[2])), "and stays");
-                    expect (near (pad->getDot(), at), "the handle moves to the dot");
+                    const auto clamped = [] (experimental::LabOrbit::Position p)
+                    {
+                        for (auto& v : p)
+                            v = juce::jlimit (0.0f, 1.0f, v);
+                        return p;
+                    };
+                    expect (near (pad->getHandle(), clamped (at)), "the handle moves to the dot");
                 }
             }
         }
@@ -547,7 +580,7 @@ public:
         beginTest ("drag explores from candidate");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -577,16 +610,9 @@ public:
                 expect (lab.latent() != z1, "the word list edits");
                 const auto z2 = lab.latent();
                 lab.assignAxis (2, "s:noise");
-                auto* zs = [&]
-                {
-                    for (auto* c : lab.getChildren()) // the Z slider; the axis list holds the others
-                        if (auto* s = dynamic_cast<juce::Slider*> (c))
-                            return s;
-                    return (juce::Slider*) nullptr;
-                }();
-                expect (zs != nullptr && zs->isEnabled());
-                if (zs)
-                    zs->setValue (zs->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                // Page Up moves the handle along Z (Orbit has no separate Z slider)
+                pad->keyPressed (juce::KeyPress (pad->getHandle()[2] > 0.5f ? juce::KeyPress::pageDownKey
+                                                                            : juce::KeyPress::pageUpKey));
                 expect (lab.latent() != z2, "Z edits");
                 expectEquals (lab.selectedCandidate(), 0, "the dot stays marked");
             }
@@ -595,7 +621,7 @@ public:
         beginTest ("reselect restores exact codes");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -621,7 +647,7 @@ public:
         beginTest ("send to surge exact then decoded");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -661,7 +687,7 @@ public:
         beginTest ("a dropped find never leaves a progress status");
         {
             auto t = open (promptJson);
-            auto* pad = t->lab ? findChild<experimental::LabPad> (*t->lab) : nullptr;
+            auto* pad = t->lab ? findChild<experimental::LabOrbit> (*t->lab) : nullptr;
             if (pad && t->lab->isPromptReady())
             {
                 auto& lab = *t->lab;
@@ -703,7 +729,7 @@ public:
                 // A manual edit after a prompt drops its result
                 const auto pads = lab.promptCandidates();
                 lab.findSounds ("deep sub bass");
-                if (auto* pad = findChild<experimental::LabPad> (lab))
+                if (auto* pad = findChild<experimental::LabOrbit> (lab))
                     pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
                 const auto z1 = lab.latent();
                 pumpUntil ([] { return false; }, 1500);
@@ -815,33 +841,56 @@ public:
                 expectEquals (after[i], before[i]);
         }
 
-        beginTest ("VAE Lab v2 layout");
+        beginTest ("VAE Lab layout: equal sidebars, a centre column, a centre-only keyboard");
         {
             PluginProcessor processor;
             settleModel (processor);
             std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
             auto* lab = findChild<experimental::JointVaePanel> (*editor);
-            juce::TextButton* labButton = nullptr;
-            for (auto* child : editor->getChildren())
-                if (auto* button = dynamic_cast<juce::TextButton*> (child);
-                    button && button->getButtonText() == "VAE Lab")
-                    labButton = button;
-            expect (lab != nullptr && labButton != nullptr);
-            if (lab && labButton)
+            auto* labButton = findButton (*editor, "VAE Lab");
+            auto* editorKeys = findChild<FlatKeyboard> (*editor);
+            expect (lab != nullptr && labButton != nullptr && editorKeys != nullptr);
+            if (lab && labButton && editorKeys)
             {
                 labButton->onClick();
-                auto* pad = findChild<experimental::LabPad> (*lab);
-                auto* list = findChild<juce::Viewport> (*lab);
-#if VAE_WITH_SURGE
-                expect (pad != nullptr && list != nullptr);
-                if (pad && list)
+                const auto shoot = [&] (const char* variable)
                 {
-                    const auto p = lab->getLocalArea (pad, pad->getLocalBounds());
-                    const auto l = lab->getLocalArea (list, list->getLocalBounds());
-                    expect (p.getWidth() >= 0.6 * lab->getWidth(), "pad width " + juce::String (p.getWidth()));
-                    expect (p.getHeight() >= 0.55 * lab->getHeight(), "pad height " + juce::String (p.getHeight()));
-                    expect (l.getX() >= p.getRight() && ! l.intersects (p));
-                    expect (l.getHeight() >= p.getHeight());
+                    const auto file = juce::SystemStats::getEnvironmentVariable (variable, "");
+                    if (file.isNotEmpty())
+                        if (auto stream = juce::File (file).createOutputStream())
+                            juce::PNGImageFormat().writeImageToStream (
+                                editor->createComponentSnapshot (editor->getLocalBounds()), *stream);
+                };
+#if VAE_WITH_SURGE
+                auto* orbit = findChild<experimental::LabOrbit> (*lab);
+                auto* list = findChild<juce::Viewport> (*lab);
+                auto* keys = findChild<PitcherKeyboard> (*lab);
+                auto* prompt = findChild<juce::TextEditor> (*lab);
+                expect (orbit != nullptr && list != nullptr && keys != nullptr && prompt != nullptr);
+                if (orbit && list && keys && prompt)
+                {
+                    const auto& l = lab->getLayout();
+                    const auto in = [&] (juce::Component* c) { return lab->getLocalArea (c, c->getLocalBounds()); };
+                    expectEquals (l.left.getWidth(), l.right.getWidth(), "equal sidebar widths");
+                    expect (l.left.getY() == l.right.getY() && l.left.getHeight() == l.right.getHeight(),
+                            "equal sidebar heights");
+                    expect (l.left.getRight() < l.centre.getX() && l.centre.getRight() < l.right.getX(), "no overlap");
+                    for (auto* c : std::initializer_list<juce::Component*> { orbit, prompt, keys })
+                        expect (l.centre.contains (in (c)), "in the centre column");
+                    expect (in (orbit).getBottom() <= in (prompt).getY() && in (prompt).getBottom() <= in (keys).getY(),
+                            "orbit, prompt, keyboard from top to bottom");
+                    expect (in (keys).getX() >= l.centre.getX() && in (keys).getRight() <= l.centre.getRight()
+                                && in (keys).getBottom() <= l.left.getBottom(),
+                            "the keyboard stays in the centre column");
+                    expect (l.right.contains (in (list)), "the axis list is in the right sidebar");
+                    expect (in (orbit).getWidth() >= 0.45 * lab->getWidth(),
+                            "orbit width " + juce::String (in (orbit).getWidth()));
+                    expect (in (orbit).getHeight() >= 0.5 * lab->getHeight(),
+                            "orbit height " + juce::String (in (orbit).getHeight()));
+                    expect (keys->getRangeStart() == 48 && keys->getRangeEnd() == 84, "C3 to C6: 37 keys");
+                    expect (keys->getKeyStartPosition (84) + keys->getKeyWidth() <= (float) keys->getWidth() + 1.0f,
+                            "every key fits");
+                    expect (keys->isVisible() && ! editorKeys->isVisible(), "the Lab keyboard replaces the editor's");
                     const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", "");
                     if (bundle.isNotEmpty())
                     {
@@ -849,26 +898,62 @@ public:
                         expect (
                             pumpUntil ([&] { return list->getViewedComponent()->getNumChildComponents() > 30; }, 30000),
                             "axis rows");
-                        pumpUntil ([] { return false; }, 300); // the first decode, for the screenshot
+                        expect (pumpUntil ([&] { return lab->hasOutput(); }, 30000), "the first decode");
                         expect (list->getViewedComponent()->getWidth() <= list->getMaximumVisibleWidth(),
                                 "rows clear the scroll bar: " + juce::String (list->getViewedComponent()->getWidth())
                                     + " > " + juce::String (list->getMaximumVisibleWidth()));
+                        expect (lab->assignedAxes()[2].isNotEmpty(), "Orbit has a Z axis");
+                        shoot ("VAE_LAB_SCREENSHOT");
+
+                        // The inline Replace question: its text fits, and other status writes leave it showing
+                        lab->markEdited();
+                        moveHandle (*orbit, 0.7f, 0.6f);
+                        expect (lab->isAskingToReplace());
+                        juce::Label* note = nullptr;
+                        for (auto* label : findAll<juce::Label> (*lab))
+                            if (label->getText().startsWith ("Replace your Synth edits?"))
+                                note = label;
+                        expect (note != nullptr && note->isVisible());
+                        if (note)
+                        {
+                            juce::AttributedString text (note->getText());
+                            text.setFont (note->getFont());
+                            juce::TextLayout layout;
+                            layout.createLayout (text, (float) note->getWidth());
+                            expect (layout.getHeight() <= (float) note->getHeight()
+                                        && layout.getWidth() <= (float) note->getWidth(),
+                                    "the banner text is not clipped");
+                            expect (l.centre.contains (in (note)), "the banner is in the centre column");
+                        }
+                        if (auto* send = findButton (*lab, "Send to Surge"))
+                            send->onClick();
+                        expect (lab->statusText().contains ("Replace your Synth edits?"), lab->statusText());
+                        shoot ("VAE_LAB_ASK_SCREENSHOT");
+                        lab->answerReplace (false);
+
+                        // The knob pad keeps its flat pad and category map
+                        bool shown = false;
+                        lab->onMapShown = [&shown] { shown = true; };
+                        if (auto* knob = findButton (*lab, "Knob pad"))
+                            knob->onClick();
+                        auto* pad = findChild<experimental::LabPad> (*lab);
+                        expect (pad != nullptr && pad->isVisible() && ! orbit->isVisible(),
+                                "the knob pad replaces Orbit");
+                        expect (pumpUntil ([&] { return shown; }, 30000), "knob map");
+                        lab->onMapShown = nullptr;
+                        shoot ("VAE_LAB_KNOB_SCREENSHOT");
                     }
                 }
 #else
-                expect (pad == nullptr && list == nullptr);
+                expect (findChild<experimental::LabOrbit> (*lab) == nullptr
+                        && findChild<juce::Viewport> (*lab) == nullptr);
                 auto* note = findChild<juce::Label> (*lab);
                 expect (note != nullptr && note->getText() == "VAE Lab needs a Surge build");
+                shoot ("VAE_LAB_SCREENSHOT");
 #endif
-                auto image = editor->createComponentSnapshot (editor->getLocalBounds());
-                expect (image.isValid());
-                const auto screenshot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_SCREENSHOT", "");
-                if (screenshot.isNotEmpty())
-                {
-                    auto stream = juce::File (screenshot).createOutputStream();
-                    if (stream)
-                        juce::PNGImageFormat().writeImageToStream (image, *stream);
-                }
+                expect (editor->createComponentSnapshot (editor->getLocalBounds()).isValid());
+                findButton (*editor, "Synth")->onClick();
+                expect (editorKeys->isVisible(), "the editor keyboard is back in the Synth view");
             }
         }
 
@@ -941,9 +1026,9 @@ public:
                 const auto after = processor.getControls();
                 for (int i = 0; i < schema::kControlCount; ++i)
                     expectEquals (after[i], before[i]);
-                if (auto* pad = findChild<experimental::LabPad> (*lab))
-                    pad->keyPressed (juce::KeyPress (juce::KeyPress::rightKey));
-                expect (pumpUntil ([&] { return played > 0; }, 30000), "a pad move plays");
+                if (auto* orbit = findChild<experimental::LabOrbit> (*lab))
+                    orbit->keyPressed (juce::KeyPress (juce::KeyPress::rightKey));
+                expect (pumpUntil ([&] { return played > 0; }, 30000), "a handle move plays");
             }
         }
         else
@@ -956,24 +1041,19 @@ public:
             {
                 std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
                 auto* lab = findChild<experimental::JointVaePanel> (*editor);
-                auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
-                bool ready = false;
+                auto* orbit = lab ? findChild<experimental::LabOrbit> (*lab) : nullptr;
                 if (lab)
-                {
-                    lab->onMapShown = [&ready] { ready = true; };
                     lab->loadBundle (juce::File (bundle));
-                }
-                expect (pad != nullptr && pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
-                if (pad == nullptr || ! ready)
+                const bool ready = lab && pumpUntil ([&] { return lab->hasOutput(); }, 60000);
+                expect (orbit != nullptr && ready, "bundle loaded");
+                if (orbit == nullptr || ! ready)
                     editor.reset();
-                else
-                    lab->onMapShown = nullptr;
                 return editor;
             };
             // A fresh editor whose Lab has loaded the bundle; `steps` get the editor and its Lab
             const auto withLab =
                 [&] (const std::function<void (juce::AudioProcessorEditor&, PluginProcessor&,
-                                               experimental::JointVaePanel&, experimental::LabPad&)>& steps)
+                                               experimental::JointVaePanel&, experimental::LabOrbit&)>& steps)
             {
                 PluginProcessor processor;
                 settleModel (processor);
@@ -981,7 +1061,7 @@ public:
                 if (auto editor = openLab (processor))
                 {
                     auto* lab = findChild<experimental::JointVaePanel> (*editor);
-                    steps (*editor, processor, *lab, *findChild<experimental::LabPad> (*lab));
+                    steps (*editor, processor, *lab, *findChild<experimental::LabOrbit> (*lab));
                 }
                 processor.releaseResources();
             };
@@ -1003,11 +1083,11 @@ public:
             beginTest ("lab preset shows in synth view");
             withLab (
                 [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
-                     experimental::LabPad& pad)
+                     experimental::LabOrbit& pad)
                 {
                     findButton (editor, "VAE Lab")->onClick();
                     const auto before = lab.output().codes;
-                    pad.moved ({ 0.85f, 0.2f });
+                    moveHandle (pad, 0.85f, 0.2f);
                     expect (
                         pumpUntil (
                             [&]
@@ -1055,12 +1135,12 @@ public:
             beginTest ("lab writes do not mark edited");
             withLab (
                 [&] (juce::AudioProcessorEditor&, PluginProcessor& processor, experimental::JointVaePanel& lab,
-                     experimental::LabPad& pad)
+                     experimental::LabOrbit& pad)
                 {
                     for (auto p : { juce::Point<float> (0.2f, 0.8f), juce::Point<float> (0.7f, 0.4f) })
                     {
                         const auto before = lab.output().codes;
-                        pad.moved (p);
+                        moveHandle (pad, p.x, p.y);
                         expect (pumpUntil (
                             [&]
                             { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
@@ -1074,10 +1154,10 @@ public:
             beginTest ("synth edit marks lab edited");
             withLab (
                 [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
-                     experimental::LabPad& pad)
+                     experimental::LabOrbit& pad)
                 {
                     auto before = lab.output().codes;
-                    pad.moved ({ 0.3f, 0.3f });
+                    moveHandle (pad, 0.3f, 0.3f);
                     expect (pumpUntil (
                         [&] { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
                         30000));
@@ -1093,7 +1173,7 @@ public:
                     const auto z0 = lab.latent();
 
                     // Keep editing: sound and Lab state unchanged
-                    pad.moved ({ 0.9f, 0.9f });
+                    moveHandle (pad, 0.9f, 0.9f);
                     expect (lab.isAskingToReplace(), "a Lab move asks");
                     // R21: asked inline in the Lab, never in a top-level window a host can hide
                     auto* keep = findButton (lab, "Keep editing");
@@ -1106,7 +1186,7 @@ public:
                         expect (dynamic_cast<juce::AlertWindow*> (juce::TopLevelWindow::getTopLevelWindow (w))
                                     == nullptr,
                                 "no top-level dialog");
-                    pad.moved ({ 0.1f, 0.1f }); // ignored while asking
+                    moveHandle (pad, 0.1f, 0.1f); // ignored while asking
                     if (keep != nullptr)
                         keep->triggerClick();
                     pumpUntil ([] { return false; }, 50); // triggerClick is async
@@ -1120,7 +1200,7 @@ public:
 
                     // Replace: the new point plays
                     before = lab.output().codes;
-                    pad.moved ({ 0.9f, 0.9f });
+                    moveHandle (pad, 0.9f, 0.9f);
                     expect (lab.isAskingToReplace(), "asks again");
                     lab.answerReplace (true);
                     expect (! lab.isAskingToReplace() && ! lab.isEdited());
@@ -1146,17 +1226,17 @@ public:
             beginTest ("an in-flight lab decode never overwrites a non-Lab write");
             withLab (
                 [&] (juce::AudioProcessorEditor&, PluginProcessor& processor, experimental::JointVaePanel& lab,
-                     experimental::LabPad& pad)
+                     experimental::LabOrbit& pad)
                 {
                     const auto index = processor.getParams().indexOf (schema::control (firstContinuous()).id);
                     const auto before = lab.output().codes;
-                    pad.moved ({ 0.8f, 0.7f });                // not edited: the decode is queued
+                    moveHandle (pad, 0.8f, 0.7f);              // not edited: the decode is queued
                     processor.getParams().set (index, 0.123f); // a host write lands before its result
                     expect (pumpUntil ([&] { return lab.output().codes != before; }, 30000), "the decode arrives");
                     pumpUntil ([] { return false; }, 300);
                     expectWithinAbsoluteError (processor.getParams().get (index), 0.123f, 1e-6f);
                     expect (lab.isEdited(), "the host write marks edited");
-                    pad.moved ({ 0.2f, 0.3f });
+                    moveHandle (pad, 0.2f, 0.3f);
                     expect (lab.isAskingToReplace(), "the next Lab move asks");
                     lab.answerReplace (true);
                     const auto replaced = lab.output().codes;
@@ -1171,7 +1251,7 @@ public:
             beginTest ("reset returns to the same random real preset");
             withLab (
                 [&] (juce::AudioProcessorEditor&, PluginProcessor&, experimental::JointVaePanel& lab,
-                     experimental::LabPad&)
+                     experimental::LabOrbit&)
                 {
                     juce::ComboBox* base = nullptr;
                     for (auto* c : findAll<juce::ComboBox> (lab))
@@ -1200,6 +1280,92 @@ public:
                     expect (redrawn, "choosing Random real preset again draws a new one");
                 });
 
+            beginTest ("camera gestures never decode or play");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    int played = 0;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        ++played;
+                        if (play)
+                            play (s);
+                    };
+                    const auto before = lab.output().codes;
+                    moveHandle (orbit, 0.8f, 0.3f); // the user acts, so a decode would play
+                    expect (pumpUntil ([&] { return played > 0 && lab.output().codes != before; }, 30000));
+                    pumpUntil ([] { return false; }, 300);
+                    const auto codes = lab.output().codes;
+                    const auto z = lab.latent();
+                    const auto handle = orbit.getHandle();
+                    const int count = played;
+                    const auto seen = orbit.project (handle);
+                    auto* view = findChild<OrbitView> (orbit);
+                    expect (view != nullptr);
+                    if (view == nullptr)
+                        return;
+                    // Orbit: a drag on empty space (a corner, away from the handle), then its release
+                    const juce::Point<float> corner { 4.0f, (float) view->getHeight() - 4.0f };
+                    const auto end = corner + juce::Point<float> (90.0f, -40.0f);
+                    view->mouseDown (mouseAt (*view, corner, corner));
+                    view->mouseDrag (mouseAt (*view, end, corner));
+                    view->mouseUp (mouseAt (*view, end, corner, true));
+                    orbit.mouseUp (mouseAt (orbit, end, corner, true));
+                    expect (orbit.project (handle).getDistanceFrom (seen) > 1.0f, "the drag orbits the camera");
+                    // Zoom: wheel and the - / + buttons; then Reset view and Home
+                    juce::MouseWheelDetails wheel {};
+                    wheel.deltaY = 0.5f;
+                    view->mouseWheelMove (mouseAt (*view, corner, corner), wheel);
+                    for (auto* text : { "+", "-", "Reset view" })
+                        if (auto* b = findButton (orbit, text))
+                            b->onClick();
+                        else
+                            expect (false, juce::String ("camera button ") + text);
+                    expect (orbit.project (handle).getDistanceFrom (seen) < 1e-3f, "Reset view restores the camera");
+                    view->keyPressed (juce::KeyPress (juce::KeyPress::homeKey));
+                    pumpUntil ([] { return false; }, 500);
+                    expectEquals (played, count, "camera gestures play nothing");
+                    expect (lab.latent() == z && lab.output().codes == codes, "and decode nothing");
+                    expect (orbit.getHandle() == handle, "the handle stays");
+                });
+
+            beginTest ("an orbit handle drag constrains the assigned axes, then decodes");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* view = findChild<OrbitView> (orbit);
+                    expect (view != nullptr);
+                    if (view == nullptr)
+                        return;
+                    const auto before = lab.output().codes;
+                    const auto start = orbit.getHandle();
+                    const auto at = orbit.project (start);
+                    const auto to = at + juce::Point<float> (30.0f, -20.0f);
+                    view->mouseDown (mouseAt (*view, at, at));
+                    view->mouseDrag (mouseAt (*view, to, at));
+                    view->mouseUp (mouseAt (*view, to, at, true));
+                    const auto handle = orbit.getHandle();
+                    expect (handle != start, "the handle moved");
+                    const auto& ids = lab.assignedAxes();
+                    for (int i = 0; i < 3; ++i)
+                        if (auto* axis = lab.padData()->find (ids[(size_t) i]))
+                            expectWithinAbsoluteError (axisPosition (*axis, lab.latent()), handle[(size_t) i], 1e-3f,
+                                                       "slot " + juce::String (i) + " reads the handle");
+                        else
+                            expect (false, "slot " + juce::String (i) + " is assigned");
+                    expect (
+                        pumpUntil (
+                            [&]
+                            { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
+                            30000),
+                        "the constrained z decodes and plays");
+                });
+
             beginTest ("a reopened editor keeps the lab gate and the Surge patch state");
             {
                 PluginProcessor processor;
@@ -1212,7 +1378,7 @@ public:
                 {
                     auto& lab = *labOf (*editor);
                     const auto before = lab.output().codes;
-                    findChild<experimental::LabPad> (lab)->moved ({ 0.85f, 0.2f });
+                    moveHandle (*findChild<experimental::LabOrbit> (lab), 0.85f, 0.2f);
                     expect (pumpUntil (
                         [&] { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
                         30000));
@@ -1227,14 +1393,14 @@ public:
                 {
                     auto& lab = *labOf (*editor);
                     expect (lab.isEdited(), "an edit made while closed");
-                    findChild<experimental::LabPad> (lab)->moved ({ 0.3f, 0.6f });
+                    moveHandle (*findChild<experimental::LabOrbit> (lab), 0.3f, 0.6f);
                     expect (lab.isAskingToReplace(), "the first pad move asks");
                     lab.answerReplace (false);
                     pumpUntil ([] { return false; }, 500);
                     expect (same (processor.getControls(), edited), "the edit is kept");
                     // Send to Surge, then close and reopen: the banner shows and a knob returns to Lite
                     const auto shown = lab.output().codes;
-                    findChild<experimental::LabPad> (lab)->moved ({ 0.7f, 0.6f });
+                    moveHandle (*findChild<experimental::LabOrbit> (lab), 0.7f, 0.6f);
                     lab.answerReplace (true);
                     expect (pumpUntil (
                                 [&]
@@ -1307,7 +1473,8 @@ public:
                 bool ready = false;
                 lab->onMapShown = [&ready] { ready = true; };
                 lab->loadBundle (juce::File (bundle));
-                expect (pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                expect (pumpUntil ([&] { return lab->hasOutput(); }, 60000), "bundle loaded");
+                expect (! ready, "the latent view requests no map (Orbit only)");
                 const auto before = lab->output().codes;
                 const auto z0 = lab->latent();
                 expect (knobButton->isEnabled(), "knob pad is available");
@@ -1406,10 +1573,8 @@ public:
             {
                 int played = 0;
                 lab->onLite = [&played] (const schema::Snapshot&) { ++played; };
-                bool ready = false;
-                lab->onMapShown = [&ready] { ready = true; };
                 lab->loadBundle (juce::File (bundle));
-                expect (pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                expect (pumpUntil ([&] { return lab->hasOutput(); }, 60000), "bundle loaded");
                 auto* xy = lab->padData();
                 auto* brightness = xy ? xy->find ("s:brightness") : nullptr;
                 expect (brightness != nullptr);
@@ -1444,13 +1609,10 @@ public:
                 settleModel (processor);
                 std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
                 auto* lab = findChild<experimental::JointVaePanel> (*editor);
-                bool ready = false;
                 if (lab)
-                {
-                    lab->onMapShown = [&ready] { ready = true; };
                     lab->loadBundle (juce::File (bundle));
-                }
-                expect (lab != nullptr && pumpUntil ([&] { return ready; }, 60000), "bundle loaded");
+                const bool ready = lab != nullptr && pumpUntil ([&] { return lab->hasOutput(); }, 60000);
+                expect (ready, "bundle loaded");
                 if (lab && ready)
                     steps (*lab);
             };
@@ -1496,8 +1658,8 @@ public:
             run (
                 [&] (experimental::JointVaePanel& lab)
                 {
-                    if (auto* pad = findChild<experimental::LabPad> (lab))
-                        pad->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
+                    if (auto* orbit = findChild<experimental::LabOrbit> (lab))
+                        orbit->keyPressed (juce::KeyPress (juce::KeyPress::upKey));
                     movedBefore = bright (lab);
                     lab.nudge ("brighter");
                     expect (! lab.statusText().contains ("no sound type found"), lab.statusText());
@@ -1512,31 +1674,18 @@ public:
             settleModel (processor);
             std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
             auto* lab = findChild<experimental::JointVaePanel> (*editor);
-            auto* pad = lab ? findChild<experimental::LabPad> (*lab) : nullptr;
-            expect (pad != nullptr);
-            juce::ComboBox* background = nullptr;
-            std::function<void (juce::Component&)> find = [&] (juce::Component& c)
-            {
-                for (auto* child : c.getChildren())
-                {
-                    if (auto* box = dynamic_cast<juce::ComboBox*> (child);
-                        box && box->getItemText (0) == "Category guess")
-                        background = box;
-                    find (*child);
-                }
-            };
-            if (lab)
-                find (*lab);
-            expect (background != nullptr);
-            if (pad && background)
+            auto* knob = lab ? findButton (*lab, "Knob pad") : nullptr;
+            expect (knob != nullptr);
+            if (knob)
             {
                 int shown = 0;
                 lab->onMapShown = [&shown] { ++shown; };
                 lab->loadBundle (juce::File (bundle));
-                expect (pumpUntil ([&] { return shown > 0; }, 60000), "the first map arrives");
-                // The category map is the slow one (~0.8 s): it is surely computing at the reset
-                background->setSelectedId (1, juce::sendNotificationSync);
-                expect (pumpUntil ([&] { return lab->isMapRunning(); }, 5000), "a category map is computing");
+                expect (pumpUntil ([&] { return lab->hasOutput(); }, 60000), "the bundle loads");
+                // Orbit requests no maps; the knob pad's category map is quick, so it may already be done here.
+                // The worker's cancel-on-close is unchanged (shortcut: no slow map left to close in the middle of)
+                knob->onClick();
+                expect (pumpUntil ([&] { return lab->isMapRunning() || shown > 0; }, 5000), "a knob map started");
                 const int before = shown;
                 const auto t0 = juce::Time::getMillisecondCounter();
                 editor.reset();

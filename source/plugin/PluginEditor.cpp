@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include "BinaryData.h"
+
 #include <numeric>
 
 namespace vae
@@ -252,6 +254,12 @@ void Spinner::paint (juce::Graphics& g)
 PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (p)
     , processor (p)
+    , jointVaePanel (
+          p.getKeyboardState(),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceMonoRegular_ttf,
+                                                   BinaryData::SpaceMonoRegular_ttfSize))
     , keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel (&lookAndFeel.get());
@@ -451,6 +459,11 @@ void PluginEditor::showView (View view)
     for (auto* s : sections)
         s->setVisible (view == View::synth);
     status.setVisible (view != View::jointVae); // the Lab has its own status line
+#if VAE_WITH_SURGE
+    keyboard.setVisible (view != View::jointVae); // the Lab has its own 3-octave keyboard (Task 17)
+#endif
+    // The Lab's tooltips (the spectrogram's details) in its own look; the panel outlives the window
+    tooltips.setLookAndFeel (view == View::jointVae ? &jointVaePanel.getLookAndFeel() : nullptr);
     synthViewButton.setToggleState (view == View::synth, juce::dontSendNotification);
     resized();
 }
@@ -618,7 +631,11 @@ void PluginEditor::chooseModel()
 
 void PluginEditor::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
 
-void PluginEditor::paint (juce::Graphics& g) { g.fillAll (LF::paper); }
+void PluginEditor::paint (juce::Graphics& g)
+{
+    // The Lab's workspace runs up under the header: one continuous background
+    g.fillAll (currentView == View::jointVae ? experimental::lab::workspace : LF::paper);
+}
 
 void PluginEditor::resized()
 {
@@ -641,14 +658,20 @@ void PluginEditor::resized()
 #endif
     status.setBounds (header);
 
-    keyboard.setBounds (r.removeFromBottom (kKeyboardH));
-    r.removeFromBottom (kGap);
-
     if (currentView == View::jointVae)
     {
+#if VAE_WITH_SURGE
+        // Edge to edge below the header: the Lab keeps its own margins and keyboard
+        jointVaePanel.setBounds (getLocalBounds().withTrimmedTop (kMargin + kTopBarH));
+#else
+        keyboard.setBounds (r.removeFromBottom (kKeyboardH));
+        r.removeFromBottom (kGap);
         jointVaePanel.setBounds (r);
+#endif
         return;
     }
+    keyboard.setBounds (r.removeFromBottom (kKeyboardH));
+    r.removeFromBottom (kGap);
 
     if (currentView == View::synth)
     {
