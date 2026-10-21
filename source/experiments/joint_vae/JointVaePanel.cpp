@@ -79,7 +79,7 @@ JointVaePanel::JointVaePanel()
         userActed = true;
         pos[0] = p.x;
         pos[1] = p.y;
-        applyPositions();
+        applyPositions (3);
         refresh();
         decode();
     };
@@ -87,7 +87,7 @@ JointVaePanel::JointVaePanel()
     {
         userActed = true;
         pos[2] = (float) zSlider.getValue();
-        applyPositions();
+        applyPositions (4);
         refresh();
         decode();
     };
@@ -216,6 +216,10 @@ void JointVaePanel::setKnobMode (bool knob)
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &dotsButton })
         c->setEnabled (! knob);
     fillBackground();
+    promptBox.setEnabled (! knob);
+    promptGo.setEnabled (! knob);
+    promptBox.setTooltip (knob ? "The prompt works on the latent pad" : "");
+    promptGo.setTooltip (knob ? "The prompt works on the latent pad" : "Apply the prompt");
     if (knob)
         list.setGroups (*kg);
     else
@@ -395,13 +399,13 @@ void JointVaePanel::syncPositions()
             pos[(size_t) i] = axisPosition (*a, z);
 }
 
-void JointVaePanel::applyPositions()
+void JointVaePanel::applyPositions (int slots)
 {
     if (knobMode)
     {
         // Page applyPos, then the group's knobs into the numeric codes by feature name
         for (int i = 0; i < 3; ++i)
-            if (const auto g = groupOn (i); g >= 0)
+            if (const auto g = groupOn (i); g >= 0 && (slots & (1 << i)))
             {
                 kg->set (g, pos[(size_t) i], knobVals);
                 for (const auto k : kg->groups[(size_t) g].knob)

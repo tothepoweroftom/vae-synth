@@ -266,8 +266,32 @@ public:
                     ready = false;
                     expect (pumpUntil ([&] { return ready; }, 60000), "knob map shown");
                     expect (lab->output().codes == before, "switching keeps the decoded codes");
-                    pad->moved ({ 1.0f, 0.5f });
                     const auto* kg = lab->knobGroups();
+                    // Z: a multi-knob group away from groups 0 and 1, preferring one with an inactive knob
+                    const auto& beforeKnobs = lab->output().knobs;
+                    int zGroup = -1;
+                    if (kg)
+                        for (int pass = 0; pass < 2 && zGroup < 0; ++pass)
+                            for (int g = 2; g < (int) kg->groups.size() && zGroup < 0; ++g)
+                            {
+                                const auto& gr = kg->groups[(size_t) g];
+                                bool overlap = false, inactive = false;
+                                for (int k : gr.knob)
+                                {
+                                    inactive |= std::isnan (beforeKnobs[(size_t) k]);
+                                    for (int o = 0; o < 2; ++o)
+                                        overlap |= std::find (kg->groups[(size_t) o].knob.begin(),
+                                                              kg->groups[(size_t) o].knob.end(), k)
+                                                   != kg->groups[(size_t) o].knob.end();
+                                }
+                                if (gr.knob.size() >= 2 && ! overlap && (pass == 1 || inactive))
+                                    zGroup = g;
+                            }
+                    expect (zGroup >= 0, "a multi-knob Z group");
+                    if (kg && zGroup >= 0)
+                        lab->assignAxis (2, kg->groups[(size_t) zGroup].name);
+                    const auto knobsBefore = beforeKnobs;
+                    pad->moved ({ 1.0f, 0.5f });
                     expect (kg != nullptr && kg->groups.size() == 61);
                     if (kg)
                     {
@@ -284,6 +308,18 @@ public:
                         const auto& g0 = kg->groups[0];
                         expect (pumpUntil ([&] { return lab->output().codes == expected; }, 30000),
                                 "only groups X and Y change");
+                        // Everything outside groups X and Y, inactive (NaN) knobs included, is untouched
+                        for (size_t k = 0; k < knobsBefore.size(); ++k)
+                        {
+                            const auto in = [&] (int g)
+                            {
+                                const auto& v = kg->groups[(size_t) g].knob;
+                                return std::find (v.begin(), v.end(), (int) k) != v.end();
+                            };
+                            if (! in (0) && ! in (1))
+                                expect (std::memcmp (&knobsBefore[k], &lab->output().knobs[k], sizeof (float)) == 0,
+                                        "knob " + kg->names[(int) k] + " unchanged");
+                        }
                         for (size_t k = 0; k < g0.knob.size(); ++k)
                             expectWithinAbsoluteError (
                                 lab->output().codes[(size_t) names.indexOf (kg->names[g0.knob[k]])],

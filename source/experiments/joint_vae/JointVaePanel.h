@@ -32,14 +32,15 @@ public:
     const JointLatent& latent() const { return z; }
     const JointVaeWorker::Output& output() const { return current; }
     const KnobGroups* knobGroups() const { return kg.get(); }
+    void assignAxis (int slot, const juce::String& id) { assign (slot, id); }
 #endif
 
 private:
 #if VAE_WITH_SURGE
     void loadBase (int index);
     void assign (int slot, const juce::String& id);
-    void syncPositions();  // page latSyncPos
-    void applyPositions(); // page latApplyPos
+    void syncPositions();                // page latSyncPos
+    void applyPositions (int slots = 7); // page latApplyPos; knob pad: only the slots (bit mask) the gesture moved
     void decode();
     void refresh (const LatentAxis* dragged = nullptr);
     void updateDots();
