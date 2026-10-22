@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import tempfile
 
+from model_payload import stage_models
+
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCT = "VAE Synth"
 
@@ -43,8 +45,19 @@ def notices(work, info):
     return dest
 
 
+def models(work, info, args):
+    if info.get("surge", "").upper() not in ("ON", "TRUE", "1"):
+        raise ValueError("Inference installers require VAE_WITH_SURGE=ON")
+    if not info.get("surge_root"):
+        raise ValueError("Reconfigure this build to record surge_root in release-info.json")
+    return stage_models(work / "models", args.model_root,
+                        Path(info["surge_root"]) / "resources/data", args.native_model_root)
+
+
 def mac_package(artifacts, work, info, args):
+    payload = models(work, info, args)
     stage = work / "root"
+    copy(payload, stage / "Library/Application Support/VAE Synth/models")
     for fmt, suffix, location in [
         ("Standalone", ".app", "Applications"),
         ("VST3", ".vst3", "Library/Audio/Plug-Ins/VST3"),
@@ -115,8 +128,9 @@ def windows_package(artifacts, work, info, args):
     if args.sign:
         for binary in binaries:
             windows_sign(binary)
+    payload = models(work, info, args)
     run(os.environ.get("VAE_ISCC", "iscc"), f'/DProductVersion={info["version"]}',
-        f"/DArtifacts={stage}", f"/DNotices={notices(work, info)}",
+        f"/DModels={payload}", f"/DArtifacts={stage}", f"/DNotices={notices(work, info)}",
         f"/DOutputDir={work}", ROOT / "installer/windows.iss")
     installer = work / "installer.exe"
     if args.sign:
@@ -127,7 +141,12 @@ def windows_package(artifacts, work, info, args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path)
-    parser.add_argument("--with-surge", action="store_true")
+    parser.add_argument("--model-root", type=Path, default=ROOT / "models",
+                        help="Directory containing the joint VAE and prompt-p1 bundles")
+    parser.add_argument("--native-model-root", type=Path,
+                        help="Also package native-same/ and native-generator/ for the legacy Prompt tab")
+    parser.add_argument("--with-surge", action="store_true", default=True,
+                        help="Include the Surge backend (enabled by default)")
     parser.add_argument("--test", action="store_true", help="Build tests and require CTest to pass")
     parser.add_argument("--package", action="store_true", help="Create an installer after building")
     parser.add_argument("--package-only", action="store_true", help="Package an existing Release build")
@@ -147,7 +166,7 @@ def main():
     packaging = args.package or args.package_only
     if args.sign and not packaging:
         parser.error("--sign requires --package or --package-only")
-    if args.package_only and (args.test or args.with_surge or args.cmake_arg):
+    if args.package_only and (args.test or args.cmake_arg):
         parser.error("--package-only uses the existing build; omit build/test options")
     if args.sign:
         names = ("VAE_MAC_APPLICATION_IDENTITY", "VAE_MAC_INSTALLER_IDENTITY") if system == "Darwin" else (

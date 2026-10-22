@@ -11,20 +11,82 @@ The Lab needs a `VAE_WITH_SURGE=ON` build; the default build shows "VAE Lab need
 ## Layout (Task 17)
 
 The Lab is laid out as the brutalist design study (`docs/design/PITCHER-BRUTALIST-JUCE.md`, reference image
-`docs/design/pitcher-native-study.png`), in three columns on one continuous `#252525` workspace that runs up under
-the editor's Synth / VAE Lab header. The two sidebars have equal widths and heights; the centre column is flexible.
+`docs/design/pitcher-native-study.png`), in three columns on one continuous `#252525` workspace. There is no header
+row (Task 22): every column starts at the top margin. The two sidebars have equal widths and heights; the centre
+column is flexible.
 
-- **Left:** the pitcher mark, **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> ·
-  <n>%" and eight rows with 3 px bars), then the controls: Latent pad / Knob pad, Start from, Category, Lock structure,
-  Reset, Send to Surge, then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the spectrogram, 0 s / 2 s / 6 s) sits at the bottom; hover it for the
-  details: brightness, attack, length and noise, then the decoded preset.
+- **Left:** the pitcher logo (the green 40 px "spinning ball stripes" mark and the lowercase wordmark), the editor's
+  **Synth / VAE Lab** tabs (the logo and tabs are the editor's and are the same in both views; a click on the logo
+  resets the synth, see below), then **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> · <n>%" and eight
+  rows with 3 px bars), then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the
+  spectrogram, 0 s / 2 s / 6 s) fills the rest of the column down to the bottom; hover it for the details:
+  brightness, attack, length and noise, then the decoded preset. The control group is hidden for now (see below).
 - **Centre:** the orbit view (or, on the knob pad, the flat pad with its category map), the Replace banner and Find's
-  chips when there are any, the single-line prompt with its submit button, a line with Find sounds / Word list, the
-  "experimental" tag and the status, and the 3-octave keyboard (C3-C6, MIDI 48-84), which replaces the editor's
+  chips when there are any, the single-line prompt with its submit button, the status line (Task 23 removed the
+  "experimental" tag; Find is still experimental, see Known limits), and the 3-octave keyboard (C3-C6, MIDI 48-84), which replaces the editor's
   keyboard while the Lab is shown.
-- **Right:** the axis list under one **AXES** tab (**KNOB GROUPS** on the knob pad): a flat list, sound axes first,
-  then the latent dimensions in bundle order, each row with X / Y / Z buttons and, when assigned, its low-high slider.
-  It scrolls within its height. There is no Presets tab and no favourites.
+- **Right:** **Save preset**, then two tabs, **AXES | PRESETS** (Task 23). AXES (**KNOB GROUPS** on the knob pad) is
+  the axis list: a flat list, sound axes first, then the latent dimensions in bundle order, each row with X / Y / Z
+  buttons and, when assigned, its low-high slider. PRESETS is the saved presets (below). Both scroll within their
+  height.
+
+### The Synth view, sizing and hidden controls (Task 22)
+
+- **Synth view.** The same left column (logo, tabs, then the status banner, for example "Playing the
+  full Surge patch from the Lab. Knobs return to Lite"), then the knob sections in the remaining width, three rows of
+  cells per section, and the Lab's 3-octave `PitcherKeyboard` along the bottom. It uses the same tokens: the Synth
+  view's `VaeLookAndFeel` takes its colours from `LabTheme.h` (graphite, ink, green, hairline), the tabs and the reset question use
+  `PitcherLookAndFeel`, and section rules are hairlines. Every control behaves as before. The default (non-Surge)
+  build shows the same column and the "VAE Lab needs a Surge build" label right of it.
+- **Resizing.** `PluginEditor` is a thin resizable shell. `MainEditorComponent` holds everything and is always laid
+  out at its native size, 1240 x 820 px (`kNativeWidth`, `kNativeHeight`; the same for both views). The shell scales
+  it by an `AffineTransform`, so the window keeps that aspect ratio at any size; mouse, keyboard and hit-testing go
+  through the transform and stay in native pixels (the 7 px dot and 14 px handle radii, pad presses and drag
+  distances). One exception: Orbit tells a click from a drag by JUCE's threshold, 4 screen px, which is fewer
+  native px when the window is larger (about 2.7 at 1.5x). The default scale comes from the primary display,
+  `sqrt (area / 1920 x 1080)`, times `dpi / 96` except on macOS (ruling R24: JUCE's mac dpi is 72 or 144 and its
+  sizes are already points), clamped so the window fits 90% of the display's user area. The limits are the default
+  / 1.5 and x 1.5, and the maximum is never larger than the user area. The scale is saved
+  with the plug-in state (the `editorScale` attribute, not a host parameter) and restored, clamped, when the editor
+  opens. Double-click the resize corner to go back to the default. The host's own DPI scale factor is ignored
+  (`setScaleFactor` does nothing) so it is not applied twice.
+- **Hidden for now.** Latent pad / Knob pad, Start from (Typical <label> / Random real preset), Category, Lock
+  structure, Reset, Send to Surge and the prompt's Find sounds / Word list switch are hidden, not removed: their code
+  and tests stay, and the freed space goes to Category match and Expected sound. To show them again, set
+  `kShowLabControls` to `true` in `source/experiments/joint_vae/JointVaePanel.h`.
+- **Surge is unreachable from the UI** while Send to Surge and the engine selector are hidden (Task 23 hid the
+  Lite / Surge XT selector behind `kShowEngineChoice` in `source/plugin/PluginEditor.h`; its code stays). The Surge
+  engine still runs for a host that sets the hidden `engine` parameter or a saved state that chose it.
+- **Prompt while the switch is hidden.** Return runs **Find sounds** whenever a prompt bundle is installed. Without
+  one, the box falls back to the word list, and its placeholder says so ("No prompt model: word list, ..."). With p1
+  installed, word-list nudges such as "brighter" cannot be reached from the UI until the switch is shown again.
+
+### Presets, the fine-tune demo and the logo reset (Task 23)
+
+- **Save preset** opens an inline name field in its place, prefilled with the last prompt (else the category guess),
+  with **Save** and **Cancel** (Return and Escape too). An empty name is refused. A preset keeps the current z, the
+  category, the X / Y / Z axes and pad positions, the exact decoded codes (bundle feature order, NaN = inactive) and
+  the bundle id. During an orbit it saves the centre. The knob pad cannot save (it has no z of its own).
+- **Where they live.** In the processor's state, so they are saved with the host project and survive closing the
+  editor: a `LabPresets` child element of the plug-in state, one `Preset` per preset, its numbers as text
+  (10 significant digits, locale-free; an inactive code is written `nan`). At most 64; Save says so at the limit.
+- **PRESETS tab.** One row per preset: its name (click to load), **Rename** (the same name field) and **Delete**,
+  which asks "Delete the preset ...?" in the Lab's inline banner (Delete / Cancel). A preset saved with another bundle
+  id is shown disabled, with a tooltip that says why.
+- **Loading** goes through the edit gate (it asks "Replace your Synth edits?" when the sound was edited), plays the
+  stored codes exactly (`lab ({ codes })`, as a Find pick), then restores z, the category, the axes (when the bundle
+  still has them) and the pad positions. A running orbit re-centres on it. The next move explores from its z.
+- **Tune space to my presets** (under the list; needs 2 presets) is **a dummy**: an in-panel dialog with the line
+  "Demo only: nothing is trained or changed" and a bar that fills over 10 s on a message-thread timer, then reads
+  "Done (demo)". It trains nothing, makes no model calls, writes no parameters or presets and touches no audio.
+  Close (also mid-way, which cancels it) dismisses it.
+- **The logo resets.** The Init button and the engine selector are gone from the left column. A click on the pitcher
+  logo (pointer cursor, tooltip) asks "Reset the synth to its init patch?" with **Reset** and **Cancel** in a banner
+  under the tabs, in both views, because the logo is easy to click by accident. Reset is the old Init: every control
+  to its schema default, which the Lab then counts as a Synth edit (its status reads "Reset to init patch"). Cancel changes nothing.
+- **Smaller dots.** The orbit view's preset dots are 25% smaller at every radius (normal, current category,
+  highlighted category: 1.58 / 1.88 / 2.4 px instead of 2.1 / 2.5 / 3.2). Find's numbered highlights keep their size.
+  The radii live in the design study's `OrbitView`, which got a `setDotScale` setter that the Lab sets to 0.75.
 
 Clicking a CATEGORY MATCH row highlights that category's presets in the cloud (and dims the rest); clicking it again
 clears it. It is visual only: the decoder's category and the sound stay.
@@ -56,9 +118,10 @@ the knob pad Z again still clears Z).
 The editor has two views, **Synth** and **VAE Lab**, and they show the same sound. The Lab plays by writing the
 schema controls, so the Synth view's knobs show the Lab's preset and you can tweak it there.
 
-- **Synth edits carry back.** A change to any control that does not come from the Lab (a Synth-view knob, Init, host
+- **Synth edits carry back.** A change to any control that does not come from the Lab (a Synth-view knob, the logo reset, host
   automation) marks the Lab's sound edited, and its status line reads "Edited in Synth view". The next Lab edit
-  (handle, slider, prompt, base, category, lock or preset dot) first asks "Replace your Synth edits?" in a banner
+  (handle, slider, prompt, preset dot, a saved preset or Orbit LFO; base, category and lock too, with the controls
+  hidden by `kShowLabControls` shown) first asks "Replace your Synth edits?" in a banner
   above the Lab's prompt box, and the status line says a question is waiting until you answer, whatever else reports (R21: no separate dialog window, which some
   hosts open behind the plug-in). Other Lab edits are ignored until you answer. **Replace** applies the Lab edit;
   **Keep editing** leaves the sound and the Lab as they were.
@@ -73,7 +136,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 ## Workflow: prompt, preset, pad, tweak
 
 1. **Prompt.** Type a sound ("deep sub bass") in the box under the orbit view. Two actions share the box, chosen by
-   the Find sounds / Word list switch under it; Return runs the chosen one:
+   the Find sounds / Word list switch (hidden for now: Return runs Find with a prompt bundle, else the word list):
    - **Find sounds** (experimental; the default with the prompt bundle installed) sends the whole text to the student's text
      model and lists up to 8 real presets from its bank, like `Bass · 0142`. The first is selected. No word-list
      adjectives are applied on top.
@@ -83,7 +146,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
    **Matches in the cloud.** Find marks its presets in the orbit view as numbered dots (a green ring, 1-8, above the
    preset dots) at their z on the current axes; they follow axis changes and stay until the next Find, Reset, a base change
    or a bundle change. Clicking a numbered dot or its chip selects that preset: it plays its exact stored settings
-   (Lite preview; Send to Surge builds the same codes, no decoder) and the handle moves to it. Exploring is never
+   (Lite preview; Send to Surge, hidden by `kShowLabControls`, builds the same codes, no decoder) and the handle moves to it. Exploring is never
    locked (there is no Explore button): the first handle, axis-slider, category or word-list move decodes from that preset's z ("Exploring from
    <name>"; the model's approximation, so the sound may change), dragging continues live, and Send to Surge then
    sends the decoded patch. The knob pad edits a copy of the bank settings. Selecting the preset again restores them
@@ -92,8 +155,9 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 2. **Preset.** The decoded point plays at once on Lite, once you have acted in the Lab (see limits).
 3. **Orbit.** Drag the handle. X, Y and Z are any of the five sound axes or the latent dimensions. The sound
    follows while you drag, without clicks. Drag empty space to turn the cloud.
-4. **Tweak.** Type follow-ups ("brighter", "a lot longer", "slightly less noisy"), move an axis slider, click a
-   preset dot to jump to that real preset, or switch to the knob pad for fine adjustments.
+4. **Tweak.** Move an axis slider, click a preset dot to jump to that real preset, run the Orbit LFO, or save the
+   point as a preset. Word-list follow-ups ("brighter", "a lot longer", "slightly less noisy") run only without a
+   prompt bundle: with p1 installed, Return runs Find. The knob pad is hidden by `kShowLabControls`.
 
 ## Controls
 
@@ -101,12 +165,12 @@ All controls but the axis list are in the left sidebar, under CATEGORY MATCH.
 
 | Control | What it does |
 |---|---|
-| Latent pad / Knob pad | The latent pad is the orbit view over sound axes and latent dimensions. The knob pad is a flat XY pad that moves groups of the student's knobs together, over a category map. |
-| Start from | Typical <label>, or a random real preset. |
-| Category | The category the decoder is conditioned on (8 labels plus Unknown). |
-| Lock structure | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the handle. |
-| Reset | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
-| Send to Surge | Builds the full Surge patch for this point and plays it on the Surge engine. |
+| Latent pad / Knob pad (hidden: `kShowLabControls`) | The latent pad is the orbit view over sound axes and latent dimensions. The knob pad is a flat XY pad that moves groups of the student's knobs together, over a category map. |
+| Start from (hidden: `kShowLabControls`) | Typical <label>, or a random real preset. |
+| Category (hidden: `kShowLabControls`) | The category the decoder is conditioned on (8 labels plus Unknown). |
+| Lock structure (hidden: `kShowLabControls`) | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the handle. |
+| Reset (hidden: `kShowLabControls`) | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
+| Send to Surge (hidden: `kShowLabControls`) | Builds the full Surge patch for this point and plays it on the Surge engine. |
 | Orbit LFO | Moves the sound slowly around the current point (see below). Latent pad only. |
 | Rate | How fast the orbit goes round: 0.02-2 Hz on a log scale, default 0.1 Hz. Free-running, not tempo-synced. |
 | Depth | How far it strays: 0-0.25 pad units of radius, default 0.08. |
@@ -134,8 +198,11 @@ the handle's Z wobble takes it off the ring), and the moving handle; the axis sl
   move the centre to the new point; changing an axis assignment keeps the centre's sound in the new axes.
 - **Stopping.** Every stop returns the Lab to the centre point. The button again stops it and plays the centre. Reset
   and Start from load their start; Category decodes the centre in the new category; the knob pad enters from the
-  centre's output and plays it; loading a bundle stops it. A Synth-view or host edit stops it too, and the edit stays
-  (the orbit never overwrites it).
+  centre's output and plays it (those four are hidden by `kShowLabControls`); loading a bundle stops it. A
+  Synth-view or host edit, or the logo reset, stops it too, and the edit stays (the orbit never overwrites it). An
+  engine change from outside the Lab (host automation selecting Surge XT) stops it at the centre and plays nothing,
+  so the orbit never switches the engine back. Closing the editor stops it and plays the centre. A step still being
+  decoded when the orbit stops is dropped.
 - **The edit gate.** Turning it on is a user action (R14). If the sound was edited in the Synth view it asks "Replace
   your Synth edits?" first, as any Lab edit does.
 - **Send to Surge** during an orbit stops it and, once the centre is decoded, sends the centre's full Surge patch
@@ -162,8 +229,7 @@ Prompt bundle (`models/prompt-p1`, or the older `prompt-p0`): `prompt.json`, `te
 `bank.json` / `bank.bin` (p1: 4,429 real presets in all 8 categories; p0: 1,227, Bass/Lead/Pad only; Lab feature order), and parity files. It is installed by
 `scripts/install-models.sh` to `.../models/prompt-p1/` (or `prompt-p0/`) and must match the Lab bundle's id.
 
-The prompt model is **lazy** (R20): opening the editor only checks that the bundle is installed and shows Find (with
-an "experimental" tag); the model loads on the first Find, which shows "Loading prompt model..." and then runs. A
+The prompt model is **lazy** (R20): opening the editor only checks that the bundle is installed and offers Find; the model loads on the first Find, which shows "Loading prompt model..." and then runs. A
 failed load turns Find off with the reason and leaves the Word list.
 
 ### Export order
@@ -202,6 +268,9 @@ ctest --test-dir build-default        # no Surge: checks the "needs a Surge buil
 - `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab with the "deep sub bass" matches highlighted (needs both bundles).
 - `VAE_SYNTH_SCREENSHOT=<file.png>`: a snapshot of the Synth view after a Lab pad move.
 - `VAE_ORBIT_SCREENSHOT=<file.png>`: the Lab with the Orbit LFO running at depth 0.25 (needs `VAE_JOINT_BUNDLE`).
+- `VAE_LAB_AXES_SCREENSHOT`, `VAE_LAB_PRESETS_SCREENSHOT`, `VAE_LAB_TUNE_SCREENSHOT` (need `VAE_JOINT_BUNDLE`) and
+  `VAE_RESET_SCREENSHOT`: the Axes tab, the Presets tab with 3 presets, the fine-tune demo at 42% and the logo's
+  reset question. Delete old files first: the tests append to an existing file.
 
 No inference, model loading or UI logic runs in the audio callback. Surge's own patch load does, once per Send to
 Surge.
@@ -218,7 +287,7 @@ Surge.
 - The knob pad has no preset dots and no axis captions on the pad (the axis list shows which group is on X and Y).
 - In the orbit view the arrow keys move the handle (as the old pad); the study's arrow-key camera rotation is not
   available from the keyboard (drag to orbit, Home to reset).
-- The Lab needs the editor's 1240 px width; `PitcherLayout` targets at least 1000 px and has no compact layout.
+- The editor lays out at 1240 x 820 px and scales as a whole; `PitcherLayout` has no compact layout of its own.
 - `pruning.json` for `j48w_b05` is assumed identical to `j48`'s. The student has not confirmed it, and a wrong one
   would give wrong patches silently.
 - The p0/p1 text-encoder preprocessing is our reading of the student's code; there are no student golden outputs.
@@ -227,7 +296,7 @@ Surge.
   Word list can still pick a start.
 - **Find is experimental.** With p1 the first candidate differs for dark/bright bass and short/long pad but is the same row (892) for
   soft/sharp lead (p0 returned the same row for all three pairs); that is a selection fact, not evidence that it follows adjectives. It is
-  labelled "experimental" in the UI and here until listening notes in `docs/PROMPT-EVAL.md` support semantic claims.
+  called experimental here (the UI tag was removed in Task 23) until listening notes in `docs/PROMPT-EVAL.md` support semantic claims.
 - Cost of p1 (R22; measured 2026-10-21 with `vae_p0_eval profile` and `mem` on `models/prompt-p1`, headless, Apple
   Silicon, Release): the model loads on the first Find in about 0.5 s (499 ms) and adds about 0.94 GB of resident
   memory per editor that has searched: 1.02 GB for one editor with p1 loaded against 75 MB without, 2.01 GB for two
@@ -240,32 +309,44 @@ Surge.
   a process-wide or detached runner).
 - Exploring from a match is a jump, not a faithful continuation: the decoded z can sound different from the bank
   preset.
-- Lab state is not saved in the host project. The Lab's last write (the edited gate) lasts for the session only, and
-  a reopened Lab starts from its first base, not where the pad was left.
+- Lab state is not saved in the host project, except the saved presets (Task 23). The Lab's last write (the edited
+  gate) lasts for the session only, and a reopened Lab starts from its first base, not where the pad was left.
+- The fine-tune demo is only a demo: the space is never tuned to your presets.
+- The orbit runs only while the editor is open.
+- While the orbit runs, the Lab writes the changing controls to the host at up to 30 Hz without gestures. Hosts in
+  Write mode may record it, and some may mark the project modified.
+- The default window scale can open below 1x on some Mac laptops (about 0.8 on a 1440 x 900 display). Resize to
+  taste; the size is saved.
 
 ## Try it
 
 Run `scripts/install-models.sh`, then open `build-surge/VAESynth_artefacts/Release/Standalone/VAE Synth.app`, go to
-VAE Lab, hold a note, and check each line. Note anything that differs.
+VAE Lab, hold a note, and check each line. Note anything that differs. This covers what the UI shows now; the
+controls hidden by `kShowLabControls` / `kShowEngineChoice` (knob pad, Start from, Category, Lock, Reset, Send to
+Surge, the Find / Word list switch, the engine selector) are covered by the tests.
 
-- [ ] Type "dark reese bass": you hear Lite, and the reply names Bass and the dark step.
-- [ ] Drag the orbit handle with a held note: the sound follows, no clicks.
+- [ ] Type "dark reese bass" and press Return: Find lists up to 8 matches as chips and numbered dots, the first
+      plays on Lite. Click another chip or dot: its exact preset plays.
+- [ ] Drag the orbit handle with a held note: the sound follows, no clicks ("Exploring from <name>").
 - [ ] Drag empty space, zoom, Reset view: the cloud turns and the sound does not change.
-- [ ] Type "longer": the handle moves along the Short/Long axis.
-- [ ] Lock structure, then drag: oscillator types and switches stay the same.
+- [ ] Assign another axis to X, Y or Z and move its slider: the handle and the sound follow.
 - [ ] Click a preset dot of the current category: jumps to that preset.
 - [ ] Click a CATEGORY MATCH row: the cloud highlights it; the sound does not change.
-- [ ] Knob pad: fine-tune and hear it.
-- [ ] Send to Surge: the Surge patch plays (a held note may cut once on the switch).
-- [ ] Drag again: back on Lite.
+- [ ] Hold a note and turn on Orbit LFO: the sound drifts smoothly around the preset with no flutter, clicks or
+      switch changes; try Rate 2 Hz and Depth 0.25 too. Turn it off: back to the starting sound.
+- [ ] With the orbit running, close and reopen the editor: the starting sound plays, not a step of the orbit.
 - [ ] Close and reopen the editor: your sound is unchanged until you act in the Lab.
 - [ ] Move a knob in the Synth view, then drag the Lab handle: it asks "Replace your Synth edits?"; Keep editing keeps
       your knob, Replace plays the pad.
 - [ ] Drag the handle, close the editor, move a knob in the host (or change nothing), reopen and drag: it asks only
       when something changed.
-- [ ] Send to Surge, close and reopen: the Synth view still says the Surge patch is playing; a knob returns to Lite.
-- [ ] Hold a note and turn on Orbit LFO: the sound drifts smoothly around the preset with no flutter, clicks or
-      switch changes; try Rate 2 Hz and Depth 0.25 too. Turn it off: back to the starting sound.
+- [ ] Save preset, name it, move away, open PRESETS and click it: the saved sound plays exactly. Close and reopen
+      the editor (or the host project): it is still listed. Rename and Delete (which asks) work.
+- [ ] With 2 presets, Tune space to my presets: the demo fills over 10 s and says "Done (demo)"; nothing changes.
+- [ ] Click the logo: it asks before resetting; Cancel keeps the sound, Reset gives the init patch, and the Lab's
+      status reads "Reset to init patch".
+- [ ] Resize the window from its corner: it keeps its shape; double-click the corner for the default size; close and
+      reopen: the size is kept.
 
 ## Rendering and profiling the prompt feature
 

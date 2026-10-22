@@ -1,6 +1,7 @@
 #pragma once
 #include "StudyData.h"
-#include "OrbitView.h"
+#include "StudyView.h"
+#include "StudyOrbit.h"
 #include "BinaryData.h"
 #include "ui/PitcherControls.h"
 #include "ui/PitcherLayout.h"
@@ -77,12 +78,32 @@ inline bool runStudyChecks(juce::String& report)
         const auto bounded = p.drag(start, 1.0e6f, -1.0e6f, OrbitMath::Drag::plane);
         for (auto value : bounded) if (!std::isfinite(value) || value < 0 || value > 1) return fail("cube bounds");
     }
+    {
+        StudyView study;
+        const auto original=study.latent;
+        const auto originalAxes=study.assigned;
+        study.pin.onClick();
+        study.orbit.onGestureStart();
+        study.orbit.onPositionChanged({.25f,.7f,.4f});
+        const auto explored=study.latent;
+        if(explored==original)return fail("exploration did not move latent");
+        study.compare.onClick();
+        if(study.latent!=original || study.assigned!=originalAxes)return fail("A/B did not restore pinned state");
+        study.compare.onClick();
+        if(study.latent!=explored)return fail("A/B did not preserve explored state");
+        study.back.onClick();
+        if(study.latent!=original)return fail("Back did not restore previous gesture");
+        study.orbit.setReducedMotion(true);study.orbit.zoom(1.5f);
+        const auto before=study.orbit.getPosition();study.orbit.resetCamera();
+        if(study.orbit.getCamera().zoom!=1.f || study.orbit.getPosition()!=before)return fail("camera reset changed sound or ignored reduced motion");
+    }
+    report += "PASS: pinned comparison round trip, gesture history, camera reset preserves sound.\n";
     report += "PASS: 1,375 presets; constrained latent moves; predicted spectrogram and five measures; "
               "72 camera orientations (plane/depth inverse, axis isolation, bounds).\n";
 
-    OrbitView orbit;
+    StudyOrbit orbit;
     orbit.setSize(700, 500);
-    std::vector<PresetPoint> points;
+    std::vector<StudyPresetPoint> points;
     size_t visible = 0;
     for (size_t i = 0; i < data.presets.size(); ++i)
     {

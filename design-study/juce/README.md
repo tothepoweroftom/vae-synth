@@ -86,3 +86,32 @@ This does **not** compile `Main`, `StudyView`, `StudyData`, embedded model data 
 - `PitcherLayout::calculate`: shared column, pad, prompt and keyboard geometry, independent of model/controller. Designed for a minimum 1000 px workspace; scale or specify a compact layout separately for narrower plug-in editors.
 
 `StudyView` is the sample wiring/controller, not a production editor to copy wholesale. Replace its approximate category matching, prompt lookup, session-only saves and coalesced message-thread inference with existing Lab services. All reusable component calls are message-thread operations. No part of the painting/model code belongs in `processBlock`.
+
+## Micro-interaction experiment
+
+The standalone study now uses `StudyOrbit` and `StudyAxisRow`, isolated experiment
+versions of the shared controls. **The plugin still uses the unchanged `OrbitView`
+and `AxisRow`.** These copies are intentionally temporary: review the interaction
+feel here before consolidating accepted behavior into the reusable controls.
+
+Try this sequence:
+
+1. Hover the central handle, then drag it. Its halo and movement plane strengthen;
+   assigned axis rows briefly highlight and retain their names alongside percentage values.
+2. Assign another X/Y/Z axis. Its row highlights; the cloud reprojects as before.
+3. Click **Pin A**, explore, then **Swap A/B** to compare two model predictions.
+   **Back** restores the previous gesture, including axes and category (64 states maximum).
+4. Rotate/zoom the camera, then **Reset view** for a 220 ms eased reset. The sound
+   position does not move. Category bars settle with a short easing transition.
+5. Toggle **Motion: off** for immediate camera/bar updates and no decorative fades.
+
+The explorer identifies pending versus completed **predictions**, never audio playback.
+The study still produces no audio. Percentages on axis rows are normalized positions,
+not physical synth parameter units. Direct numerical entry, selectable preset-dot
+previews, Orbit LFO, and engine-transfer feedback are not part of this first experiment.
+Animations run on message-thread timers which settle and stop; inference remains
+coalesced at 20 Hz at most. This is a visual prototype, not a production threading design.
+
+`--checks` now exercises the experimental painter plus pinned comparison, gesture
+history and camera-reset state preservation. The shared production UI sources are
+unchanged by this experiment.

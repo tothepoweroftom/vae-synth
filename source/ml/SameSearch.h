@@ -9,12 +9,6 @@
 
 namespace vae::ml
 {
-// Where scripts/install-models.sh puts the assets; loaded on first use unless a picker chose others.
-inline juce::File installedModels (const char* relative)
-{
-    return appDataDir().getChildFile ("models").getChildFile (relative);
-}
-
 // All methods allocate and must run off the audio thread.
 class SameSearch
 {

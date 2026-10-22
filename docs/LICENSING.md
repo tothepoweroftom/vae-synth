@@ -7,7 +7,7 @@ Not legal advice. Get a review before distributing binaries.
 | JUCE 8 | AGPLv3 or commercial JUCE licence | fetched |
 | ONNX Runtime | MIT | fetched; shared library shipped next to the plug-in |
 | Surge XT (`surge-common` and its libs) | GPL-3.0-or-later | fetched only with `VAE_WITH_SURGE=ON` |
-| Lite DSP (`source/engine/lite/dsp/`) | project code | oscillator, filter, noise, wavetable builder, biquad, delay line |
+| Lite DSP (`source/engine/lite/dsp/`) | project code | oscillator, filter, noise, wavetable builder, biquad, delay line, four-line reverb FDN |
 | Inter font | SIL OFL 1.1 (`assets/fonts/Inter-LICENSE.txt`) | vendored |
 | Parameter store (`source/params/`) | this project | clean-room implementation from `docs/specs/parameter-manager.md` |
 | Lite filter resonance (`FilterUnit` in `source/engine/lite/LiteDsp.h`) | project code | clean-room fit from `docs/specs/lite-filter-resonance.md` |
@@ -40,8 +40,9 @@ stopped before its final report, so there is no written confirmation from it;
 its final constants were chosen by a sweep over the same measured renders.
 
 Other Lite constants that match Surge's behaviour (the ~6 dB higher level of
-the Sine, Wavetable and FM2 oscs, the S&H noise hold rate, random osc start
-phase, the FM index for the backend's FM2 settings) are behaviour facts,
-measured from renders and in some cases checked against the Surge source; no
-Surge code is copied. Like `SurgeCurves.h`, they describe what Surge does,
-not how it is written.
+the Sine, Wavetable and FM2 oscs, the S&H noise hold rate, the 1024-sample
+wavetable mips, random osc start phase, the FM index for the backend's FM2
+settings, the distortion/EQ/phaser filter cutoffs and the Reverb 2 delay
+times) are behaviour facts, measured from renders and in some cases checked
+against the Surge source; no Surge code is copied. Like `SurgeCurves.h`, they
+describe what Surge does, not how it is written.

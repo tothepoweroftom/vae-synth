@@ -8,12 +8,12 @@ of what the 93-control schema already loses from the original presets
 0.86, release 0.93); attack doesn't (0.42). The biggest single problem is in
 the **importer**, not the engines. Fix in this order.
 
-**Status (2026-10-21):** 1–4 done, the noise half of 5 done, wavetable and
-the effects done, high-resonance filters done. Open: attack (5), category
-test (7), and the remaining S&H/FM/wavetable oscillator detail. Full-run
-median engine gap is now **2.28 dB** (p90 5.37 dB), loudness **0.84 dB**;
-see "Re-run after effects and filters". The implementation notes and the
-per-component sweep are in `docs/LITE-SURGE-PARITY-PLAN.md`.
+**Status (2026-10-22):** 1–4 done, the effects, high-resonance filters,
+wavetable and S&H noise done. Open: attack (5) and category test (7), plus
+the residual FM/S&H edge detail. Full-run
+median engine gap is now **2.18 dB** (p90 5.24 dB), loudness **0.82 dB**;
+see "Re-run after effects, filters and oscillators". The implementation notes
+and the per-component sweep are in `docs/LITE-SURGE-PARITY-PLAN.md`.
 
 ## 1. Importer: fold modulation into osc level and amp sustain (35% of the data) — done
 
@@ -64,8 +64,8 @@ isolated gaps are (median over the component sweep, `sl_frame_mel_db`):
 | flanger | 3.2–3.6 | **1.04** |
 | EQ | 4.0–4.9 | **0.84** |
 | reverb | 3.1–5.6 | **2.17** |
-| wavetable osc | 1.6 | 1.6 (not changed) |
-| S&H noise | 2.6 | 2.6 (not changed) |
+| wavetable osc | 1.6 | **0.60** |
+| S&H noise | 2.6 | **1.89** |
 
 What changed:
 
@@ -82,6 +82,8 @@ What changed:
   modulated taps and the Surge decay law.
 - **Filters:** two-step SVF at 2× rate with Surge's state-scaling limiter and
   gain law, plus a low-cutoff resonance makeup.
+- **Wavetable:** every mip is at least 1024 samples and the read is cubic.
+- **S&H noise:** 32 values per note cycle (the measured Surge rate).
 
 ## 7. Category test is inconclusive — open
 
@@ -100,14 +102,14 @@ noise part of 5, the wavetable part of 6 and the extras below.
 
 | measure | engine gap before | after 1–4+osc | after effects+filters | schema loss after |
 |---|---|---|---|---|
-| spectrum over time (median) | 4.9 dB | 3.5 dB | **2.28 dB** | 11.48 dB |
-| spectrum over time (p90) | — | — | **5.37 dB** | 19.90 dB |
+| spectrum over time (median) | 4.9 dB | 3.5 dB | **2.18 dB** | 11.54 dB |
+| spectrum over time (p90) | — | — | **5.24 dB** | 19.71 dB |
 | brightness | 0.31 oct | 0.15 oct | — | 0.79 oct |
-| loudness | 4.0 dB | 1.2 dB | **0.84 dB** | 6.7 dB |
+| loudness | 4.0 dB | 1.2 dB | **0.82 dB** | 6.7 dB |
 | envelope correlation | 0.95 | 0.96 | **0.979** | 0.80 |
 | svec/lite silence mismatch | 222 | ~36 | **21** | |
 
-Re-run after effects and filters (3,561 presets, 2026-10-21):
+Re-run after effects, filters and oscillators (3,561 presets, 2026-10-22):
 
 ```sh
 python3 tools/surge_preset_to_vector.py <surge>/resources/data/patches_factory <surge>/resources/data/patches_3rdparty -o vectors.jsonl

@@ -109,6 +109,16 @@ public:
     juce::File getDecoderModelFile() const;
     juce::String getLastPrompt() const;
     void setLastPrompt (const juce::String& prompt);
+    /** The editor's scale (Task 22): saved with the state, not a host parameter. 0 until an editor sets it. */
+    float getEditorScale() const;
+    void setEditorScale (float);
+
+    /** The Lab's saved presets (Task 23): an opaque element the Lab writes and reads, saved with the state as a
+        child element. Message thread. */
+    juce::XmlElement getLabPresets() const;
+    void setLabPresets (const juce::XmlElement&);
+    /** Tells an open editor, on the message thread, that a state load replaced the Lab presets. */
+    juce::ChangeBroadcaster& getStateLoaded() noexcept { return stateLoaded; }
 
     /** Generator status, plus a note when the saved model file is missing. */
     juce::String describeModel() const;
@@ -136,6 +146,9 @@ private:
     juce::File modelPath;      // saved with the state; may point at a missing file
     bool modelMissing = false; // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
+    float editorScale = 0.0f;
+    juce::XmlElement labPresets { "LabPresets" };
+    juce::ChangeBroadcaster stateLoaded;      // sendChangeMessage is safe from any thread
     std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
 
     std::optional<schema::Snapshot> labControls; // message thread

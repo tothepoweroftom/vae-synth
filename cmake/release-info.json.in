@@ -1,6 +1,7 @@
 {
   "version": "@PROJECT_VERSION@",
   "surge": "@VAE_WITH_SURGE@",
+  "surge_root": "@VAE_SURGE_DIR@",
   "ort_root": "@VAE_ORT_ROOT@",
   "mac_architectures": "@CMAKE_OSX_ARCHITECTURES@"
 }

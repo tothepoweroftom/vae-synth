@@ -66,6 +66,22 @@ juce::File appDataDir()
     return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile (name);
 }
 
+juce::File installedModels (const char* relative)
+{
+    const auto local = appDataDir().getChildFile ("models");
+    if (juce::SystemStats::getEnvironmentVariable ("VAE_DATA_DIR", {}).isNotEmpty())
+        return local.getChildFile (relative);
+#if JUCE_MAC
+    const char* name = "Application Support/VAE Synth/models";
+#else
+    const char* name = "VAE Synth/models";
+#endif
+    const auto shared = juce::File::getSpecialLocation (juce::File::commonApplicationDataDirectory).getChildFile (name);
+    // Select an entire bundle so files from different model versions never mix.
+    const auto bundle = juce::String (relative).upToFirstOccurrenceOf ("/", false, false);
+    return (shared.getChildFile (bundle).isDirectory() ? shared : local).getChildFile (relative);
+}
+
 bool isSha256Hex (const juce::String& s) { return s.length() == 64 && s.containsOnly ("0123456789abcdef"); }
 
 OnnxModel::OnnxModel() = default;

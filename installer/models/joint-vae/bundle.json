@@ -1,0 +1,3810 @@
+{
+  "format": "pitcher.joint-vae",
+  "version": 1,
+  "id": "j48w_b05-9d40216cc2644419",
+  "latent_dimensions": 32,
+  "sound_dimensions": 48,
+  "labels": [
+    "Bass",
+    "Lead",
+    "Pad",
+    "Keys",
+    "Pluck",
+    "Synth",
+    "Atmosphere",
+    "Orchestral",
+    "Unknown"
+  ],
+  "sound_decoder": "sound_decoder.onnx",
+  "model_sha256": "c72262bc3980002f51da91ca4b224fd53c23ddd50dc5c717ec715a6c14adf01e",
+  "features": [
+    {
+      "name": "fx/chorus/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/conditioner/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p11",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/return_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/delay/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/distortion/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/eq/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/flanger/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/freqshift/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/geq11/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/nimbus/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/nimbus/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/phaser/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/resonator/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/return_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p8",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/p9",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/return_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/reverb2/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/p7",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/rotary/send_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/filter_eg/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/filter_eg/level_noise",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/osc/0/sine/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/osc/0/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/osc/2/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/osc/2/classic/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/osc/2/wavetable/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/pan",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/vca_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/keytrack/volume",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_1/filter_balance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_1/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_1/osc/0/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_2/lfo/6/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_2/lfo/8/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_4/lfo/0/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/scene_lfo_5/lfo/11/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/adsr/0/a",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/adsr/0/r",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/adsr/1/a",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/adsr/1/d",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/feedback",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/0/envmod",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/0/resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/1/envmod",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/filterunit/1/resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/fm_depth",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/level_o1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/level_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/lfo/0/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/lfo/1/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/lfo/2/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/vca_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/volume",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/velocity/wsunit/drive",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/filterunit/0/resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/fm_depth",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/level_noise",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/level_o1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/fm2/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/fm3/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/sine/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/0/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/osc/1/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/pan",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/volume",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_1/wsunit/drive",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/level_noise",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/level_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/0/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/0/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/1/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/1/wavetable/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/2/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/osc/2/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/pan",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_2/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/level_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/level_ring_12",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/level_ring_23",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/osc/0/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/osc/0/wavetable/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/osc/1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/osc/2/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_3/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_4/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_4/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_4/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_4/level_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_4/osc/0/wavetable/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_5/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_5/osc/0/wavetable/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_6/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "route/voice_lfo_6/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/0/a",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/0/d",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/0/r",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/0/s",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/1/a",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/1/d",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/1/r",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/adsr/1/s",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/drift",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/feedback",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filter_balance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/0/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/0/envmod",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/0/keytrack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/0/resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/1/cutoff",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/1/envmod",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/1/keytrack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/filterunit/1/resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/fm_depth",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/keytrack_root",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/level_noise",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_o1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_pfg",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_ring_12",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/level_ring_23",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/delay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/0/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/delay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/1/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/10/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/11/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/delay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/2/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/delay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/3/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/4/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/5/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/5/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/5/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/hold",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/release",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/6/sustain",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/attack",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/decay",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/7/start_phase",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/8/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/8/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/9/magnitude",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lfo/9/rate",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/lowcut",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/noise_colour",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/classic/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm2/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm2/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm2/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm2/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm2/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm3/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm3/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm3/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm3/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/fm3/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/modern/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/modern/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/modern/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/modern/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/shnoise/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/sine/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/sine/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/sine/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/sine/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/string/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/string/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/string/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/string/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/twist/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/twist/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/twist/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/twist/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/window/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/window/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/0/window/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/classic/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm2/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm2/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm2/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm2/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm2/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm3/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm3/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm3/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/fm3/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/modern/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/modern/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/modern/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/sine/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/sine/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/sine/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/sine/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/classic/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/fm3/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/modern/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/modern/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/sine/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/sine/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/sine/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/sine/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p0",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p4",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p5",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/pan",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/pitch",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/portamento",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/vca_level",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/vca_velsense",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/volume",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/width",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "scene/wsunit/drive",
+      "min": 0,
+      "max": 1,
+      "kind": "cont"
+    },
+    {
+      "name": "fx/chorus/p1.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/chorus/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/conditioner/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/delay/p0.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/delay/p1.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/delay/p1.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/delay/p6.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/delay/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/distortion/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/eq/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/flanger/p2.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/flanger/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/freqshift/p2.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/freqshift/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/geq11/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/nimbus/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/phaser/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/resonator/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/reverb/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/reverb2/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "fx/rotary/present",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/drift.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/f2_cutoff_is_offset",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/f2_link_resonance",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/attack.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/decay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/delay.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/delay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/hold.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/release.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/0/unipolar",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/attack.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/decay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/delay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/hold.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/release.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/1/unipolar",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/attack.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/decay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/delay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/hold.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/release.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/2/unipolar",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/attack.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/decay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/delay.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/hold.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/3/unipolar",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/4/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/5/attack.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/5/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/6/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/6/unipolar",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/7/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/lfo/9/rate.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_noise",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_o1",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_o2",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_o3",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_ring_12",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/mute_ring_23",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/fm2/p6.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/pitch.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/retrigger",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/sine/p1.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/sine/p3.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/0/sine/p4.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/fm2/p6.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/pitch.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/retrigger",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/sine/p1.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/sine/p3.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/1/sine/p4.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/keytrack",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/pitch.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/retrigger",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/sine/p1.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/sine/p3.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/osc/2/sine/p4.off",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/pitch.ext",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "scene/portamento.sync",
+      "min": 0,
+      "max": 1,
+      "kind": "bool"
+    },
+    {
+      "name": "character",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/chorus/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/chorus/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/conditioner/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/conditioner/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/delay/p0.deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/delay/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/delay/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/distortion/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/distortion/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/eq/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/eq/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/flanger/p0",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/flanger/p1",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/flanger/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/flanger/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/freqshift/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/freqshift/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/geq11/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/geq11/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/nimbus/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/nimbus/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/phaser/p10",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/phaser/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/phaser/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/resonator/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/resonator/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/reverb/p1",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/reverb/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/reverb/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/reverb2/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/reverb2/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/rotary/placement",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "fx/rotary/position",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/0/a_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/0/d_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/0/mode",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/0/r_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/1/a_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/1/d_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/1/mode",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/adsr/1/r_s",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/filterblock_configuration",
+      "min": 0,
+      "max": 7,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/filterunit/0/model",
+      "min": 0,
+      "max": 70,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/filterunit/1/model",
+      "min": 0,
+      "max": 69,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/fm_switch",
+      "min": 0,
+      "max": 3,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/0/shape",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/0/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/1/shape",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/1/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/10/shape",
+      "min": 0,
+      "max": 5,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/11/shape",
+      "min": 0,
+      "max": 6,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/2/shape",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/2/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/3/shape",
+      "min": 0,
+      "max": 9,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/3/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/4/shape",
+      "min": 0,
+      "max": 6,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/4/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/5/shape",
+      "min": 0,
+      "max": 7,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/5/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/6/shape",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/6/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/7/shape",
+      "min": 0,
+      "max": 6,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/7/trigmode",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/8/shape",
+      "min": 0,
+      "max": 7,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/lfo/9/shape",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/sine/p0",
+      "min": 0,
+      "max": 15,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/sine/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/string/p0",
+      "min": 0,
+      "max": 9,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/twist/p0",
+      "min": 0,
+      "max": 8,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/type",
+      "min": 0,
+      "max": 10,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p6.deform",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/wavetable/wt",
+      "min": 0,
+      "max": 32,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/window/p2",
+      "min": 0,
+      "max": 7,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/0/window/wt",
+      "min": 0,
+      "max": 32,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/1/sine/p0",
+      "min": 0,
+      "max": 15,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/1/sine/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/1/type",
+      "min": 0,
+      "max": 10,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/1/wavetable/wt",
+      "min": 0,
+      "max": 32,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/2/sine/p0",
+      "min": 0,
+      "max": 17,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/2/sine/p2",
+      "min": 0,
+      "max": 1,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/2/type",
+      "min": 0,
+      "max": 10,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/osc/2/wavetable/wt",
+      "min": 0,
+      "max": 32,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/polymode",
+      "min": 0,
+      "max": 4,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_noise",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_o1",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_o2",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_o3",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_ring_12",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/route_ring_23",
+      "min": 0,
+      "max": 2,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/wsunit/type",
+      "min": 0,
+      "max": 22,
+      "kind": "cat"
+    },
+    {
+      "name": "scene/octave",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/alias/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/classic/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/fm2/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/fm2/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/modern/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/octave",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/sine/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/wavetable/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/0/window/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/classic/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/fm2/p1",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/fm2/p3",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/octave",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/sine/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/1/wavetable/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/2/classic/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/2/octave",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/2/sine/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    },
+    {
+      "name": "scene/osc/2/wavetable/p6",
+      "min": 0,
+      "max": 1,
+      "kind": "ord"
+    }
+  ],
+  "notes": "Codes ordered num/bool/cat/stepped; stepped indices converted to normalized codes. Use schema.json and pruning.json with the student codec for full Surge patches.",
+  "xypad": "xypad.json"
+}

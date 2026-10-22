@@ -370,7 +370,24 @@ public:
                     return 0.0f;
                 const float idx = wtPhase * frameSize;
                 const int i0 = int (idx);
-                const float x = frame[i0] + (idx - float (i0)) * (frame[i0 + 1] - frame[i0]);
+                const float t = idx - float (i0);
+                const int n = int (frameSize);
+                auto sampleAt = [this, n] (int i)
+                {
+                    if (i < 0)
+                        i += n;
+                    else if (i > n)
+                        i -= n;
+                    return frame[i];
+                };
+                // Catmull-Rom: Surge reads the table with a windowed-sinc FIR;
+                // cubic is a cheap step in the same direction.
+                const float y0 = sampleAt (i0 - 1), y1 = sampleAt (i0);
+                const float y2 = sampleAt (i0 + 1), y3 = sampleAt (i0 + 2);
+                const float a0 = -0.5f * y0 + 1.5f * y1 - 1.5f * y2 + 0.5f * y3;
+                const float a1 = y0 - 2.5f * y1 + 2.0f * y2 - 0.5f * y3;
+                const float a2 = -0.5f * y0 + 0.5f * y2;
+                const float x = ((a0 * t + a1) * t + a2) * t + y1;
                 wtPhase += increment;
                 if (wtPhase >= 1.0f)
                     wtPhase -= 1.0f;
@@ -393,8 +410,8 @@ public:
     static constexpr float kFmRatio = 2.0f;
     static constexpr float kFmIndex = 0.68f; // the Surge backend's FM2 M1 amount 0.3: 0.3^3 * 8 pi rad
     static constexpr float kNoiseGain = 1.4f;
-    // Surge holds 32 values per cycle but band-limits the steps; naive S&H at 24 matches its brightness.
-    static constexpr float kNoiseHoldRate = 24.0f;
+    // Surge's S&H holds 32 values per note cycle; 32 matches its spectrum.
+    static constexpr float kNoiseHoldRate = 32.0f;
     static constexpr float kHotOscGain = 2.0f; // Surge's Sine, Wavetable and FM2 oscs run ~6 dB above its Classic saw
 
 private:

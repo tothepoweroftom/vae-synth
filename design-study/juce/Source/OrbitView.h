@@ -25,6 +25,8 @@ public:
     OrbitMath::Camera getCamera() const { return camera; } // hosts project their own overlays and hit tests
     void setLabelFont(juce::Font font) { labelFont=std::move(font);repaint(); }
     void zoom(float factor);
+    void setDotScale(float scale) { dotScale=scale;repaint(); } // hosts may draw the preset dots smaller
+    float dotRadius(int category) const; // a preset dot's radius under the current highlight
     double lastPaintMs() const { return paintMilliseconds; }
     std::function<void(std::array<float, 3>)> onPositionChanged;
 
@@ -49,6 +51,7 @@ private:
     OrbitMath::Drag dragMode = OrbitMath::Drag::plane;
     juce::Point<float> pointerStart;
     int highlightedCategory = -1;
+    float dotScale = 1.0f;
     bool selected = false, rotating = false, dragging = false;
     double paintMilliseconds = 0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OrbitView)

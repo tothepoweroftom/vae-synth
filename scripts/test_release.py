@@ -24,6 +24,12 @@ class ReleaseTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"original")
         self.args = argparse.Namespace(sign=True, notarize=False)
+        self.models = self.root / "models"
+        self.models.mkdir()
+        (self.models / "model.onnx").write_bytes(b"model")
+        model_mock = patch.object(release, "models", return_value=self.models)
+        self.model_mock = model_mock.start()
+        self.addCleanup(model_mock.stop)
 
     def test_windows_signs_copies_before_installer_and_preserves_runtime(self):
         events = []
@@ -34,6 +40,7 @@ class ReleaseTests(unittest.TestCase):
             events.append(("sign", path.name))
 
         def run(*args):
+            self.assertIn(f"/DModels={self.models}", args)
             events.append(("iscc", str(args[0])))
             (self.work / "installer.exe").write_bytes(b"installer")
 
@@ -43,6 +50,7 @@ class ReleaseTests(unittest.TestCase):
             result = release.windows_package(self.artifacts, self.work, {"version": "0.1.0"}, self.args)
         self.assertEqual([event[0] for event in events], ["sign"] * 4 + ["iscc", "sign"])
         self.assertEqual(result.read_bytes(), b"signed")
+        self.model_mock.assert_called_once()
         for original in (self.exe, self.dll, self.plugin, self.plugin_dll):
             self.assertEqual(original.read_bytes(), b"original")
             staged = self.work / "artifacts" / original.relative_to(self.artifacts)
@@ -100,6 +108,7 @@ class ReleaseTests(unittest.TestCase):
         }), patch.object(release, "run", side_effect=run), \
                 patch.object(release, "notices", return_value=notices):
             release.mac_package(self.artifacts, self.work, {"version": "0.1.0"}, self.args)
+        self.assertEqual((self.work / "root/Library/Application Support/VAE Synth/models/model.onnx").read_bytes(), b"model")
         signed = [cmd[-1] for cmd in commands if cmd[:2] == ("codesign", "--force")]
         self.assertEqual(len(signed), 6)
         for runtime, bundle in zip(signed[::2], signed[1::2]):

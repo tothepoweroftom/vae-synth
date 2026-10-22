@@ -26,7 +26,7 @@ constexpr SectionInfo kSections[] = {
 };
 
 constexpr const char* kSurgePatchStatus = "Playing the full Surge patch from the Lab. Knobs return to Lite";
-constexpr int kMargin = 20, kTopBarH = 36, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
+constexpr int kKeyboardH = 56, kGap = 12;
 
 juce::Array<int> sectionControls (const char* key)
 {
@@ -153,8 +153,9 @@ int ControlSection::getPreferredWidth() const { return juce::jmax (columns() * k
 
 void ControlSection::paint (juce::Graphics& g)
 {
-    g.setColour (LF::ink);
+    g.setColour (LF::faint); // a hairline rule
     g.fillRect (0, 0, getWidth(), 1);
+    g.setColour (LF::ink);
     g.setFont (LF::labelFont (11.0f, true));
     g.drawText (title.toUpperCase(), 0, 8, getWidth(), 16, juce::Justification::centredLeft);
 }
@@ -251,27 +252,39 @@ void Spinner::paint (juce::Graphics& g)
 }
 
 //==============================================================================
-PluginEditor::PluginEditor (PluginProcessor& p)
-    : AudioProcessorEditor (p)
-    , processor (p)
-    , jointVaePanel (
-          p.getKeyboardState(),
-          juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize),
-          juce::Typeface::createSystemTypefaceFor (BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize),
-          juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceMonoRegular_ttf,
-                                                   BinaryData::SpaceMonoRegular_ttfSize))
-    , keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
+MainEditorComponent::MainEditorComponent (PluginProcessor& p)
+    : processor (p)
+    , inter (juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize))
+    , interBold (juce::Typeface::createSystemTypefaceFor (BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize))
+    , spaceMono (juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceMonoRegular_ttf,
+                                                          BinaryData::SpaceMonoRegular_ttfSize))
+    , columnLook (inter, interBold, spaceMono)
+    , jointVaePanel (p.getKeyboardState(), inter, interBold, spaceMono)
+    , keyboard (p.getKeyboardState())
 {
     setLookAndFeel (&lookAndFeel.get());
     juce::LookAndFeel::setDefaultLookAndFeel (&lookAndFeel.get());
 
-    initButton.setTooltip ("Reset every control to the schema default");
-    initButton.onClick = [this]
+    // Task 23: a click on the logo resets to the init patch, after asking (the logo is easy to click by accident)
+    logo.onClick = [this]
     {
-        processor.applyControls (schema::Snapshot::defaults());
-        setStatus ("Init");
+        resetQuestion.setVisible (true);
+        resized();
     };
-    addAndMakeVisible (initButton);
+    resetQuestion.cancel.onClick = [this]
+    {
+        resetQuestion.setVisible (false);
+        resized();
+    };
+    resetQuestion.reset.onClick = [this]
+    {
+        resetQuestion.setVisible (false);
+        processor.applyControls (schema::Snapshot::defaults()); // the old Init button's action
+        setStatus ("Init");
+        handleAsyncUpdate(); // the edit gate now, so the reset's own status is the Lab's last
+        jointVaePanel.markReset();
+        resized();
+    };
 
 #if VAE_PROMPT_TAB // Task 16 compiled the Prompt tab out; this is its UI and wiring
     promptEditor.setTextToShowWhenEmpty ("Describe a sound: warm detuned pad, plucky bass...", LF::quiet());
@@ -336,12 +349,16 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 #endif
 
     engineBox.setTooltip ("Synth engine backend");
-    addAndMakeVisible (engineBox);
+    addChildComponent (engineBox);
+    engineBox.setVisible (kShowEngineChoice);
     engineBinding =
         std::make_unique<params::ComboBinding> (processor.getParams(), PluginProcessor::kEngineParamId, engineBox);
 
     status.setFont (LF::labelFont (10.0f));
     status.setColour (juce::Label::textColourId, LF::quiet());
+    status.setJustificationType (juce::Justification::topLeft);
+    status.setMinimumHorizontalScale (1.0f); // the Surge banner wraps in the left column
+    status.setBorderSize ({});
     addAndMakeVisible (status);
 #if VAE_PROMPT_TAB
     setStatus (processor.describeModel());
@@ -365,12 +382,21 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     for (auto* b : { &synthViewButton, &jointVaeViewButton })
     {
         b->setClickingTogglesState (false);
+        b->getProperties().set ("tab", true); // the design's tabs: green text and underline when active
+        b->setLookAndFeel (&columnLook);
         addAndMakeVisible (b);
     }
+    resetQuestion.setLookAndFeel (&columnLook);
+    addAndMakeVisible (logo);
+    addChildComponent (resetQuestion);
     synthViewButton.onClick = [this] { showView (View::synth); };
 
     jointVaeViewButton.onClick = [this] { showView (View::jointVae); };
     addChildComponent (jointVaePanel);
+    jointVaePanel.toBack(); // under the left column's logo, tabs and reset question, which sit over its top
+    jointVaePanel.setPresets (processor.getLabPresets()); // they outlive the editor (Task 23)
+    jointVaePanel.onPresetsChanged = [this] (const juce::XmlElement& presets) { processor.setLabPresets (presets); };
+    processor.getStateLoaded().addChangeListener (this);
     jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch)
     {
         auto r = processor.loadSurgePatch (patch);
@@ -400,6 +426,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         setStatus (kSurgePatchStatus);
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().addListener (schema::control (i).id, this);
+    processor.getParams().addListener (PluginProcessor::kEngineParamId, this); // the orbit yields to the host
 #if VAE_PROMPT_TAB
 
     // shortcut: the pad drives latent dims 0 and 1 with the rest at 0; add per-axis dim pickers if wanted.
@@ -433,16 +460,16 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                               [] (int n, const ControlSection* s) { return n + s->getNumCells(); })
              == schema::kControlCount); // a schema section missing from kSections hides its controls
 
-    keyboard.setKeyWidth (16.0f);
-    keyboard.setLowestVisibleKey (36);
+    // The Lab's 3-octave keyboard, C3 (MIDI 48) to C6 (MIDI 84)
+    keyboard.setAvailableRange (48, 84);
+    keyboard.setLowestVisibleKey (48);
     addAndMakeVisible (keyboard);
 
-    const int sectionsH = layOutSections (sections, { kMargin, 0, kEditorW - 2 * kMargin, 10000 }, false);
-    setSize (kEditorW, kMargin + kTopBarH + sectionsH + kGap + kKeyboardH + kMargin);
+    setSize (kNativeWidth, kNativeHeight);
     showView (View::synth);
 }
 
-void PluginEditor::showView (View view)
+void MainEditorComponent::showView (View view)
 {
     currentView = view;
     jointVaePanel.setVisible (view == View::jointVae);
@@ -468,8 +495,13 @@ void PluginEditor::showView (View view)
     resized();
 }
 
-void PluginEditor::handleAsyncUpdate()
+void MainEditorComponent::handleAsyncUpdate()
 {
+    // The Lab selects Lite synchronously as it plays, so off Lite here is another writer's (host automation)
+    const auto& kinds = processor.getEngineKinds();
+    if (const auto e = (size_t) processor.getParams().get (PluginProcessor::kEngineParamId);
+        e < kinds.size() && kinds[e] != EngineKind::Lite)
+        jointVaePanel.stopOrbitForEngine();
     if (! processor.editedSinceLab())
         return; // the Lab's own write (or nothing new)
     jointVaePanel.markEdited();
@@ -480,18 +512,24 @@ void PluginEditor::handleAsyncUpdate()
     }
 }
 
-PluginEditor::~PluginEditor()
+MainEditorComponent::~MainEditorComponent()
 {
+    jointVaePanel.endOrbitForClose(); // while onLite and the processor are alive: the centre stays the sound
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().removeListener (schema::control (i).id, this);
+    processor.getParams().removeListener (PluginProcessor::kEngineParamId, this);
     cancelPendingUpdate();
+    processor.getStateLoaded().removeChangeListener (this);
+    for (auto* b : { &synthViewButton, &jointVaeViewButton })
+        b->setLookAndFeel (nullptr);
+    resetQuestion.setLookAndFeel (nullptr);
     setLookAndFeel (nullptr);
     if (lookAndFeel.getReferenceCount() == 1) // last editor: the shared instance dies with us
         juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
 }
 
 #if VAE_PROMPT_TAB
-void PluginEditor::generate()
+void MainEditorComponent::generate()
 {
     const auto prompt = promptEditor.getText().trim();
     if (prompt.isEmpty())
@@ -532,7 +570,7 @@ void PluginEditor::generate()
         });
 }
 
-void PluginEditor::chooseGenerator()
+void MainEditorComponent::chooseGenerator()
 {
     chooser = std::make_unique<juce::FileChooser> ("Load native Stable Audio package", juce::File(), "*.json");
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -553,7 +591,7 @@ void PluginEditor::chooseGenerator()
                           });
 }
 
-void PluginEditor::chooseSearchFile (bool bank)
+void MainEditorComponent::chooseSearchFile (bool bank)
 {
     chooser = std::make_unique<juce::FileChooser> (bank ? "Load native SAME bank" : "Find presets from reference audio",
                                                    juce::File(), bank ? "*.json" : "*.wav;*.aiff;*.flac");
@@ -593,7 +631,7 @@ void PluginEditor::chooseSearchFile (bool bank)
                           });
 }
 
-void PluginEditor::choosePreset()
+void MainEditorComponent::choosePreset()
 {
     chooser = std::make_unique<juce::FileChooser> ("Load retrieved preset", juce::File(), "*.json");
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -607,7 +645,7 @@ void PluginEditor::choosePreset()
                           });
 }
 
-void PluginEditor::chooseModel()
+void MainEditorComponent::chooseModel()
 {
     chooser = std::make_unique<juce::FileChooser> ("Load ONNX decoder", processor.getDecoderModelFile(), "*.onnx");
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -629,49 +667,109 @@ void PluginEditor::chooseModel()
 
 #endif
 
-void PluginEditor::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
+void MainEditorComponent::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
 
-void PluginEditor::paint (juce::Graphics& g)
+LogoButton::LogoButton()
+    : Button ("Reset to init")
 {
-    // The Lab's workspace runs up under the header: one continuous background
-    g.fillAll (currentView == View::jointVae ? experimental::lab::workspace : LF::paper);
+    setTooltip ("Reset the synth to its init patch (asks first)");
+    setMouseCursor (juce::MouseCursor::PointingHandCursor);
 }
 
-void PluginEditor::resized()
+ResetQuestion::ResetQuestion()
 {
-    auto r = getLocalBounds().reduced (kMargin);
+    setOpaque (true);
+    note.setColour (juce::Label::textColourId, experimental::lab::ink);
+    note.setBorderSize ({});
+    note.setMinimumHorizontalScale (1.0f);
+    for (auto* c : std::initializer_list<juce::Component*> { &note, &reset, &cancel })
+        addAndMakeVisible (c);
+}
 
-    auto header = r.removeFromTop (kTopBarH).removeFromTop (24);
-    synthViewButton.setBounds (header.removeFromLeft (80));
-#if VAE_PROMPT_TAB
-    promptViewButton.setBounds (header.removeFromLeft (80));
-#endif
-    jointVaeViewButton.setBounds (header.removeFromLeft (90));
-    header.removeFromLeft (16);
-    engineBox.setBounds (header.removeFromRight (120));
-    header.removeFromRight (12);
-    initButton.setBounds (header.removeFromRight (72));
-    header.removeFromRight (16);
-#if VAE_PROMPT_TAB
-    spinner.setBounds (header.removeFromLeft (24));
-    header.removeFromLeft (8);
-#endif
-    status.setBounds (header);
+void ResetQuestion::paint (juce::Graphics& g)
+{
+    // The Lab's Replace banner: a green tint and outline, here over the workspace
+    g.fillAll (experimental::lab::workspace);
+    g.fillAll (experimental::lab::green.withAlpha (0.07f));
+    g.setColour (experimental::lab::green);
+    g.drawRect (getLocalBounds(), 1);
+}
 
+void ResetQuestion::resized()
+{
+    if (auto* look = dynamic_cast<PitcherLookAndFeel*> (&getLookAndFeel()); look && look->body)
+        note.setFont (juce::Font (juce::FontOptions (look->body)).withHeight (11.5f));
+    auto r = getLocalBounds().reduced (10, 8);
+    note.setBounds (r.removeFromTop (22));
+    r.removeFromTop (4);
+    reset.setBounds (r.removeFromLeft (80));
+    r.removeFromLeft (6);
+    cancel.setBounds (r.removeFromLeft (80));
+}
+
+void MainEditorComponent::paint (juce::Graphics& g)
+{
+    // One continuous workspace; the Lab paints the same logo and rule over it
+    g.fillAll (experimental::lab::workspace);
+    const auto cols = PitcherLayout::calculate (getLocalBounds());
+    experimental::lab::drawWordmark (g, (float) cols.left.getX(), (float) cols.left.getY(),
+                                     juce::Font (juce::FontOptions (interBold)).withHeight (25.0f));
+    g.setColour (experimental::lab::line);
+    g.drawVerticalLine (cols.left.getRight(), (float) cols.left.getY(), (float) cols.left.getBottom());
+}
+
+void MainEditorComponent::resized()
+{
+    // No header row (Task 22): the left column, shared with the Lab, holds the logo, the view tabs (and, hidden, the
+    // engine), then the status banner; the views use the rest
+    const auto cols = PitcherLayout::calculate (getLocalBounds());
+    const auto column = cols.left.withTrimmedRight (20);
+    logo.setBounds (column.getX(), column.getY(), 150, 36); // the mark and the wordmark
+    auto nav = column.withTrimmedTop (48);                  // under the 36 px logo
+    auto tabs = nav.removeFromTop (26);
+#if VAE_PROMPT_TAB
+    const int tabW = tabs.getWidth() / 3;
+    synthViewButton.setBounds (tabs.removeFromLeft (tabW));
+    promptViewButton.setBounds (tabs.removeFromLeft (tabW));
+#else
+    synthViewButton.setBounds (tabs.removeFromLeft (tabs.getWidth() / 2));
+#endif
+    jointVaeViewButton.setBounds (tabs);
+    nav.removeFromTop (8);
+    if (kShowEngineChoice)
+        engineBox.setBounds (nav.removeFromTop (26)); // shortcut: overlaps the Lab's category match when shown
+    // The reset question covers the top of the column under the tabs (over the Lab's category match), opaque
+    resetQuestion.setBounds (column.getX(), nav.getY(), column.getWidth(), 70);
+    if (resetQuestion.isVisible())
+        resetQuestion.toFront (false);
+    auto banner = column.withTrimmedTop (experimental::JointVaePanel::kLeftTop).removeFromTop (48);
+    if (resetQuestion.isVisible())
+        banner.setY (resetQuestion.getBottom() + 8);
+#if VAE_PROMPT_TAB
+    spinner.setBounds (banner.removeFromRight (24).removeFromTop (24));
+#endif
+    status.setBounds (banner);
+
+    auto r = juce::Rectangle<int>::leftTopRightBottom (cols.centre.getX(), cols.left.getY(), cols.right.getRight(),
+                                                       cols.left.getBottom());
+    const auto placeKeyboard = [&]
+    {
+        keyboard.setBounds (r.removeFromBottom (kKeyboardH));
+        keyboard.setKeyWidth ((float) keyboard.getWidth() / 22.0f); // 22 white keys
+        r.removeFromBottom (14);
+    };
     if (currentView == View::jointVae)
     {
 #if VAE_WITH_SURGE
-        // Edge to edge below the header: the Lab keeps its own margins and keyboard
-        jointVaePanel.setBounds (getLocalBounds().withTrimmedTop (kMargin + kTopBarH));
+        // Edge to edge: the Lab keeps its own margins and keyboard; the column's controls sit over its top
+        jointVaePanel.setBounds (getLocalBounds());
 #else
-        keyboard.setBounds (r.removeFromBottom (kKeyboardH));
-        r.removeFromBottom (kGap);
+        placeKeyboard();
         jointVaePanel.setBounds (r);
 #endif
         return;
     }
-    keyboard.setBounds (r.removeFromBottom (kKeyboardH));
-    r.removeFromBottom (kGap);
+    placeKeyboard();
 
     if (currentView == View::synth)
     {
@@ -710,6 +808,78 @@ void PluginEditor::resized()
     main.removeFromBottom (kGap - 6);
     xyPad.setBounds (main);
 #endif
+}
+
+//==============================================================================
+PluginEditor::Sizing PluginEditor::Sizing::forDisplay (juce::Rectangle<int> total, juce::Rectangle<int> user,
+                                                       double dpi)
+{
+    constexpr float kNativeDisplayArea = 1920.0f * 1080.0f, kNativeDpi = 96.0f;
+    const auto W = (float) MainEditorComponent::kNativeWidth, H = (float) MainEditorComponent::kNativeHeight;
+    const auto area = total.isEmpty() ? kNativeDisplayArea : (float) total.getWidth() * (float) total.getHeight();
+#if JUCE_MAC
+    // Ruling R24: mac dpi is NSDeviceResolution (72 / 144) and JUCE sizes are already points, so no dpi factor
+    juce::ignoreUnused (dpi, kNativeDpi);
+    float def = std::sqrt (area / kNativeDisplayArea);
+#else
+    // shortcut: JUCE sizes are logical on every platform, so this dpi factor may double-scale; revisit with a real
+    // Windows HiDPI host
+    float def = std::sqrt (area / kNativeDisplayArea) * (dpi > 0 ? (float) dpi / kNativeDpi : 1.0f);
+#endif
+    float max = def * 1.5f;
+    if (! user.isEmpty()) // the window opens within 90% of the user area and never grows past all of it
+    {
+        const auto fit = juce::jmin ((float) user.getWidth() / W, (float) user.getHeight() / H);
+        def = juce::jmin (def, 0.9f * fit);
+        max = juce::jmin (def * 1.5f, fit);
+    }
+    return { def, def / 1.5f, max };
+}
+
+PluginEditor::PluginEditor (PluginProcessor& p)
+    : AudioProcessorEditor (p)
+    , pluginProcessor (p)
+    , main (p)
+{
+    addAndMakeVisible (main);
+    setResizable (true, true);
+    if (resizableCorner != nullptr)
+        resizableCorner->addMouseListener (this, false); // its double-click resets the scale
+    const auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
+    setSizing (display != nullptr ? Sizing::forDisplay (display->totalArea, display->userArea, display->dpi)
+                                  : Sizing {});
+}
+
+void PluginEditor::setSizing (Sizing s)
+{
+    sizing = s;
+    constexpr int W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
+    auto* c = getConstrainer();
+    c->setFixedAspectRatio (W / (double) H);
+    c->setSizeLimits (juce::roundToInt (W * s.min), juce::roundToInt (H * s.min), juce::roundToInt (W * s.max),
+                      juce::roundToInt (H * s.max));
+    const auto saved = pluginProcessor.getEditorScale();
+    const auto open = juce::jlimit (s.min, s.max, saved > 0 ? saved : s.def);
+    setSize (juce::roundToInt (W * open), juce::roundToInt (H * open));
+}
+
+void PluginEditor::resized()
+{
+    constexpr int W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
+    scale = juce::jlimit (sizing.min, sizing.max, (float) getHeight() / (float) H);
+    pluginProcessor.setEditorScale (scale);
+    main.setBounds (0, 0, W, H);
+    main.setTransform (juce::AffineTransform::scale (scale));
+    // AudioProcessorEditor places the resize corner (always on top) itself
+}
+
+void PluginEditor::mouseDoubleClick (const juce::MouseEvent& e)
+{
+    if (e.eventComponent != resizableCorner.get())
+        return;
+    pluginProcessor.setEditorScale (sizing.def);
+    setSize (juce::roundToInt (MainEditorComponent::kNativeWidth * sizing.def),
+             juce::roundToInt (MainEditorComponent::kNativeHeight * sizing.def));
 }
 
 } // namespace vae

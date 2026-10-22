@@ -24,6 +24,7 @@ bool inside (const LabOrbit::Position& p)
 LabOrbit::LabOrbit()
 {
     addAndMakeVisible (view);
+    view.setDotScale (kDotScale);
     view.addMouseListener (this, false);
     view.addKeyListener (this);
     // The study's description says arrows rotate the camera; in the Lab they move the handle (keyPressed)

@@ -18,6 +18,7 @@ constexpr const char* kAttrParams = "params";
 constexpr const char* kAttrModel = "decoderModel";
 constexpr const char* kAttrPrompt = "prompt";
 constexpr const char* kAttrSchema = "schemaVersion";
+constexpr const char* kAttrEditorScale = "editorScale";
 } // namespace
 
 PluginProcessor::PluginProcessor()
@@ -337,6 +338,8 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
         const juce::ScopedLock sl (stateLock);
         xml.setAttribute (kAttrModel, modelPath.getFullPathName());
         xml.setAttribute (kAttrPrompt, lastPrompt);
+        xml.setAttribute (kAttrEditorScale, editorScale);
+        xml.addChildElement (new juce::XmlElement (labPresets));
     }
     copyXmlToBinary (xml, destData);
 }
@@ -362,10 +365,14 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         // so saving again does not lose the reference.
         const juce::ScopedLock sl (stateLock);
         lastPrompt = xml->getStringAttribute (kAttrPrompt);
+        editorScale = (float) xml->getDoubleAttribute (kAttrEditorScale, editorScale);
+        const auto* presets = xml->getChildByName (labPresets.getTagName());
+        labPresets = presets != nullptr ? *presets : juce::XmlElement (labPresets.getTagName()); // older states: none
         modelPath = model;
         modelMissing = missing;
     }
     requestModel (missing ? juce::File() : model, model, missing, nullptr);
+    stateLoaded.sendChangeMessage(); // an open editor re-reads the presets (Task 23 review)
 }
 
 juce::AudioProcessorEditor* PluginProcessor::createEditor() { return new PluginEditor (*this); }
@@ -378,4 +385,28 @@ void vae::PluginProcessor::setLastPrompt (const juce::String& prompt)
 {
     const juce::ScopedLock sl (stateLock);
     lastPrompt = prompt;
+}
+
+juce::XmlElement vae::PluginProcessor::getLabPresets() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return labPresets;
+}
+
+void vae::PluginProcessor::setLabPresets (const juce::XmlElement& presets)
+{
+    const juce::ScopedLock sl (stateLock);
+    labPresets = presets;
+}
+
+float vae::PluginProcessor::getEditorScale() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return editorScale;
+}
+
+void vae::PluginProcessor::setEditorScale (float scale)
+{
+    const juce::ScopedLock sl (stateLock);
+    editorScale = scale;
 }

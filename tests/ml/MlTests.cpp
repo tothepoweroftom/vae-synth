@@ -20,6 +20,14 @@ public:
     {
         const juce::File stub (VAE_STUB_DECODER_PATH);
 
+        if (juce::SystemStats::getEnvironmentVariable ("VAE_DATA_DIR", {}).isNotEmpty())
+        {
+            beginTest ("explicit data directory isolates installed model lookup");
+            expect (installedModels ("joint-vae/bundle.json")
+                    == appDataDir().getChildFile ("models/joint-vae/bundle.json"));
+            expect (installedModels ("surge-data") == appDataDir().getChildFile ("models/surge-data"));
+        }
+
         beginTest ("runtime loads");
         OnnxModel model;
         logMessage (model.getRuntimeStatus());

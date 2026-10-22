@@ -1,0 +1,3784 @@
+{
+ "threshold": 0.01,
+ "n_train": 1485,
+ "statistic": "changed share on train (reference / mode rule)",
+ "template": "see s2_reference.py (provisional: Templates/Init Saw.fxp until Step 3)",
+ "n_features": 1416,
+ "n_kept": 631,
+ "n_model_columns_kept": 1249,
+ "kept": [
+  "character",
+  "fx/chorus/p0",
+  "fx/chorus/p1",
+  "fx/chorus/p1.sync",
+  "fx/chorus/p2",
+  "fx/chorus/p3",
+  "fx/chorus/p4",
+  "fx/chorus/p5",
+  "fx/chorus/p6",
+  "fx/chorus/p7",
+  "fx/chorus/placement",
+  "fx/chorus/position",
+  "fx/chorus/present",
+  "fx/conditioner/p0",
+  "fx/conditioner/p1",
+  "fx/conditioner/p2",
+  "fx/conditioner/p3",
+  "fx/conditioner/p4",
+  "fx/conditioner/p5",
+  "fx/conditioner/p6",
+  "fx/conditioner/p7",
+  "fx/conditioner/p8",
+  "fx/conditioner/placement",
+  "fx/conditioner/position",
+  "fx/conditioner/present",
+  "fx/delay/p0",
+  "fx/delay/p0.deform",
+  "fx/delay/p0.sync",
+  "fx/delay/p1",
+  "fx/delay/p1.off",
+  "fx/delay/p1.sync",
+  "fx/delay/p10",
+  "fx/delay/p11",
+  "fx/delay/p2",
+  "fx/delay/p3",
+  "fx/delay/p4",
+  "fx/delay/p5",
+  "fx/delay/p6",
+  "fx/delay/p6.sync",
+  "fx/delay/p7",
+  "fx/delay/p8",
+  "fx/delay/placement",
+  "fx/delay/position",
+  "fx/delay/present",
+  "fx/delay/return_level",
+  "fx/delay/send_level",
+  "fx/distortion/p0",
+  "fx/distortion/p1",
+  "fx/distortion/p10",
+  "fx/distortion/p2",
+  "fx/distortion/p3",
+  "fx/distortion/p4",
+  "fx/distortion/p5",
+  "fx/distortion/p6",
+  "fx/distortion/p7",
+  "fx/distortion/p8",
+  "fx/distortion/p9",
+  "fx/distortion/placement",
+  "fx/distortion/position",
+  "fx/distortion/present",
+  "fx/distortion/send_level",
+  "fx/eq/p0",
+  "fx/eq/p1",
+  "fx/eq/p10",
+  "fx/eq/p2",
+  "fx/eq/p3",
+  "fx/eq/p4",
+  "fx/eq/p5",
+  "fx/eq/p6",
+  "fx/eq/p7",
+  "fx/eq/p8",
+  "fx/eq/p9",
+  "fx/eq/placement",
+  "fx/eq/position",
+  "fx/eq/present",
+  "fx/flanger/p0",
+  "fx/flanger/p1",
+  "fx/flanger/p10",
+  "fx/flanger/p2",
+  "fx/flanger/p2.sync",
+  "fx/flanger/p3",
+  "fx/flanger/p6",
+  "fx/flanger/p7",
+  "fx/flanger/p8",
+  "fx/flanger/p9",
+  "fx/flanger/placement",
+  "fx/flanger/position",
+  "fx/flanger/present",
+  "fx/flanger/send_level",
+  "fx/freqshift/p0",
+  "fx/freqshift/p1",
+  "fx/freqshift/p2",
+  "fx/freqshift/p2.sync",
+  "fx/freqshift/p3",
+  "fx/freqshift/p4",
+  "fx/freqshift/placement",
+  "fx/freqshift/position",
+  "fx/freqshift/present",
+  "fx/freqshift/send_level",
+  "fx/geq11/p2",
+  "fx/geq11/p3",
+  "fx/geq11/p4",
+  "fx/geq11/p6",
+  "fx/geq11/p7",
+  "fx/geq11/p8",
+  "fx/geq11/p9",
+  "fx/geq11/placement",
+  "fx/geq11/position",
+  "fx/geq11/present",
+  "fx/nimbus/p3",
+  "fx/nimbus/p5",
+  "fx/nimbus/placement",
+  "fx/nimbus/position",
+  "fx/nimbus/present",
+  "fx/phaser/p0",
+  "fx/phaser/p1",
+  "fx/phaser/p10",
+  "fx/phaser/p2",
+  "fx/phaser/p3",
+  "fx/phaser/p4",
+  "fx/phaser/p5",
+  "fx/phaser/p6",
+  "fx/phaser/p9",
+  "fx/phaser/placement",
+  "fx/phaser/position",
+  "fx/phaser/present",
+  "fx/resonator/p0",
+  "fx/resonator/p1",
+  "fx/resonator/p3",
+  "fx/resonator/p4",
+  "fx/resonator/p5",
+  "fx/resonator/p6",
+  "fx/resonator/p7",
+  "fx/resonator/placement",
+  "fx/resonator/position",
+  "fx/resonator/present",
+  "fx/reverb/p0",
+  "fx/reverb/p1",
+  "fx/reverb/p10",
+  "fx/reverb/p2",
+  "fx/reverb/p3",
+  "fx/reverb/p4",
+  "fx/reverb/p5",
+  "fx/reverb/p6",
+  "fx/reverb/p7",
+  "fx/reverb/p8",
+  "fx/reverb/p9",
+  "fx/reverb/placement",
+  "fx/reverb/position",
+  "fx/reverb/present",
+  "fx/reverb/return_level",
+  "fx/reverb/send_level",
+  "fx/reverb2/p0",
+  "fx/reverb2/p1",
+  "fx/reverb2/p2",
+  "fx/reverb2/p3",
+  "fx/reverb2/p4",
+  "fx/reverb2/p5",
+  "fx/reverb2/p6",
+  "fx/reverb2/p7",
+  "fx/reverb2/p8",
+  "fx/reverb2/p9",
+  "fx/reverb2/placement",
+  "fx/reverb2/position",
+  "fx/reverb2/present",
+  "fx/reverb2/return_level",
+  "fx/reverb2/send_level",
+  "fx/rotary/p0",
+  "fx/rotary/p1",
+  "fx/rotary/p2",
+  "fx/rotary/p3",
+  "fx/rotary/p6",
+  "fx/rotary/p7",
+  "fx/rotary/placement",
+  "fx/rotary/position",
+  "fx/rotary/present",
+  "fx/rotary/send_level",
+  "route/filter_eg/filterunit/0/cutoff",
+  "route/filter_eg/level_noise",
+  "route/keytrack/filterunit/0/cutoff",
+  "route/keytrack/filterunit/1/cutoff",
+  "route/keytrack/osc/0/sine/p1",
+  "route/keytrack/osc/0/wavetable/p1",
+  "route/keytrack/osc/2/classic/p1",
+  "route/keytrack/osc/2/classic/p5",
+  "route/keytrack/osc/2/wavetable/p5",
+  "route/keytrack/pan",
+  "route/keytrack/vca_level",
+  "route/keytrack/volume",
+  "route/scene_lfo_1/filter_balance",
+  "route/scene_lfo_1/filterunit/0/cutoff",
+  "route/scene_lfo_1/osc/0/classic/p1",
+  "route/scene_lfo_1/pitch",
+  "route/scene_lfo_2/lfo/6/deform",
+  "route/scene_lfo_2/lfo/8/rate",
+  "route/scene_lfo_4/lfo/0/rate",
+  "route/scene_lfo_5/lfo/11/magnitude",
+  "route/velocity/adsr/0/a",
+  "route/velocity/adsr/0/r",
+  "route/velocity/adsr/1/a",
+  "route/velocity/adsr/1/d",
+  "route/velocity/feedback",
+  "route/velocity/filterunit/0/cutoff",
+  "route/velocity/filterunit/0/envmod",
+  "route/velocity/filterunit/0/resonance",
+  "route/velocity/filterunit/1/cutoff",
+  "route/velocity/filterunit/1/envmod",
+  "route/velocity/filterunit/1/resonance",
+  "route/velocity/fm_depth",
+  "route/velocity/level_o1",
+  "route/velocity/level_o2",
+  "route/velocity/level_o3",
+  "route/velocity/lfo/0/magnitude",
+  "route/velocity/lfo/1/magnitude",
+  "route/velocity/lfo/2/magnitude",
+  "route/velocity/vca_level",
+  "route/velocity/volume",
+  "route/velocity/wsunit/drive",
+  "route/voice_lfo_1/filterunit/0/cutoff",
+  "route/voice_lfo_1/filterunit/0/resonance",
+  "route/voice_lfo_1/filterunit/1/cutoff",
+  "route/voice_lfo_1/fm_depth",
+  "route/voice_lfo_1/level_noise",
+  "route/voice_lfo_1/level_o1",
+  "route/voice_lfo_1/level_o2",
+  "route/voice_lfo_1/osc/0/classic/p1",
+  "route/voice_lfo_1/osc/0/fm2/p0",
+  "route/voice_lfo_1/osc/0/fm3/p0",
+  "route/voice_lfo_1/osc/0/pitch",
+  "route/voice_lfo_1/osc/0/sine/p1",
+  "route/voice_lfo_1/osc/0/wavetable/p0",
+  "route/voice_lfo_1/osc/0/wavetable/p1",
+  "route/voice_lfo_1/osc/1/pitch",
+  "route/voice_lfo_1/osc/1/wavetable/p0",
+  "route/voice_lfo_1/pan",
+  "route/voice_lfo_1/pitch",
+  "route/voice_lfo_1/volume",
+  "route/voice_lfo_1/wsunit/drive",
+  "route/voice_lfo_2/filterunit/0/cutoff",
+  "route/voice_lfo_2/filterunit/1/cutoff",
+  "route/voice_lfo_2/level_noise",
+  "route/voice_lfo_2/level_o2",
+  "route/voice_lfo_2/level_o3",
+  "route/voice_lfo_2/osc/0/pitch",
+  "route/voice_lfo_2/osc/0/wavetable/p0",
+  "route/voice_lfo_2/osc/1/pitch",
+  "route/voice_lfo_2/osc/1/wavetable/p0",
+  "route/voice_lfo_2/osc/1/wavetable/p3",
+  "route/voice_lfo_2/osc/2/classic/p1",
+  "route/voice_lfo_2/osc/2/wavetable/p1",
+  "route/voice_lfo_2/pan",
+  "route/voice_lfo_2/pitch",
+  "route/voice_lfo_3/filterunit/0/cutoff",
+  "route/voice_lfo_3/filterunit/1/cutoff",
+  "route/voice_lfo_3/level_o2",
+  "route/voice_lfo_3/level_o3",
+  "route/voice_lfo_3/level_ring_12",
+  "route/voice_lfo_3/level_ring_23",
+  "route/voice_lfo_3/osc/0/pitch",
+  "route/voice_lfo_3/osc/0/wavetable/p3",
+  "route/voice_lfo_3/osc/1/pitch",
+  "route/voice_lfo_3/osc/2/pitch",
+  "route/voice_lfo_3/pitch",
+  "route/voice_lfo_4/filterunit/0/cutoff",
+  "route/voice_lfo_4/filterunit/1/cutoff",
+  "route/voice_lfo_4/level_o2",
+  "route/voice_lfo_4/level_o3",
+  "route/voice_lfo_4/osc/0/wavetable/p2",
+  "route/voice_lfo_5/filterunit/1/cutoff",
+  "route/voice_lfo_5/osc/0/wavetable/p4",
+  "route/voice_lfo_6/filterunit/0/cutoff",
+  "route/voice_lfo_6/filterunit/1/cutoff",
+  "scene/adsr/0/a",
+  "scene/adsr/0/a_s",
+  "scene/adsr/0/d",
+  "scene/adsr/0/d_s",
+  "scene/adsr/0/mode",
+  "scene/adsr/0/r",
+  "scene/adsr/0/r_s",
+  "scene/adsr/0/s",
+  "scene/adsr/1/a",
+  "scene/adsr/1/a_s",
+  "scene/adsr/1/d",
+  "scene/adsr/1/d_s",
+  "scene/adsr/1/mode",
+  "scene/adsr/1/r",
+  "scene/adsr/1/r_s",
+  "scene/adsr/1/s",
+  "scene/drift",
+  "scene/drift.ext",
+  "scene/f2_cutoff_is_offset",
+  "scene/f2_link_resonance",
+  "scene/feedback",
+  "scene/filter_balance",
+  "scene/filterblock_configuration",
+  "scene/filterunit/0/cutoff",
+  "scene/filterunit/0/envmod",
+  "scene/filterunit/0/keytrack",
+  "scene/filterunit/0/model",
+  "scene/filterunit/0/resonance",
+  "scene/filterunit/1/cutoff",
+  "scene/filterunit/1/envmod",
+  "scene/filterunit/1/keytrack",
+  "scene/filterunit/1/model",
+  "scene/filterunit/1/resonance",
+  "scene/fm_depth",
+  "scene/fm_switch",
+  "scene/keytrack_root",
+  "scene/level_noise",
+  "scene/level_o1",
+  "scene/level_o2",
+  "scene/level_o3",
+  "scene/level_pfg",
+  "scene/level_ring_12",
+  "scene/level_ring_23",
+  "scene/lfo/0/attack",
+  "scene/lfo/0/attack.sync",
+  "scene/lfo/0/decay",
+  "scene/lfo/0/decay.sync",
+  "scene/lfo/0/deform",
+  "scene/lfo/0/delay",
+  "scene/lfo/0/delay.off",
+  "scene/lfo/0/delay.sync",
+  "scene/lfo/0/hold",
+  "scene/lfo/0/hold.sync",
+  "scene/lfo/0/magnitude",
+  "scene/lfo/0/rate",
+  "scene/lfo/0/rate.sync",
+  "scene/lfo/0/release",
+  "scene/lfo/0/release.sync",
+  "scene/lfo/0/shape",
+  "scene/lfo/0/start_phase",
+  "scene/lfo/0/sustain",
+  "scene/lfo/0/trigmode",
+  "scene/lfo/0/unipolar",
+  "scene/lfo/1/attack",
+  "scene/lfo/1/attack.sync",
+  "scene/lfo/1/decay",
+  "scene/lfo/1/decay.sync",
+  "scene/lfo/1/deform",
+  "scene/lfo/1/delay",
+  "scene/lfo/1/delay.sync",
+  "scene/lfo/1/hold",
+  "scene/lfo/1/hold.sync",
+  "scene/lfo/1/magnitude",
+  "scene/lfo/1/rate",
+  "scene/lfo/1/rate.sync",
+  "scene/lfo/1/release",
+  "scene/lfo/1/release.sync",
+  "scene/lfo/1/shape",
+  "scene/lfo/1/start_phase",
+  "scene/lfo/1/sustain",
+  "scene/lfo/1/trigmode",
+  "scene/lfo/1/unipolar",
+  "scene/lfo/10/attack",
+  "scene/lfo/10/decay",
+  "scene/lfo/10/deform",
+  "scene/lfo/10/magnitude",
+  "scene/lfo/10/rate",
+  "scene/lfo/10/release",
+  "scene/lfo/10/shape",
+  "scene/lfo/10/sustain",
+  "scene/lfo/11/attack",
+  "scene/lfo/11/deform",
+  "scene/lfo/11/magnitude",
+  "scene/lfo/11/rate",
+  "scene/lfo/11/release",
+  "scene/lfo/11/shape",
+  "scene/lfo/11/sustain",
+  "scene/lfo/2/attack",
+  "scene/lfo/2/attack.sync",
+  "scene/lfo/2/decay",
+  "scene/lfo/2/decay.sync",
+  "scene/lfo/2/deform",
+  "scene/lfo/2/delay",
+  "scene/lfo/2/delay.sync",
+  "scene/lfo/2/hold",
+  "scene/lfo/2/hold.sync",
+  "scene/lfo/2/magnitude",
+  "scene/lfo/2/rate",
+  "scene/lfo/2/rate.sync",
+  "scene/lfo/2/release",
+  "scene/lfo/2/release.sync",
+  "scene/lfo/2/shape",
+  "scene/lfo/2/start_phase",
+  "scene/lfo/2/sustain",
+  "scene/lfo/2/trigmode",
+  "scene/lfo/2/unipolar",
+  "scene/lfo/3/attack",
+  "scene/lfo/3/attack.sync",
+  "scene/lfo/3/decay",
+  "scene/lfo/3/decay.sync",
+  "scene/lfo/3/deform",
+  "scene/lfo/3/delay",
+  "scene/lfo/3/delay.sync",
+  "scene/lfo/3/hold",
+  "scene/lfo/3/hold.sync",
+  "scene/lfo/3/magnitude",
+  "scene/lfo/3/rate",
+  "scene/lfo/3/rate.sync",
+  "scene/lfo/3/shape",
+  "scene/lfo/3/sustain",
+  "scene/lfo/3/trigmode",
+  "scene/lfo/3/unipolar",
+  "scene/lfo/4/attack",
+  "scene/lfo/4/decay",
+  "scene/lfo/4/deform",
+  "scene/lfo/4/hold",
+  "scene/lfo/4/magnitude",
+  "scene/lfo/4/rate",
+  "scene/lfo/4/rate.sync",
+  "scene/lfo/4/release",
+  "scene/lfo/4/shape",
+  "scene/lfo/4/start_phase",
+  "scene/lfo/4/sustain",
+  "scene/lfo/4/trigmode",
+  "scene/lfo/5/attack",
+  "scene/lfo/5/attack.sync",
+  "scene/lfo/5/magnitude",
+  "scene/lfo/5/rate",
+  "scene/lfo/5/rate.sync",
+  "scene/lfo/5/shape",
+  "scene/lfo/5/trigmode",
+  "scene/lfo/6/attack",
+  "scene/lfo/6/decay",
+  "scene/lfo/6/deform",
+  "scene/lfo/6/hold",
+  "scene/lfo/6/magnitude",
+  "scene/lfo/6/rate",
+  "scene/lfo/6/rate.sync",
+  "scene/lfo/6/release",
+  "scene/lfo/6/shape",
+  "scene/lfo/6/start_phase",
+  "scene/lfo/6/sustain",
+  "scene/lfo/6/trigmode",
+  "scene/lfo/6/unipolar",
+  "scene/lfo/7/attack",
+  "scene/lfo/7/decay",
+  "scene/lfo/7/deform",
+  "scene/lfo/7/magnitude",
+  "scene/lfo/7/rate",
+  "scene/lfo/7/rate.sync",
+  "scene/lfo/7/shape",
+  "scene/lfo/7/start_phase",
+  "scene/lfo/7/trigmode",
+  "scene/lfo/8/magnitude",
+  "scene/lfo/8/rate",
+  "scene/lfo/8/shape",
+  "scene/lfo/9/magnitude",
+  "scene/lfo/9/rate",
+  "scene/lfo/9/rate.sync",
+  "scene/lfo/9/shape",
+  "scene/lowcut",
+  "scene/mute_noise",
+  "scene/mute_o1",
+  "scene/mute_o2",
+  "scene/mute_o3",
+  "scene/mute_ring_12",
+  "scene/mute_ring_23",
+  "scene/noise_colour",
+  "scene/octave",
+  "scene/osc/0/alias/p6",
+  "scene/osc/0/classic/p0",
+  "scene/osc/0/classic/p1",
+  "scene/osc/0/classic/p2",
+  "scene/osc/0/classic/p3",
+  "scene/osc/0/classic/p4",
+  "scene/osc/0/classic/p5",
+  "scene/osc/0/classic/p6",
+  "scene/osc/0/fm2/p0",
+  "scene/osc/0/fm2/p1",
+  "scene/osc/0/fm2/p2",
+  "scene/osc/0/fm2/p3",
+  "scene/osc/0/fm2/p4",
+  "scene/osc/0/fm2/p5",
+  "scene/osc/0/fm2/p6",
+  "scene/osc/0/fm2/p6.ext",
+  "scene/osc/0/fm3/p0",
+  "scene/osc/0/fm3/p1",
+  "scene/osc/0/fm3/p2",
+  "scene/osc/0/fm3/p3",
+  "scene/osc/0/fm3/p6",
+  "scene/osc/0/modern/p0",
+  "scene/osc/0/modern/p1",
+  "scene/osc/0/modern/p2",
+  "scene/osc/0/modern/p5",
+  "scene/osc/0/modern/p6",
+  "scene/osc/0/octave",
+  "scene/osc/0/pitch",
+  "scene/osc/0/pitch.ext",
+  "scene/osc/0/retrigger",
+  "scene/osc/0/shnoise/p5",
+  "scene/osc/0/sine/p0",
+  "scene/osc/0/sine/p1",
+  "scene/osc/0/sine/p1.ext",
+  "scene/osc/0/sine/p2",
+  "scene/osc/0/sine/p3",
+  "scene/osc/0/sine/p3.off",
+  "scene/osc/0/sine/p4",
+  "scene/osc/0/sine/p4.off",
+  "scene/osc/0/sine/p5",
+  "scene/osc/0/sine/p6",
+  "scene/osc/0/string/p0",
+  "scene/osc/0/string/p2",
+  "scene/osc/0/string/p3",
+  "scene/osc/0/string/p4",
+  "scene/osc/0/string/p6",
+  "scene/osc/0/twist/p0",
+  "scene/osc/0/twist/p1",
+  "scene/osc/0/twist/p2",
+  "scene/osc/0/twist/p3",
+  "scene/osc/0/twist/p4",
+  "scene/osc/0/type",
+  "scene/osc/0/wavetable/p0",
+  "scene/osc/0/wavetable/p1",
+  "scene/osc/0/wavetable/p2",
+  "scene/osc/0/wavetable/p3",
+  "scene/osc/0/wavetable/p4",
+  "scene/osc/0/wavetable/p5",
+  "scene/osc/0/wavetable/p6",
+  "scene/osc/0/wavetable/p6.deform",
+  "scene/osc/0/wavetable/wt",
+  "scene/osc/0/window/p0",
+  "scene/osc/0/window/p1",
+  "scene/osc/0/window/p2",
+  "scene/osc/0/window/p5",
+  "scene/osc/0/window/p6",
+  "scene/osc/0/window/wt",
+  "scene/osc/1/classic/p0",
+  "scene/osc/1/classic/p1",
+  "scene/osc/1/classic/p2",
+  "scene/osc/1/classic/p3",
+  "scene/osc/1/classic/p4",
+  "scene/osc/1/classic/p5",
+  "scene/osc/1/classic/p6",
+  "scene/osc/1/fm2/p0",
+  "scene/osc/1/fm2/p1",
+  "scene/osc/1/fm2/p2",
+  "scene/osc/1/fm2/p3",
+  "scene/osc/1/fm2/p4",
+  "scene/osc/1/fm2/p5",
+  "scene/osc/1/fm2/p6",
+  "scene/osc/1/fm2/p6.ext",
+  "scene/osc/1/fm3/p1",
+  "scene/osc/1/fm3/p2",
+  "scene/osc/1/fm3/p3",
+  "scene/osc/1/fm3/p6",
+  "scene/osc/1/modern/p0",
+  "scene/osc/1/modern/p2",
+  "scene/osc/1/modern/p5",
+  "scene/osc/1/octave",
+  "scene/osc/1/pitch",
+  "scene/osc/1/pitch.ext",
+  "scene/osc/1/retrigger",
+  "scene/osc/1/sine/p0",
+  "scene/osc/1/sine/p1",
+  "scene/osc/1/sine/p1.ext",
+  "scene/osc/1/sine/p2",
+  "scene/osc/1/sine/p3",
+  "scene/osc/1/sine/p3.off",
+  "scene/osc/1/sine/p4",
+  "scene/osc/1/sine/p4.off",
+  "scene/osc/1/sine/p5",
+  "scene/osc/1/sine/p6",
+  "scene/osc/1/type",
+  "scene/osc/1/wavetable/p0",
+  "scene/osc/1/wavetable/p1",
+  "scene/osc/1/wavetable/p2",
+  "scene/osc/1/wavetable/p3",
+  "scene/osc/1/wavetable/p4",
+  "scene/osc/1/wavetable/p5",
+  "scene/osc/1/wavetable/p6",
+  "scene/osc/1/wavetable/wt",
+  "scene/osc/2/classic/p0",
+  "scene/osc/2/classic/p1",
+  "scene/osc/2/classic/p2",
+  "scene/osc/2/classic/p3",
+  "scene/osc/2/classic/p4",
+  "scene/osc/2/classic/p5",
+  "scene/osc/2/classic/p6",
+  "scene/osc/2/fm3/p0",
+  "scene/osc/2/fm3/p1",
+  "scene/osc/2/fm3/p2",
+  "scene/osc/2/fm3/p3",
+  "scene/osc/2/fm3/p4",
+  "scene/osc/2/fm3/p5",
+  "scene/osc/2/fm3/p6",
+  "scene/osc/2/keytrack",
+  "scene/osc/2/modern/p0",
+  "scene/osc/2/modern/p5",
+  "scene/osc/2/octave",
+  "scene/osc/2/pitch",
+  "scene/osc/2/pitch.ext",
+  "scene/osc/2/retrigger",
+  "scene/osc/2/sine/p0",
+  "scene/osc/2/sine/p1",
+  "scene/osc/2/sine/p1.ext",
+  "scene/osc/2/sine/p2",
+  "scene/osc/2/sine/p3",
+  "scene/osc/2/sine/p3.off",
+  "scene/osc/2/sine/p4",
+  "scene/osc/2/sine/p4.off",
+  "scene/osc/2/sine/p5",
+  "scene/osc/2/sine/p6",
+  "scene/osc/2/type",
+  "scene/osc/2/wavetable/p0",
+  "scene/osc/2/wavetable/p1",
+  "scene/osc/2/wavetable/p2",
+  "scene/osc/2/wavetable/p3",
+  "scene/osc/2/wavetable/p4",
+  "scene/osc/2/wavetable/p5",
+  "scene/osc/2/wavetable/p6",
+  "scene/osc/2/wavetable/wt",
+  "scene/pan",
+  "scene/pitch",
+  "scene/pitch.ext",
+  "scene/polymode",
+  "scene/portamento",
+  "scene/portamento.sync",
+  "scene/route_noise",
+  "scene/route_o1",
+  "scene/route_o2",
+  "scene/route_o3",
+  "scene/route_ring_12",
+  "scene/route_ring_23",
+  "scene/vca_level",
+  "scene/vca_velsense",
+  "scene/volume",
+  "scene/width",
+  "scene/wsunit/drive",
+  "scene/wsunit/type"
+ ],
+ "frozen": {
+  "fx/bonsai/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p1.deform": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p1.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/bonsai/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chorus/p4.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/chorus/p5.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/chorus/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/chorus/send_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/chow/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/chow/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p1.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p11": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p2.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p3.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p5.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/combulator/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/conditioner/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/conditioner/p1.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/conditioner/p8.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "fx/delay/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/delay/p2.deform": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "fx/delay/p2.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/delay/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/delay/p4.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/delay/p5.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/delay/p7.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/p11": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/distortion/p3.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/p9.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/distortion/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/ensemble/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p11": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p11.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ensemble/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/eq/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/eq/p3.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/eq/p6.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/eq/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/eq/send_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/exciter/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/exciter/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/flanger/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/flanger/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/flanger/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/freqshift/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/freqshift/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p1.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p10": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p10.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p11": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p2.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p3.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p4.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/geq11/p5.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p6.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p7.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p8.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/geq11/p9.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/mstool/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p1.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p11": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p2.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p4.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p5.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p6.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p8.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/mstool/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p11": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p8.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p8.sync": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/neuron/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/nimbus/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p10": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p11": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p7": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p8": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/p9": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/nimbus/send_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/phaser/p11": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/phaser/p11.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "fx/phaser/p3.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/phaser/p3.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/phaser/p7": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/phaser/p8": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/phaser/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/phaser/send_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p1.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p10": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/p11": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p7.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/resonator/p8": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/p9": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/resonator/send_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/reverb/p0.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/reverb/p5.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/reverb/p8.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/reverb2/p0.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/ringmod/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p2.abs": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p2.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p6.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p7.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/ringmod/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/rotary/p0.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "fx/rotary/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/rotary/p4.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "fx/rotary/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/rotary/return_level": {
+   "how": "reference",
+   "code": null
+  },
+  "fx/spring/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/spring/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p0.deform": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p0.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p10": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p11": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p4.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p8.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/p9": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/tape/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p2.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p3.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/present": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/return_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/treemonster/send_level": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p0": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p0.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p1": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p1.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p2": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p2.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p3": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p4": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p4.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p5": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p5.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p6": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p6.off": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p7": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p7.ext": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/p8": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/placement": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/position": {
+   "how": "absent",
+   "code": null
+  },
+  "fx/waveshaper/present": {
+   "how": "absent",
+   "code": null
+  },
+  "route/keytrack/osc/0/classic/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/classic/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/fm3/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/sine/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/wavetable/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/0/window/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/fm3/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/shnoise/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/sine/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/sine/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "route/keytrack/osc/2/wavetable/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/classic/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/classic/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/fm3/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/fm3/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/twist/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/twist/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "route/velocity/osc/0/wavetable/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/filter_balance": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/classic/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/classic/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/classic/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/fm2/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/fm3/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/string/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/wavetable/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/wavetable/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/window/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/0/window/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/1/fm2/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/1/wavetable/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_1/osc/2/wavetable/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/classic/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/classic/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/classic/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/classic/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/fm3/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/0/window/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/1/classic/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/1/classic/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/2/pitch": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/2/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_2/osc/2/sine/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_3/osc/0/classic/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_3/osc/0/wavetable/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_3/osc/2/wavetable/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_4/pitch": {
+   "how": "reference",
+   "code": null
+  },
+  "route/voice_lfo_5/osc/0/sine/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/adsr/0/a.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/0/d.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/0/r.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/0/r.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/1/a.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/1/d.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/adsr/1/r.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/feedback.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/feedback.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/filterunit/0/cutoff.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/filterunit/0/model.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/filterunit/1/cutoff.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/filterunit/1/model.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/level_ring_12.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/level_ring_23.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/0/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/0/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/0/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/0/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/0/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/1/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/10/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/10/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/rate.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/10/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/trigmode": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/10/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/10/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/decay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/rate.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/trigmode": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/11/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/11/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/2/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/2/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/2/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/2/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/2/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/2/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/release": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/3/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/3/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/3/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/4/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/4/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/decay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/deform": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/release": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/sustain": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/5/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/5/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/6/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/6/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/6/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/7/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/7/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/release": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/7/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/sustain": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/7/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/7/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/attack": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/decay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/deform": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/rate.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/release": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/sustain": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/trigmode": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/8/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/8/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/attack": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/attack.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/decay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/decay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/deform": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/deform.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/delay": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/delay.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/delay.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/hold": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/hold.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/magnitude.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/rate.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/release": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/release.sync": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/start_phase": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/start_phase.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/sustain": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/trigmode": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lfo/9/trigmode.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lfo/9/unipolar": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/lowcut.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/lowcut.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/noise_colour.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/alias/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/alias/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/alias/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/alias/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/classic/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/classic/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm2/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm2/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p1.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p1.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p3.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/fm3/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/fm3/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/fm3/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/keytrack": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/modern/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/modern/p1.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/modern/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/modern/p2.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/modern/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/modern/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/modern/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/modern/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/pitch.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/shnoise/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/shnoise/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/shnoise/p2.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/0/shnoise/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/shnoise/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/0/shnoise/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/shnoise/p4.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/shnoise/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/shnoise/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/shnoise/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/sine/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/sine/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/sine/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/string/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p2.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p4.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/string/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/string/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/twist/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/twist/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/twist/p5.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/twist/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/wavetable/p0.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/wavetable/p0.ext": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/0/wavetable/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/wavetable/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/window/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/window/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/window/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/0/window/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/0/window/p4.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/0/window/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/window/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/0/window/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/alias/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/alias/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/alias/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/alias/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/alias/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/classic/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/classic/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm2/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm2/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/fm3/p1.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p1.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p3.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/fm3/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/fm3/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/fm3/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/keytrack": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/modern/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/modern/p1.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p2.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/modern/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/modern/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/modern/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/pitch.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/shnoise/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p2.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/shnoise/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/shnoise/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p4.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/shnoise/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/shnoise/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/shnoise/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/shnoise/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/sine/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/sine/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/sine/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p2.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p4.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/string/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/string/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/twist/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/twist/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/twist/p5.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/twist/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/wavetable/p0.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/wavetable/p0.ext": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/wavetable/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/wavetable/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/wavetable/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/window/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/window/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/window/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p4.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/1/window/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/window/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/window/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/1/window/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/1/window/wt": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/alias/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/alias/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/alias/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/alias/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/alias/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/classic/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/classic/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm2/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm2/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/fm2/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm2/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p1.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p1.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p3.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/fm3/p6.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p0.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/modern/p1.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/modern/p2.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p2.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/modern/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/modern/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/modern/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/pitch.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/shnoise/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p2.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/shnoise/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/shnoise/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p4.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/shnoise/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/shnoise/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/shnoise/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/shnoise/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/sine/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/sine/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/sine/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p1.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p2.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p3.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p4.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/string/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/string/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/twist/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p4.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/twist/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/twist/p5.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/twist/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/wavetable/p0.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/wavetable/p0.ext": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/wavetable/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/wavetable/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/wavetable/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/window/p0": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p0.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/window/p1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p3.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/window/p4": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p4.off": {
+   "how": "mode",
+   "code": 1.0
+  },
+  "scene/osc/2/window/p5": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p5.abs": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/window/p5.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/window/p6": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/osc/2/window/p6.deform": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/osc/2/window/wt": {
+   "how": "mode",
+   "code": 13.0
+  },
+  "scene/solo_noise": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/solo_o1": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/solo_o2": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/solo_o3": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/solo_ring_12": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/solo_ring_23": {
+   "how": "reference",
+   "code": null
+  },
+  "scene/volume.off": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/wsunit/drive.ext": {
+   "how": "mode",
+   "code": 0.0
+  },
+  "scene/wsunit/type.off": {
+   "how": "mode",
+   "code": 0.0
+  }
+ }
+}
