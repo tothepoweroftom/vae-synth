@@ -4,6 +4,10 @@ A JUCE synth for **prompt → preset** sound design. A prompt becomes a latent
 vector, a decoder turns that into a fixed **control vector** (93 Surge-style
 controls), and a synth engine plays it.
 
+## Demo
+
+[Watch the Joint VAE demo (MP4)](assets/videos/joint-vae-demo-2026-10-22.mp4)
+
 The control vector follows the student's component list (schema v2, see
 `docs/SCHEMA.md`). It is a Surge-shaped synth: voice/glide, 3 oscillators,
 2 filters, 2 curved ADSRs, 2 LFOs and a fixed FX chain, with categorical
