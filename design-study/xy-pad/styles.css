@@ -1,0 +1,129 @@
+/* Alternate skins share the minimal workflow and data. */
+.study-nav{min-height:58px;height:auto;gap:24px;flex-wrap:wrap;padding:12px 0}
+.style-picker{display:flex;gap:4px;flex-wrap:wrap}
+.style-picker button{border:1px solid transparent;background:none;color:#99998e;border-radius:3px;padding:8px 12px;font:10px StudyInter,Arial,sans-serif}
+.style-picker button:hover{color:var(--accent);border-color:#444}
+.style-picker button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#style-caption{margin-left:auto;font:9px StudyInter,Arial,sans-serif;color:#77776e}
+/* Brutalist: graphite surfaces, signal green, hard edges. */
+:root[data-theme=dark][data-style=brutalist]{
+ --bg:#252525;--panel:#2c2c2c;--well:#202020;--ink:#f0f0ec;--muted:#a5aaa5;--line:#4b504b;
+ --c0:#70bcff;--c1:#ffad66;--c2:#86eeac;--c3:#ffe078;--c4:#ff8fc7;
+ --c5:#63e0d5;--c6:#b6a0ff;--c7:#ff918c;--c8:#b4b9b4;
+ --accent:#70ff63;--accent-ink:#182018;--accent-soft:#70ff6312;--dot-ring:#70ff63;--heat:#70ff63;
+}
+[data-style=brutalist] body{background:#1c1c1c}
+[data-style=brutalist] .panel{background:var(--panel)}
+[data-style=brutalist] .padbox{background-color:var(--well)}
+[data-style=brutalist] dialog{background:var(--panel)}
+[data-style=brutalist] #favorite-name{background:var(--well);border-radius:0}
+
+[data-style=brutalist] .wrap{border:0;border-radius:0;box-shadow:none}
+[data-style=brutalist] .instrument-header{height:82px;border-bottom:2px solid var(--accent);background:var(--accent);color:#121212}
+[data-style=brutalist] .brand{font-size:43px;font-weight:700;letter-spacing:-3px}
+[data-style=brutalist] .brand-mark{color:#121212;font-size:44px}
+[data-style=brutalist] .header-title{font:700 22px StudyMono,monospace;text-transform:uppercase;color:#121212;letter-spacing:-1px}
+[data-style=brutalist] .about-link{color:#121212;font:10px StudyMono,monospace;text-decoration:underline}
+[data-style=brutalist] .toolbar{border-bottom:2px solid #666;padding:17px 0}
+[data-style=brutalist] .field label{color:#ddd;font-size:9px}
+[data-style=brutalist] .seg,[data-style=brutalist] .btn,[data-style=brutalist] select,[data-style=brutalist] #filter,[data-style=brutalist] .axbtn{border-radius:0;border:1px solid #777;font-family:StudyMono,monospace}
+[data-style=brutalist] .seg button{font:700 10px StudyMono,monospace;text-transform:uppercase}
+[data-style=brutalist] .btn.primary{box-shadow:3px 3px 0 #397433;border-color:var(--accent)}
+[data-style=brutalist] .padbox{border:2px solid #ddd;border-radius:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:40px 40px}
+[data-style=brutalist] .axes-panel{border-color:#777;border-width:2px}
+[data-style=brutalist] .listhead h2{font:700 20px StudyMono,monospace;text-transform:uppercase}
+[data-style=brutalist] .g{border-bottom:1px solid #555}
+[data-style=brutalist] .g .nm{font:11px StudyMono,monospace;text-transform:uppercase}
+[data-style=brutalist] .axbtn[aria-pressed=true]{border-color:var(--accent);box-shadow:2px 2px 0 #397433}
+[data-style=brutalist] .audition{border-top:2px solid #777}
+[data-style=brutalist] .key{border-radius:0;background:#e1e1d9}
+[data-style=brutalist] .key.black{background:#121212}
+/* Swiss Modern: typographic hierarchy, exact spacing, flat surfaces. */
+[data-style=swiss] .wrap{border-radius:0;border-color:#40403a;box-shadow:none}
+[data-style=swiss] .instrument-header{height:90px;align-items:baseline;padding-top:20px;border-bottom:1px solid #8a8a7c;gap:30px}
+[data-style=swiss] .brand{font:700 48px/1 StudyInter,Arial,sans-serif;letter-spacing:-4px}
+[data-style=swiss] .brand-mark{display:none}
+[data-style=swiss] .header-title{font:400 23px StudyInter,Arial,sans-serif;color:#ffff07;letter-spacing:-1px}
+[data-style=swiss] .about-link{font-size:11px;color:#c5c5b8}
+[data-style=swiss] .field label{font:10px StudyInter,Arial,sans-serif;text-transform:none;letter-spacing:0}
+[data-style=swiss] .toolbar{gap:18px;border-bottom:1px solid #45453f;padding:17px 0}
+[data-style=swiss] .seg{border:0;border-radius:0;gap:16px;background:none}
+[data-style=swiss] .seg button{padding:9px 0;border-bottom:2px solid transparent;font-size:12px}
+[data-style=swiss] .seg button[aria-pressed=true]{background:none;color:#ffff07;border-color:#ffff07}
+[data-style=swiss] .btn,[data-style=swiss] select,[data-style=swiss] #filter{border-radius:0;font-size:11px}
+[data-style=swiss] .padbox{border-radius:0;background-image:none;border-color:#4b4b42}
+[data-style=swiss] .listhead h2{font:700 22px StudyInter,Arial,sans-serif;letter-spacing:-.7px}
+[data-style=swiss] .g .nm{font-size:12px;letter-spacing:-.2px}
+[data-style=swiss] .axis-info summary{font:8px StudyInter,Arial,sans-serif}
+[data-style=swiss] .axbtn{font:10px StudyInter,Arial,sans-serif;border-radius:0;border-color:transparent;background:#252523}
+[data-style=swiss] .axbtn[aria-pressed=true]{background:#ffff07;color:#121212}
+[data-style=swiss] .xaxis b,[data-style=swiss] .yaxis b{font:11px StudyInter,Arial,sans-serif}
+[data-style=swiss] .audition{border-color:#45453f}
+/* Industrial: recessed screen, panel seams, physical control caps. */
+[data-style=industrial] .wrap{border:1px solid #53534a;border-radius:10px;box-shadow:0 4px 0 #060606,0 16px 40px #0008;background:linear-gradient(#ffffff02,transparent 130px),#121212}
+[data-style=industrial] .instrument-header{height:69px;background:linear-gradient(#282826,#1c1c1b);border-bottom:3px double #484840;position:relative;padding-left:40px;padding-right:40px}
+[data-style=industrial] .instrument-header:before,[data-style=industrial] .instrument-header:after{content:'−';position:absolute;top:28px;left:13px;border-radius:50%;height:9px;width:9px;background:#393933;color:#111;text-align:center;font:9px/8px monospace;box-shadow:0 1px 2px #000}
+[data-style=industrial] .instrument-header:after{left:auto;right:13px}
+[data-style=industrial] .brand{font-size:25px;letter-spacing:1px}
+[data-style=industrial] .brand-mark{font-size:28px}
+[data-style=industrial] .header-title{font:10px StudyMono,monospace;letter-spacing:2px;text-transform:uppercase;color:#aaa99c}
+[data-style=industrial] .toolbar{padding:16px 0;border-bottom:3px double #34342f}
+[data-style=industrial] .btn,[data-style=industrial] .seg,[data-style=industrial] .axbtn{border-radius:4px;border-color:#45453c;box-shadow:0 2px 0 #050505,inset 0 1px #ffffff0e;background:linear-gradient(#2e2e29,#1c1c19)}
+[data-style=industrial] .btn.primary,[data-style=industrial] .seg button[aria-pressed=true],[data-style=industrial] .axbtn[aria-pressed=true]{background:#ffff07;color:#121212;box-shadow:inset 0 -2px #b1b100}
+[data-style=industrial] .padbox{border:5px solid #292925;border-radius:7px;box-shadow:0 0 0 1px #4b4b40,inset 0 0 25px #0009;background-size:14px 14px}
+[data-style=industrial] .listhead h2{font:10px StudyMono,monospace;letter-spacing:1.4px;text-transform:uppercase}
+[data-style=industrial] .axes-panel{padding-left:18px;border-left:3px double #34342f}
+[data-style=industrial] .g .nm{font-size:10px}
+[data-style=industrial] .audition{background:#1b1b18;border-top:3px double #34342f}
+[data-style=industrial] .key{background:linear-gradient(#a9a99d,#d5d5ca);box-shadow:inset 0 -3px #96968b}
+[data-style=industrial] .key.black{background:linear-gradient(#0c0c0b,#292927);box-shadow:inset 0 -3px #080808}
+/* Editorial: serif display, fine rules, generous rhythm. */
+[data-style=editorial] .wrap{border-radius:0;border:0;box-shadow:none}
+[data-style=editorial] .instrument-header{height:100px;border-top:1px solid #66665a;border-bottom:1px solid #66665a;align-items:baseline;padding-top:22px;gap:25px}
+[data-style=editorial] .brand{font:italic 48px/1 Georgia,serif;letter-spacing:-3px}
+[data-style=editorial] .brand-mark{display:none}
+[data-style=editorial] .header-title{font:italic 24px Georgia,serif;letter-spacing:-.5px;color:#ffff07}
+[data-style=editorial] .about-link{font-size:10px;color:#aaa99c}
+[data-style=editorial] .toolbar{padding:20px 0;gap:20px;border-color:#34342f}
+[data-style=editorial] .field label{font:10px Georgia,serif;text-transform:none;letter-spacing:0}
+[data-style=editorial] .seg{border:0;gap:15px;background:none;border-radius:0}
+[data-style=editorial] .seg button{font:italic 14px Georgia,serif;padding:7px 0;border-bottom:1px solid transparent}
+[data-style=editorial] .seg button[aria-pressed=true]{background:none;color:#ffff07;border-color:#ffff07}
+[data-style=editorial] .btn,[data-style=editorial] select{border-radius:0;border-color:#383830}
+[data-style=editorial] .padbox{border-radius:0;background-image:none;border-color:#34342f}
+[data-style=editorial] .listhead h2{font:italic 24px Georgia,serif;letter-spacing:-.5px}
+[data-style=editorial] .g .nm{font:14px Georgia,serif}
+[data-style=editorial] .axbtn{border-radius:50%;border-color:#42423b;font-size:9px}
+[data-style=editorial] #filter{border-radius:0;border-width:0 0 1px;padding-left:0}
+[data-style=editorial] .xaxis b,[data-style=editorial] .yaxis b{font:italic 12px Georgia,serif}
+[data-style=editorial] .audition{border-color:#48483c}
+[data-style=editorial] .audition strong{font:15px Georgia,serif}
+/* Keep audition feedback visible over each skin's material styles. */
+[data-style] .key.on{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+@media(max-width:1100px){#style-caption{display:none}.study-nav{gap:15px}.style-picker button{padding:7px 10px}[data-style=swiss] .toolbar,[data-style=editorial] .toolbar{gap:12px}}
+@media(max-width:850px){[data-style=industrial] .axes-panel{border-left:0;border-top:3px double #34342f;padding-left:0}[data-style=brutalist] .axes-panel{border-left:0}.study-nav{padding:10px 0;gap:10px}.style-picker{gap:2px}.style-picker button{font-size:9px;padding:7px 9px}}
+@media(max-width:560px){.study-nav>a{width:100%}.style-picker{width:100%;justify-content:space-between}.style-picker button{font-size:8px;padding:7px 6px}[data-style=brutalist] .instrument-header,[data-style=swiss] .instrument-header,[data-style=editorial] .instrument-header{height:74px}[data-style=brutalist] .brand,[data-style=swiss] .brand,[data-style=editorial] .brand{font-size:35px}[data-style=brutalist] .header-title,[data-style=swiss] .header-title,[data-style=editorial] .header-title{font-size:18px}[data-style=industrial] .instrument-header{padding-left:30px;padding-right:30px}.wrap{margin-right:5px}}
+
+/* Compact identity replaces the large instrument header. */
+.pitcher-brand{display:flex;align-items:center;gap:10px;margin-right:auto;color:var(--ink)}
+.pitcher-brand svg{width:32px;height:32px;fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}
+.pitcher-brand span{font:700 25px StudyInter,Arial,sans-serif;letter-spacing:-1.2px}
+.toolbar #sound[hidden]{display:none}
+/* Three octaves C3–C6: 22 white keys and three groups of 2 + 3 black keys. */
+.audition .keys{display:block;position:relative;height:56px;min-width:210px;max-width:none}
+.audition .keys .key{position:absolute;top:0;width:calc(100% / 22);height:56px;margin:0;border:0;border-right:1px solid #737773;border-radius:0;box-sizing:border-box;font-size:7px;padding-bottom:4px}
+.audition .keys .key.black{width:calc(62% / 22);height:34px;margin:0;z-index:1;border:0}
+.audition>p{display:none}
+@media(max-width:560px){.audition{flex-wrap:wrap}.audition .keys{flex-basis:100%}.pitcher-brand span{font-size:22px}}
+
+.prompt-status:empty{display:none}
+
+/* One continuous surface across the centre workspace and the instrument. */
+[data-style=brutalist] main>section.panel{--well:var(--bg);background:var(--bg)}
+
+/* Match the compact 56px native keyboard strip. */
+.audition>div:first-child{display:none}
+[data-style=brutalist] .audition{padding:12px 24px;background:var(--bg);border-top:1px solid var(--line)}
+[data-style=brutalist] .keys .key{background:#b7bcb6;color:#555b54;box-shadow:none}
+[data-style=brutalist] .keys .key.black{background:#252825;color:#a4aaa3}
+[data-style=brutalist] .keys .key.on{background:var(--accent);color:var(--accent-ink)}

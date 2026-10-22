@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include "BinaryData.h"
+
 #include <numeric>
 
 namespace vae
@@ -23,6 +25,7 @@ constexpr SectionInfo kSections[] = {
     { "fx_delay", "Delay" },   { "fx_reverb", "Reverb" }, { "global", "Out" },
 };
 
+constexpr const char* kSurgePatchStatus = "Playing the full Surge patch from the Lab. Knobs return to Lite";
 constexpr int kMargin = 20, kTopBarH = 36, kKeyboardH = 56, kGap = 12, kEditorW = 1240;
 
 juce::Array<int> sectionControls (const char* key)
@@ -251,11 +254,26 @@ void Spinner::paint (juce::Graphics& g)
 PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (p)
     , processor (p)
+    , jointVaePanel (
+          p.getKeyboardState(),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize),
+          juce::Typeface::createSystemTypefaceFor (BinaryData::SpaceMonoRegular_ttf,
+                                                   BinaryData::SpaceMonoRegular_ttfSize))
     , keyboard (p.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel (&lookAndFeel.get());
     juce::LookAndFeel::setDefaultLookAndFeel (&lookAndFeel.get());
 
+    initButton.setTooltip ("Reset every control to the schema default");
+    initButton.onClick = [this]
+    {
+        processor.applyControls (schema::Snapshot::defaults());
+        setStatus ("Init");
+    };
+    addAndMakeVisible (initButton);
+
+#if VAE_PROMPT_TAB // Task 16 compiled the Prompt tab out; this is its UI and wiring
     promptEditor.setTextToShowWhenEmpty ("Describe a sound: warm detuned pad, plucky bass...", LF::quiet());
     promptEditor.setText (processor.getLastPrompt(), false);
     promptEditor.setFont (juce::FontOptions (15.0f));
@@ -275,12 +293,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                     safe->setStatus ("Random latent: " + note);
             });
     };
-    initButton.setTooltip ("Reset every control to the schema default");
-    initButton.onClick = [this]
-    {
-        processor.applyControls (schema::Snapshot::defaults());
-        setStatus ("Init");
-    };
     modelButton.setTooltip ("Load an ONNX latent decoder ([1, " + juce::String (schema::kLatentDimensions) + "] -> [1, "
                             + juce::String (schema::kFeatureCount) + "] features)");
     modelButton.onClick = [this] { chooseModel(); };
@@ -296,7 +308,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     };
     presetButton.setTooltip ("Load an editable preset from reference audio retrieval");
     presetButton.onClick = [this] { choosePreset(); };
-    for (auto* b : { &generateButton, &randomButton, &initButton, &modelButton, &stubButton, &presetButton })
+    for (auto* b : { &generateButton, &randomButton, &modelButton, &stubButton, &presetButton })
         addAndMakeVisible (b);
 
     generatorPackageButton.onClick = [this] { chooseGenerator(); };
@@ -321,6 +333,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         setStatus ("Loaded " + referenceMatches[(size_t) i].name + " — play with MIDI or the keyboard");
     };
     addAndMakeVisible (matchesBox);
+#endif
 
     engineBox.setTooltip ("Synth engine backend");
     addAndMakeVisible (engineBox);
@@ -330,6 +343,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     status.setFont (LF::labelFont (10.0f));
     status.setColour (juce::Label::textColourId, LF::quiet());
     addAndMakeVisible (status);
+#if VAE_PROMPT_TAB
     setStatus (processor.describeModel());
     addAndMakeVisible (spinner);
     processor.getReferenceSearch().preload (
@@ -343,14 +357,50 @@ PluginEditor::PluginEditor (PluginProcessor& p)
             if (safe != nullptr)
                 safe->setStatus (message);
         });
+    promptViewButton.setClickingTogglesState (false);
+    promptViewButton.onClick = [this] { showView (View::prompt); };
+    addAndMakeVisible (promptViewButton);
+#endif
 
-    for (auto* b : { &synthViewButton, &promptViewButton })
+    for (auto* b : { &synthViewButton, &jointVaeViewButton })
     {
         b->setClickingTogglesState (false);
         addAndMakeVisible (b);
     }
-    synthViewButton.onClick = [this] { showView (false); };
-    promptViewButton.onClick = [this] { showView (true); };
+    synthViewButton.onClick = [this] { showView (View::synth); };
+
+    jointVaeViewButton.onClick = [this] { showView (View::jointVae); };
+    addChildComponent (jointVaePanel);
+    jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch)
+    {
+        auto r = processor.loadSurgePatch (patch);
+        if (r.wasOk())
+            setStatus (kSurgePatchStatus);
+        return r;
+    };
+    jointVaePanel.onLite = [this] (const schema::Snapshot& lite)
+    {
+        // A decode that a Synth or host edit overtook: that edit stays, and the next Lab edit asks
+        if (processor.editedSinceLab())
+        {
+            jointVaePanel.markEdited();
+            return;
+        }
+        const bool patch = processor.isPlayingSurgePatch();
+        processor.playLiteControls (lite);
+        processor.markLabControls(); // the store's notifications arrive later; they compare equal
+        if (patch)
+            setStatus ({});
+    };
+    jointVaePanel.onReplace = [this] { processor.markLabControls(); }; // the user gave the sound to the Lab
+    // A reopened editor: the gate and the Surge patch outlive the previous one (opening plays nothing, R14)
+    if (processor.editedSinceLab())
+        jointVaePanel.markEdited();
+    if (processor.isPlayingSurgePatch())
+        setStatus (kSurgePatchStatus);
+    for (int i = 0; i < schema::kControlCount; ++i)
+        processor.getParams().addListener (schema::control (i).id, this);
+#if VAE_PROMPT_TAB
 
     // shortcut: the pad drives latent dims 0 and 1 with the rest at 0; add per-axis dim pickers if wanted.
     xyPad.onMove = [this] (float x, float y)
@@ -371,6 +421,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     paramViewport.setViewedComponent (new ParamList (processor.getParams()), true);
     paramViewport.setScrollBarsShown (true, false);
     addChildComponent (paramViewport);
+#endif
 
     for (const auto& info : kSections)
     {
@@ -388,31 +439,58 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     const int sectionsH = layOutSections (sections, { kMargin, 0, kEditorW - 2 * kMargin, 10000 }, false);
     setSize (kEditorW, kMargin + kTopBarH + sectionsH + kGap + kKeyboardH + kMargin);
-    showView (false);
+    showView (View::synth);
 }
 
-void PluginEditor::showView (bool prompt)
+void PluginEditor::showView (View view)
 {
-    promptView = prompt;
+    currentView = view;
+    jointVaePanel.setVisible (view == View::jointVae);
+    jointVaeViewButton.setToggleState (view == View::jointVae, juce::dontSendNotification);
+#if VAE_PROMPT_TAB
+    const bool prompt = view == View::prompt;
     for (auto* c : std::initializer_list<juce::Component*> { &promptEditor, &generateButton, &randomButton,
                                                              &modelButton, &stubButton, &presetButton,
                                                              &generatorPackageButton, &bankButton, &referenceButton,
                                                              &cancelSearchButton, &matchesBox, &xyPad, &paramViewport })
         c->setVisible (prompt);
-    for (auto* s : sections)
-        s->setVisible (! prompt);
-    synthViewButton.setToggleState (! prompt, juce::dontSendNotification);
     promptViewButton.setToggleState (prompt, juce::dontSendNotification);
+#endif
+    for (auto* s : sections)
+        s->setVisible (view == View::synth);
+    status.setVisible (view != View::jointVae); // the Lab has its own status line
+#if VAE_WITH_SURGE
+    keyboard.setVisible (view != View::jointVae); // the Lab has its own 3-octave keyboard (Task 17)
+#endif
+    // The Lab's tooltips (the spectrogram's details) in its own look; the panel outlives the window
+    tooltips.setLookAndFeel (view == View::jointVae ? &jointVaePanel.getLookAndFeel() : nullptr);
+    synthViewButton.setToggleState (view == View::synth, juce::dontSendNotification);
     resized();
+}
+
+void PluginEditor::handleAsyncUpdate()
+{
+    if (! processor.editedSinceLab())
+        return; // the Lab's own write (or nothing new)
+    jointVaePanel.markEdited();
+    if (processor.isPlayingSurgePatch())
+    {
+        processor.playLiteControls (processor.getControls()); // the first knob move after Send to Surge returns to Lite
+        setStatus ({});
+    }
 }
 
 PluginEditor::~PluginEditor()
 {
+    for (int i = 0; i < schema::kControlCount; ++i)
+        processor.getParams().removeListener (schema::control (i).id, this);
+    cancelPendingUpdate();
     setLookAndFeel (nullptr);
     if (lookAndFeel.getReferenceCount() == 1) // last editor: the shared instance dies with us
         juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
 }
 
+#if VAE_PROMPT_TAB
 void PluginEditor::generate()
 {
     const auto prompt = promptEditor.getText().trim();
@@ -549,9 +627,15 @@ void PluginEditor::chooseModel()
                           });
 }
 
+#endif
+
 void PluginEditor::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
 
-void PluginEditor::paint (juce::Graphics& g) { g.fillAll (LF::paper); }
+void PluginEditor::paint (juce::Graphics& g)
+{
+    // The Lab's workspace runs up under the header: one continuous background
+    g.fillAll (currentView == View::jointVae ? experimental::lab::workspace : LF::paper);
+}
 
 void PluginEditor::resized()
 {
@@ -559,25 +643,42 @@ void PluginEditor::resized()
 
     auto header = r.removeFromTop (kTopBarH).removeFromTop (24);
     synthViewButton.setBounds (header.removeFromLeft (80));
+#if VAE_PROMPT_TAB
     promptViewButton.setBounds (header.removeFromLeft (80));
+#endif
+    jointVaeViewButton.setBounds (header.removeFromLeft (90));
     header.removeFromLeft (16);
     engineBox.setBounds (header.removeFromRight (120));
     header.removeFromRight (12);
     initButton.setBounds (header.removeFromRight (72));
     header.removeFromRight (16);
+#if VAE_PROMPT_TAB
     spinner.setBounds (header.removeFromLeft (24));
     header.removeFromLeft (8);
+#endif
     status.setBounds (header);
 
+    if (currentView == View::jointVae)
+    {
+#if VAE_WITH_SURGE
+        // Edge to edge below the header: the Lab keeps its own margins and keyboard
+        jointVaePanel.setBounds (getLocalBounds().withTrimmedTop (kMargin + kTopBarH));
+#else
+        keyboard.setBounds (r.removeFromBottom (kKeyboardH));
+        r.removeFromBottom (kGap);
+        jointVaePanel.setBounds (r);
+#endif
+        return;
+    }
     keyboard.setBounds (r.removeFromBottom (kKeyboardH));
     r.removeFromBottom (kGap);
 
-    if (! promptView)
+    if (currentView == View::synth)
     {
         layOutSections (sections, r, true);
         return;
     }
-
+#if VAE_PROMPT_TAB
     // 60:40 split: XY pad over the prompt tools, then the parameter sidebar.
     auto main = r.removeFromLeft (r.getWidth() * 3 / 5);
     main.removeFromRight (kGap);
@@ -608,6 +709,7 @@ void PluginEditor::resized()
     promptEditor.setBounds (row (64));
     main.removeFromBottom (kGap - 6);
     xyPad.setBounds (main);
+#endif
 }
 
 } // namespace vae

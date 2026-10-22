@@ -19,6 +19,7 @@
 
 #include <array>
 #include <atomic>
+#include <optional>
 #include <vector>
 
 namespace vae
@@ -69,6 +70,28 @@ public:
     /** Current schema vector as the host sees it (message thread). */
     schema::Snapshot getControls() const;
 
+    /** Play a full Surge patch (joint VAE experiment) on the Surge engine and select it
+        (message thread). The next applyControls returns that engine to the schema vector. */
+    juce::Result loadSurgePatch (const juce::MemoryBlock& patch);
+
+    /** Lab playback (message thread): selects the Lite engine, leaves Surge patch mode and sets the
+        controls that changed without host gestures. The host is still told about each change, so a host
+        in write or latch mode can record pad moves as automation. */
+    void playLiteControls (const schema::Snapshot&);
+
+    /** True while the Surge engine plays a full patch from loadSurgePatch. */
+    bool isPlayingSurgePatch() const noexcept;
+
+    /** The Lab/Synth gate (Task 16), kept here so it survives closing the editor (message thread,
+        session only). markLabControls records the current controls as the Lab's: after its write, or when
+        the user chose Replace. editedSinceLab: the controls differ from that record (from the defaults
+        before the first one), so something other than the Lab changed the sound. */
+    void markLabControls() { labControls = getControls(); }
+    bool editedSinceLab() const;
+
+    /** The engine of that kind, or nullptr when it is not in this build. */
+    SynthEngine* findEngine (EngineKind) const noexcept;
+
     /** Apply a whole vector as one host gesture per control (message thread). */
     void applyControls (const schema::Snapshot&);
 
@@ -114,6 +137,8 @@ private:
     bool modelMissing = false; // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
     std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
+
+    std::optional<schema::Snapshot> labControls; // message thread
 
     ml::PresetGenerator generator;
     ml::SameSearchWorker referenceSearch;

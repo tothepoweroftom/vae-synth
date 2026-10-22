@@ -146,6 +146,39 @@ private:
 };
 
 //==============================================================================
+/** Two-step state-variable filter, the topology Surge uses for its standard
+    filter types. Each sample performs two sub-steps; `r` scales the integrator
+    states and is the resonance limiter. */
+class Svf2
+{
+public:
+    struct Out
+    {
+        float low, band, high;
+    };
+
+    Out process (float in, float F, float Q, float r) noexcept
+    {
+        const float l1 = low + F * band;
+        const float h1 = in - l1 - Q * band;
+        const float b1 = band + F * h1;
+
+        const float l2 = l1 + F * b1;
+        const float h2 = in - l2 - Q * b1;
+        const float b2 = b1 + F * h2;
+
+        band = b2 * r;
+        low = l2 * r;
+        return { l2, b2, h2 };
+    }
+
+    void reset() noexcept { low = band = 0.0f; }
+
+private:
+    float low = 0.0f, band = 0.0f;
+};
+
+//==============================================================================
 /** Cheap per-voice white noise (xorshift32). */
 class Noise
 {

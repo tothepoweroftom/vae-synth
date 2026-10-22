@@ -2,7 +2,24 @@ juce_add_console_app(vae_ml_tests PRODUCT_NAME "vae_ml_tests" VERSION 0.1.0)
 
 target_sources(vae_ml_tests PRIVATE
     MlTests.cpp
+    JointVaeTests.cpp
+    XyPadTests.cpp
+    LatentOrbitTests.cpp
+    PromptWordsTests.cpp
+    LiteTranslationTests.cpp
+    PromptModelTests.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptModel.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LiteTranslation.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptWords.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/XyPad.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LatentOrbit.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/StudentCodec.cpp
     ../common/TestMain.cpp)
+if(VAE_WITH_SURGE)
+    target_sources(vae_ml_tests PRIVATE ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/SurgePatchBuilder.cpp)
+    target_link_libraries(vae_ml_tests PRIVATE vae::surge)
+endif()
 
 target_compile_definitions(vae_ml_tests PRIVATE
     VAE_TEST_CATEGORY="vae_ml"
@@ -13,6 +30,7 @@ target_compile_definitions(vae_ml_tests PRIVATE
 
 target_link_libraries(vae_ml_tests PRIVATE
     vae_ml
+    vae_tokenizer
     juce::juce_events
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)

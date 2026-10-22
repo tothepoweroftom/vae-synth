@@ -202,7 +202,7 @@ void Patch::set (int index, const Snapshot& s)
 
         case kReverbOn:      fx.reverbOn = on (s, index); break;
         case kReverbSize:    fx.reverbSize = sc::toUnits (index, s[index]); break;
-        case kReverbDecay:   fx.reverbDecay = s[index]; break;
+        case kReverbDecay:   fx.reverbDecay = sc::toUnits (index, s[index]); break;
         case kReverbDamping: fx.reverbDamping = s[index]; break;
         case kReverbMix:     fx.reverbMix = s[index]; break;
 

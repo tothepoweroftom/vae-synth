@@ -4,6 +4,9 @@
 #include "BinaryData.h"
 #include "PluginEditor.h"
 #include "schema/SurgeCurves.h"
+#if VAE_WITH_SURGE
+#include "engine/surge/SurgeEngine.h"
+#endif
 
 namespace vae
 {
@@ -175,8 +178,66 @@ juce::Result PluginProcessor::loadPresetFile (const juce::File& file)
     return juce::Result::ok();
 }
 
+juce::Result PluginProcessor::loadSurgePatch (const juce::MemoryBlock& patch)
+{
+#if VAE_WITH_SURGE
+    const auto kind = std::find (engineKinds.begin(), engineKinds.end(), EngineKind::Surge);
+    if (kind != engineKinds.end())
+    {
+        const auto index = std::distance (engineKinds.begin(), kind);
+        static_cast<SurgeEngine&> (*engines[(size_t) index]).loadPatchData (patch);
+        params.set (kEngineParamId, float (index));
+        return juce::Result::ok();
+    }
+#endif
+    juce::ignoreUnused (patch);
+    return juce::Result::fail ("Full Surge patches need a build with VAE_WITH_SURGE=ON");
+}
+
+void PluginProcessor::playLiteControls (const schema::Snapshot& snapshot)
+{
+    const auto lite = std::find (engineKinds.begin(), engineKinds.end(), EngineKind::Lite);
+    if (lite != engineKinds.end())
+        params.set (kEngineParamId, float (std::distance (engineKinds.begin(), lite)));
+#if VAE_WITH_SURGE
+    if (auto* surge = findEngine (EngineKind::Surge))
+        static_cast<SurgeEngine&> (*surge).useSchemaControls();
+#endif
+    for (int i = 0; i < schema::kControlCount; ++i)
+        if (const auto v = schema::sanitiseValue (i, snapshot[i]);
+            ! juce::exactlyEqual (v, params.get (controlIndex[(size_t) i])))
+            params.set (controlIndex[(size_t) i], v); // a drag changes a few controls: only those reach the host
+}
+
+bool PluginProcessor::isPlayingSurgePatch() const noexcept
+{
+#if VAE_WITH_SURGE
+    if (auto* surge = findEngine (EngineKind::Surge))
+        return static_cast<const SurgeEngine&> (*surge).hasPatchData();
+#endif
+    return false;
+}
+
+bool PluginProcessor::editedSinceLab() const
+{
+    return getControls().values != labControls.value_or (schema::Snapshot::defaults()).values;
+}
+
+SynthEngine* PluginProcessor::findEngine (EngineKind kind) const noexcept
+{
+    for (const auto& e : engines)
+        if (e->kind() == kind)
+            return e.get();
+    return nullptr;
+}
+
 void PluginProcessor::applyControls (const schema::Snapshot& snapshot)
 {
+#if VAE_WITH_SURGE
+    for (auto& e : engines)
+        if (e->kind() == EngineKind::Surge)
+            static_cast<SurgeEngine&> (*e).useSchemaControls();
+#endif
     for (int i = 0; i < schema::kControlCount; ++i)
     {
         const auto index = controlIndex[(size_t) i];

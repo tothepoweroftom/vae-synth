@@ -62,6 +62,28 @@ add_library(vae_retrieval INTERFACE)
 target_sources(vae_retrieval INTERFACE source/ml/SameSearch.cpp source/ml/StableAudioGenerator.cpp)
 target_link_libraries(vae_retrieval INTERFACE vae_tokenizer vae_ml juce::juce_audio_formats juce::juce_cryptography)
 
+# --- isolated joint VAE experiment ---------------------------------------------
+# The Lab's look: the design study's reusable controls and orbit view (no study data or model code).
+add_subdirectory(design-study/juce/Source/ui pitcher-ui)
+add_library(vae_joint_experiment INTERFACE)
+target_sources(vae_joint_experiment INTERFACE
+    source/experiments/joint_vae/JointVae.cpp
+    source/experiments/joint_vae/JointVaePanel.cpp
+    source/experiments/joint_vae/LabPad.cpp
+    source/experiments/joint_vae/LabOrbit.cpp
+    source/experiments/joint_vae/LabAxisList.cpp
+    source/experiments/joint_vae/StudentCodec.cpp
+    source/experiments/joint_vae/LiteTranslation.cpp
+    source/experiments/joint_vae/XyPad.cpp
+    source/experiments/joint_vae/LatentOrbit.cpp
+    source/experiments/joint_vae/PromptWords.cpp
+    source/experiments/joint_vae/PromptModel.cpp)
+target_link_libraries(vae_joint_experiment INTERFACE vae_ml vae_tokenizer juce::juce_gui_basics pitcher_study_ui)
+if(VAE_WITH_SURGE)
+    target_sources(vae_joint_experiment INTERFACE source/experiments/joint_vae/SurgePatchBuilder.cpp)
+    target_link_libraries(vae_joint_experiment INTERFACE vae::surge)
+endif()
+
 # --- parameter store (clean-room, docs/specs/parameter-manager.md) ------------
 add_subdirectory(source/params)
 
@@ -92,6 +114,8 @@ juce_add_binary_data(VAESynthAssets
     SOURCES
         assets/fonts/SpaceMono-Regular.ttf
         assets/fonts/SpaceMono-Bold.ttf
+        assets/fonts/Inter-Regular.ttf
+        assets/fonts/Inter-Bold.ttf
         models/stub_decoder.onnx)
 
 target_sources(VAESynth PRIVATE
@@ -111,6 +135,7 @@ target_link_libraries(VAESynth
         vae_params
         vae_engine
         vae_retrieval
+        vae_joint_experiment
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
@@ -126,6 +151,7 @@ configure_file(cmake/release-info.json.in release-info.json @ONLY)
 add_subdirectory(tools/retrieve)
 if(VAE_WITH_SURGE)
     add_subdirectory(tools/compare)
+    add_subdirectory(tools/p0_eval)
 endif()
 
 # --- tests ---------------------------------------------------------------------

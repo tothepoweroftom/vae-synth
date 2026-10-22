@@ -22,6 +22,7 @@ target_link_libraries(vae_plugin_tests PRIVATE
     vae_params
     vae_engine
     vae_retrieval
+    vae_joint_experiment
     juce::juce_audio_utils
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags)

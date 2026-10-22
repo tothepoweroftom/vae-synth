@@ -49,6 +49,17 @@ public:
     /** Voices currently sounding (for tests). */
     int numActiveVoices() const noexcept;
 
+    /** The smoothed value in effect right now (for tests). */
+    float currentControl (int index) const noexcept { return controls[index]; }
+
+    /** Click diagnostics. Written on the audio thread; only tests read them (between process() calls). */
+    struct Diagnostics
+    {
+        int ducksStarted = 0;
+        int64_t duckedSamples = 0; // output samples at a duck gain below 1
+    };
+    Diagnostics diagnostics;
+
 private:
     void noteOn (int note);
     void noteOff (int note);
@@ -57,9 +68,29 @@ private:
     void allNotesOff();
     void renderVoices (float* left, float* right, int numSamples);
     float glideSource() const noexcept;
+    void snapControls();
+    void smoothControls (int numSamples);
+    void applyDiscrete();
+    float finishSpan (float* left, float* right, int len);
 
     std::shared_ptr<const dsp::Wavetable> wavetable;
+    // `controls` are the values in effect (smoothed); `targets` what was set.
     schema::Snapshot controls = schema::Snapshot::defaults();
+    schema::Snapshot targets = schema::Snapshot::defaults();
+    float smoothCoeff = 1.0f; // one-pole step per kControlBlock
+    float smoothRate = 0.0f;  // -1 / (tau * sampleRate)
+    // Toggle/Categorical changes duck the output: Down, swap at gain 0, Up.
+    enum class Duck
+    {
+        Idle,
+        Down,
+        Up
+    };
+    Duck duck = Duck::Idle;
+    float duckGain = 1.0f;
+    float duckStep = 1.0f;
+    float gainNow = -1.0f; // master gain at the end of the last span; < 0 after a snap
+    int duckCountdown = 0; // samples until a Down duck reaches gain 0
     lite::Patch patch;
     std::array<lite::Voice, kMaxVoices> voices;
     lite::FxRack fx;

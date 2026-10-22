@@ -11,6 +11,9 @@ namespace
 // Output guard: an extreme patch (e.g. +48 dB EQ boost into heavy resonance)
 // can get very loud; clamp to +12 dBFS rather than hand the host anything wilder.
 constexpr float kOutputLimit = 4.0f;
+constexpr float kSmoothTau = 0.020f;   // seconds, continuous controls
+constexpr float kDuckSeconds = 0.005f; // each way, discrete controls
+constexpr float kSnapDelta = 1.0e-4f;
 } // namespace
 
 LiteEngine::LiteEngine() = default;
@@ -28,7 +31,10 @@ void LiteEngine::prepare (double newSampleRate, int)
         freeLfo[i].seed (uint32_t (0xf00d + i));
 
     fx.prepare (newSampleRate);
-    patch.setAll (controls);
+    smoothRate = -1.0f / (kSmoothTau * sampleRate);
+    smoothCoeff = 1.0f - std::exp (smoothRate * float (kControlBlock));
+    duckStep = 1.0f / (kDuckSeconds * sampleRate);
+    snapControls();
     prepared = true;
     reset();
 }
@@ -44,6 +50,40 @@ void LiteEngine::reset()
     for (size_t i = 0; i < freeLfo.size(); ++i)
         freeLfo[i].restart (patch.lfo[i].phase);
     fx.reset();
+    snapControls();
+}
+
+void LiteEngine::snapControls()
+{
+    controls = targets;
+    patch.setAll (controls);
+    duck = Duck::Idle;
+    duckGain = 1.0f;
+    gainNow = -1.0f;
+}
+
+void LiteEngine::applyDiscrete()
+{
+    for (int i = 0; i < schema::kControlCount; ++i)
+        if (schema::control (i).kind != schema::Kind::Continuous && controls[i] != targets[i])
+        {
+            controls[i] = targets[i];
+            patch.set (i, controls);
+        }
+}
+
+// One-pole toward the targets, once per control block; only moving controls cost a patch.set.
+void LiteEngine::smoothControls (int numSamples)
+{
+    const float a = numSamples == kControlBlock ? smoothCoeff : 1.0f - std::exp (smoothRate * float (numSamples));
+    for (int i = 0; i < schema::kControlCount; ++i)
+    {
+        if (schema::control (i).kind != schema::Kind::Continuous || controls[i] == targets[i])
+            continue;
+        const float d = targets[i] - controls[i];
+        controls[i] = std::abs (d) < kSnapDelta ? targets[i] : controls[i] + d * a;
+        patch.set (i, controls);
+    }
 }
 
 void LiteEngine::setControl (int index, float value)
@@ -52,11 +92,21 @@ void LiteEngine::setControl (int index, float value)
         return;
 
     value = schema::sanitiseValue (index, value);
-    if (juce::exactlyEqual (controls[index], value))
+    if (juce::exactlyEqual (targets[index], value))
         return;
 
-    controls[index] = value;
-    patch.set (index, controls);
+    targets[index] = value;
+    if (numActiveVoices() == 0) // nothing to click or glide: apply at once
+    {
+        controls[index] = value;
+        patch.set (index, controls);
+    }
+    else if (schema::control (index).kind != schema::Kind::Continuous && duck != Duck::Down)
+    {
+        duck = Duck::Down;
+        ++diagnostics.ducksStarted;
+        duckCountdown = std::max (1, int (std::ceil (duckGain / duckStep))); // samples until gain 0
+    }
 }
 
 int LiteEngine::numActiveVoices() const noexcept
@@ -202,11 +252,42 @@ void LiteEngine::renderVoices (float* left, float* right, int numSamples)
     {
         const int n = std::min (kControlBlock, numSamples - start);
         const float seconds = float (n) / sampleRate;
+        smoothControls (n);
         for (size_t i = 0; i < freeLfo.size(); ++i)
             blockValues.freeLfo[i] = freeLfo[i].advance (patch.lfo[i], seconds);
         for (auto& v : voices)
             v.render (left + start, right + start, n, patch, blockValues);
     }
+}
+
+// FX and output gain (with the duck ramp) for samples [pos, pos + len).
+float LiteEngine::finishSpan (float* left, float* right, int len)
+{
+    fx.process (left, right, len, patch.fx);
+
+    // The master gain ramps across the span: a step at each block edge clicks while it moves (Task 18).
+    if (gainNow < 0.0f)
+        gainNow = patch.masterGain;
+    const float gainStep = (patch.masterGain - gainNow) / float (std::max (len, 1));
+    float check = 0.0f;
+    for (int i = 0; i < len; ++i)
+    {
+        if (duck == Duck::Down)
+            duckGain = std::max (0.0f, duckGain - duckStep);
+        else if (duck == Duck::Up)
+        {
+            duckGain = std::min (1.0f, duckGain + duckStep);
+            if (duckGain == 1.0f)
+                duck = Duck::Idle;
+        }
+        diagnostics.duckedSamples += duckGain < 1.0f ? 1 : 0;
+        const float g = (gainNow + gainStep * float (i + 1)) * duckGain;
+        left[i] = std::clamp (left[i] * g, -kOutputLimit, kOutputLimit);
+        right[i] = std::clamp (right[i] * g, -kOutputLimit, kOutputLimit);
+        check += left[i] + right[i];
+    }
+    gainNow = patch.masterGain;
+    return check;
 }
 
 void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuffer& midi)
@@ -219,6 +300,28 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
     auto* left = buffer.getWritePointer (0);
     auto* right = buffer.getWritePointer (1);
 
+    // A duck in progress is finished span by span, so the discrete controls swap
+    // on the exact sample where the gain reaches 0. Otherwise FX/gain run once.
+    const bool ducking = duck == Duck::Down;
+    float check = 0.0f;
+    auto span = [&] (int pos, int len)
+    {
+        while (len > 0)
+        {
+            const int seg = duck == Duck::Down ? std::min (len, duckCountdown) : len;
+            renderVoices (left + pos, right + pos, seg);
+            if (ducking)
+                check += finishSpan (left + pos, right + pos, seg);
+            if (duck == Duck::Down && (duckCountdown -= seg) == 0)
+            {
+                applyDiscrete();
+                duck = Duck::Up;
+            }
+            pos += seg;
+            len -= seg;
+        }
+    };
+
     // Render between events so every event lands on its sample.
     int position = 0;
     for (const auto meta : midi)
@@ -226,7 +329,7 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
         const int at = std::clamp (meta.samplePosition, 0, numSamples);
         if (at > position)
         {
-            renderVoices (left + position, right + position, at - position);
+            span (position, at - position);
             position = at;
         }
 
@@ -245,17 +348,10 @@ void LiteEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuff
             setSustain (false);
     }
     if (position < numSamples)
-        renderVoices (left + position, right + position, numSamples - position);
+        span (position, numSamples - position);
+    if (! ducking)
+        check = finishSpan (left, right, numSamples);
 
-    fx.process (left, right, numSamples, patch.fx);
-
-    float check = 0.0f;
-    for (int i = 0; i < numSamples; ++i)
-    {
-        left[i] = std::clamp (left[i] * patch.masterGain, -kOutputLimit, kOutputLimit);
-        right[i] = std::clamp (right[i] * patch.masterGain, -kOutputLimit, kOutputLimit);
-        check += left[i] + right[i];
-    }
     if (! dsp::isFiniteBits (check))
     {
         // Should be unreachable; recover instead of recirculating NaN in FX tails.

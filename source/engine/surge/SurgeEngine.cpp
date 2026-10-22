@@ -220,6 +220,10 @@ struct SurgeEngine::Impl
     std::array<float, kQuantum> quantumL {}, quantumR {};
     int quantumPos = kQuantum;
 
+    // Full patch mode (loadPatchData). Data blocks: message thread only.
+    std::atomic<bool> external { false }, leaveExternal { false };
+    juce::MemoryBlock externalPatch, defaultPatch;
+
     //--------------------------------------------------------------------------
     Parameter* find (const char* name) const
     {
@@ -341,6 +345,8 @@ struct SurgeEngine::Impl
     /** Write one control to Surge (skips unchanged values). */
     void write (int index)
     {
+        if (external)
+            return;
         const float v = controls[index];
         if (juce::exactlyEqual (written[index], v))
             return;
@@ -563,6 +569,8 @@ struct SurgeEngine::Impl
             synth->channelController (kChannel, msg.getControllerNumber(), msg.getControllerValue());
     }
 
+    void applySchema();
+
     void fillQuantum()
     {
         synth->process();
@@ -587,31 +595,66 @@ void SurgeEngine::prepare (double sampleRate, int)
     impl->synth->time_data.tempo = 120.0;
     impl->synth->process(); // let the default patch settle
 
-    for (auto& osc : impl->synth->storage.getPatch().scene[0].osc)
+    void* data = nullptr;
+    const auto size = impl->synth->saveRaw (&data); // the patch owns the buffer
+    impl->defaultPatch.replaceAll (data, size);
+
+    impl->resolve();
+    impl->external = false;
+    impl->leaveExternal = false;
+    impl->applySchema();
+    impl->quantumPos = kQuantum;
+
+    if (! impl->externalPatch.isEmpty())
+        loadPatchData (juce::MemoryBlock (impl->externalPatch));
+}
+
+void SurgeEngine::Impl::applySchema()
+{
+    for (auto& osc : synth->storage.getPatch().scene[0].osc)
     {
         buildDefaultWavetable (osc.wt);
         osc.wt.queue_id = -1;
         osc.wt.current_id = -1;
     }
 
-    impl->resolve();
-    impl->written.values.fill (kNaN);
-    impl->oscDirty.fill (false);
-    impl->fxDirty.fill (false);
-    impl->routeDestination.fill (0);
+    written.values.fill (kNaN);
+    oscDirty.fill (false);
+    fxDirty.fill (false);
+    routeDestination.fill (0);
 
     // Load the fixed FX chain once; *_on only flips fx_disable bits afterwards.
     for (int u = 0; u < int (std::size (kFxUnits)); ++u)
-        impl->stageFxType (u);
+        stageFxType (u);
 
     // Make every wave's parameters explicit, even when the osc type is the default.
     for (int n = 0; n < 3; ++n)
-        impl->oscDirty[(size_t) n] = true;
+        oscDirty[(size_t) n] = true;
     for (int i = 0; i < kControlCount; ++i)
-        impl->write (i);
-    impl->settle();
-    impl->quantumPos = kQuantum;
+        write (i);
+    settle();
 }
+
+void SurgeEngine::loadPatchData (const juce::MemoryBlock& data)
+{
+    impl->externalPatch = data;
+    impl->leaveExternal = false;
+    impl->external = true;
+    if (impl->synth != nullptr)
+        impl->synth->enqueuePatchForLoad (data.getData(), (int) data.getSize());
+}
+
+void SurgeEngine::useSchemaControls()
+{
+    if (! impl->external || impl->synth == nullptr)
+        return;
+    impl->externalPatch.reset();
+    impl->synth->enqueuePatchForLoad (impl->defaultPatch.getData(), (int) impl->defaultPatch.getSize());
+    impl->leaveExternal = true;
+}
+
+// A pending useSchemaControls counts as left: the audio thread finishes it on its next block.
+bool SurgeEngine::hasPatchData() const noexcept { return impl->external && ! impl->leaveExternal; }
 
 void SurgeEngine::reset()
 {
@@ -646,6 +689,13 @@ void SurgeEngine::process (juce::AudioBuffer<float>& buffer, const juce::MidiBuf
         return;
     }
 
+    if (impl->leaveExternal.exchange (false))
+    {
+        // Load the default patch now, so the schema rewrite lands on top of it.
+        impl->synth->processEnqueuedPatchIfNeeded();
+        impl->external = false;
+        impl->applySchema();
+    }
     impl->settle();
 
     auto* left = buffer.getWritePointer (0);

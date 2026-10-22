@@ -129,7 +129,9 @@ struct FxSettings
     bool delayOn = false;
     float delaySeconds = 0.25f, delayFeedback = 0.5f, delayMix = 0.5f;
     bool reverbOn = false;
-    float reverbSize = 0.0f, reverbDecay = 0.475f, reverbDamping = 0.2f, reverbMix = 0.33f;
+    float reverbSize = 0.0f;    // Surge room-size units (bipolar)
+    float reverbDecay = 0.75f;  // Surge log2-seconds (0.75 -> 1.68 s)
+    float reverbDamping = 0.2f, reverbMix = 0.33f;
 };
 
 struct Patch

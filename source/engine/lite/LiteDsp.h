@@ -182,9 +182,9 @@ private:
     dsp::Noise rng;
 };
 
-/** One filter slot (mono): SVF, two cascaded for the 24 dB types. Damping is
-    recomputed per sample so it can rise with the band signal; that bounds the
-    self-oscillation once resonance pushes the damping below zero. */
+/** One filter slot (mono): Surge's two-step SVF, cascaded for the 24 dB types.
+    The state-scaling limiter bounds self-oscillation without the old
+    band-dependent damping fit. */
 class FilterUnit
 {
 public:
@@ -192,7 +192,7 @@ public:
     {
         a.reset();
         b.reset();
-        bandA = bandB = 0.0f;
+        rState = 1.0f;
     }
 
     /** Set coefficients for this control block. */
@@ -201,62 +201,115 @@ public:
         type = t;
         if (t == FilterType::Off)
             return;
-        const float hz = std::clamp (cutoffHz, 13.75f, 0.45f * sampleRate);
-        g = std::tan (3.14159265f * hz / sampleRate);
-        const float r = std::clamp (resonance, 0.0f, 1.0f);
+
+        const float reso = std::clamp (resonance, 0.0f, 1.0f);
+        const float rs = std::sqrt (reso);
         const bool fourPole = t == FilterType::Lp24 || t == FilterType::Hp24;
-        // Damping vs resonance, fitted to Surge renders: 2 at r = 0, crossing 0
-        // (self-oscillation) near r = 0.87 for 2-pole and r = 0.9 for 4-pole.
-        k = 2.0f - 2.15f * std::pow ((fourPole ? 0.97f : 1.0f) * r, 0.54f);
-        // Output level falls with resonance (fitted to Surge renders: -1.4 dB at 0.05, -9 dB at 1).
-        gain = (2.0f - 2.15f * std::pow (r, 0.54f) + 1.27f) / 3.27f;
-        // Extra damping per |band|^3; sets the ringing level, fitted to Surge renders.
-        limit = fourPole ? 0.012f : 0.005f;
+        const float hz = std::clamp (cutoffHz, 13.75f, 0.44f * sampleRate);
+
+        // Surge's coefficient at 2x: F1 = 2 sin(pi f / (2 fs_os)), fs_os = 2 fs.
+        // Each base sample is processed as two OS samples (zero-order hold in,
+        // box average out), which is the filter Surge runs at 2x.
+        F = 2.0f * std::sin (3.14159265f * std::min (0.11f, hz / (4.0f * sampleRate)));
+        const float overshoot = fourPole ? 0.10f : 0.15f;
+        Q = 2.0f - rs * (2.0f + overshoot) + F * F * overshoot * 0.9f;
+        Q = std::min (Q, std::min (2.0f, 2.0f - 1.52f * F));
+        clipDamp = 0.1f * rs * F;
+        gain = 1.0f - 0.65f * rs;
+
+        // The zero-order-hold 2x input loses a little resonance level at low
+        // cutoffs; fit a small makeup that vanishes above ~1 kHz. (The 2x
+        // filter already matches the high-cutoff levels without it.)
+        if (t != FilterType::Notch)
+        {
+            const float lowCutWeight = std::max (0.0f, 1.0f - F / 0.12f);
+            const float resoWeight = std::pow (reso, fourPole ? 12.0f : 8.0f);
+            gain *= 1.0f + (fourPole ? 0.0f : 0.65f) * resoWeight * lowCutWeight;
+        }
+
         if (t == FilterType::Notch)
         {
-            // Notch width vs resonance, fitted to Surge renders; unity gain, never rings.
-            k = 5.1f * (1.0f - r) * (1.0f - r) + 0.02f;
+            // Surge's notch damping; no self-oscillation, unity gain.
+            Q = 2.5f - 2.49f * (1.0f - (1.0f - reso) * (1.0f - reso));
+            clipDamp = 0.0f;
             gain = 1.0f;
         }
+        rState = 1.0f;
     }
 
     float process (float x) noexcept
     {
+        float r = rState;
         switch (type)
         {
             case FilterType::Off:  return x;
-            case FilterType::Lp12: return gain * stage (a, bandA, x, k).low;
-            case FilterType::Lp24:
-                return gain * stage (b, bandB, stage (a, bandA, x, std::max (k, kFirstStageMinDamping)).low, k).low;
-            case FilterType::Hp12: return gain * stage (a, bandA, x, k).high;
-            case FilterType::Hp24:
-                return gain * stage (b, bandB, stage (a, bandA, x, std::max (k, kFirstStageMinDamping)).high, k).high;
-            case FilterType::Bp: return gain * stage (a, bandA, x, k).band;
+            case FilterType::Lp12:
+            {
+                const auto o1 = a.process (x, F, Q, r);
+                r = limit (o1.band);
+                const auto o2 = a.process (x, F, Q, r);
+                rState = limit (o2.band);
+                return gain * 0.5f * (o1.low + o2.low);
+            }
+            case FilterType::Hp12:
+            {
+                const auto o1 = a.process (x, F, Q, r);
+                r = limit (o1.band);
+                const auto o2 = a.process (x, F, Q, r);
+                rState = limit (o2.band);
+                return gain * 0.5f * (o1.high + o2.high);
+            }
+            case FilterType::Bp:
+            {
+                const auto o1 = a.process (x, F, Q, r);
+                r = limit (o1.band);
+                const auto o2 = a.process (x, F, Q, r);
+                rState = limit (o2.band);
+                return gain * 0.5f * (o1.band + o2.band);
+            }
             case FilterType::Notch:
             {
-                const auto o = stage (a, bandA, x, k);
-                return o.low + o.high;
+                const auto o1 = a.process (x, F, Q, 1.0f);
+                const auto o2 = a.process (x, F, Q, 1.0f);
+                return 0.5f * (o1.low + o1.high + o2.low + o2.high);
+            }
+            case FilterType::Lp24:
+            {
+                const auto o1 = a.process (x, F, Q, r);
+                r = limit (o1.band);
+                const auto o2 = a.process (x, F, Q, r);
+                r = limit (o2.band);
+                const auto p1 = b.process (o1.low, F, Q, r);
+                r = limit (p1.band);
+                const auto p2 = b.process (o2.low, F, Q, r);
+                rState = limit (p2.band);
+                return gain * 0.5f * (p1.low + p2.low);
+            }
+            case FilterType::Hp24:
+            {
+                const auto o1 = a.process (x, F, Q, r);
+                r = limit (o1.band);
+                const auto o2 = a.process (x, F, Q, r);
+                r = limit (o2.band);
+                const auto p1 = b.process (o1.high, F, Q, r);
+                r = limit (p1.band);
+                const auto p2 = b.process (o2.high, F, Q, r);
+                rState = limit (p2.band);
+                return gain * 0.5f * (p1.high + p2.high);
             }
         }
         return x;
     }
 
 private:
-    // Only the last stage of a 24 dB pair self-oscillates (best match to Surge renders).
-    dsp::Svf::Out stage (dsp::Svf& s, float& band, float x, float kStage) noexcept
+    float limit (float band) const noexcept
     {
-        coefs.set (g, kStage + limit * band * band * std::abs (band));
-        const auto o = s.process (x, coefs);
-        band = o.band;
-        return o;
+        return std::max (0.1f, 1.0f - clipDamp * band * band);
     }
 
-    static constexpr float kFirstStageMinDamping = 0.3f; // 24 dB first stage never rings; fitted to Surge renders
-
     FilterType type = FilterType::Off;
-    float g = 0.0f, k = 2.0f, gain = 1.0f, limit = 0.0f, bandA = 0.0f, bandB = 0.0f;
-    dsp::SvfCoefs coefs;
-    dsp::Svf a, b;
+    float F = 0.0f, Q = 2.0f, clipDamp = 0.0f, gain = 1.0f, rState = 1.0f;
+    dsp::Svf2 a, b;
 };
 
 /** One oscillator slot: every schema wave, band-limited where it matters. */

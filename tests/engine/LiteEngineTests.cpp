@@ -349,6 +349,126 @@ public:
             expect (p.tailPeak (size_t (second)) < 1.0e-6f,
                     "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
         }
+
+        beginTest ("reverb tail continues after the note ends");
+        {
+            auto s = basePatch ("saw");
+            s[kReverbOn] = 1.0f;
+            s[kReverbMix] = 0.5f;
+            const auto out = capture (e, s, 2 * second, { { 0, 60, 100 }, { second / 5, 60, 0 } });
+            const float tail = rmsOf (out, size_t (second), size_t (second + second / 2));
+            expect (tail > 1.0e-3f, "reverb tail rms " + juce::String (tail));
+        }
+
+        beginTest ("cutoff change glides");
+        {
+            e.reset();
+            auto s = Snapshot::defaults();
+            s[kFilter1Type] = option (kFilter1Type, "lp24");
+            s[kFilter1Cutoff] = 0.2f;
+            e.setControls (s);
+            testutil::Player p (e);
+            p.block (256, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (4800);
+            e.setControl (kFilter1Cutoff, 0.8f);
+            p.run (240); // 5 ms
+            const float mid = e.currentControl (kFilter1Cutoff);
+            expect (mid > 0.2f && mid < 0.8f, "mid-glide " + juce::String (mid));
+            p.run (int (0.15 * kRate));
+            expectWithinAbsoluteError (e.currentControl (kFilter1Cutoff), 0.8f, 1.0e-3f);
+        }
+
+        beginTest ("discrete change does not click");
+        for (const int hostBlock : { 64, 1024 })
+        {
+            e.reset();
+            e.setControls (Snapshot::defaults());
+            testutil::Player p (e);
+            p.block (hostBlock, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            while (p.left.size() < 9600)
+                p.block (hostBlock);
+            const size_t change = p.left.size();
+            e.setControl (kOsc1Wave, option (kOsc1Wave, "square"));
+            while (p.left.size() < change + 9600)
+                p.block (hostBlock);
+
+            auto maxStep = [&] (size_t from, size_t to)
+            {
+                float m = 0.0f;
+                for (size_t i = from + 1; i < to; ++i)
+                    m = juce::jmax (m, std::abs (p.left[i] - p.left[i - 1]));
+                return m;
+            };
+            const float before = maxStep (change - 4800, change), around = maxStep (change - 480, change + 480);
+            expect (before > 0.0f && around <= 1.5f * before, "block " + juce::String (hostBlock) + ": around "
+                                                                  + juce::String (around) + " vs "
+                                                                  + juce::String (before));
+
+            // The swap happens on the sample where the ramp reaches 0: output is silent there
+            // (a hard swap never is), and only for a moment (not a host-block dropout).
+            int silent = 0;
+            for (size_t i = change; i < change + 2400; ++i)
+                silent += std::abs (p.left[i]) < 1.0e-6f ? 1 : 0;
+            expect (silent >= 1 && silent <= 8,
+                    "block " + juce::String (hostBlock) + ": silent samples " + juce::String (silent));
+        }
+
+        beginTest ("a moving delay time, EQ gain or master volume does not step at block edges");
+        for (const auto [c, fxOn] :
+             { std::pair<int, int> { kDelayTime, kDelayOn }, std::pair<int, int> { kEqHighGain, kEqOn },
+               std::pair<int, int> { kMasterVolume, -1 } })
+        {
+            // Task 18: FX settings and the master gain applied once per host block stepped at every block edge
+            // while a Lab drag moved them (edge / inside curvature before the ramps: delay 399, EQ high gain 23, master volume 10)
+            e.reset();
+            auto s = basePatch ("sine");
+            if (fxOn >= 0)
+                s[fxOn] = 1.0f;
+            s[kDelayMix] = 0.5f;
+            s[c] = 0.3f;
+            e.setControls (s);
+            testutil::Player p (e);
+            p.block (512, { juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100) });
+            p.run (second / 2);
+            const size_t from = p.left.size();
+            for (int b = 0; b < 188; ++b) // 2 s
+            {
+                e.setControl (c, 0.3f + 0.4f * float (b) / 187.0f);
+                p.block (512);
+            }
+            // A sine's second difference is smooth; a step in level or slope at a block edge stands out
+            double edge = 0.0, inside = 0.0;
+            int edges = 0, insides = 0;
+            for (size_t i = from + 2; i < p.left.size(); ++i)
+            {
+                const bool atEdge = (i - from) % 512 <= 1;
+                (atEdge ? edge : inside) += std::abs (p.left[i] - 2.0f * p.left[i - 1] + p.left[i - 2]);
+                ++(atEdge ? edges : insides);
+            }
+            const double ratio = (edge / edges) / (inside / insides);
+            expect (ratio < 1.5, juce::String (control (c).id) + ": edge / inside curvature " + juce::String (ratio));
+        }
+
+        beginTest ("fresh render unchanged by smoothing");
+        {
+            auto s = Snapshot::defaults();
+            for (int i = 0; i < kControlCount; ++i)
+                s[i] = sanitiseValue (i, control (i).kind == Kind::Continuous
+                                             ? 0.25f + 0.5f * float ((i * 37) % 11) / 10.0f
+                                             : float ((i * 5) % 3));
+            std::vector<float> a, b;
+            LiteEngine x, y;
+            x.prepare (kRate, 512);
+            for (int i = 0; i < kControlCount; ++i)
+                x.setControl (i, s[i]);
+            renderEvents (x, { 64 }, second, { { 0, 60, 100 } }, 0, &a);
+            for (int i = 0; i < kControlCount; ++i)
+                y.setControl (i, s[i]);
+            y.prepare (kRate, 512);
+            renderEvents (y, { 64 }, second, { { 0, 60, 100 } }, 0, &b);
+            expect (a == b, "bit-identical");
+            expect (rmsOf (a, 0, a.size()) > 0.0f);
+        }
     }
 
 private:

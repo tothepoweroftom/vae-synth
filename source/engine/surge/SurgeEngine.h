@@ -51,6 +51,20 @@ public:
     void process (juce::AudioBuffer<float>& buffer, const juce::MidiBuffer& midi) override;
 
     //==========================================================================
+    // Full Surge patches (the joint VAE experiment), message thread. While one is
+    // loaded, schema controls are stored but not written. Surge loads the data on
+    // the audio thread through its own patch queue, as Surge XT itself does
+    // (that load allocates). The patch survives prepare().
+
+    /** Surge patch data (SurgeSynthesizer::saveRaw / an .fxp's content). */
+    void loadPatchData (const juce::MemoryBlock&);
+
+    /** Back to the schema vector: the default patch, then every control rewritten. */
+    void useSchemaControls();
+
+    bool hasPatchData() const noexcept;
+
+    //==========================================================================
     // Inspection, for tests and diagnostics. Valid after prepare().
 
     /** Number of schema controls whose Surge parameters all resolved. */

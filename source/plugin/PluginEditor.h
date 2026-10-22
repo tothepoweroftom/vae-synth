@@ -1,14 +1,21 @@
 /*
-  Editor: two toggleable views over one header (engine choice, init, status) and
-  an on-screen keyboard. Synth view: the schema controls as knobs grouped by
-  their schema "section". Prompt view: prompt and model tools, a latent XY pad,
-  and a sidebar of every control as a linear bar. Every control binds through params::SliderBinding /
+  Editor: Synth and VAE Lab views over one header (engine choice, init, status) and an on-screen
+  keyboard. Both show one sound: the Lab plays by writing the schema controls, which the Synth
+  view's knobs (grouped by schema "section") show and edit; an edit there marks the Lab's sound
+  edited. The Prompt view (prompt and model tools, a latent XY pad, a sidebar of every control as a
+  linear bar) builds only with VAE_PROMPT_TAB=1. Every control binds through params::SliderBinding /
   ComboBinding, so hidden and host parameters behave alike.
 */
 
 #pragma once
 
+// Task 16 compiled the Prompt tab out of the editor; build with -DVAE_PROMPT_TAB=1 to bring it back.
+#ifndef VAE_PROMPT_TAB
+#define VAE_PROMPT_TAB 0
+#endif
+
 #include "PluginProcessor.h"
+#include "experiments/joint_vae/JointVaePanel.h"
 #include "params/Attachments.h"
 #include "ui/VaeLookAndFeel.h"
 
@@ -109,7 +116,10 @@ private:
     bool spinning = false;
 };
 
-class PluginEditor final : public juce::AudioProcessorEditor
+class PluginEditor final
+    : public juce::AudioProcessorEditor
+    , private params::ParamStore::Listener
+    , private juce::AsyncUpdater
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -119,37 +129,57 @@ public:
     void resized() override;
 
 private:
+#if VAE_PROMPT_TAB
     void generate();
     void chooseGenerator();
     void chooseModel();
     void choosePreset();
     void chooseSearchFile (bool bank);
+#endif
     void setStatus (const juce::String&);
-    void showView (bool prompt);
+    // Any thread: a control changed. The message-thread check compares against the Lab's last write
+    // (PluginProcessor::editedSinceLab).
+    void paramChanged (const juce::String&, float) override { triggerAsyncUpdate(); }
+    void handleAsyncUpdate() override;
+    enum class View
+    {
+        synth,
+#if VAE_PROMPT_TAB
+        prompt,
+#endif
+        jointVae
+    };
+    void showView (View);
 
     PluginProcessor& processor;
     // Shared by every open editor: it is also the global default, which is where JUCE resolves fonts.
     juce::SharedResourcePointer<VaeLookAndFeel> lookAndFeel;
 
+    juce::TextButton initButton { "Init" };
+#if VAE_PROMPT_TAB
     juce::TextEditor promptEditor;
     juce::TextButton generatorPackageButton { "Audio model..." };
-    juce::TextButton generateButton { "Generate" }, randomButton { "Random" }, initButton { "Init" },
-        modelButton { "Model..." }, stubButton { "Stub" }, presetButton { "Preset..." };
+    juce::TextButton generateButton { "Generate" }, randomButton { "Random" }, modelButton { "Model..." },
+        stubButton { "Stub" }, presetButton { "Preset..." };
     juce::TextButton bankButton { "SAME bank..." }, referenceButton { "Find from audio..." },
         cancelSearchButton { "Cancel search" };
     juce::ComboBox matchesBox;
     std::vector<ml::SameSearch::Match> referenceMatches;
-    juce::ComboBox engineBox;
-    std::unique_ptr<params::ComboBinding> engineBinding;
-    juce::Label status;
     Spinner spinner { [this] { return processor.getReferenceSearch().isBusy(); } };
     std::unique_ptr<juce::FileChooser> chooser;
-
-    juce::TextButton synthViewButton { "Synth" }, promptViewButton { "Prompt" };
-    bool promptView = false;
+    juce::TextButton promptViewButton { "Prompt" };
     XYPad xyPad;
     schema::Latent xyLatent {};
     juce::Viewport paramViewport;
+#endif
+    juce::ComboBox engineBox;
+    std::unique_ptr<params::ComboBinding> engineBinding;
+    juce::Label status; // Synth view: Init and the Send to Surge banner
+
+    juce::TextButton synthViewButton { "Synth" };
+    juce::TextButton jointVaeViewButton { "VAE Lab" };
+    View currentView = View::synth;
+    experimental::JointVaePanel jointVaePanel; // its edited gate and Surge patch state live on the processor
 
     juce::OwnedArray<ControlSection> sections;
     FlatKeyboard keyboard;
