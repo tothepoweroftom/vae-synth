@@ -127,7 +127,8 @@ def windows_package(artifacts, work, info, args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path)
-    parser.add_argument("--with-surge", action="store_true")
+    parser.add_argument("--with-surge", action="store_true", default=True,
+                        help="Include the Surge backend (enabled by default)")
     parser.add_argument("--test", action="store_true", help="Build tests and require CTest to pass")
     parser.add_argument("--package", action="store_true", help="Create an installer after building")
     parser.add_argument("--package-only", action="store_true", help="Package an existing Release build")
@@ -147,7 +148,7 @@ def main():
     packaging = args.package or args.package_only
     if args.sign and not packaging:
         parser.error("--sign requires --package or --package-only")
-    if args.package_only and (args.test or args.with_surge or args.cmake_arg):
+    if args.package_only and (args.test or args.cmake_arg):
         parser.error("--package-only uses the existing build; omit build/test options")
     if args.sign:
         names = ("VAE_MAC_APPLICATION_IDENTITY", "VAE_MAC_INSTALLER_IDENTITY") if system == "Darwin" else (

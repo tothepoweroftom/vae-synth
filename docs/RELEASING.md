@@ -36,8 +36,8 @@ py -3 scripts/release.py --test
 
 Both wrappers use `scripts/release.py`. Builds live in
 `build-release-<platform>-<variant>/VAESynth_artefacts/Release`.
-Default variant: Lite. Add `--with-surge` to build the optional Surge backend
-in its own directory. See [licensing notes](LICENSING.md) before distributing it.
+Default variant: Surge (`VAE_WITH_SURGE=ON`). The legacy `--with-surge` flag
+is still accepted. See [licensing notes](LICENSING.md) before distributing it.
 `--test` builds and runs the project's CTest suite, stopping on failure.
 Use `--jobs 6` to change parallelism (default: 3).
 

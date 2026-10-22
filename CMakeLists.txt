@@ -11,7 +11,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(VAE_WITH_SURGE "Build the Surge XT engine backend (makes the binary GPL-3.0-or-later)" OFF)
+option(VAE_WITH_SURGE "Build the Surge XT engine backend (makes the binary GPL-3.0-or-later)" ON)
 option(VAE_BUILD_TESTS "Build unit tests" ON)
 set(VAE_PLUGIN_FORMATS "VST3;Standalone" CACHE STRING "JUCE plug-in formats (AU is added on macOS)")
 
