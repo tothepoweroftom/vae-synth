@@ -39,3 +39,12 @@ vae_copy_onnxruntime_next_to(vae_ml_tests)
 add_test(NAME vae_ml_tests COMMAND vae_ml_tests)
 # Keep tests away from the user's installed models and caches.
 set_tests_properties(vae_ml_tests PROPERTIES ENVIRONMENT "VAE_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/appdata")
+
+# Exercise the exact runtime bundles shipped by the installer when available.
+set(_vae_release_models "${CMAKE_SOURCE_DIR}/installer/models")
+if(EXISTS "${_vae_release_models}/joint-vae/bundle.json" AND EXISTS "${_vae_release_models}/prompt-p1/prompt.json")
+    add_test(NAME vae_model_bundle_tests COMMAND vae_ml_tests)
+    set_tests_properties(vae_model_bundle_tests PROPERTIES
+        ENVIRONMENT "VAE_DATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/model-appdata;VAE_JOINT_BUNDLE=${_vae_release_models}/joint-vae/bundle.json;VAE_PROMPT_BUNDLE=${_vae_release_models}/prompt-p1/prompt.json"
+        TIMEOUT 180)
+endif()

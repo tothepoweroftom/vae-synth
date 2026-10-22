@@ -71,6 +71,9 @@ Windows release installers embed the exported model bundles. Copy the Mac's
 NPZ files and ONNX external weights. Run `git lfs pull` if these assets use LFS.
 Packaging rejects missing required files and unresolved LFS pointers, and records
 SHA-256 hashes of the embedded files in `installed-manifest.json`.
+When the joint-vae and prompt-p1 manifests are present at configure time, CTest
+also runs `vae_model_bundle_tests`: native ONNX inference and parity checks on
+the exact bundled models, using an isolated per-user cache directory.
 
 ```powershell
 .\build-windows.ps1 --test --package --models-dir C:\Models\VAE-Synth
