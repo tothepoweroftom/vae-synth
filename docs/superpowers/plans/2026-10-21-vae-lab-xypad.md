@@ -813,3 +813,8 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
 - Their behaviour and tests stay. Tests that drive them through hooks or `triggerClick` keep working, so set them invisible rather than removing them.
 - The left column's freed space goes to the rest of the column (Category match, Orbit LFO controls, Expected sound). There must be no empty gap.
 - Docs: list the hidden controls and how to re-enable them.
+- Also hide the prompt's **Find sounds / Word list** toggle (user request, 22 Oct 2026), behind the same flag.
+  - Return always runs Find when a prompt bundle is installed.
+  - *My call:* when no prompt bundle is installed, the box falls back to the word-list path, so it still works, and the placeholder says so.
+  - Word-list nudges (e.g. "brighter") are then unreachable while p1 is installed. The code and tests stay.
+  - The "experimental" tag stays next to the prompt.
