@@ -18,9 +18,132 @@ void JointVaePanel::stopOrbitForEngine() {}
 void JointVaePanel::endOrbitForClose() {}
 void JointVaePanel::markReset() {}
 void JointVaePanel::setPresets (const juce::XmlElement&) {}
+std::shared_ptr<const JointVaeSession> JointVaePanel::saveSession() const { return {}; }
+void JointVaePanel::restoreSession (std::shared_ptr<const JointVaeSession>) {}
 void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
 void JointVaePanel::paint (juce::Graphics&) {}
 #else
+// Value-only snapshot: workers and components still have the editor's lifetime.
+struct JointVaeSession
+{
+    juce::File bundle;
+    JointVaeWorker::Output output;
+    bool outputValid = false, knobMode = false, bankMode = false, find = false, presetsTab = false;
+    JointLatent z {};
+    std::array<juce::String, 3> axes, latAxes, knobAxes;
+    std::array<float, 3> pos {};
+    std::optional<std::vector<float>> lockedTail;
+    std::vector<float> knobVals, knobCodes, bankCodes;
+    std::vector<PromptCandidate> candidates;
+    int selected = -1, base = 0, category = 0, randomPreset = -1, highlighted = -1;
+    double rate = 0, depth = 0;
+    juce::String prompt, status;
+};
+
+std::shared_ptr<const JointVaeSession> JointVaePanel::saveSession() const
+{
+    if (pendingSession)
+        return pendingSession; // closed again before the bundle finished loading
+    if (! xy)
+        return {};
+    auto s = std::make_shared<JointVaeSession>();
+    s->bundle = bundleFile;
+    s->output = current;
+    s->outputValid = outputValid;
+    s->z = z;
+    s->axes = axes;
+    s->latAxes = latAxes;
+    s->knobAxes = knobAxes;
+    s->pos = pos;
+    s->lockedTail = lockedTail;
+    s->knobMode = knobMode;
+    s->knobVals = knobVals;
+    s->knobCodes = knobCodes;
+    s->bankMode = bankMode;
+    s->bankCodes = bankCodes;
+    s->candidates = candidates;
+    s->selected = selected;
+    s->base = base.getSelectedId();
+    s->category = category.getSelectedId();
+    s->randomPreset = randomPreset;
+    s->highlighted = highlighted;
+    s->rate = orbitRate.getValue();
+    s->depth = orbitDepth.getValue();
+    s->prompt = promptBox.getText();
+    s->find = findButton.getToggleState();
+    s->presetsTab = presetsTabButton.getToggleState();
+    s->status = finding ? "Find cancelled" : pendingEdit ? juce::String() : status.getText();
+    return s;
+}
+
+void JointVaePanel::restoreSession (std::shared_ptr<const JointVaeSession> s)
+{
+    if (! s)
+        return;
+    pendingSession = std::move (s);
+    if (bundleFile != pendingSession->bundle)
+        loadBundle (pendingSession->bundle);
+}
+
+void JointVaePanel::applySession (const JointVaeSession& s)
+{
+    z = s.z;
+    axes = s.axes;
+    latAxes = s.latAxes;
+    knobAxes = s.knobAxes;
+    pos = s.pos;
+    lockedTail = s.lockedTail;
+    knobMode = s.knobMode;
+    knobVals = s.knobVals;
+    knobCodes = s.knobCodes;
+    bankMode = s.bankMode;
+    bankCodes = s.bankCodes;
+    candidates = s.candidates;
+    selected = s.selected;
+    randomPreset = s.randomPreset;
+    highlighted = s.highlighted;
+    current = s.output;
+    outputValid = s.outputValid;
+    userActed = false; // restoring the display must never replace the playing sound
+    base.setSelectedId (s.base, juce::dontSendNotification);
+    category.setSelectedId (s.category, juce::dontSendNotification);
+    for (auto& row : categoryRows)
+        row.setToggleState (row.index == highlighted, juce::dontSendNotification);
+    shownBase = s.base;
+    shownCategory = s.category;
+    orbitRate.setValue (s.rate, juce::dontSendNotification);
+    orbitDepth.setValue (s.depth, juce::dontSendNotification);
+    orbitSettings.rateHz = (float) s.rate;
+    orbitSettings.depth = (float) s.depth;
+    promptBox.setText (s.prompt, false);
+    findButton.setToggleState (s.find, juce::dontSendNotification);
+    nudgeButton.setToggleState (! s.find, juce::dontSendNotification);
+    latentButton.setToggleState (! knobMode, juce::dontSendNotification);
+    knobButton.setToggleState (knobMode, juce::dontSendNotification);
+    lockButton.setToggleState (lockedTail.has_value(), juce::dontSendNotification);
+    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &orbitButton,
+                                                             &promptBox, &promptGo })
+        c->setEnabled (! knobMode);
+    orbit.setVisible (! knobMode);
+    pad.setVisible (knobMode);
+    if (knobMode)
+        list.setGroups (*kg);
+    else
+        list.setAxes (xy->axes);
+    refresh();
+    updateDots();
+    updatePromptUi();
+    showPresetsTab (s.presetsTab);
+    if (outputValid)
+        showOutput();
+    sendButton.setEnabled (outputValid && current.patchResult.wasOk());
+    if (! edited)
+        setStatus (s.status);
+    scheduleMap();
+    if (! outputValid)
+        decode(); // finish a decode interrupted by closing, for display only
+}
+
 namespace
 {
 constexpr int kRandomBase = 100, kRowH = 26, kRowGap = 6, kChipRowH = 22, kAskH = 46, kGap = 8, kSpectrumH = 124,
@@ -979,6 +1102,9 @@ void JointVaePanel::setKnobMode (bool knob)
 
 void JointVaePanel::loadBundle (const juce::File& file)
 {
+    if (pendingSession && pendingSession->bundle != file)
+        pendingSession.reset();
+    bundleFile = file;
     stopOrbit (false); // a step the load supersedes never calls back
     setStatus ("Loading and checking joint VAE...");
     ++promptToken;
@@ -1043,8 +1169,11 @@ void JointVaePanel::loadBundle (const juce::File& file)
                               &self.promptBox, &self.promptGo, &self.knobButton, &self.orbitButton })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
-                     self.loadBase (self.base.getSelectedId());
                      self.loadPromptBundle (self.promptFile);
+                     if (auto session = std::exchange (self.pendingSession, {}))
+                         self.applySession (*session);
+                     else
+                         self.loadBase (self.base.getSelectedId());
                  });
 }
 

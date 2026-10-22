@@ -24,6 +24,10 @@
 
 namespace vae
 {
+namespace experimental
+{
+struct JointVaeSession;
+}
 
 class PluginProcessor final : public juce::AudioProcessor
 {
@@ -112,6 +116,10 @@ public:
     /** The editor's scale (Task 22): saved with the state, not a host parameter. 0 until an editor sets it. */
     float getEditorScale() const;
     void setEditorScale (float);
+
+    // Message-thread editor state. It outlives each host window, without keeping widgets or workers alive.
+    std::shared_ptr<const experimental::JointVaeSession> labSession;
+    bool labViewSelected = false;
 
     /** The Lab's saved presets (Task 23): an opaque element the Lab writes and reads, saved with the state as a
         child element. Message thread. */

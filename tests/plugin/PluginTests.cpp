@@ -2475,6 +2475,9 @@ public:
 
             beginTest ("a reopened editor keeps the lab gate and the Surge patch state");
             {
+                experimental::JointLatent savedLatent {};
+                std::vector<float> savedCodes;
+                std::array<juce::String, 3> savedAxes;
                 PluginProcessor processor;
                 settleModel (processor);
                 processor.prepareToPlay (48000.0, 512);
@@ -2489,10 +2492,28 @@ public:
                     expect (pumpUntil (
                         [&] { return lab.output().codes != before && same (processor.getControls(), liteOf (lab)); },
                         30000));
+                    savedLatent = lab.latent();
+                    savedCodes = lab.output().codes;
+                    savedAxes = lab.assignedAxes();
+                    findButton (*editor, "VAE Lab")->onClick();
+                    findChild<juce::TextEditor> (lab)->setText ("bright evolving pad");
                 }
                 // Reopened with the sound as the Lab left it: not edited, a move plays
                 if (auto editor = openLab (processor))
+                {
                     expect (! labOf (*editor)->isEdited(), "the Lab's own sound is not an edit");
+                    expect (labOf (*editor)->latent() == savedLatent, "the explored latent survives closing");
+                    const auto& restoredCodes = labOf (*editor)->output().codes;
+                    expect (restoredCodes.size() == savedCodes.size()
+                                && std::equal (restoredCodes.begin(), restoredCodes.end(), savedCodes.begin(),
+                                               [] (float a, float b)
+                                               { return a == b || (std::isnan (a) && std::isnan (b)); }),
+                            "the displayed sound survives closing");
+                    expect (labOf (*editor)->assignedAxes() == savedAxes, "the assigned axes survive closing");
+                    expect (findButton (*editor, "VAE Lab")->getToggleState(), "the selected tab survives closing");
+                    expectEquals (findChild<juce::TextEditor> (*labOf (*editor))->getText(),
+                                  juce::String ("bright evolving pad"));
+                }
                 // A Synth or host edit while the editor is closed: the first pad move asks
                 processor.getParams().set (index, processor.getParams().get (index) > 0.5f ? 0.1f : 0.9f);
                 const auto edited = processor.getControls();

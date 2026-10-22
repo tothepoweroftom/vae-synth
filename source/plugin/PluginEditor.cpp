@@ -395,6 +395,7 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
     addChildComponent (jointVaePanel);
     jointVaePanel.toBack(); // under the left column's logo, tabs and reset question, which sit over its top
     jointVaePanel.setPresets (processor.getLabPresets()); // they outlive the editor (Task 23)
+    jointVaePanel.restoreSession (processor.labSession);
     jointVaePanel.onPresetsChanged = [this] (const juce::XmlElement& presets) { processor.setLabPresets (presets); };
     processor.getStateLoaded().addChangeListener (this);
     jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch)
@@ -466,12 +467,13 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
     addAndMakeVisible (keyboard);
 
     setSize (kNativeWidth, kNativeHeight);
-    showView (View::synth);
+    showView (processor.labViewSelected ? View::jointVae : View::synth);
 }
 
 void MainEditorComponent::showView (View view)
 {
     currentView = view;
+    processor.labViewSelected = view == View::jointVae;
     jointVaePanel.setVisible (view == View::jointVae);
     jointVaeViewButton.setToggleState (view == View::jointVae, juce::dontSendNotification);
 #if VAE_PROMPT_TAB
@@ -515,6 +517,7 @@ void MainEditorComponent::handleAsyncUpdate()
 MainEditorComponent::~MainEditorComponent()
 {
     jointVaePanel.endOrbitForClose(); // while onLite and the processor are alive: the centre stays the sound
+    processor.labSession = jointVaePanel.saveSession();
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().removeListener (schema::control (i).id, this);
     processor.getParams().removeListener (PluginProcessor::kEngineParamId, this);

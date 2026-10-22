@@ -13,6 +13,7 @@
 
 namespace vae::experimental
 {
+struct JointVaeSession;
 /** Task 22: hides the Lab's control group (Latent pad / Knob pad, Start from, Category, Lock structure, Reset,
     Send to Surge) and the prompt's Find sounds / Word list switch. They still work (tests drive them); true shows
     them again. */
@@ -56,6 +57,8 @@ public:
     /** Task 23: the saved presets as the processor stores them (the editor sets them on open), and their changes
         (message thread). */
     void setPresets (const juce::XmlElement&);
+    std::shared_ptr<const JointVaeSession> saveSession() const;
+    void restoreSession (std::shared_ptr<const JointVaeSession>);
     std::function<void (const juce::XmlElement&)> onPresetsChanged;
 #if VAE_WITH_SURGE
     static constexpr int kMaxPresets = 64;
@@ -119,6 +122,9 @@ public:
 
 private:
 #if VAE_WITH_SURGE
+    void applySession (const JointVaeSession&);
+    juce::File bundleFile;
+    std::shared_ptr<const JointVaeSession> pendingSession;
     /** A CATEGORY MATCH row: name, percentage and a 3 px bar; a click toggles the cloud's highlight. */
     struct CategoryRow final : juce::Button
     {
