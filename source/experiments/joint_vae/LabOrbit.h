@@ -7,7 +7,8 @@ namespace vae::experimental
 {
 /** The Lab's latent view: the design study's OrbitView (positions 0..1 on the X, Y, Z axes), with the
     camera's - / + / Reset view buttons, Find's numbered highlights, and a click on a highlight or a
-    preset dot. Arrow keys move the handle in X and Y, Page Up / Down in Z (0.02; Shift: 0.1).
+    preset dot, and the orbit LFO's path. Arrow keys move the handle in X and Y, Page Up / Down in Z (0.02;
+    Shift: 0.1).
     Only handle drags and those keys call `moved`: orbit, zoom and Reset view never do. */
 class LabOrbit final
     : public juce::Component
@@ -22,6 +23,8 @@ public:
     std::function<void (int)> jumped;     // a click on preset i, one of the active label's dots
     void setHandle (Position p) { view.setPosition (p); }
     Position getHandle() const { return view.getPosition(); }
+    /** The orbit LFO: its path (dashed) around `centre` (a hollow ring); an empty path hides both. */
+    void setOrbit (std::vector<Position> path, Position centre);
     /** Every preset at its X, Y, Z position, with its label; clicks jump to `activeLabel`'s dots. */
     void setPresets (std::vector<Position>, std::vector<int> labels, int activeLabel);
     /** Find's candidates, numbered 1..; `selected` is drawn filled. */
@@ -41,7 +44,8 @@ private:
     bool keyPressed (const juce::KeyPress&, juce::Component*) override; // the view's keys, before its own
     OrbitView view;
     juce::TextButton zoomOut { "-" }, zoomIn { "+" }, resetView { "Reset view" };
-    std::vector<Position> presets, highlights;
+    std::vector<Position> presets, highlights, orbitPath;
+    Position orbitCentre {};
     std::vector<int> labels;
     int activeLabel = -1, selectedHighlight = -1;
     bool pressOnHandle = false;

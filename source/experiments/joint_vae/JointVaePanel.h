@@ -4,6 +4,7 @@
 #include "LabOrbit.h"
 #include "LabPad.h"
 #include "LabTheme.h"
+#include "LatentOrbit.h"
 #include "PitcherControls.h"
 #include "PitcherLayout.h"
 #include "PromptModel.h"
@@ -68,6 +69,8 @@ public:
     const JointVaeWorker::Output& output() const { return current; }
     const KnobGroups* knobGroups() const { return kg.get(); }
     void assignAxis (int slot, const juce::String& id) { assign (slot, id); }
+    bool isOrbiting() const { return orbitSettings.on; }
+    const std::array<float, 3>& orbitCentre() const { return centre; } // the orbit LFO's centre, pad units
 #endif
 
 private:
@@ -101,7 +104,7 @@ private:
     void assign (int slot, const juce::String& id);
     void syncPositions();                // page latSyncPos
     void applyPositions (int slots = 7); // page latApplyPos; knob pad: only the slots (bit mask) the gesture moved
-    void decode();
+    void decode (bool orbitStep = false);
     void refresh (const LatentAxis* dragged = nullptr);
     void updateDots();
     void scheduleMap()
@@ -112,7 +115,7 @@ private:
     void requestMap();
     void jumpToPreset (int k); // a click on a preset dot of the current category
     void showOutput();         // the spectrogram, its details and the category match, from `current`
-    void setStatus (const juce::String&, bool error = false);
+    void setStatus (const juce::String&, bool error = false, bool map = false); // map: a knob-map failure
     const LatentAxis* axisOn (int slot) const;
     int groupOn (int slot) const; // knob pad: group index on the slot, -1 when none
     bool hasSlot (int slot) const { return knobMode ? groupOn (slot) >= 0 : axisOn (slot) != nullptr; }
@@ -124,6 +127,12 @@ private:
     void leaveBank();           // the first sound edit after selecting a candidate decodes from its z
     void clearPromptProgress(); // a dropped Find must not leave "Finding sounds..." behind
     void updatePromptUi();
+    // The orbit LFO (Task 19): a 30 Hz tick moves the handle around `centre` and decodes like a drag
+    void startOrbit();
+    void stopOrbit (bool backToCentre); // false when the caller decodes something else (Reset, a category...)
+    void recentre();                    // a drag, nudge or Find pick moves the centre to the new point
+    void orbitTick();
+    void showOrbitPath();
 
     PitcherLookAndFeel look; // before every child; detached in the destructor
     ComboLook comboLook { look.monoFont (11.0f) };
@@ -151,6 +160,12 @@ private:
     int highlighted = -1;                 // the category the cloud highlights (visual only)
     bool errorShown = false;
     bool mapError = false; // the status line shows a map failure
+    struct StatusText
+    {
+        juce::String text;
+        bool error = false, map = false;
+    };
+    std::optional<StatusText> heldStatus; // the latest status written while the Replace question is open
     JointLatent z {};
     std::array<juce::String, 3> axes;
     std::array<float, 3> pos { 0.5f, 0.5f, 0.5f };
@@ -159,9 +174,19 @@ private:
     bool knobMode = false;
     std::array<juce::String, 3> latAxes, knobAxes;
     std::vector<float> knobVals, knobCodes; // the 123 knob values and the codes they are written into
+    // Orbit LFO: the centre's z and pad positions; its decoded Lite values hold every discrete control
+    OrbitSettings orbitSettings;
+    JointLatent centreZ {};
+    std::array<float, 3> centre {};
+    std::optional<schema::Snapshot> centreLite; // empty until the centre's decode returns: ticks wait
+    bool lockedByOrbit = false;                 // Lock was off before the orbit forced it on
+    bool orbitStepPending = false;              // one orbit decode at a time, so none is superseded unplayed
+    double orbitStart = 0;                      // ms, the phase origin
 
     juce::TextButton latentButton { "Latent pad" }, knobButton { "Knob pad" }, lockButton { "Lock structure" },
-        resetButton { "Reset" }, sendButton { "Send to Surge" };
+        resetButton { "Reset" }, sendButton { "Send to Surge" }, orbitButton { "Orbit LFO" };
+    juce::Slider orbitRate, orbitDepth;
+    juce::Label orbitRateLabel, orbitDepthLabel;
     juce::ComboBox base, category;
     std::array<CategoryRow, 8> categoryRows;
     Spectrum spectrum;
@@ -187,6 +212,7 @@ private:
                                        mapTimer.stopTimer();
                                        requestMap();
                                    } };
+    juce::TimedCallback orbitTimer { [this] { orbitTick(); } };
 #else
     juce::Label note;
 #endif

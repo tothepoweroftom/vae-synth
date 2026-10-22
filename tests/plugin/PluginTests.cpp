@@ -13,6 +13,7 @@
 #if VAE_WITH_SURGE
 #include "engine/surge/SurgeEngine.h"
 #include "experiments/joint_vae/JointVae.h"
+#include "experiments/joint_vae/LatentOrbit.h"
 #include "experiments/joint_vae/LiteTranslation.h"
 #endif
 
@@ -200,8 +201,52 @@ struct DragStats
     }
 };
 
-/** Holds a note on Lite and plays `results` at 60 per second through playLiteControls (2 s, 512-sample blocks). */
-DragStats playDrag (const std::vector<schema::Snapshot>& results)
+/** Task 19: the orbit LFO's results for 2 s at the panel's 30 per second, made as the panel makes them: each
+    step constrains the pad axes from the centre z, Lock holds the centre's structure codes, and every discrete
+    Lite control holds the centre's value. */
+std::vector<schema::Snapshot> labOrbit (experimental::JointVae& model, experimental::OrbitSettings settings)
+{
+    using namespace experimental;
+    const auto& xy = model.xypad();
+    const auto centreZ = xy.typical.at ("Lead");
+    const auto* dim = &*std::find_if (xy.axes.begin(), xy.axes.end(), [] (const auto& a) { return a.kind == "dim"; });
+    const LatentAxis* held[] { xy.find ("s:brightness"), xy.find ("s:length"), dim };
+    std::array<float, 3> centre;
+    for (size_t i = 0; i < 3; ++i)
+        centre[i] = axisPosition (*held[i], centreZ);
+    const auto lite = [&] (const JointLatent& z, std::optional<std::vector<float>>& tail, schema::Snapshot& out)
+    {
+        std::vector<float> codes;
+        if (model.decode (z, 1, codes).failed())
+            return false;
+        const auto from = codes.begin() + model.layout().numNumeric;
+        if (! tail)
+            tail.emplace (from, codes.end());
+        std::copy (tail->begin(), tail->end(), from);
+        juce::MemoryBlock patch;
+        out = schema::Snapshot::defaults();
+        return model.patch (codes, patch).wasOk() && liteControls (patch, out).wasOk();
+    };
+    std::optional<std::vector<float>> tail;
+    schema::Snapshot centreLite;
+    if (! lite (centreZ, tail, centreLite))
+        return {};
+    std::vector<schema::Snapshot> out { centreLite };
+    for (int k = 1; k < 60; ++k)
+    {
+        const auto p = orbitPosition (centre, settings, k / 30.0, true);
+        const float targets[] { axisTarget (*held[0], p[0]), axisTarget (*held[1], p[1]), axisTarget (*held[2], p[2]) };
+        schema::Snapshot s;
+        if (! lite (constrain (centreZ, held, targets), tail, s))
+            return {};
+        holdDiscrete (s, centreLite);
+        out.push_back (s);
+    }
+    return out;
+}
+
+/** Holds a note on Lite and plays `results` at `perSecond` through playLiteControls (2 s, 512-sample blocks). */
+DragStats playDrag (const std::vector<schema::Snapshot>& results, int perSecond = 60)
 {
     DragStats stats;
     for (size_t k = 1; k < results.size(); ++k)
@@ -231,7 +276,7 @@ DragStats playDrag (const std::vector<schema::Snapshot>& results)
     const int blocks = 2 * int (kRate) / 512;
     for (int b = 0; b < blocks; ++b)
     {
-        while (next < results.size() && b * 512 >= int (next) * 800) // 48000 / 60
+        while (next < results.size() && b * 512 >= int (next) * int (kRate) / perSecond)
             p.playLiteControls (results[next++]);
         const auto t0 = juce::Time::getHighResolutionTicks();
         p.processBlock (buffer, midi);
@@ -1366,6 +1411,145 @@ public:
                         "the constrained z decodes and plays");
                 });
 
+            beginTest ("the orbit LFO moves around the point with Lock on and every switch held (Task 19)");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* button = findButton (lab, "Orbit LFO");
+                    auto* lock = findButton (lab, "Lock structure");
+                    expect (button != nullptr && button->isEnabled() && lock != nullptr, "the Orbit LFO button");
+                    if (button == nullptr || lock == nullptr)
+                        return;
+                    const auto z0 = lab.latent();
+                    const auto centre = orbit.getHandle();
+                    std::vector<schema::Snapshot> played;
+                    std::vector<std::vector<float>> codes;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        played.push_back (s);
+                        codes.push_back (lab.output().codes);
+                        if (play)
+                            play (s);
+                    };
+                    button->onClick(); // R14: turning the orbit on is a user action, so it plays
+                    expect (lab.isOrbiting() && button->getToggleState());
+                    pumpUntil ([] { return false; }, 1000);
+                    logMessage ("orbit results in 1 s: " + juce::String ((int) played.size()));
+                    expect (played.size() >= 20, "results in 1 s: " + juce::String ((int) played.size()));
+                    if (played.empty())
+                        return;
+                    expect (lock->getToggleState() && ! lock->isEnabled(), "Lock is forced on");
+                    const auto numeric = (size_t) lab.output().layout.numNumeric;
+                    expect (numeric > 0);
+                    for (size_t k = 1; k < codes.size(); ++k)
+                        expect (std::equal (codes[k].begin() + (long) numeric, codes[k].end(),
+                                            codes[0].begin() + (long) numeric),
+                                "the structure codes stay (Lock)");
+                    int continuousMoves = 0;
+                    for (size_t k = 1; k < played.size(); ++k)
+                        for (int i = 0; i < schema::kControlCount; ++i)
+                            if (schema::control (i).kind != schema::Kind::Continuous)
+                                expectEquals (played[k][i], played[0][i], schema::control (i).id);
+                            else
+                                continuousMoves += ! juce::exactlyEqual (played[k][i], played[0][i]);
+                    expect (continuousMoves > 0, "continuous controls move");
+                    expect (orbit.getHandle() != centre, "the dot moves");
+                    const auto at = orbit.getHandle();
+                    float d2 = 0;
+                    for (size_t i = 0; i < 3; ++i)
+                        d2 += (at[i] - centre[i]) * (at[i] - centre[i]);
+                    expect (std::sqrt (d2) <= 0.08f * 1.12f + 1e-4f, "the dot stays within the depth");
+                    const auto& ids = lab.assignedAxes();
+                    for (size_t i = 0; i < 2; ++i)
+                        if (auto* axis = lab.padData()->find (ids[i]))
+                            expectWithinAbsoluteError (axisPosition (*axis, lab.latent()), at[i], 1e-3f,
+                                                       "the axis sliders follow the handle");
+                    if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_ORBIT_SCREENSHOT", "");
+                        shot.isNotEmpty())
+                    {
+                        for (auto* s : findAll<juce::Slider> (lab)) // the widest path reads best in a still
+                            if (s->getTitle() == "Orbit depth")
+                                s->setValue (0.25, juce::sendNotificationSync);
+                        pumpUntil ([] { return false; }, 1500);
+                        juce::File (shot).deleteFile();
+                        if (auto stream = juce::File (shot).createOutputStream())
+                            juce::PNGImageFormat().writeImageToStream (
+                                editor.createComponentSnapshot (editor.getLocalBounds()), *stream);
+                    }
+
+                    // Off: the sound returns to the centre point, and Lock to how the user left it
+                    button->onClick();
+                    expect (! lab.isOrbiting() && ! button->getToggleState());
+                    expect (lab.latent() == z0, "the centre's z");
+                    expect (orbit.getHandle() == centre, "the handle is back at the centre");
+                    expect (pumpUntil (
+                                [&]
+                                {
+                                    return same (processor.getControls(), liteOf (lab)) && lab.latent() == z0
+                                           && lab.output().latent == z0;
+                                },
+                                30000),
+                            "the centre plays");
+                    pumpUntil ([] { return false; }, 300);
+                    expect (! lock->getToggleState() && lock->isEnabled(), "Lock is back off");
+                    expect (lab.output().codes == codes[0], "the centre's exact codes");
+                });
+
+            beginTest ("a drag re-centres the orbit; Reset, a category, the knob pad and a Synth edit stop it");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* button = findButton (lab, "Orbit LFO");
+                    expect (button != nullptr);
+                    if (button == nullptr)
+                        return;
+                    const auto start = [&]
+                    {
+                        if (! lab.isOrbiting())
+                            button->onClick();
+                        pumpUntil ([] { return false; }, 200);
+                        return lab.isOrbiting();
+                    };
+                    expect (start());
+                    moveHandle (orbit, 0.8f, 0.3f);
+                    expect (lab.isOrbiting(), "a drag keeps the orbit");
+                    expectWithinAbsoluteError (lab.orbitCentre()[0], 0.8f, 1e-5f, "re-centred X");
+                    expectWithinAbsoluteError (lab.orbitCentre()[1], 0.3f, 1e-5f, "re-centred Y");
+                    pumpUntil ([] { return false; }, 600);
+                    const auto at = orbit.getHandle();
+                    expect (at != lab.orbitCentre() && std::hypot (at[0] - 0.8f, at[1] - 0.3f) < 0.1f,
+                            "it circles the new centre");
+
+                    findButton (lab, "Reset")->onClick();
+                    expect (! lab.isOrbiting(), "Reset stops it");
+                    expect (start());
+                    juce::ComboBox* category = nullptr;
+                    for (auto* c : findAll<juce::ComboBox> (lab))
+                        if (c->getItemText (0) == juce::String (experimental::jointLabels[0]))
+                            category = c;
+                    expect (category != nullptr);
+                    if (category)
+                        category->setSelectedId (category->getSelectedId() % 9 + 1, juce::sendNotificationSync);
+                    expect (! lab.isOrbiting(), "a category change stops it");
+                    expect (start());
+                    findButton (lab, "Knob pad")->onClick();
+                    expect (! lab.isOrbiting(), "the knob pad stops it");
+                    expect (! button->isEnabled(), "and has no orbit");
+                    findButton (lab, "Latent pad")->onClick();
+                    expect (start());
+                    lab.markEdited(); // a Synth or host edit, as the editor reports it
+                    expect (! lab.isOrbiting(), "a non-Lab edit stops it rather than overwriting");
+                    button->onClick();
+                    expect (lab.isAskingToReplace() && ! lab.isOrbiting(), "starting while edited asks first");
+                    lab.answerReplace (true);
+                    expect (lab.isOrbiting(), "Replace starts it");
+                });
+
             beginTest ("a reopened editor keeps the lab gate and the Surge patch state");
             {
                 PluginProcessor processor;
@@ -1958,6 +2142,38 @@ public:
                 expect (moving.ducks <= 2 * moving.discretePerSecond, name + ": " + moving.describe());
                 expect (moving.duckedSamples < kRate / 10, name + ": " + moving.describe()); // < 5% of 2 s
                 expect (moving.maxMs < 512 * 1000 / kRate, name + ": " + moving.describe()); // the block budget
+            }
+        }
+#endif
+
+#if VAE_WITH_SURGE
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("the orbit LFO plays without ducks or clicks (Task 19)");
+            experimental::JointVae lab;
+            expect (lab.load (juce::File (bundle)).wasOk());
+            experimental::OrbitSettings slow, fast;
+            fast.rateHz = 2.0f; // the fastest and widest the controls allow
+            fast.depth = 0.25f;
+            for (const auto& settings : { slow, fast })
+            {
+                const auto results = labOrbit (lab, settings);
+                expectEquals ((int) results.size(), 60);
+                if (results.size() != 60)
+                    continue;
+                const auto name = juce::String (settings.rateHz, 2) + " Hz, depth " + juce::String (settings.depth, 2);
+                const auto moving = playDrag (results, 30);
+                float stillStep = 0;
+                for (size_t k : { 0, 15, 30, 45, 59 })
+                    stillStep =
+                        std::max (stillStep, playDrag (std::vector<schema::Snapshot> (60, results[k]), 30).maxStep);
+                logMessage ("orbit " + name + ": " + moving.describe());
+                logMessage ("orbit " + name + ": max step " + juce::String (moving.maxStep / stillStep, 2)
+                            + "x the still points'");
+                expectEquals (moving.discretePerSecond, 0.0, name + ": every switch held");
+                expectEquals (moving.ducks, 0, name + ": " + moving.describe());
+                expect (moving.maxStep < 1.15f * stillStep, name + ": " + moving.describe());
+                expect (moving.maxMs < 512 * 1000 / kRate, name + ": " + moving.describe());
             }
         }
 #endif

@@ -60,9 +60,10 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     base.setLookAndFeel (&comboLook);
     category.setLookAndFeel (&comboLook);
 
-    for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
-                                                             &resetButton, &sendButton, &spectrum, &orbit, &listView,
-                                                             &status, &promptBox, &promptGo, &nudgeButton, &keyboard })
+    for (auto* c : std::initializer_list<juce::Component*> {
+             &latentButton, &knobButton,  &base,      &category,   &lockButton,     &resetButton,    &sendButton,
+             &spectrum,     &orbit,       &listView,  &status,     &promptBox,      &promptGo,       &nudgeButton,
+             &keyboard,     &orbitButton, &orbitRate, &orbitDepth, &orbitRateLabel, &orbitDepthLabel })
         addAndMakeVisible (c);
     addChildComponent (pad);
     addChildComponent (findButton);
@@ -118,6 +119,50 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     base.setTooltip ("Start from");
     lockButton.setTooltip ("Keep oscillator types, effects and other switches fixed while moving");
     resetButton.setTooltip ("Back to the start point");
+    // Orbit LFO (Task 19): the controls under the others in the left sidebar
+    orbitButton.setTooltip ("Move slowly around the current sound; switches and effects stay put");
+    orbitButton.onClick = [this] { edit ([this] { orbitSettings.on ? stopOrbit (true) : startOrbit(); }); };
+    for (auto* s : { &orbitRate, &orbitDepth })
+    {
+        s->setSliderStyle (juce::Slider::LinearHorizontal);
+        s->setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+    }
+    orbitRate.setTitle ("Orbit rate");
+    orbitRate.setTooltip ("How fast the orbit goes round, 0.02 to 2 Hz");
+    orbitRate.setRange (0.02, 2.0);
+    orbitRate.setSkewFactorFromMidPoint (0.2); // log scale: 0.2 Hz, the geometric middle, mid-track
+    orbitRate.setValue (orbitSettings.rateHz, juce::dontSendNotification);
+    orbitDepth.setTitle ("Orbit depth");
+    orbitDepth.setTooltip ("How far the orbit strays from the sound, in pad units");
+    orbitDepth.setRange (0.0, 0.25);
+    orbitDepth.setValue (orbitSettings.depth, juce::dontSendNotification);
+    for (auto* l : { &orbitRateLabel, &orbitDepthLabel })
+    {
+        l->setFont (look.monoFont (10.0f));
+        l->setColour (juce::Label::textColourId, lab::muted);
+        l->setBorderSize ({});
+    }
+    const auto showOrbitValues = [this]
+    {
+        orbitRateLabel.setText ("RATE " + juce::String (orbitSettings.rateHz, 2) + " Hz", juce::dontSendNotification);
+        orbitDepthLabel.setText ("DEPTH " + juce::String (orbitSettings.depth, 2), juce::dontSendNotification);
+    };
+    showOrbitValues();
+    orbitRate.onValueChange = [this, showOrbitValues]
+    {
+        // The phase carries on: a new rate never jumps the handle
+        const auto now = juce::Time::getMillisecondCounterHiRes();
+        const auto rate = (float) orbitRate.getValue();
+        orbitStart = now - (now - orbitStart) * orbitSettings.rateHz / rate;
+        orbitSettings.rateHz = rate;
+        showOrbitValues();
+    };
+    orbitDepth.onValueChange = [this, showOrbitValues]
+    {
+        orbitSettings.depth = (float) orbitDepth.getValue();
+        showOrbitValues();
+        showOrbitPath();
+    };
     listView.setViewedComponent (&list, false);
     listView.setScrollBarsShown (true, false);
     listView.setScrollBarThickness (6);
@@ -251,6 +296,7 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
             {
                 userActed = true;
                 leaveBank();
+                stopOrbit (false);
                 category.setSelectedId (id, juce::dontSendNotification);
                 updateDots();
                 decode();
@@ -282,7 +328,7 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
                    r.failed());
     };
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &sendButton,
-                                                             &orbit, &pad, &promptBox, &promptGo })
+                                                             &orbit, &pad, &promptBox, &promptGo, &orbitButton })
         c->setEnabled (false);
 
     // Installed by scripts/install-models.sh, like the Prompt tab's models
@@ -332,6 +378,7 @@ void JointVaePanel::ComboLook::positionComboBoxText (juce::ComboBox& box, juce::
 
 void JointVaePanel::markEdited()
 {
+    stopOrbit (false); // the edit stays: the orbit never overwrites it
     if (! std::exchange (edited, true))
         setStatus ("Edited in Synth view");
 }
@@ -347,6 +394,7 @@ void JointVaePanel::edit (std::function<void()> change)
         return;
     }
     pendingEdit = std::move (change);
+    heldStatus.reset();
     showAsk (true);
 }
 
@@ -368,29 +416,40 @@ void JointVaePanel::resolveReplace (bool replace)
         return;
     const auto change = std::exchange (pendingEdit, nullptr);
     showAsk (false);
+    // A status written while asking shows now; without one, the answer's own
+    const auto answered = [this, held = std::exchange (heldStatus, std::nullopt)] (const juce::String& text)
+    {
+        if (held && held->text.isNotEmpty())
+            setStatus (held->text, held->error, held->map);
+        else
+            setStatus (text);
+    };
     if (replace)
     {
         edited = false;
-        setStatus ({});
+        answered ({});
         if (onReplace)
             onReplace();
         change();
         return;
     }
     // Keep editing: z, positions and codes were never touched; put the controls back on them
-    setStatus ("Edited in Synth view");
+    answered ("Edited in Synth view");
     base.setSelectedId (shownBase, juce::dontSendNotification);
     category.setSelectedId (shownCategory, juce::dontSendNotification);
     clearPromptProgress(); // when the question was a Find's, its result is dropped
     refresh();
 }
 
-void JointVaePanel::setStatus (const juce::String& text, bool error)
+void JointVaePanel::setStatus (const juce::String& text, bool error, bool map)
 {
     if (pendingEdit && text != kAsking)
-        return; // the question stays readable until it is answered
+    {
+        heldStatus = StatusText { text, error, map }; // the question stays readable; this shows after the answer
+        return;
+    }
     errorShown = error;
-    mapError = false;
+    mapError = map;
     status.setText (text, juce::dontSendNotification);
 }
 
@@ -414,6 +473,7 @@ void JointVaePanel::setKnobMode (bool knob)
         return;
     if (knob && (! outputValid || current.knobs.size() != (size_t) kg->names.size()))
         return;
+    stopOrbit (false); // the knob pad has no orbit; it edits the sound where the orbit left it
     if (knob)
     {
         latAxes = axes;
@@ -429,7 +489,8 @@ void JointVaePanel::setKnobMode (bool knob)
     knobMode = knob;
     latentButton.setToggleState (! knob, juce::dontSendNotification);
     knobButton.setToggleState (knob, juce::dontSendNotification);
-    for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton })
+    for (auto* c :
+         std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &orbitButton })
         c->setEnabled (! knob);
     orbit.setVisible (! knob);
     pad.setVisible (knob);
@@ -513,7 +574,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                          self.base.addItem ("Random real preset", kRandomBase);
                      for (auto* c : std::initializer_list<juce::Component*> {
                               &self.base, &self.category, &self.lockButton, &self.resetButton, &self.orbit, &self.pad,
-                              &self.promptBox, &self.promptGo, &self.knobButton })
+                              &self.promptBox, &self.promptGo, &self.knobButton, &self.orbitButton })
                          c->setEnabled (true);
                      self.base.setSelectedItemIndex (0, juce::dontSendNotification);
                      self.loadBase (self.base.getSelectedId());
@@ -523,6 +584,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
 
 void JointVaePanel::loadBase (int id, bool draw)
 {
+    stopOrbit (false); // a new start (or Reset) ends the orbit
     if (! xy || id == 0)
         return;
     juce::String message;
@@ -778,11 +840,15 @@ void JointVaePanel::assign (int slot, const juce::String& id)
     if (next[0].isEmpty() || next[1].isEmpty())
         return;
     axes = next;
+    if (orbitSettings.on)
+        z = centreZ; // the orbit goes on around the same sound, in the new axes
     syncPositions();
     refresh();
     updateDots();
     scheduleMap();
     resized();
+    if (orbitSettings.on)
+        decode(); // re-centres
 }
 
 void JointVaePanel::syncPositions()
@@ -905,8 +971,7 @@ void JointVaePanel::requestMap()
                         return;
                     if (r.failed())
                     {
-                        safe->setStatus (r.getErrorMessage(), true);
-                        safe->mapError = true;
+                        safe->setStatus (r.getErrorMessage(), true, true);
                         return;
                     }
                     if (std::exchange (safe->mapError, false) && safe->errorShown)
@@ -942,10 +1007,13 @@ void JointVaePanel::requestMap()
                 });
 }
 
-void JointVaePanel::decode()
+void JointVaePanel::decode (bool orbitStep)
 {
     if (! xy)
         return;
+    if (orbitSettings.on && ! orbitStep)
+        recentre();
+    orbitStepPending = orbitStep;
     shownBase = base.getSelectedId();
     shownCategory = category.getSelectedId();
     scheduleMap(); // 150 ms after the last change
@@ -962,14 +1030,35 @@ void JointVaePanel::decode()
                 {
                     if (! safe)
                         return;
+                    safe->orbitStepPending = false; // this, or a newer request that superseded the step
                     if (r.failed())
                     {
                         safe->setStatus (r.getErrorMessage(), true);
+                        if (safe->orbitSettings.on && ! safe->centreLite)
+                            safe->stopOrbit (false); // no centre to hold
                         return;
                     }
                     auto& self = *safe;
                     self.current = std::move (out);
                     self.outputValid = true;
+                    if (self.orbitSettings.on && self.current.patchResult.wasOk())
+                    {
+                        if (! self.centreLite)
+                        {
+                            // The centre's decode: Lock holds its structure, its switches hold every step's
+                            if (! self.lockedTail && self.current.layout.numNumeric > 0
+                                && (size_t) self.current.layout.numNumeric <= self.current.codes.size())
+                            {
+                                self.lockedTail.emplace (self.current.codes.begin() + self.current.layout.numNumeric,
+                                                         self.current.codes.end());
+                                self.lockedByOrbit = true;
+                                self.lockButton.setToggleState (true, juce::dontSendNotification);
+                            }
+                            self.centreLite = self.current.lite;
+                        }
+                        else // Lite's LFO destination follows route depths: flips would duck (Task 18)
+                            holdDiscrete (self.current.lite, *self.centreLite);
+                    }
                     self.showOutput();
                     const bool playable = safe->current.patchResult.wasOk();
                     safe->sendButton.setEnabled (playable);
@@ -984,6 +1073,74 @@ void JointVaePanel::decode()
                             safe->onLite (safe->current.lite);
                     }
                 });
+}
+
+void JointVaePanel::startOrbit()
+{
+    if (! xy || knobMode || orbitSettings.on)
+        return;
+    userActed = true; // R14: turning the orbit on is a user action
+    orbitSettings.on = true;
+    orbitStart = juce::Time::getMillisecondCounterHiRes();
+    lockedByOrbit = false;
+    orbitButton.setToggleState (true, juce::dontSendNotification);
+    lockButton.setEnabled (false); // forced on while the orbit runs
+    decode();                      // re-centres here: the centre plays, and its result sets Lock and the switches
+    orbitTimer.startTimerHz (30);
+}
+
+void JointVaePanel::stopOrbit (bool backToCentre)
+{
+    if (! orbitSettings.on)
+        return;
+    orbitSettings.on = false;
+    orbitTimer.stopTimer();
+    orbitStepPending = false;
+    centreLite.reset();
+    orbitButton.setToggleState (false, juce::dontSendNotification);
+    lockButton.setEnabled (! knobMode);
+    if (std::exchange (lockedByOrbit, false))
+    {
+        lockedTail.reset(); // Lock as the user left it
+        lockButton.setToggleState (false, juce::dontSendNotification);
+    }
+    showOrbitPath();
+    if (! backToCentre)
+        return;
+    z = centreZ;
+    pos = centre;
+    refresh();
+    decode();
+}
+
+void JointVaePanel::recentre()
+{
+    centre = pos;
+    centreZ = z;
+    centreLite.reset(); // ticks wait for the new centre's decode
+    showOrbitPath();
+}
+
+void JointVaePanel::orbitTick()
+{
+    if (! orbitSettings.on || ! centreLite || orbitStepPending || pendingEdit)
+        return;
+    leaveBank(); // the steps decode from z
+    const auto seconds = (juce::Time::getMillisecondCounterHiRes() - orbitStart) / 1000.0;
+    pos = orbitPosition (centre, orbitSettings, seconds, axisOn (2) != nullptr);
+    z = centreZ; // each step constrains from the centre, so the other directions stay at the anchor
+    applyPositions();
+    refresh();
+    decode (true);
+}
+
+void JointVaePanel::showOrbitPath()
+{
+    std::vector<LabOrbit::Position> path;
+    if (orbitSettings.on)
+        for (int k = 0; k < 64; ++k) // the X/Y circle at the centre's Z; the handle's Z wobble rides on it
+            path.push_back (orbitPosition (centre, orbitSettings, k / (64.0 * orbitSettings.rateHz), false));
+    orbit.setOrbit (std::move (path), centre);
 }
 
 void JointVaePanel::showOutput()
@@ -1115,7 +1272,7 @@ void JointVaePanel::resized()
     categoryArea = left.removeFromTop (44);
     spectrum.setBounds (left.removeFromBottom (kSpectrumH));
     left.removeFromBottom (12);
-    constexpr int controlsH = 5 * kRowH + 4 * kRowGap;
+    constexpr int controlsH = 8 * kRowH + 7 * kRowGap;
     const int rowH = juce::jlimit (22, 32, (left.getHeight() - controlsH - 12) / 8);
     for (auto& row : categoryRows)
         row.setBounds (left.removeFromTop (rowH));
@@ -1135,6 +1292,14 @@ void JointVaePanel::resized()
     lockButton.setBounds (lockRow.removeFromLeft (lockRow.getWidth() * 3 / 5).withTrimmedRight (3));
     resetButton.setBounds (lockRow.withTrimmedLeft (3));
     sendButton.setBounds (controlRow());
+    orbitButton.setBounds (controlRow());
+    for (auto [slider, label] :
+         { std::pair { &orbitRate, &orbitRateLabel }, std::pair { &orbitDepth, &orbitDepthLabel } })
+    {
+        auto r = controlRow();
+        label->setBounds (r.removeFromLeft (r.getWidth() * 2 / 5));
+        slider->setBounds (r);
+    }
 
     // Right: the axis list, scrolling within its height
     auto right = layout.right.withTrimmedLeft (20);

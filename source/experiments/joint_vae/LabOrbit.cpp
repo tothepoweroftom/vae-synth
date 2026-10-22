@@ -26,6 +26,11 @@ LabOrbit::LabOrbit()
     addAndMakeVisible (view);
     view.addMouseListener (this, false);
     view.addKeyListener (this);
+    // The study's description says arrows rotate the camera; in the Lab they move the handle (keyPressed)
+    view.setDescription ("Drag the handle to move the sound; Shift drag moves it in Z. Drag empty space to orbit the "
+                         "camera, scroll to zoom. Arrow keys move the handle in X and Y, Page Up and Down in Z; "
+                         "Shift takes bigger steps. Home resets the camera. The Orbit LFO in the left sidebar "
+                         "circles the handle slowly around the current sound.");
     view.onPositionChanged = [this] (Position p)
     {
         if (moved)
@@ -59,6 +64,13 @@ void LabOrbit::setPresets (std::vector<Position> p, std::vector<int> l, int acti
     activeLabel = active;
 }
 
+void LabOrbit::setOrbit (std::vector<Position> path, Position centre)
+{
+    orbitPath = std::move (path);
+    orbitCentre = centre;
+    repaint();
+}
+
 void LabOrbit::setHighlights (std::vector<Position> h, int selected)
 {
     highlights = std::move (h);
@@ -86,6 +98,23 @@ void LabOrbit::resized()
 
 void LabOrbit::paintOverChildren (juce::Graphics& g)
 {
+    if (! orbitPath.empty())
+    {
+        juce::Path loop, dashed;
+        loop.startNewSubPath (project (orbitPath[0]));
+        for (size_t i = 1; i < orbitPath.size(); ++i)
+            loop.lineTo (project (orbitPath[i]));
+        loop.closeSubPath();
+        const float dashes[] { 4.0f, 3.0f };
+        juce::PathStrokeType (1.5f).createDashedStroke (dashed, loop, dashes, 2);
+        const auto ring = juce::Rectangle<float> (12, 12).withCentre (project (orbitCentre));
+        g.setColour (lab::workspace.withAlpha (0.8f)); // a dark underlay keeps both readable over the dots
+        g.strokePath (loop, juce::PathStrokeType (4.0f));
+        g.drawEllipse (ring, 4.0f);
+        g.setColour (lab::green);
+        g.fillPath (dashed);
+        g.drawEllipse (ring, 1.5f);
+    }
     // Find's candidates, numbered as the chips
     g.setFont (PitcherLookAndFeel::monoFontFor (*this, 9.0f));
     for (size_t i = 0; i < highlights.size(); ++i)

@@ -4,6 +4,7 @@ target_sources(vae_ml_tests PRIVATE
     MlTests.cpp
     JointVaeTests.cpp
     XyPadTests.cpp
+    LatentOrbitTests.cpp
     PromptWordsTests.cpp
     LiteTranslationTests.cpp
     PromptModelTests.cpp
@@ -11,6 +12,7 @@ target_sources(vae_ml_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LiteTranslation.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/PromptWords.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/XyPad.cpp
+    ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/LatentOrbit.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/JointVae.cpp
     ${CMAKE_SOURCE_DIR}/source/experiments/joint_vae/StudentCodec.cpp
     ../common/TestMain.cpp)

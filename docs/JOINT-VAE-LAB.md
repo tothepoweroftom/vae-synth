@@ -16,7 +16,7 @@ the editor's Synth / VAE Lab header. The two sidebars have equal widths and heig
 
 - **Left:** the pitcher mark, **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> ·
   <n>%" and eight rows with 3 px bars), then the controls: Latent pad / Knob pad, Start from, Category, Lock structure,
-  Reset and Send to Surge. **Expected sound** (the spectrogram, 0 s / 2 s / 6 s) sits at the bottom; hover it for the
+  Reset, Send to Surge, then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the spectrogram, 0 s / 2 s / 6 s) sits at the bottom; hover it for the
   details: brightness, attack, length and noise, then the decoded preset.
 - **Centre:** the orbit view (or, on the knob pad, the flat pad with its category map), the Replace banner and Find's
   chips when there are any, the single-line prompt with its submit button, a line with Find sounds / Word list, the
@@ -107,9 +107,35 @@ All controls but the axis list are in the left sidebar, under CATEGORY MATCH.
 | Lock structure | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the handle. |
 | Reset | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
 | Send to Surge | Builds the full Surge patch for this point and plays it on the Surge engine. |
+| Orbit LFO | Moves the sound slowly around the current point (see below). Latent pad only. |
+| Rate | How fast the orbit goes round: 0.02-2 Hz on a log scale, default 0.1 Hz. Free-running, not tempo-synced. |
+| Depth | How far it strays: 0-0.25 pad units of radius, default 0.08. |
 | Axis list (right) | Sound axes first, then every latent dimension, flat. X/Y/Z buttons; an assigned row's slider moves that axis (on the knob pad, that group). |
 | Expected sound | The spectrogram at the handle; hover it for the measures and the decoded preset. |
 | Keyboard | C3-C6, playing the plug-in's keyboard state; the computer keys play C3 up. |
+
+### Orbit LFO (Task 19)
+
+**Orbit LFO** makes the current point the centre: the anchor z plus the pad positions of the X, Y and Z axes. A 30 Hz
+timer moves the handle round a circle in X and Y, with a Z wobble at 0.7x the rate and half the depth (Orbit always
+has a Z). Each step constrains the pad axes from the centre's z, so the other latent directions stay put, and decodes
+through the normal Lab path to Lite. Only one step is in flight at a time and the newest request wins; Lite's 20 ms
+smoothing fills the gaps. The orbit view shows the centre as a hollow ring, the X/Y circle dashed, and the moving
+handle; the axis sliders follow the handle. Changing Rate keeps the phase, so the handle never jumps.
+
+- **Switches never move.** Lock structure is forced on while the orbit runs (its button is disabled; turning the
+  orbit off puts Lock back as you left it). Lock alone is not enough: Lite's LFO destination is derived from
+  continuous route depths and flipped about 4 times a second, and each flip ducks for 5 ms, which flutters. So every
+  discrete Lite control (toggles and choices) is held at the centre's decoded value in each step; only continuous
+  controls move. Measured with a held note for 2 s: 0 ducks and a max sample step 0.91x (default) / 1.05x (2 Hz,
+  depth 0.25) of the still points'. Without the hold, the same run had 2 / 17 ducks.
+- **Re-centring.** A handle drag or key, an axis slider, a prompt nudge, a preset-dot click and a Find dot or chip
+  move the centre to the new point; changing an axis assignment keeps the centre's sound in the new axes.
+- **Stopping.** The button again stops it and plays the centre point. Reset, Start from, Category and the knob pad
+  stop it where it is. A Synth-view or host edit stops it too, and the edit stays (the orbit never overwrites it).
+- **The edit gate.** Turning it on is a user action (R14). If the sound was edited in the Synth view it asks "Replace
+  your Synth edits?" first, as any Lab edit does.
+- Send to Surge during an orbit sends the step's full Surge patch, whose switches are not held.
 
 The preset dots are always shown (the old Preset dots switch and the latent pad's background maps are gone: Orbit is
 the only view). The worker's map request remains for the knob pad's category map.
@@ -171,6 +197,7 @@ ctest --test-dir build-default        # no Surge: checks the "needs a Surge buil
   knob pad (need `VAE_JOINT_BUNDLE`).
 - `VAE_LAB_BANK_SCREENSHOT=<file.png>`: a snapshot of the Lab with the "deep sub bass" matches highlighted (needs both bundles).
 - `VAE_SYNTH_SCREENSHOT=<file.png>`: a snapshot of the Synth view after a Lab pad move.
+- `VAE_ORBIT_SCREENSHOT=<file.png>`: the Lab with the Orbit LFO running at depth 0.25 (needs `VAE_JOINT_BUNDLE`).
 
 No inference, model loading or UI logic runs in the audio callback. Surge's own patch load does, once per Send to
 Surge.
@@ -233,6 +260,8 @@ VAE Lab, hold a note, and check each line. Note anything that differs.
 - [ ] Drag the handle, close the editor, move a knob in the host (or change nothing), reopen and drag: it asks only
       when something changed.
 - [ ] Send to Surge, close and reopen: the Synth view still says the Surge patch is playing; a knob returns to Lite.
+- [ ] Hold a note and turn on Orbit LFO: the sound drifts smoothly around the preset with no flutter, clicks or
+      switch changes; try Rate 2 Hz and Depth 0.25 too. Turn it off: back to the starting sound.
 
 ## Rendering and profiling the prompt feature
 
