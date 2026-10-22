@@ -158,8 +158,9 @@ public:
             osc[i].setIncrement (hz / sr, o.wave, table);
         }
 
-        // Filter coefficients.
-        const float keyOffset = float (note) - 60.0f;
+        // Filter coefficients. Keytrack follows the gliding pitch and pitch
+        // bend, as Surge's state.pitch does, not the target note.
+        const float keyOffset = current + shared.pitchBendSemis - 60.0f;
         for (size_t f = 0; f < filter.size(); ++f)
         {
             const auto& fs = p.filter[f];

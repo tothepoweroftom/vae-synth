@@ -350,6 +350,16 @@ public:
                     "re-enabled delay is silent: " + juce::String (p.tailPeak (size_t (second))));
         }
 
+        beginTest ("reverb tail continues after the note ends");
+        {
+            auto s = basePatch ("saw");
+            s[kReverbOn] = 1.0f;
+            s[kReverbMix] = 0.5f;
+            const auto out = capture (e, s, 2 * second, { { 0, 60, 100 }, { second / 5, 60, 0 } });
+            const float tail = rmsOf (out, size_t (second), size_t (second + second / 2));
+            expect (tail > 1.0e-3f, "reverb tail rms " + juce::String (tail));
+        }
+
         beginTest ("cutoff change glides");
         {
             e.reset();
