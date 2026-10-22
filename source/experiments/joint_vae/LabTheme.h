@@ -23,12 +23,12 @@ inline const juce::Colour categories[9] = { juce::Colour (0xff70bcff), juce::Col
 inline constexpr float mapAlpha = 0.36f;
 
 /** The identity at the top of the left column, shared by the Lab and the Synth view: the green "spinning ball
-    stripes" mark (a 100 x 100 design drawn in a 32 px square at (x, y)) and the lowercase wordmark in `bold`
+    stripes" mark (a 100 x 100 design drawn in a 40 px square, centred on the 36 px row) and the lowercase wordmark in `bold`
     (25 px Inter Bold), 36 px tall from (x, y). */
 inline void drawWordmark (juce::Graphics& g, float x, float y, juce::Font bold)
 {
-    const auto toMark = juce::AffineTransform::scale (0.32f).translated (x, y);
-    juce::Path clip; // a ball and the rect trailing it
+    const auto toMark = juce::AffineTransform::scale (0.4f).translated (x, y - 3); // stripes span y + 7 to y + 27
+    juce::Path clip;                                                               // a ball and the rect trailing it
     clip.addEllipse (36, 24, 52, 52);
     clip.addRectangle (0, 24, 62, 52);
     juce::Path stripes;
@@ -47,6 +47,6 @@ inline void drawWordmark (juce::Graphics& g, float x, float y, juce::Font bold)
     }
     g.setColour (ink);
     g.setFont (bold);
-    g.drawText ("pitcher", (int) x + 43, (int) y - 2, 180, 38, juce::Justification::centredLeft);
+    g.drawText ("pitcher", (int) x + 47, (int) y - 2, 180, 38, juce::Justification::centredLeft);
 }
 } // namespace vae::experimental::lab

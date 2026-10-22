@@ -15,7 +15,7 @@ The Lab is laid out as the brutalist design study (`docs/design/PITCHER-BRUTALIS
 row (Task 22): every column starts at the top margin. The two sidebars have equal widths and heights; the centre
 column is flexible.
 
-- **Left:** the pitcher logo (the green "spinning ball stripes" mark and the lowercase wordmark), the editor's
+- **Left:** the pitcher logo (the green 40 px "spinning ball stripes" mark and the lowercase wordmark), the editor's
   **Synth / VAE Lab** tabs, **Init** and the engine selector (these three are the editor's and are the same in both
   views), then **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> · <n>%" and eight
   rows with 3 px bars), then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the
@@ -41,8 +41,11 @@ column is flexible.
   out at its native size, 1240 x 820 px (`kNativeWidth`, `kNativeHeight`; the same for both views). The shell scales
   it by an `AffineTransform`, so the window keeps that aspect ratio at any size; mouse, keyboard and hit-testing go
   through the transform and stay in native pixels (the 7 px dot and 14 px handle radii, pad presses and drag
-  distances). The default scale comes from the primary display, `sqrt (area / 1920 x 1080) x dpi / 96`, clamped so
-  the window fits 90% of the display's user area. The limits are the default / 1.5 and x 1.5. The scale is saved
+  distances). One exception: Orbit tells a click from a drag by JUCE's threshold, 4 screen px, which is fewer
+  native px when the window is larger (about 2.7 at 1.5x). The default scale comes from the primary display,
+  `sqrt (area / 1920 x 1080)`, times `dpi / 96` except on macOS (ruling R24: JUCE's mac dpi is 72 or 144 and its
+  sizes are already points), clamped so the window fits 90% of the display's user area. The limits are the default
+  / 1.5 and x 1.5, and the maximum is never larger than the user area. The scale is saved
   with the plug-in state (the `editorScale` attribute, not a host parameter) and restored, clamped, when the editor
   opens. Double-click the resize corner to go back to the default. The host's own DPI scale factor is ignored
   (`setScaleFactor` does nothing) so it is not applied twice.

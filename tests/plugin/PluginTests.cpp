@@ -971,6 +971,15 @@ public:
                                     + " > " + juce::String (list->getMaximumVisibleWidth()));
                         expect (lab->assignedAxes()[2].isNotEmpty(), "Orbit has a Z axis");
                         shoot ("VAE_LAB_SCREENSHOT");
+                        // What users with p1 installed see: the Find placeholder and the experimental tag
+                        if (const auto p1 = juce::SystemStats::getEnvironmentVariable ("VAE_PROMPT_BUNDLE", "");
+                            p1.isNotEmpty())
+                        {
+                            lab->loadPromptBundle (juce::File (p1));
+                            expect (lab->isPromptReady(), "Find offered");
+                            expect (prompt->getTextToShowWhenEmpty().contains ("to find"));
+                            shoot ("VAE_LAB_P1_SCREENSHOT");
+                        }
 
                         // The inline Replace question: its text fits, and other status writes leave it showing
                         lab->markEdited();
@@ -1243,17 +1252,35 @@ public:
         beginTest ("the default scale follows the display and fits it");
         {
             constexpr float W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
-            const auto hd = PluginEditor::Sizing::forDisplay ({ 0, 0, 1920, 1080 }, { 0, 25, 1920, 1055 }, 96.0);
+            const juce::Rectangle<int> hdTotal { 0, 0, 1920, 1080 }, hdUser { 0, 25, 1920, 1055 };
+            // The maximum is x 1.5 or the whole user area, whichever is smaller
+            const auto hdMax = juce::jmin (1.5f, 1920.0f / W, 1055.0f / H);
+#if JUCE_MAC
+            // R24: mac dpi is NSDeviceResolution, 72 at scale 1 and 144 at scale 2, and sizes are points: no dpi factor
+            for (const auto dpi : { 72.0, 144.0 })
+            {
+                const auto hd = PluginEditor::Sizing::forDisplay (hdTotal, hdUser, dpi);
+                expectWithinAbsoluteError (hd.def, 1.0f, 1e-4f, "1920 x 1080 at dpi " + juce::String (dpi));
+                expectWithinAbsoluteError (hd.min, 1.0f / 1.5f, 1e-4f);
+                expectWithinAbsoluteError (hd.max, hdMax, 1e-4f);
+            }
+            const auto laptop = PluginEditor::Sizing::forDisplay ({ 0, 0, 1512, 982 }, { 0, 38, 1512, 944 }, 144.0);
+            expectWithinAbsoluteError (laptop.def, std::sqrt (1512.0f * 982.0f / (1920.0f * 1080.0f)), 1e-4f);
+            // A small user area clamps the default to 90% of it
+            const auto dense = PluginEditor::Sizing::forDisplay (hdTotal, { 0, 0, 1240, 700 }, 144.0);
+#else
+            const auto hd = PluginEditor::Sizing::forDisplay (hdTotal, hdUser, 96.0);
             expectWithinAbsoluteError (hd.def, 1.0f, 1e-4f);
             expectWithinAbsoluteError (hd.min, 1.0f / 1.5f, 1e-4f);
-            expectWithinAbsoluteError (hd.max, 1.5f, 1e-4f);
+            expectWithinAbsoluteError (hd.max, hdMax, 1e-4f);
+            // 200% dpi asks for 2x, more than fits: the default is clamped to 90% of the user area
+            const auto dense = PluginEditor::Sizing::forDisplay (hdTotal, { 0, 0, 1240, 700 }, 192.0);
+#endif
+            expectWithinAbsoluteError (dense.def, juce::jmin (0.9f * 1240 / W, 0.9f * 700 / H), 1e-4f, "clamped");
+            expectWithinAbsoluteError (dense.max, juce::jmin (dense.def * 1.5f, 1240 / W, 700 / H), 1e-4f,
+                                       "no larger than the screen");
             const auto small = PluginEditor::Sizing::forDisplay ({ 0, 0, 1280, 800 }, { 0, 25, 1280, 775 }, 96.0);
             expectWithinAbsoluteError (small.def, std::sqrt (1280.0f * 800.0f / (1920.0f * 1080.0f)), 1e-4f);
-            // A dense display asks for more than fits: the default is clamped to 90% of the user area
-            const auto dense = PluginEditor::Sizing::forDisplay ({ 0, 0, 1512, 982 }, { 0, 38, 1512, 944 }, 254.0);
-            expect (W * dense.def <= 0.9f * 1512 + 0.5f && H * dense.def <= 0.9f * 944 + 0.5f, "fits");
-            expectWithinAbsoluteError (dense.def, juce::jmin (0.9f * 1512 / W, 0.9f * 944 / H), 1e-4f);
-            expectWithinAbsoluteError (dense.max, dense.def * 1.5f, 1e-4f);
         }
 
         beginTest ("at 1.5x, the knobs and the keyboard hit as at 1x");

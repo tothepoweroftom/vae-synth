@@ -206,8 +206,9 @@ public:
     struct Sizing
     {
         float def = 1.0f, min = 1.0f / 1.5f, max = 1.5f;
-        /** From a display's total and user areas and its dpi: sqrt (area / 1920 x 1080) x dpi / 96, clamped so the
-            window fits 90% of the user area; the limits are the default / 1.5 and x 1.5. */
+        /** From a display's total and user areas and its dpi: sqrt (area / 1920 x 1080), x dpi / 96 except on macOS
+            (R24), clamped so the window fits 90% of the user area; the limits are the default / 1.5 and x 1.5, the
+            maximum also no larger than the user area. */
         static Sizing forDisplay (juce::Rectangle<int> total, juce::Rectangle<int> user, double dpi);
     };
 

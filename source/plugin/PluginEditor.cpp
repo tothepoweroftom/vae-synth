@@ -745,10 +745,21 @@ PluginEditor::Sizing PluginEditor::Sizing::forDisplay (juce::Rectangle<int> tota
     constexpr float kNativeDisplayArea = 1920.0f * 1080.0f, kNativeDpi = 96.0f;
     const auto W = (float) MainEditorComponent::kNativeWidth, H = (float) MainEditorComponent::kNativeHeight;
     const auto area = total.isEmpty() ? kNativeDisplayArea : (float) total.getWidth() * (float) total.getHeight();
+#if JUCE_MAC
+    // Ruling R24: mac dpi is NSDeviceResolution (72 / 144) and JUCE sizes are already points, so no dpi factor
+    juce::ignoreUnused (dpi, kNativeDpi);
+    float def = std::sqrt (area / kNativeDisplayArea);
+#else
     float def = std::sqrt (area / kNativeDisplayArea) * (dpi > 0 ? (float) dpi / kNativeDpi : 1.0f);
-    if (! user.isEmpty()) // the window fits 90% of the user area
-        def = juce::jmin (def, 0.9f * (float) user.getWidth() / W, 0.9f * (float) user.getHeight() / H);
-    return { def, def / 1.5f, def * 1.5f };
+#endif
+    float max = def * 1.5f;
+    if (! user.isEmpty()) // the window opens within 90% of the user area and never grows past all of it
+    {
+        const auto fit = juce::jmin ((float) user.getWidth() / W, (float) user.getHeight() / H);
+        def = juce::jmin (def, 0.9f * fit);
+        max = juce::jmin (def * 1.5f, fit);
+    }
+    return { def, def / 1.5f, max };
 }
 
 PluginEditor::PluginEditor (PluginProcessor& p)
