@@ -261,9 +261,9 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     findButton.setTooltip ("Learned prompt search: suggests real presets from the prompt bundle");
     nudgeButton.setTooltip ("Word list: picks a starting point and nudges it with words like darker or longer");
     // Installed beside the Lab bundle by scripts/install-models.sh; loads after each Lab bundle
-    promptFile = ml::appDataDir().getChildFile ("models/prompt-p1/prompt.json");
+    promptFile = ml::installedModels ("prompt-p1/prompt.json");
     if (! promptFile.existsAsFile()) // older installs
-        promptFile = ml::appDataDir().getChildFile ("models/prompt-p0/prompt.json");
+        promptFile = ml::installedModels ("prompt-p0/prompt.json");
     updatePromptUi();
 
     // The study's 3-octave keyboard, C3 (MIDI 48) to C6 (MIDI 84): 22 white and 15 black keys
@@ -401,10 +401,10 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
         c->setEnabled (false);
 
     // Installed by scripts/install-models.sh, like the Prompt tab's models
-    if (const auto installed = ml::appDataDir().getChildFile ("models/joint-vae/bundle.json"); installed.existsAsFile())
+    if (const auto installed = ml::installedModels ("joint-vae/bundle.json"); installed.existsAsFile())
         loadBundle (installed);
     else
-        setStatus ("No VAE bundle installed: run scripts/install-models.sh");
+        setStatus ("No VAE bundle installed: reinstall VAE Synth");
 }
 
 JointVaePanel::~JointVaePanel()

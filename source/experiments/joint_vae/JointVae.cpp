@@ -396,7 +396,7 @@ juce::Result JointVae::patch (const std::vector<float>& codes, juce::MemoryBlock
     if (builder == nullptr)
     {
         // Template + wavetables: installed by scripts/install-models.sh, else the build tree's Surge checkout
-        auto data = ml::appDataDir().getChildFile ("models/surge-data");
+        auto data = ml::installedModels ("surge-data");
         if (! data.isDirectory())
             data = juce::File (VAE_SURGE_DATA_DIR);
         builder = std::make_unique<SurgePatchBuilder> (data);

@@ -74,6 +74,28 @@ in `CMakeLists.txt`.
   (including its own ONNX DLL) in `Common Files\VST3`, Start menu shortcut
   and uninstaller.
 
+Installers include the current Lab inference payload: the complete
+`models/joint-vae-j48w_b05` and `models/prompt-p1` bundles (ONNX models,
+external tensor files, tokenizer, preset bank and metadata), plus the Surge
+Init Saw template and the wavetables referenced by the Lab schema. Packaging
+fails if required files or wavetables are absent, or the prompt and Lab bundle
+IDs disagree. Override the source directory with `--model-root /path/to/models`.
+The configured Surge checkout is recorded in `release-info.json`; reconfigure
+older builds before using `--package-only`.
+
+Models install once for all plugin formats and users:
+
+- macOS: `/Library/Application Support/VAE Synth/models`
+- Windows: `%ProgramData%\VAE Synth\models`
+
+The plugin prefers these shared bundles, falls back to per-user development
+models, and keeps generated caches in the user's data folder. `VAE_DATA_DIR`
+explicitly overrides both model lookup and caches for isolated testing.
+
+The retired Prompt tab is disabled in the current UI. To also include its
+SAME and Stable Audio assets, pass `--native-model-root /path/to/build-dir`
+containing `native-same/` and `native-generator/` (approximately 3 GB extra).
+
 The embedded stub model and fonts are already compiled into the synth.
 Installers also include the Inter and ONNX Runtime license notices.
 Windows machines need the Microsoft Visual C++ 2015–2022 x64 Redistributable

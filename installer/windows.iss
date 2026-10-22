@@ -20,5 +20,7 @@ Source: "{#Artifacts}\Standalone\*"; DestDir: "{app}"; Flags: ignoreversion recu
 Source: "{#Artifacts}\VST3\VAE Synth.vst3\*"; DestDir: "{commoncf64}\VST3\VAE Synth.vst3"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#Notices}\*"; DestDir: "{app}\Licenses"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+Source: "{#Models}\*"; DestDir: "{commonappdata}\VAE Synth\models"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 [Icons]
 Name: "{group}\VAE Synth"; Filename: "{app}\VAE Synth.exe"

@@ -42,8 +42,11 @@ struct Int64TensorView
     std::span<const int64_t> shape;
 };
 
-/** Per-user "VAE Synth" data folder (or $VAE_DATA_DIR): installed models and derived caches. */
+/** Per-user "VAE Synth" data folder (or $VAE_DATA_DIR): development models and derived caches. */
 juce::File appDataDir();
+
+/** Installed model asset; shared installer data, with per-user development fallback. */
+juce::File installedModels (const char* relative);
 
 bool isSha256Hex (const juce::String&);
 
