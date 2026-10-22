@@ -802,3 +802,14 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
   - The editor keeps the fixed ratio when resized.
   - The scale is restored from state.
   - At scale 1.5, a click at a scaled point hits the same control as at 1.0.
+
+**Task 22, added (user request, 22 Oct 2026): hide the Lab's control group for now.**
+- Hide these controls, but don't delete them:
+  - the Latent pad / Knob pad switch;
+  - the Start from combo (Typical ⟨label⟩ / Random real preset);
+  - the Category combo;
+  - Lock structure, Reset and Send to Surge.
+- Use one constant or flag (`kShowLabControls = false`), so they can be switched back on in one line.
+- Their behaviour and tests stay. Tests that drive them through hooks or `triggerClick` keep working, so set them invisible rather than removing them.
+- The left column's freed space goes to the rest of the column (Category match, Orbit LFO controls, Expected sound). There must be no empty gap.
+- Docs: list the hidden controls and how to re-enable them.
