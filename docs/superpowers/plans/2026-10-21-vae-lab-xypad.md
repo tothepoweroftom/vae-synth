@@ -771,3 +771,34 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
   - Lab layout: no left-column component is clipped.
 - [ ] **Step 2:** Implement.
 - [ ] **Step 3:** Take screenshots of both views and compare them with `docs/design/pitcher-native-study.png`. Run the full ctest in both builds. vae_format_check failures on the user's uncommitted Lite files are expected. Commit.
+
+**Task 22, added (user request, 22 Oct 2026): a resizable editor at a fixed aspect ratio, scaled by a transform.** This follows the pattern in `/Users/thomaspower/Developer/Jochem/Ablaze.Screamer/source/PluginEditor.{h,cpp}`. That repo is reference only; don't copy its licence-, iOS- or preset-specific code.
+
+- **Split the editor.**
+  - `PluginEditor` (the `AudioProcessorEditor`) becomes a thin shell.
+  - A new inner `MainEditorComponent` owns everything currently laid out in the editor: the shared left column, both views and the keyboards.
+  - The inner component is always laid out at one **native size**, `kNativeWidth × kNativeHeight`. The same size is used for both views, so the ratio never changes between Synth and Lab. *My call:* the native size is 1240 px wide by the current editor height at that width. Fix it as two constants.
+- **Shell `resized()`:**
+  - `scale = jlimit (minScale, maxScale, getHeight() / float (kNativeHeight))`.
+  - `inner.setBounds (0, 0, kNativeWidth, kNativeHeight)`.
+  - `inner.setTransform (juce::AffineTransform::scale (scale))`.
+  - Then place the resize corner.
+- **Constrainer:**
+  - `setResizable (true, true)`.
+  - `getConstrainer()->setFixedAspectRatio (kNativeWidth / (double) kNativeHeight)`.
+  - Min and max sizes are the native size × minScale and × maxScale.
+- **Default scale:**
+  - Computed from the primary display: `sqrt (displayArea / nativeDisplayArea) × dpi / 96`, with min = default ÷ 1.5 and max = default × 1.5, as Ablaze does.
+  - *My call:* clamp the default so the window fits within 90% of the display's user area.
+- **Persistence:**
+  - The scale is stored as a processor property and saved and restored with the plug-in's state. Check how `PluginProcessor` saves state and add one property; don't make it a host parameter.
+  - On open, the editor restores it, clamped.
+  - Double-clicking the resize corner resets to the default.
+- **Host scaling:** override `setScaleFactor()` to do nothing, as Ablaze does, so host DPI scaling isn't applied on top of the transform. Add a comment saying why.
+- **Behaviour to keep:**
+  - Mouse, keyboard and hit-testing must work at every scale. JUCE transforms handle this. Check the Orbit view's drag and hit-test, the pad tap threshold and the keyboard in a test at scale 1.5.
+  - Screenshots and layout tests run on the inner component at native size.
+- **Extra tests:**
+  - The editor keeps the fixed ratio when resized.
+  - The scale is restored from state.
+  - At scale 1.5, a click at a scaled point hits the same control as at 1.0.
