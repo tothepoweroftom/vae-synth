@@ -19,7 +19,12 @@ add_custom_target(vae_tokenizer_build DEPENDS "${VAE_TOKENIZER_LIB}")
 add_library(vae_tokenizer STATIC IMPORTED GLOBAL)
 set_target_properties(vae_tokenizer PROPERTIES IMPORTED_LOCATION "${VAE_TOKENIZER_LIB}")
 add_dependencies(vae_tokenizer vae_tokenizer_build)
-if(APPLE)
+if(WIN32)
+    # A Rust staticlib does not carry its native system-library dependencies
+    # into the C++ link. Propagate them to every tokenizer consumer.
+    target_link_libraries(vae_tokenizer INTERFACE
+        kernel32 ntdll userenv ws2_32 dbghelp bcrypt advapi32)
+elseif(APPLE)
     target_link_libraries(vae_tokenizer INTERFACE "-framework Security" "-framework SystemConfiguration")
 elseif(UNIX)
     target_link_libraries(vae_tokenizer INTERFACE pthread dl m)

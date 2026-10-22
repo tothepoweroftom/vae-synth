@@ -66,6 +66,7 @@ endif()
 if(WIN32)
     set(VAE_ORT_RUNTIME_NAME "onnxruntime.dll")
     set(VAE_ORT_RUNTIME_FILE "${VAE_ORT_ROOT}/lib/onnxruntime.dll")
+    file(GLOB VAE_ORT_EXTRA_DLLS "${VAE_ORT_ROOT}/lib/onnxruntime_*.dll")
 elseif(APPLE)
     set(VAE_ORT_RUNTIME_NAME "libonnxruntime.dylib")
     file(GLOB _ort_libs "${VAE_ORT_ROOT}/lib/libonnxruntime.*.dylib")
@@ -109,6 +110,11 @@ function(vae_bundle_onnxruntime plugin_target)
                 COMMAND codesign --force --deep --sign - "$<TARGET_BUNDLE_DIR:${t}>"
                 VERBATIM)
         endif()
+        if(WIN32 AND VAE_ORT_EXTRA_DLLS)
+            add_custom_command(TARGET ${t} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VAE_ORT_EXTRA_DLLS} "${dest}"
+                VERBATIM)
+        endif()
     endforeach()
 endfunction()
 
@@ -118,4 +124,9 @@ function(vae_copy_onnxruntime_next_to exe_target)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${VAE_ORT_RUNTIME_FILE}"
                 "$<TARGET_FILE_DIR:${exe_target}>/${VAE_ORT_RUNTIME_NAME}"
         VERBATIM)
+    if(WIN32 AND VAE_ORT_EXTRA_DLLS)
+        add_custom_command(TARGET ${exe_target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VAE_ORT_EXTRA_DLLS} "$<TARGET_FILE_DIR:${exe_target}>"
+            VERBATIM)
+    endif()
 endfunction()

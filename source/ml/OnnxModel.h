@@ -45,6 +45,9 @@ struct Int64TensorView
 /** Per-user "VAE Synth" data folder (or $VAE_DATA_DIR): installed models and derived caches. */
 juce::File appDataDir();
 
+/** User models take precedence over the Windows installer's shared model files. */
+juce::File installedModelFile (const juce::String& relative);
+
 bool isSha256Hex (const juce::String&);
 
 struct ModelLoadOptions

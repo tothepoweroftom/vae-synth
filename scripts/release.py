@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build and optionally package VAE Synth locally. No third-party Python dependencies."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ import platform
 import plistlib
 import shutil
 import subprocess
+import struct
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,13 +91,147 @@ def mac_package(artifacts, work, info, args):
     return installer
 
 
+def signing_env(name, fallback=None):
+    return os.environ.get(name) or (os.environ.get(fallback) if fallback else None)
+
+
+def windows_signtool():
+    configured = os.environ.get("VAE_SIGNTOOL") or shutil.which("signtool")
+    if configured:
+        return configured
+    sdk = Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)")) / "Windows Kits/10/bin"
+    candidates = sorted(sdk.glob("10.*/x64/signtool.exe"),
+                        key=lambda p: tuple(int(n) for n in p.parent.parent.name.split(".")))
+    if not candidates:
+        raise FileNotFoundError("Install the Windows SDK or set VAE_SIGNTOOL to its x64 signtool.exe.")
+    return str(candidates[-1])
+
+
+def windows_azure_metadata():
+    metadata_path = os.environ.get("VAE_AZURE_METADATA")
+    if metadata_path:
+        metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8-sig"))
+        for key in ("Endpoint", "CodeSigningAccountName", "CertificateProfileName"):
+            if not metadata.get(key):
+                raise ValueError(f"Missing {key} in VAE_AZURE_METADATA")
+        return metadata
+    account = signing_env("VAE_AZURE_ACCOUNT", "TRUCE_AZURE_ACCOUNT")
+    profile = signing_env("VAE_AZURE_PROFILE", "TRUCE_AZURE_PROFILE")
+    if not account and not profile:
+        return None
+    if not account or not profile:
+        raise ValueError("Set both VAE_AZURE_ACCOUNT and VAE_AZURE_PROFILE (or their TRUCE equivalents).")
+    endpoint = signing_env("VAE_AZURE_ENDPOINT", "TRUCE_AZURE_ENDPOINT") or "weu"
+    if not endpoint.startswith("https://"):
+        if "://" in endpoint:
+            raise ValueError("Azure signing requires an HTTPS endpoint.")
+        endpoint = f"https://{endpoint.strip('/')}.codesigning.azure.net"
+    return {"Endpoint": endpoint, "CodeSigningAccountName": account, "CertificateProfileName": profile}
+
+
+def windows_azure_dlib():
+    path = signing_env("VAE_AZURE_DLIB", "TRUCE_AZURE_DLIB")
+    if not path:
+        path = str(Path(os.environ.get("LOCALAPPDATA", "")) /
+                   "Microsoft/MicrosoftArtifactSigningClientTools/Azure.CodeSigning.Dlib.dll")
+    if not Path(path).is_file():
+        raise FileNotFoundError("Set VAE_AZURE_DLIB to the x64 Azure.CodeSigning.Dlib.dll from the Microsoft signing client.")
+    return path
+
+
 def windows_sign(path):
-    tool = os.environ.get("VAE_SIGNTOOL", "signtool")
+    tool = windows_signtool()
+    metadata = windows_azure_metadata()
+    if metadata:
+        dlib = windows_azure_dlib()
+        timestamp = signing_env("VAE_WINDOWS_TIMESTAMP_URL", "TRUCE_TIMESTAMP_URL") or "http://timestamp.acs.microsoft.com"
+        # Only public account/profile metadata goes on disk; authentication stays
+        # with Azure.Identity and the user's existing credential provider.
+        with tempfile.TemporaryDirectory(prefix="azure-sign-", dir=path.parent) as temporary:
+            manifest = Path(temporary) / "metadata.json"
+            manifest.write_text(json.dumps(metadata), encoding="utf-8")
+            run(tool, "sign", "/fd", "SHA256", "/tr", timestamp, "/td", "SHA256",
+                "/dlib", dlib, "/dmdf", manifest, path)
+        run(tool, "verify", "/pa", "/all", "/tw", path)
+        return
     store = ["/sm"] if os.environ.get("VAE_WINDOWS_MACHINE_STORE") == "1" else []
     run(tool, "sign", *store, "/sha1", require_env("VAE_WINDOWS_CERT_SHA1"),
         "/fd", "SHA256", "/tr", require_env("VAE_WINDOWS_TIMESTAMP_URL"),
         "/td", "SHA256", path)
     run(tool, "verify", "/pa", "/all", path)
+
+
+def require_x64(path):
+    """Check the PE header, including for --package-only builds."""
+    with path.open("rb") as stream:
+        if stream.read(2) != b"MZ":
+            raise ValueError(f"Not a Windows PE binary: {path}")
+        stream.seek(0x3c)
+        offset = struct.unpack("<I", stream.read(4))[0]
+        stream.seek(offset)
+        if stream.read(4) != b"PE\0\0" or stream.read(2) != b"\x64\x86":
+            raise ValueError(f"Windows releases require x64 binaries: {path}")
+
+
+def windows_redist(work):
+    override = os.environ.get("VAE_VC_REDIST")
+    candidates = [Path(override)] if override else sorted(
+        Path(os.environ.get("ProgramFiles(x86)", "C:/Program Files (x86)"))
+        .glob("Microsoft Visual Studio/2022/*/VC/Redist/MSVC/v143/vc_redist.x64.exe"))
+    if not candidates or not candidates[0].is_file():
+        raise FileNotFoundError("Set VAE_VC_REDIST to Microsoft's vc_redist.x64.exe (14.44.35211 or newer).")
+    source = candidates[0].resolve()
+    # Validate the publisher and minimum supported version before embedding it.
+    shell_env = os.environ.copy()
+    shell_env.pop("PSModulePath", None)  # Do not mix PowerShell 7 and Windows PowerShell modules.
+    subprocess.run([shutil.which("pwsh") or "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", str(ROOT / "scripts/verify-redist.ps1"),
+                    "-Path", str(source)], check=True, env=shell_env)
+    dest = work / "vc_redist.x64.exe"
+    copy(source, dest)
+    return dest
+
+
+def stage_models(source, destination):
+    required = {
+        "joint-vae": ("bundle.json", "decoder.onnx", "sound_encoder.onnx", "sound_decoder.onnx",
+                      "schema.json", "pruning.json", "xypad.json", "sound_pca.npz"),
+        "prompt-p0": ("prompt.json", "text_encoder.onnx", "prior.onnx", "tokenizer.json", "bank.json", "bank.bin"),
+        "prompt-p1": ("prompt.json", "text_encoder.onnx", "prior.onnx", "tokenizer.json", "bank.json", "bank.bin"),
+        "same": ("native-bank.json", "same-encoder.onnx"),
+        "generator": ("generator.json", "text.onnx", "dit.onnx", "decoder.onnx", "tokenizer.json"),
+        "surge-data": ("patches_factory/Templates/Init Saw.fxp",),
+    }
+    if not source.is_dir():
+        raise FileNotFoundError(f"Model directory not found: {source}")
+    bundles = [name for name in required if (source / name).is_dir()]
+    if not bundles or bundles == ["surge-data"]:
+        raise ValueError("Model directory must contain exported runtime bundles (joint-vae, prompt-p1, same, generator).")
+    for bundle in bundles:
+        for name in required[bundle]:
+            if not (source / bundle / name).is_file():
+                raise FileNotFoundError(f"Incomplete model bundle: {source / bundle / name}")
+    manifest = {}
+    for bundle in bundles:
+        for path in sorted((source / bundle).rglob("*")):
+            if path.is_symlink():
+                raise ValueError(f"Model bundles must contain files, not symlinks: {path}")
+            if not path.is_file() or path.name == ".DS_Store":
+                continue
+            with path.open("rb") as stream:
+                if stream.read(128).startswith(b"version https://git-lfs.github.com/spec/v1"):
+                    raise ValueError(f"Unresolved Git LFS pointer: {path}. Run git lfs pull before packaging.")
+                stream.seek(0)
+                digest = hashlib.file_digest(stream, "sha256").hexdigest() if hasattr(hashlib, "file_digest") else None
+                if digest is None:
+                    hasher = hashlib.sha256()
+                    for block in iter(lambda: stream.read(1024 * 1024), b""):
+                        hasher.update(block)
+                    digest = hasher.hexdigest()
+            relative = path.relative_to(source)
+            copy(path, destination / relative)
+            manifest[relative.as_posix()] = digest
+    (destination / "installed-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
 def windows_package(artifacts, work, info, args):
@@ -112,11 +248,25 @@ def windows_package(artifacts, work, info, args):
     for binary in binaries:
         if not binary.is_file():
             raise FileNotFoundError(f"Missing release binary: {binary}")
+        require_x64(binary)
+    # Include provider/support DLLs from the exact ORT package used by CMake.
+    for dll in (Path(info["ort_root"]) / "lib").glob("onnxruntime_*.dll"):
+        require_x64(dll)
+        for directory in (binaries[0].parent, binaries[2].parent):
+            copy(dll, directory / dll.name)
+    redist = windows_redist(work)
+    models = work / "models"
+    models.mkdir()
+    if args.models_dir:
+        stage_models(args.models_dir, models)
+    elif not args.without_models:
+        raise ValueError("Windows installers require --models-dir (or --without-models for a stub-only development installer).")
     if args.sign:
         for binary in binaries:
             windows_sign(binary)
     run(os.environ.get("VAE_ISCC", "iscc"), f'/DProductVersion={info["version"]}',
         f"/DArtifacts={stage}", f"/DNotices={notices(work, info)}",
+        f"/DRedist={redist}", f"/DModels={models}", f"/DIncludeModels={int(bool(args.models_dir))}",
         f"/DOutputDir={work}", ROOT / "installer/windows.iss")
     installer = work / "installer.exe"
     if args.sign:
@@ -132,6 +282,9 @@ def main():
     parser.add_argument("--test", action="store_true", help="Build tests and require CTest to pass")
     parser.add_argument("--package", action="store_true", help="Create an installer after building")
     parser.add_argument("--package-only", action="store_true", help="Package an existing Release build")
+    models = parser.add_mutually_exclusive_group()
+    models.add_argument("--models-dir", type=Path, help="Exported runtime bundles to embed in the Windows installer")
+    models.add_argument("--without-models", action="store_true", help="Explicitly create a stub-only development installer")
     parser.add_argument("--sign", action="store_true", help="Sign using local certificates")
     parser.add_argument("--notarize", action="store_true", help="Submit signed macOS installer to Apple")
     parser.add_argument("--mac-arch", choices=("universal", "arm64", "x86_64"), default="universal")
@@ -146,13 +299,25 @@ def main():
     if args.notarize and (system != "Darwin" or not args.sign):
         parser.error("--notarize requires macOS and --sign")
     packaging = args.package or args.package_only
+    if system == "Windows" and packaging and not args.models_dir and not args.without_models:
+        default_models = ROOT / "installer/models"
+        if default_models.is_dir():
+            args.models_dir = default_models
+        else:
+            parser.error("Copy the Mac runtime bundles to installer/models, or pass --models-dir. Use --without-models only for a stub-only installer.")
     if args.sign and not packaging:
         parser.error("--sign requires --package or --package-only")
     if args.package_only and (args.test or args.cmake_arg):
         parser.error("--package-only uses the existing build; omit build/test options")
     if args.sign:
-        names = ("VAE_MAC_APPLICATION_IDENTITY", "VAE_MAC_INSTALLER_IDENTITY") if system == "Darwin" else (
-            "VAE_WINDOWS_CERT_SHA1", "VAE_WINDOWS_TIMESTAMP_URL")
+        if system == "Darwin":
+            names = ("VAE_MAC_APPLICATION_IDENTITY", "VAE_MAC_INSTALLER_IDENTITY")
+        elif windows_azure_metadata():
+            windows_signtool()
+            windows_azure_dlib()
+            names = ()
+        else:
+            names = ("VAE_WINDOWS_CERT_SHA1", "VAE_WINDOWS_TIMESTAMP_URL")
         for name in names:
             require_env(name)
     if args.notarize:
@@ -180,6 +345,8 @@ def main():
             arch = "universal" if arches == {"arm64", "x86_64"} else info["mac_architectures"] or platform.machine()
             label = f"mac-{arch}"
         status = "notarized" if args.notarize else "signed" if args.sign else "unsigned"
+        if system == "Windows" and args.without_models:
+            variant += "-stub"
         dist = ROOT / "dist"
         dist.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="package-", dir=build) as temporary:

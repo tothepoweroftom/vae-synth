@@ -5,6 +5,13 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
 
 project(VAESynth VERSION 0.1.0 LANGUAGES C CXX)
 
+if(WIN32 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR
+        "VAE Synth requires a 64-bit Windows build (ONNX Runtime and the Rust tokenizer). "
+        "Use a new build directory with -G \"Visual Studio 17 2022\" -A x64, "
+        "or run Ninja from an x64 Native Tools command prompt.")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

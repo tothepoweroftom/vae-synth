@@ -66,6 +66,19 @@ juce::File appDataDir()
     return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile (name);
 }
 
+juce::File installedModelFile (const juce::String& relative)
+{
+    const auto user = appDataDir().getChildFile ("models").getChildFile (relative);
+#if JUCE_WINDOWS
+    // An explicit data override must stay isolated (including in tests).
+    if (! user.exists() && juce::SystemStats::getEnvironmentVariable ("VAE_DATA_DIR", {}).isEmpty())
+        return juce::File::getSpecialLocation (juce::File::commonApplicationDataDirectory)
+            .getChildFile ("VAE Synth/models")
+            .getChildFile (relative);
+#endif
+    return user;
+}
+
 bool isSha256Hex (const juce::String& s) { return s.length() == 64 && s.containsOnly ("0123456789abcdef"); }
 
 OnnxModel::OnnxModel() = default;

@@ -1,8 +1,8 @@
 # Local macOS and Windows builds
 
 The local release helpers follow Ablaze.WASMSynth's native installer layout.
-They use local signing tools and certificates, with no remote signing service
-or CI dependency. Run them from any working directory.
+They use local build tools and either local signing certificates or Azure
+Trusted Signing on Windows. Run them from any working directory.
 
 ## Prerequisites
 
@@ -10,7 +10,8 @@ or CI dependency. Run them from any working directory.
 - macOS: full Xcode, selected with `xcode-select`. The default build is universal
   (Apple Silicon + Intel), targeting macOS 11 or newer.
 - Windows: Visual Studio 2022 with Desktop development with C++, the Windows
-  SDK, and the Python launcher (`py`). Builds target x64.
+  SDK, and Python (`py` or `python` on PATH). Builds target x64.
+- Rust/Cargo with the MSVC toolchain on Windows, for the native tokenizer.
 - Windows packaging: Inno Setup 6.3+; put `iscc.exe` on PATH or set `VAE_ISCC`
   to its full path. Signed builds also need `signtool.exe` on PATH or
   `VAE_SIGNTOOL` set to its full path.
@@ -62,6 +63,44 @@ or architectures. Windows packaging currently supports x64 only.
 .\build-windows.ps1 --test --package
 ```
 
+Windows release installers embed the exported model bundles. Copy the Mac's
+`~/Library/Application Support/VAE Synth/models/` contents into `installer/models/`
+(or supply `--models-dir C:\path\to\models`). Preserve the runtime directory names:
+`joint-vae`, `prompt-p1`/`prompt-p0`, `same`, `generator`, and, for Surge builds,
+`surge-data`. Copy the complete bundles, including tokenizers, banks, manifests,
+NPZ files and ONNX external weights. Run `git lfs pull` if these assets use LFS.
+Packaging rejects missing required files and unresolved LFS pointers, and records
+SHA-256 hashes of the embedded files in `installed-manifest.json`.
+
+```powershell
+.\build-windows.ps1 --test --package --models-dir C:\Models\VAE-Synth
+# Explicit development-only installer with the embedded stub model:
+.\build-windows.ps1 --package-only --without-models
+```
+
+The Windows installer requires Windows 10 version 2004 or newer and an x64-compatible
+processor. Packaging validates PE headers to reject x86/ARM64 app, plugin or ONNX
+DLLs, including when using `--package-only`. It embeds Microsoft's signed x64
+Visual C++ Redistributable (14.44.35211 or newer), found in the VS2022 `v143`
+redistributable directory. Alternatively set `VAE_VC_REDIST` to Microsoft's
+`vc_redist.x64.exe`. Its publisher signature and version are checked before
+packaging. Setup installs it before the synth, aborts on prerequisite failure,
+skips an existing compatible version, and reports a required restart.
+
+ONNX Runtime and its support DLLs are installed beside the standalone EXE and
+inside the VST3 bundle's `Contents/x86_64-win` directory. Models install once in
+`%ProgramData%\VAE Synth\models`, readable by all users; the app and plugin discover
+them automatically. Per-user models in `%APPDATA%\VAE Synth\models` take precedence.
+Optimized graphs and verification caches stay in per-user app data. `VAE_DATA_DIR`
+isolates both models and caches from the shared install for testing. The installed
+app requires no Python, Rust, Visual Studio, PATH changes or model downloads.
+
+Before distributing, test in a clean Windows VM: install offline with no VC++
+runtime present, launch the standalone, load the VST3 in a 64-bit host, and exercise
+every included model bundle from a standard second user account. Repeat installation
+with a newer VC++ runtime already installed, then test upgrade and uninstall.
+Local build/CTest and installer compilation do not replace this clean-machine test.
+
 Outputs appear in ignored `dist/`, with version, platform, architecture, engine
 variant and signing status in their filenames. Repeating a release replaces
 the same output filename. Version comes from `project(VAESynth VERSION ...)`
@@ -76,8 +115,8 @@ in `CMakeLists.txt`.
 
 The embedded stub model and fonts are already compiled into the synth.
 Installers also include the Inter and ONNX Runtime license notices.
-Windows machines need the Microsoft Visual C++ 2015–2022 x64 Redistributable
-required by ONNX Runtime; the installer does not download or install it.
+Windows installers include and install the Microsoft Visual C++ x64 Redistributable
+required by the app and ONNX Runtime; installation can run offline.
 These scripts package binaries; they do not prepare corresponding source
 archives for a GPL release.
 
@@ -119,6 +158,33 @@ macOS bundles retain their development ad-hoc signatures and the installer
 is labeled unsigned.
 
 ## Local Windows signing
+
+Azure Trusted Signing (Artifact Signing) can reuse the same account, identity
+and authentication as Truce. The native Windows signing works for JUCE binaries
+as well as Rust binaries. To choose the JUCE certificate profile:
+
+```powershell
+$env:VAE_AZURE_ACCOUNT = 'YOUR_EXISTING_ACCOUNT'
+$env:VAE_AZURE_PROFILE = 'juce'
+$env:VAE_AZURE_ENDPOINT = 'weu'
+.\build-windows.ps1 --package --sign
+```
+
+The release helper also accepts `TRUCE_AZURE_ACCOUNT`, `TRUCE_AZURE_PROFILE`,
+`TRUCE_AZURE_ENDPOINT`, `TRUCE_AZURE_DLIB` and `TRUCE_TIMESTAMP_URL` as fallbacks.
+`VAE_` values take precedence. Set `VAE_AZURE_DLIB` if the Microsoft signing client
+is installed outside its default per-user location. SignTool is discovered in
+the installed x64 Windows SDK, or selected with `VAE_SIGNTOOL`.
+
+Alternatively set `VAE_AZURE_METADATA` to a local Azure signing metadata JSON
+with `Endpoint`, `CodeSigningAccountName` and `CertificateProfileName`. No private
+keys or passwords belong in that JSON. Azure.Identity uses the existing credential
+provider (for example Azure CLI/Visual Studio login or the `AZURE_*` service-principal
+environment variables). No authentication values are copied into this repository.
+Signatures use SHA-256 and the Microsoft RFC 3161 timestamp service, and every
+signed output is verified. Missing or partial Azure configuration fails the build.
+
+For a certificate installed in the Windows certificate store instead:
 
 The default uses a certificate in the current user's `My` certificate store.
 For a certificate in the local machine store, set `VAE_WINDOWS_MACHINE_STORE=1`.

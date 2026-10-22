@@ -20,6 +20,11 @@ public:
     {
         const juce::File stub (VAE_STUB_DECODER_PATH);
 
+        beginTest ("test data override isolates model discovery from installed shared models");
+        if (juce::SystemStats::getEnvironmentVariable ("VAE_DATA_DIR", {}).isNotEmpty())
+            expect (installedModelFile ("joint-vae/bundle.json")
+                    == appDataDir().getChildFile ("models/joint-vae/bundle.json"));
+
         beginTest ("runtime loads");
         OnnxModel model;
         logMessage (model.getRuntimeStatus());

@@ -41,10 +41,25 @@ Needs CMake ≥ 3.22, a C++20 compiler and network access on first configure
 (JUCE, ONNX Runtime, and Surge if enabled are fetched).
 
 ```sh
+# macOS/Linux (Windows instructions below)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ctest --test-dir build
 ```
+
+On Windows, use a fresh x64 build directory. The Visual Studio generator sets
+up the compiler and Windows SDK without needing a developer command prompt:
+
+```powershell
+cmake -S . -B build-windows-x64 -G "Visual Studio 17 2022" -A x64
+cmake --build build-windows-x64 --config Release --parallel 3
+ctest --test-dir build-windows-x64 -C Release --output-on-failure
+```
+
+Install Visual Studio 2022's Desktop development with C++ workload (including
+the Windows SDK) and Rust/Cargo with the MSVC toolchain. Ninja builds must run
+inside an **x64 Native Tools** prompt so the SDK's headers and libraries are
+available. A build directory configured for x86 cannot be reused for x64.
 
 Formatting (`.clang-format`, JUCE house style; `vae_format_check` in CTest
 fails on unformatted code):
