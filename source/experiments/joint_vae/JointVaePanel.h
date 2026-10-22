@@ -129,8 +129,9 @@ private:
     void updatePromptUi();
     // The orbit LFO (Task 19): a 30 Hz tick moves the handle around `centre` and decodes like a drag
     void startOrbit();
-    void stopOrbit (bool backToCentre); // false when the caller decodes something else (Reset, a category...)
-    void recentre();                    // a drag, nudge or Find pick moves the centre to the new point
+    void stopOrbit (bool play); // back to the centre; play: decode it (false when the caller decodes next)
+    void sendToSurge();
+    void recentre(); // a drag, nudge or Find pick moves the centre to the new point
     void orbitTick();
     void showOrbitPath();
 
@@ -178,10 +179,12 @@ private:
     OrbitSettings orbitSettings;
     JointLatent centreZ {};
     std::array<float, 3> centre {};
-    std::optional<schema::Snapshot> centreLite; // empty until the centre's decode returns: ticks wait
-    bool lockedByOrbit = false;                 // Lock was off before the orbit forced it on
-    bool orbitStepPending = false;              // one orbit decode at a time, so none is superseded unplayed
-    double orbitStart = 0;                      // ms, the phase origin
+    std::optional<JointVaeWorker::Output> centreOut; // empty until the centre's decode returns: ticks wait
+    bool sendAfterCentre = false;                    // Send to Surge during an orbit: send the centre once decoded
+    bool lockedByOrbit = false;                      // Lock was off before the orbit forced it on
+    bool orbitStepPending = false;                   // one orbit decode at a time, so none is superseded unplayed
+    double orbitStart = 0;                           // ms, the phase origin
+    double centreTime = 0;                           // ms, the last start or re-centre: the radius ramps in from it
 
     juce::TextButton latentButton { "Latent pad" }, knobButton { "Knob pad" }, lockButton { "Lock structure" },
         resetButton { "Reset" }, sendButton { "Send to Surge" }, orbitButton { "Orbit LFO" };

@@ -319,13 +319,11 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     };
     sendButton.onClick = [this]
     {
-        if (! outputValid || current.patch.isEmpty())
-            return;
-        const auto r = onPatch ? onPatch (current.patch) : juce::Result::fail ("Surge playback not connected");
-        setStatus (r.wasOk() ? (bankMode ? "Playing the bank preset on Surge; select it again to return to Lite."
-                                         : "Playing the decoded point on Surge; move the pad to return to Lite.")
-                             : r.getErrorMessage(),
-                   r.failed());
+        if (! orbitSettings.on)
+            return sendToSurge();
+        // The next orbit step would switch back to Lite: stop, and send the centre once it is decoded
+        sendAfterCentre = true;
+        stopOrbit (true);
     };
     for (auto* c : std::initializer_list<juce::Component*> { &base, &category, &lockButton, &resetButton, &sendButton,
                                                              &orbit, &pad, &promptBox, &promptGo, &orbitButton })
@@ -374,6 +372,17 @@ void JointVaePanel::ComboLook::positionComboBoxText (juce::ComboBox& box, juce::
     label.setBounds (8, 0, box.getWidth() - 28, box.getHeight());
     label.setBorderSize ({});
     label.setFont (font);
+}
+
+void JointVaePanel::sendToSurge()
+{
+    if (! outputValid || current.patch.isEmpty())
+        return;
+    const auto r = onPatch ? onPatch (current.patch) : juce::Result::fail ("Surge playback not connected");
+    setStatus (r.wasOk() ? (bankMode ? "Playing the bank preset on Surge; select it again to return to Lite."
+                                     : "Playing the decoded point on Surge; move the pad to return to Lite.")
+                         : r.getErrorMessage(),
+               r.failed());
 }
 
 void JointVaePanel::markEdited()
@@ -473,7 +482,7 @@ void JointVaePanel::setKnobMode (bool knob)
         return;
     if (knob && (! outputValid || current.knobs.size() != (size_t) kg->names.size()))
         return;
-    stopOrbit (false); // the knob pad has no orbit; it edits the sound where the orbit left it
+    stopOrbit (true); // the knob pad has no orbit; it enters from the centre's output, which plays again
     if (knob)
     {
         latAxes = axes;
@@ -515,6 +524,7 @@ void JointVaePanel::setKnobMode (bool knob)
 
 void JointVaePanel::loadBundle (const juce::File& file)
 {
+    stopOrbit (false); // a step the load supersedes never calls back
     setStatus ("Loading and checking joint VAE...");
     ++promptToken;
     worker.load (file,
@@ -1033,8 +1043,9 @@ void JointVaePanel::decode (bool orbitStep)
                     safe->orbitStepPending = false; // this, or a newer request that superseded the step
                     if (r.failed())
                     {
+                        safe->sendAfterCentre = false;
                         safe->setStatus (r.getErrorMessage(), true);
-                        if (safe->orbitSettings.on && ! safe->centreLite)
+                        if (safe->orbitSettings.on && ! safe->centreOut)
                             safe->stopOrbit (false); // no centre to hold
                         return;
                     }
@@ -1043,7 +1054,7 @@ void JointVaePanel::decode (bool orbitStep)
                     self.outputValid = true;
                     if (self.orbitSettings.on && self.current.patchResult.wasOk())
                     {
-                        if (! self.centreLite)
+                        if (! self.centreOut)
                         {
                             // The centre's decode: Lock holds its structure, its switches hold every step's
                             if (! self.lockedTail && self.current.layout.numNumeric > 0
@@ -1054,10 +1065,10 @@ void JointVaePanel::decode (bool orbitStep)
                                 self.lockedByOrbit = true;
                                 self.lockButton.setToggleState (true, juce::dontSendNotification);
                             }
-                            self.centreLite = self.current.lite;
+                            self.centreOut = self.current;
                         }
                         else // Lite's LFO destination follows route depths: flips would duck (Task 18)
-                            holdDiscrete (self.current.lite, *self.centreLite);
+                            holdDiscrete (self.current.lite, self.centreOut->lite);
                     }
                     self.showOutput();
                     const bool playable = safe->current.patchResult.wasOk();
@@ -1072,6 +1083,8 @@ void JointVaePanel::decode (bool orbitStep)
                         if (safe->userActed && safe->onLite)
                             safe->onLite (safe->current.lite);
                     }
+                    if (std::exchange (safe->sendAfterCentre, false) && playable)
+                        safe->sendToSurge();
                 });
 }
 
@@ -1089,14 +1102,19 @@ void JointVaePanel::startOrbit()
     orbitTimer.startTimerHz (30);
 }
 
-void JointVaePanel::stopOrbit (bool backToCentre)
+void JointVaePanel::stopOrbit (bool play)
 {
     if (! orbitSettings.on)
         return;
     orbitSettings.on = false;
     orbitTimer.stopTimer();
     orbitStepPending = false;
-    centreLite.reset();
+    if (centreOut) // the knob pad and Send read the output: the centre's, not the last step's
+    {
+        current = std::move (*centreOut);
+        showOutput();
+    }
+    centreOut.reset();
     orbitButton.setToggleState (false, juce::dontSendNotification);
     lockButton.setEnabled (! knobMode);
     if (std::exchange (lockedByOrbit, false))
@@ -1105,29 +1123,32 @@ void JointVaePanel::stopOrbit (bool backToCentre)
         lockButton.setToggleState (false, juce::dontSendNotification);
     }
     showOrbitPath();
-    if (! backToCentre)
-        return;
+    // Every stop returns to the centre, so a category change conditions on the preset, not on a step
     z = centreZ;
     pos = centre;
     refresh();
-    decode();
+    if (play)
+        decode();
 }
 
 void JointVaePanel::recentre()
 {
     centre = pos;
     centreZ = z;
-    centreLite.reset(); // ticks wait for the new centre's decode
+    centreOut.reset(); // ticks wait for the new centre's decode
+    centreTime = juce::Time::getMillisecondCounterHiRes();
     showOrbitPath();
 }
 
 void JointVaePanel::orbitTick()
 {
-    if (! orbitSettings.on || ! centreLite || orbitStepPending || pendingEdit)
+    if (! orbitSettings.on || ! centreOut || orbitStepPending || pendingEdit)
         return;
     leaveBank(); // the steps decode from z
-    const auto seconds = (juce::Time::getMillisecondCounterHiRes() - orbitStart) / 1000.0;
-    pos = orbitPosition (centre, orbitSettings, seconds, axisOn (2) != nullptr);
+    const auto now = juce::Time::getMillisecondCounterHiRes();
+    auto ramped = orbitSettings;
+    ramped.depth *= (float) juce::jmin (1.0, (now - centreTime) / 1000.0 / kOrbitRampSeconds);
+    pos = orbitPosition (centre, ramped, (now - orbitStart) / 1000.0, axisOn (2) != nullptr);
     z = centreZ; // each step constrains from the centre, so the other directions stay at the anchor
     applyPositions();
     refresh();
@@ -1138,7 +1159,8 @@ void JointVaePanel::showOrbitPath()
 {
     std::vector<LabOrbit::Position> path;
     if (orbitSettings.on)
-        for (int k = 0; k < 64; ++k) // the X/Y circle at the centre's Z; the handle's Z wobble rides on it
+        // The X/Y circle at the centre's Z, projected; the handle's Z wobble (half the depth) rides off it
+        for (int k = 0; k < 64; ++k)
             path.push_back (orbitPosition (centre, orbitSettings, k / (64.0 * orbitSettings.rateHz), false));
     orbit.setOrbit (std::move (path), centre);
 }

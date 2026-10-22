@@ -234,7 +234,9 @@ std::vector<schema::Snapshot> labOrbit (experimental::JointVae& model, experimen
     std::vector<schema::Snapshot> out { centreLite };
     for (int k = 1; k < 60; ++k)
     {
-        const auto p = orbitPosition (centre, settings, k / 30.0, true);
+        auto ramped = settings; // the radius ramps in, as the panel's
+        ramped.depth *= (float) std::min (1.0, k / 30.0 / kOrbitRampSeconds);
+        const auto p = orbitPosition (centre, ramped, k / 30.0, true);
         const float targets[] { axisTarget (*held[0], p[0]), axisTarget (*held[1], p[1]), axisTarget (*held[2], p[2]) };
         schema::Snapshot s;
         if (! lite (constrain (centreZ, held, targets), tail, s))
@@ -1426,11 +1428,13 @@ public:
                     const auto centre = orbit.getHandle();
                     std::vector<schema::Snapshot> played;
                     std::vector<std::vector<float>> codes;
+                    std::vector<experimental::LabOrbit::Position> handles;
                     auto play = lab.onLite;
                     lab.onLite = [&] (const schema::Snapshot& s)
                     {
                         played.push_back (s);
                         codes.push_back (lab.output().codes);
+                        handles.push_back (orbit.getHandle());
                         if (play)
                             play (s);
                     };
@@ -1439,8 +1443,10 @@ public:
                     pumpUntil ([] { return false; }, 1000);
                     logMessage ("orbit results in 1 s: " + juce::String ((int) played.size()));
                     expect (played.size() >= 20, "results in 1 s: " + juce::String ((int) played.size()));
-                    if (played.empty())
+                    if (played.size() < 2)
                         return;
+                    const auto first = std::hypot (handles[1][0] - centre[0], handles[1][1] - centre[1]);
+                    expect (first < 0.3f * 0.08f, "the radius ramps in: no jump at the start, " + juce::String (first));
                     expect (lock->getToggleState() && ! lock->isEnabled(), "Lock is forced on");
                     const auto numeric = (size_t) lab.output().layout.numNumeric;
                     expect (numeric > 0);
@@ -1548,6 +1554,121 @@ public:
                     expect (lab.isAskingToReplace() && ! lab.isOrbiting(), "starting while edited asks first");
                     lab.answerReplace (true);
                     expect (lab.isOrbiting(), "Replace starts it");
+                });
+
+            beginTest (
+                "every orbit stop returns to the centre: Category conditions on it, the knob pad enters from it");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* button = findButton (lab, "Orbit LFO");
+                    juce::ComboBox* category = nullptr;
+                    for (auto* c : findAll<juce::ComboBox> (lab))
+                        if (c->getItemText (0) == juce::String (experimental::jointLabels[0]))
+                            category = c;
+                    expect (button != nullptr && category != nullptr);
+                    if (button == nullptr || category == nullptr)
+                        return;
+                    const auto z0 = lab.latent();
+                    const auto centre = orbit.getHandle();
+                    std::vector<float> centreCodes;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        if (centreCodes.empty())
+                            centreCodes = lab.output().codes;
+                        if (play)
+                            play (s);
+                    };
+                    button->onClick();
+                    pumpUntil ([] { return false; }, 900);
+                    expect (! (lab.latent() == z0), "orbiting away from the centre");
+                    category->setSelectedId (category->getSelectedId() % 9 + 1, juce::sendNotificationSync);
+                    expect (! lab.isOrbiting());
+                    expect (lab.latent() == z0 && orbit.getHandle() == centre,
+                            "a category change starts from the centre");
+                    expect (pumpUntil ([&] { return lab.output().latent == z0 && lab.output().codes != centreCodes; },
+                                       30000),
+                            "the new category decodes the centre's z");
+
+                    category->setSelectedId (category->getSelectedId() == 1 ? 9 : category->getSelectedId() - 1,
+                                             juce::sendNotificationSync); // back to the start's category
+                    centreCodes.clear();
+                    button->onClick();
+                    pumpUntil ([] { return false; }, 900);
+                    expect (! centreCodes.empty() && ! (lab.latent() == z0));
+                    findButton (lab, "Knob pad")->onClick();
+                    expect (! lab.isOrbiting() && lab.knobGroups() != nullptr);
+                    expect (lab.latent() == z0, "the knob pad leaves the latent at the centre");
+                    expect (lab.output().codes == centreCodes, "the knob pad enters from the centre's output");
+                });
+
+            beginTest ("Send to Surge during an orbit stops it and sends the centre");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit&)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* button = findButton (lab, "Orbit LFO");
+                    auto* send = findButton (lab, "Send to Surge");
+                    expect (button != nullptr && send != nullptr);
+                    if (button == nullptr || send == nullptr)
+                        return;
+                    int lites = 0;
+                    juce::MemoryBlock centrePatch;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        if (lites++ == 0)
+                            centrePatch = lab.output().patch;
+                        if (play)
+                            play (s);
+                    };
+                    std::vector<juce::MemoryBlock> sent;
+                    auto toSurge = lab.onPatch;
+                    lab.onPatch = [&] (const juce::MemoryBlock& patch)
+                    {
+                        sent.push_back (patch);
+                        return toSurge (patch);
+                    };
+                    button->onClick();
+                    pumpUntil ([] { return false; }, 600);
+                    expect (lab.isOrbiting() && lites > 3);
+                    send->onClick();
+                    expect (! lab.isOrbiting(), "Send stops the orbit");
+                    expect (pumpUntil ([&] { return ! sent.empty(); }, 30000), "then sends");
+                    const int after = lites;
+                    pumpUntil ([] { return false; }, 300);
+                    expectEquals (lites, after, "no Lite write follows");
+                    auto* surge = dynamic_cast<SurgeEngine*> (processor.findEngine (EngineKind::Surge));
+                    expect (surge != nullptr && surge->hasPatchData(), "Surge keeps playing");
+                    expect (processor.getParams().get (PluginProcessor::kEngineParamId) != 0.0f, "not back on Lite");
+                    expect (sent.size() == 1 && sent[0] == centrePatch, "the centre's patch");
+                    expect (lab.statusText().contains ("on Surge"), lab.statusText());
+                });
+
+            beginTest ("a status written while the Replace question is open shows after the answer");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    const auto before = lab.output().codes;
+                    moveHandle (orbit, 0.3f, 0.3f); // the user acts, so the word list only nudges
+                    expect (pumpUntil ([&] { return lab.output().codes != before; }, 30000));
+                    for (const bool replace : { false, true })
+                    {
+                        if (auto* knob = synthKnob (editor, firstContinuous()))
+                            knob->setValue (knob->getValue() > 0.5 ? 0.1 : 0.9, juce::sendNotificationSync);
+                        expect (pumpUntil ([&] { return lab.isEdited(); }, 1000));
+                        moveHandle (orbit, 0.6f, 0.4f);
+                        expect (lab.isAskingToReplace());
+                        lab.nudge ("qwertyuiop"); // no words it knows: a status line only, no edit
+                        expect (lab.statusText().contains ("Replace your Synth edits?"), "the question stays");
+                        lab.answerReplace (replace);
+                        expect (lab.statusText().startsWith ("Word list"), lab.statusText());
+                    }
                 });
 
             beginTest ("a reopened editor keeps the lab gate and the Surge patch state");

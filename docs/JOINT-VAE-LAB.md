@@ -120,8 +120,9 @@ All controls but the axis list are in the left sidebar, under CATEGORY MATCH.
 timer moves the handle round a circle in X and Y, with a Z wobble at 0.7x the rate and half the depth (Orbit always
 has a Z). Each step constrains the pad axes from the centre's z, so the other latent directions stay put, and decodes
 through the normal Lab path to Lite. Only one step is in flight at a time and the newest request wins; Lite's 20 ms
-smoothing fills the gaps. The orbit view shows the centre as a hollow ring, the X/Y circle dashed, and the moving
-handle; the axis sliders follow the handle. Changing Rate keeps the phase, so the handle never jumps.
+smoothing fills the gaps. After a start or re-centre the radius ramps in from 0 over 0.5 s, so the handle never
+jumps. The orbit view shows the centre as a hollow ring, the dashed ring (the X/Y circle at the centre's Z, projected:
+the handle's Z wobble takes it off the ring), and the moving handle; the axis sliders follow the handle. Changing Rate keeps the phase, so the handle never jumps.
 
 - **Switches never move.** Lock structure is forced on while the orbit runs (its button is disabled; turning the
   orbit off puts Lock back as you left it). Lock alone is not enough: Lite's LFO destination is derived from
@@ -131,11 +132,14 @@ handle; the axis sliders follow the handle. Changing Rate keeps the phase, so th
   depth 0.25) of the still points'. Without the hold, the same run had 2 / 17 ducks.
 - **Re-centring.** A handle drag or key, an axis slider, a prompt nudge, a preset-dot click and a Find dot or chip
   move the centre to the new point; changing an axis assignment keeps the centre's sound in the new axes.
-- **Stopping.** The button again stops it and plays the centre point. Reset, Start from, Category and the knob pad
-  stop it where it is. A Synth-view or host edit stops it too, and the edit stays (the orbit never overwrites it).
+- **Stopping.** Every stop returns the Lab to the centre point. The button again stops it and plays the centre. Reset
+  and Start from load their start; Category decodes the centre in the new category; the knob pad enters from the
+  centre's output and plays it; loading a bundle stops it. A Synth-view or host edit stops it too, and the edit stays
+  (the orbit never overwrites it).
 - **The edit gate.** Turning it on is a user action (R14). If the sound was edited in the Synth view it asks "Replace
   your Synth edits?" first, as any Lab edit does.
-- Send to Surge during an orbit sends the step's full Surge patch, whose switches are not held.
+- **Send to Surge** during an orbit stops it and, once the centre is decoded, sends the centre's full Surge patch
+  (otherwise the next step would switch straight back to Lite).
 
 The preset dots are always shown (the old Preset dots switch and the latent pad's background maps are gone: Orbit is
 the only view). The worker's map request remains for the knob pad's category map.

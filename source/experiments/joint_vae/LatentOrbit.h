@@ -12,6 +12,9 @@ struct OrbitSettings
     float rateHz = 0.1f, depth = 0.08f;
 };
 
+/** After a start or re-centre the radius ramps from 0 to the depth over this long, so the handle never jumps. */
+inline constexpr double kOrbitRampSeconds = 0.5;
+
 /** Pad positions (x, y, z) on the orbit at `seconds`: centre + depth * (cos wt, sin wt, 0.5 sin 0.7wt), the
     Z wobble only when `hasZ`; each clamped to 0..1. */
 std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSettings&, double seconds, bool hasZ);
