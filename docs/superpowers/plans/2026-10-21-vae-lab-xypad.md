@@ -818,3 +818,62 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
   - *My call:* when no prompt bundle is installed, the box falls back to the word-list path, so it still works, and the placeholder says so.
   - Word-list nudges (e.g. "brighter") are then unreachable while p1 is installed. The code and tests stay.
   - The "experimental" tag stays next to the prompt.
+
+---
+
+### Task 23: Presets, the fine-tune demo, reset via the logo, smaller dots (user request, 22 Oct 2026)
+
+*This reverses the earlier "no Presets tab" decision; the user now wants one. Items marked "my call" are my own.*
+
+- **Right column:**
+  - A **Save preset** button sits at the top-left of the right column, above the tab row.
+  - The tab row has two tabs, **Axes | Presets**, styled like the design doc's tabs.
+  - Axes is the existing list. Presets is a scrolling list of saved presets.
+- **Saving:**
+  - Opens an inline name field (prefilled with the category guess or the last prompt). Save or Cancel. An empty name is refused.
+  - Stores the current z, category, axis assignments and pad positions, the **exact decoded codes** (bundle feature order; NaN = inactive) and the bundle id.
+  - *My call:* presets are stored in the processor's state, so they persist with the host project and survive closing the editor. They are capped at 64.
+- **Loading:**
+  - Clicking a preset goes through the edit gate (`edit()`).
+  - It plays the stored codes exactly through `lab({codes})`, then restores z, axes and positions.
+  - A preset from a different bundle id is shown disabled with a tooltip.
+  - Each row has rename and delete actions. Delete asks inline.
+- **Fine-tune demo:**
+  - At the bottom of the preset list is a button reading **"Tune space to my presets"**. It's enabled when at least 2 presets exist.
+  - It opens an in-panel overlay: a title, the line "Demo only: nothing is trained or changed", a progress bar running 0→100% over **10 s** on a message-thread timer, and a Close button.
+  - At 100% the overlay reads "Done (demo)".
+  - It writes no parameters, makes no model calls and touches no audio. Closing it mid-way cancels it.
+- **Init and the engine switch:**
+  - Remove the Init button and the Lite/Surge XT selector from the left column.
+  - **Clicking the pitcher logo resets the synth to its init patch**, using the old Init action.
+  - *My call:* it asks first through the same inline banner pattern ("Reset the synth to its init patch?", with Reset and Cancel), because the logo is easy to click by accident.
+  - The logo gets a pointer cursor and a tooltip.
+  - Hide the selector behind a flag and keep its code; don't delete it. Note in the docs that Surge is unreachable from the UI while it and Send to Surge are hidden.
+- **Preset dots in the Orbit view are 25% smaller**, at every radius (normal, current category and highlight). Find's numbered highlights stay the same size.
+- **Tests:**
+  - Save → reopen the editor → the preset is listed; load plays the exact codes.
+  - Saved presets are restored from processor state.
+  - Load goes through the edit gate.
+  - The fine-tune demo writes nothing and reaches 100% in 10 s. Use a test hook to fast-forward time.
+  - A logo click asks before resetting; Cancel changes nothing.
+  - The dot radii are 0.75× the old values.
+
+### Task 24: Motion pass (user request, 22 Oct 2026)
+
+*Source: `docs/design/MOTION-PASS-HANDOFF.md`, which gives the implementer the final say. My scope: the "First" and "Next" rows. The "Optional" rows (undo/A-B, preset-dot hover) are deferred unless the user asks for them.*
+
+- **Handle:** a hover, focus or drag halo and movement guides; the active plane strengthens while dragging.
+- **Assigned axes:** a brief highlight linking each axis row to its guide on the pad. It must not flash continuously during Orbit or automation.
+- **Values:** shown with units where known, keeping the names.
+- **Requested vs applied:** a pending marker while a decode is in flight, resolved only when its result plays (`onLite`).
+- **Category bars:** ease to each completed result over 150–220 ms.
+- **Camera reset:** eased over about 200 ms and interruptible by a new gesture; it never changes the sound.
+- **Prompt state:** shows the real loading, search, result and error states, with no fabricated progress.
+- **Orbit:** the centre, path and playhead stay distinguishable, plus a local note when Lock is switched on automatically.
+- **Engine handoff:** confirmation only after success.
+- **Motion vocabulary** follows the handoff: 80–250 ms, no bounce, retargetable.
+- **Timers:** animation runs only on the message thread, through one shared animator. It stops when settled or hidden.
+- **Reduced motion:** honour the platform preference and offer a setting.
+- **Sound safety:** no parameter writes and no host gestures from animation.
+- Consolidate behaviour into the reusable components. The study-only `StudyOrbit`/`StudyAxis`/`StudyView` are reference only.
+- **Verification:** the handoff's list. Rapid drag/re-grab, interrupting a camera reset, stale prompt completions, host automation, the orbit while switching views, and idle CPU when settled.
