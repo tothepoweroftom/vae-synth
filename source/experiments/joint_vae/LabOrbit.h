@@ -32,7 +32,9 @@ public:
     const std::vector<Position>& getHighlights() const { return highlights; }
     void setCategoryHighlight (int category) { view.setHighlight (category); } // visual only
     void setLabelFont (juce::Font font) { view.setLabelFont (std::move (font)); }
-    juce::Point<float> project (Position) const; // local pixels, at the current camera
+    float dotRadius (int category) const { return view.dotRadius (category); } // a preset dot's, in px
+    static constexpr float kDotScale = 0.75f;                                  // Task 23: the study's dots, 25% smaller
+    juce::Point<float> project (Position) const;                               // local pixels, at the current camera
 
     void resized() override;
     void paintOverChildren (juce::Graphics&) override;

@@ -32,9 +32,9 @@ public:
     ~JointVaePanel() override;
     void resized() override;
     void paint (juce::Graphics&) override;
-    /** The top of the left column that the Lab leaves to the logo (36 px) and the editor's view tabs, Init and
-        engine selector, which sit over the panel (Task 22). */
-    static constexpr int kLeftTop = 124;
+    /** The top of the left column that the Lab leaves to the logo (36 px) and the editor's view tabs, which sit
+        over the panel (Task 22; Task 23 removed the Init and engine row under them). */
+    static constexpr int kLeftTop = 90;
     /** Plays a decoded point on the Lite engine (set by the editor; message thread). */
     std::function<void (const schema::Snapshot&)> onLite;
     /** Plays a decoded full Surge patch (set by the editor; message thread). */
@@ -46,7 +46,36 @@ public:
     /** A change to the controls that did not come from onLite (Synth view, host): the sound is
         "edited" and the next Lab sound edit asks before replacing it (Task 16; message thread). */
     void markEdited();
+    /** Task 23: the saved presets as the processor stores them (the editor sets them on open), and their changes
+        (message thread). */
+    void setPresets (const juce::XmlElement&);
+    std::function<void (const juce::XmlElement&)> onPresetsChanged;
 #if VAE_WITH_SURGE
+    static constexpr int kMaxPresets = 64;
+    /** Save preset: opens the inline name field, prefilled with the last prompt or the category guess. */
+    void startSaving();
+    juce::String nameFieldText() const { return nameBox.getText(); }
+    bool isNaming() const { return naming != -2; }
+    /** The name field's Save: a new preset (or the rename it was opened for); an empty name is refused. */
+    bool commitName (const juce::String&);
+    int numPresets() const { return (int) presets.size(); }
+    juce::String presetNameAt (int i) const { return presets[(size_t) i].name; }
+    const std::vector<float>& presetCodes (int i) const { return presets[(size_t) i].codes; }
+    bool presetPlayable (int) const; // saved with the loaded bundle
+    void loadPreset (int);           // through the edit gate; plays the stored codes exactly
+    void renamePreset (int);         // opens the name field on it
+    void deletePreset (int);         // asks first
+    void showPresetsTab (bool);
+    /** A Delete question (the inline banner, as Replace); `answer` is its buttons. */
+    bool isAsking() const { return pendingAnswer != nullptr; }
+    void answer (bool yes);
+    /** Tune space to my presets: a dummy that only shows progress for 10 s (trains nothing, writes nothing). */
+    void startTuneDemo();
+    void closeTuneDemo();
+    bool isTuning() const { return tune.isVisible(); }
+    double tuneProgress() const { return tune.progress; }
+    juce::String tuneText() const { return tune.text(); }
+    void fastForwardTune (double seconds); // test hook
     bool isEdited() const { return edited; }
     bool isAskingToReplace() const { return pendingEdit != nullptr; }
     /** Answers "Replace your Synth edits?" (the banner's buttons; tests call it directly). */
@@ -130,7 +159,13 @@ private:
     void setKnobMode (bool); // page mode switch: the decoded codes stay, the other pad's edits are dropped
     void edit (std::function<void()> change); // a Lab sound edit: asks first while the sound is edited
     void resolveReplace (bool replace);
-    void showAsk (bool); // the inline Replace question
+    void showAsk (bool); // the inline Replace (or Delete) question
+    void ask (const juce::String& note, const juce::String& yes, std::function<void()> onYes);
+    void applyPreset (int);
+    void presetsChanged (bool notify = true); // rebuilds the rows and (notify) tells the editor
+    void layOutPresets();
+    void endNaming();
+    void tuneTick();
     void applyCandidate (int);
     void leaveBank();           // the first sound edit after selecting a candidate decodes from its z
     void clearPromptProgress(); // a dropped Find must not leave "Finding sounds..." behind
@@ -164,6 +199,7 @@ private:
     bool userActed = false;               // results play only after the user acts in the Lab (ruling R14)
     bool edited = false;                  // the controls changed outside the Lab since its last write
     std::function<void()> pendingEdit;    // the Lab edit waiting on "Replace your Synth edits?"
+    std::function<void()> pendingAnswer;  // the Yes of a Delete preset question
     int randomPreset = -1;                // the Random real preset start, for Reset
     int shownBase = 0, shownCategory = 0; // the combos at the last decode, put back by Keep editing
     int highlighted = -1;                 // the category the cloud highlights (visual only)
@@ -208,7 +244,6 @@ private:
     juce::Label status;
     juce::TextEditor promptBox;
     juce::TextButton promptGo { ">" };
-    juce::Label experimentalTag { {}, "experimental" };
     // R21: the Replace question sits in the Lab, not in a top-level window a host can open behind the plug-in
     juce::Label askNote { {},
                           "Replace your Synth edits? The Lab's sound replaces the changes made in the Synth view." };
@@ -217,13 +252,57 @@ private:
     std::array<juce::TextButton, 8> chips;
     PitcherKeyboard keyboard;
     PitcherLayout layout;
-    juce::Rectangle<int> categoryArea, askArea, axesTab;
+    juce::Rectangle<int> categoryArea, askArea;
+
+    // Presets (Task 23): the right column's Save preset, the name field and the Axes | Presets tabs
+    struct Preset
+    {
+        juce::String name, bundle;
+        int category = 8;
+        JointLatent z {};
+        std::array<juce::String, 3> axes;
+        std::array<float, 3> pos {};
+        std::vector<float> codes; // bundle feature order, NaN = inactive
+    };
+    struct PresetRow final : juce::Component
+    {
+        PresetRow()
+        {
+            for (auto* b : { &load, &rename, &remove })
+                addAndMakeVisible (b);
+        }
+        juce::TextButton load, rename { "Rename" }, remove { "Delete" };
+        void resized() override;
+    };
+    /** The demo's dialog: a title, the demo line, a progress bar and Close. */
+    struct TuneOverlay final : juce::Component
+    {
+        TuneOverlay();
+        void paint (juce::Graphics&) override;
+        void resized() override;
+        juce::String text() const;
+        juce::TextButton close { "Close" };
+        double progress = 0;
+    };
+    std::vector<Preset> presets;
+    int naming = -2; // the name field: -2 closed, -1 a new preset, else the preset it renames
+    juce::TextButton saveButton { "Save preset" }, nameSave { "Save" }, nameCancel { "Cancel" },
+        axesTabButton { "AXES" }, presetsTabButton { "PRESETS" }, tuneButton { "Tune space to my presets" };
+    juce::TextEditor nameBox;
+    juce::Viewport presetView;
+    juce::Component presetList;
+    juce::OwnedArray<PresetRow> presetRows;
+    juce::Label presetHint { {}, "No presets yet: Save preset keeps the current sound here." };
+    TuneOverlay tune;
+    double tuneStart = 0, tuneSkip = 0; // ms
+    static constexpr double kTuneMs = 10000;
     juce::TimedCallback mapTimer { [this]
                                    {
                                        mapTimer.stopTimer();
                                        requestMap();
                                    } };
     juce::TimedCallback orbitTimer { [this] { orbitTick(); } };
+    juce::TimedCallback tuneTimer { [this] { tuneTick(); } };
 #else
     juce::Label note;
 #endif

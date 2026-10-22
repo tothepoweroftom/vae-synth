@@ -265,13 +265,24 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
     setLookAndFeel (&lookAndFeel.get());
     juce::LookAndFeel::setDefaultLookAndFeel (&lookAndFeel.get());
 
-    initButton.setTooltip ("Reset every control to the schema default");
-    initButton.onClick = [this]
+    // Task 23: a click on the logo resets to the init patch, after asking (the logo is easy to click by accident)
+    logo.onClick = [this]
     {
-        processor.applyControls (schema::Snapshot::defaults());
-        setStatus ("Init");
+        resetQuestion.setVisible (true);
+        resized();
     };
-    addAndMakeVisible (initButton);
+    resetQuestion.cancel.onClick = [this]
+    {
+        resetQuestion.setVisible (false);
+        resized();
+    };
+    resetQuestion.reset.onClick = [this]
+    {
+        resetQuestion.setVisible (false);
+        processor.applyControls (schema::Snapshot::defaults()); // the old Init button's action
+        setStatus ("Init");
+        resized();
+    };
 
 #if VAE_PROMPT_TAB // Task 16 compiled the Prompt tab out; this is its UI and wiring
     promptEditor.setTextToShowWhenEmpty ("Describe a sound: warm detuned pad, plucky bass...", LF::quiet());
@@ -336,7 +347,8 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
 #endif
 
     engineBox.setTooltip ("Synth engine backend");
-    addAndMakeVisible (engineBox);
+    addChildComponent (engineBox);
+    engineBox.setVisible (kShowEngineChoice);
     engineBinding =
         std::make_unique<params::ComboBinding> (processor.getParams(), PluginProcessor::kEngineParamId, engineBox);
 
@@ -372,12 +384,16 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
         b->setLookAndFeel (&columnLook);
         addAndMakeVisible (b);
     }
-    initButton.setLookAndFeel (&columnLook);
+    resetQuestion.setLookAndFeel (&columnLook);
+    addAndMakeVisible (logo);
+    addChildComponent (resetQuestion);
     synthViewButton.onClick = [this] { showView (View::synth); };
 
     jointVaeViewButton.onClick = [this] { showView (View::jointVae); };
     addChildComponent (jointVaePanel);
-    jointVaePanel.toBack(); // under the left column's tabs, Init and engine, which sit over its top
+    jointVaePanel.toBack(); // under the left column's logo, tabs and reset question, which sit over its top
+    jointVaePanel.setPresets (processor.getLabPresets()); // they outlive the editor (Task 23)
+    jointVaePanel.onPresetsChanged = [this] (const juce::XmlElement& presets) { processor.setLabPresets (presets); };
     jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch)
     {
         auto r = processor.loadSurgePatch (patch);
@@ -492,8 +508,9 @@ MainEditorComponent::~MainEditorComponent()
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().removeListener (schema::control (i).id, this);
     cancelPendingUpdate();
-    for (auto* b : { &synthViewButton, &jointVaeViewButton, &initButton })
+    for (auto* b : { &synthViewButton, &jointVaeViewButton })
         b->setLookAndFeel (nullptr);
+    resetQuestion.setLookAndFeel (nullptr);
     setLookAndFeel (nullptr);
     if (lookAndFeel.getReferenceCount() == 1) // last editor: the shared instance dies with us
         juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
@@ -640,6 +657,44 @@ void MainEditorComponent::chooseModel()
 
 void MainEditorComponent::setStatus (const juce::String& text) { status.setText (text, juce::dontSendNotification); }
 
+LogoButton::LogoButton()
+    : Button ("Reset to init")
+{
+    setTooltip ("Reset the synth to its init patch (asks first)");
+    setMouseCursor (juce::MouseCursor::PointingHandCursor);
+}
+
+ResetQuestion::ResetQuestion()
+{
+    setOpaque (true);
+    note.setColour (juce::Label::textColourId, experimental::lab::ink);
+    note.setBorderSize ({});
+    note.setMinimumHorizontalScale (1.0f);
+    for (auto* c : std::initializer_list<juce::Component*> { &note, &reset, &cancel })
+        addAndMakeVisible (c);
+}
+
+void ResetQuestion::paint (juce::Graphics& g)
+{
+    // The Lab's Replace banner: a green tint and outline, here over the workspace
+    g.fillAll (experimental::lab::workspace);
+    g.fillAll (experimental::lab::green.withAlpha (0.07f));
+    g.setColour (experimental::lab::green);
+    g.drawRect (getLocalBounds(), 1);
+}
+
+void ResetQuestion::resized()
+{
+    if (auto* look = dynamic_cast<PitcherLookAndFeel*> (&getLookAndFeel()); look && look->body)
+        note.setFont (juce::Font (juce::FontOptions (look->body)).withHeight (11.5f));
+    auto r = getLocalBounds().reduced (10, 8);
+    note.setBounds (r.removeFromTop (22));
+    r.removeFromTop (4);
+    reset.setBounds (r.removeFromLeft (80));
+    r.removeFromLeft (6);
+    cancel.setBounds (r.removeFromLeft (80));
+}
+
 void MainEditorComponent::paint (juce::Graphics& g)
 {
     // One continuous workspace; the Lab paints the same logo and rule over it
@@ -653,11 +708,12 @@ void MainEditorComponent::paint (juce::Graphics& g)
 
 void MainEditorComponent::resized()
 {
-    // No header row (Task 22): the left column, shared with the Lab, holds the logo, the view tabs, Init and the
-    // engine, then the status banner; the views use the rest
+    // No header row (Task 22): the left column, shared with the Lab, holds the logo, the view tabs (and, hidden, the
+    // engine), then the status banner; the views use the rest
     const auto cols = PitcherLayout::calculate (getLocalBounds());
     const auto column = cols.left.withTrimmedRight (20);
-    auto nav = column.withTrimmedTop (48); // under the 36 px logo
+    logo.setBounds (column.getX(), column.getY(), 150, 36); // the mark and the wordmark
+    auto nav = column.withTrimmedTop (48);                  // under the 36 px logo
     auto tabs = nav.removeFromTop (26);
 #if VAE_PROMPT_TAB
     const int tabW = tabs.getWidth() / 3;
@@ -668,11 +724,15 @@ void MainEditorComponent::resized()
 #endif
     jointVaeViewButton.setBounds (tabs);
     nav.removeFromTop (8);
-    auto row = nav.removeFromTop (26);
-    initButton.setBounds (row.removeFromLeft (72));
-    row.removeFromLeft (8);
-    engineBox.setBounds (row);
+    if (kShowEngineChoice)
+        engineBox.setBounds (nav.removeFromTop (26)); // shortcut: overlaps the Lab's category match when shown
+    // The reset question covers the top of the column under the tabs (over the Lab's category match), opaque
+    resetQuestion.setBounds (column.getX(), nav.getY(), column.getWidth(), 70);
+    if (resetQuestion.isVisible())
+        resetQuestion.toFront (false);
     auto banner = column.withTrimmedTop (experimental::JointVaePanel::kLeftTop).removeFromTop (48);
+    if (resetQuestion.isVisible())
+        banner.setY (resetQuestion.getBottom() + 8);
 #if VAE_PROMPT_TAB
     spinner.setBounds (banner.removeFromRight (24).removeFromTop (24));
 #endif

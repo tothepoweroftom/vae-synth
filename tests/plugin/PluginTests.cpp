@@ -971,13 +971,21 @@ public:
                                     + " > " + juce::String (list->getMaximumVisibleWidth()));
                         expect (lab->assignedAxes()[2].isNotEmpty(), "Orbit has a Z axis");
                         shoot ("VAE_LAB_SCREENSHOT");
-                        // What users with p1 installed see: the Find placeholder and the experimental tag
+                        // What users with p1 installed see: the Find placeholder (Task 23: no experimental tag)
                         if (const auto p1 = juce::SystemStats::getEnvironmentVariable ("VAE_PROMPT_BUNDLE", "");
                             p1.isNotEmpty())
                         {
                             lab->loadPromptBundle (juce::File (p1));
                             expect (lab->isPromptReady(), "Find offered");
                             expect (prompt->getTextToShowWhenEmpty().contains ("to find"));
+                            for (auto* label : findAll<juce::Label> (*lab))
+                                expect (! (label->isVisible() && label->getText() == "experimental"),
+                                        "no experimental tag under the prompt");
+                            auto* first = dynamic_cast<juce::Label*> (
+                                lab->getComponentAt (l.status.getX() + 2, l.status.getCentreY()));
+                            expect (first != nullptr && first->getX() == l.status.getX()
+                                        && first->getText() == lab->statusText(),
+                                    "the status line starts the prompt row: no gap");
                             shoot ("VAE_LAB_P1_SCREENSHOT");
                         }
 
@@ -1058,8 +1066,8 @@ public:
         }
 #endif
 
-        // Task 22: no header row; one left column (logo, view tabs, Init, engine) in both views
-        beginTest ("no header row: the view tabs, Init and the engine sit in the left column in both views");
+        // Task 22: no header row; one left column (logo, view tabs) in both views. Task 23: no Init or engine
+        beginTest ("no header row: the logo and the view tabs sit in the left column in both views");
         {
             PluginProcessor processor;
             settleModel (processor);
@@ -1069,12 +1077,14 @@ public:
             auto* keys = directChild<PitcherKeyboard> (main);
             auto* synthTab = findButton (main, "Synth");
             auto* labTab = findButton (main, "VAE Lab");
-            auto* init = findButton (main, "Init");
+            auto* logo = directChild<LogoButton> (main);
             auto* engine = directChild<juce::ComboBox> (main);
             auto* status = headerStatus (*editor);
             expect (dynamic_cast<MainEditorComponent*> (&main) != nullptr, "an inner editor component");
-            expect (lab && keys && synthTab && labTab && init && engine && status);
-            if (lab && keys && synthTab && labTab && init && engine && status)
+            expect (findButton (main, "Init") == nullptr, "no Init button: the logo resets");
+            expect (engine != nullptr && engine->isVisible() == kShowEngineChoice, "the engine choice is hidden");
+            expect (lab && keys && synthTab && labTab && logo && status);
+            if (lab && keys && synthTab && labTab && logo && status)
             {
                 expect (main.getWidth() == MainEditorComponent::kNativeWidth
                             && main.getHeight() == MainEditorComponent::kNativeHeight,
@@ -1083,7 +1093,7 @@ public:
                 const auto inMain = [&] (juce::Component& c) { return main.getLocalArea (&c, c.getLocalBounds()); };
                 const auto checkNav = [&] (const char* view)
                 {
-                    for (auto* c : std::initializer_list<juce::Component*> { synthTab, labTab, init, engine })
+                    for (auto* c : std::initializer_list<juce::Component*> { synthTab, labTab })
                     {
                         const auto b = inMain (*c);
                         expect (c->isVisible() && l.left.contains (b) && b.getY() >= l.left.getY() + 36,
@@ -1094,14 +1104,19 @@ public:
                     expect (inMain (*synthTab).getY() == inMain (*labTab).getY()
                                 && inMain (*synthTab).getRight() <= inMain (*labTab).getX(),
                             "the tabs share a row");
-                    expect (inMain (*init).getY() >= inMain (*synthTab).getBottom()
-                                && inMain (*engine).getY() >= inMain (*synthTab).getBottom(),
-                            "Init and the engine under the tabs");
+                    const auto b = inMain (*logo);
+                    expect (logo->isVisible() && l.left.contains (b) && b.getY() == l.left.getY()
+                                && b.getBottom() <= inMain (*synthTab).getY(),
+                            juce::String (view) + ": the logo over the tabs " + b.toString());
+                    expect (main.getComponentAt (b.getCentre()) == logo, juce::String (view) + ": the logo on top");
+                    expect (logo->getMouseCursor() == juce::MouseCursor::PointingHandCursor
+                                && logo->getTooltip().isNotEmpty(),
+                            "a pointer cursor and a tooltip");
                 };
                 // Synth: the sections and the keyboard in the right area, from the top margin
                 checkNav ("Synth");
-                expect (l.left.contains (inMain (*status)) && inMain (*status).getY() >= inMain (*engine).getBottom(),
-                        "the status banner under Init and the engine");
+                expect (l.left.contains (inMain (*status)) && inMain (*status).getY() >= inMain (*synthTab).getBottom(),
+                        "the status banner under the tabs");
                 int top = main.getHeight();
                 for (auto* section : findAll<ControlSection> (main))
                 {
@@ -1145,8 +1160,7 @@ public:
                     expect (box->isVisible() == experimental::kShowLabControls, "the start and category boxes");
                 expect (findButton (*lab, "Orbit LFO") != nullptr && findButton (*lab, "Orbit LFO")->isVisible());
                 // The left column: nothing clipped or overlapping, and no gap above the spectrogram
-                std::vector<juce::Rectangle<int>> column { inMain (*synthTab), inMain (*labTab), inMain (*init),
-                                                           inMain (*engine) };
+                std::vector<juce::Rectangle<int>> column { inMain (*synthTab), inMain (*labTab), inMain (*logo) };
                 juce::Rectangle<int> spectrum;
                 int above = 0;
                 for (auto* c : lab->getChildren())
@@ -1174,6 +1188,87 @@ public:
                 expect (keys->isVisible(), "the editor keyboard under the label");
 #endif
             }
+        }
+
+        // Task 23: the logo resets to the init patch, asking first in either view
+        beginTest ("a logo click asks before resetting; Cancel changes nothing");
+        {
+            PluginProcessor processor;
+            settleModel (processor);
+            const auto index = processor.getParams().indexOf (schema::control (firstContinuous()).id);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto& main = mainOf (*editor);
+            auto* logo = directChild<LogoButton> (main);
+            auto* question = directChild<ResetQuestion> (main);
+            expect (logo != nullptr && question != nullptr);
+            if (logo && question)
+            {
+                const auto l = PitcherLayout::calculate (main.getLocalBounds());
+                for (auto* view : { "Synth", "VAE Lab" })
+                {
+                    findButton (main, view)->onClick();
+                    processor.getParams().set (index, 0.123f);
+                    const auto edited = processor.getControls();
+                    expect (! question->isVisible());
+                    logo->onClick();
+                    expect (question->isVisible()
+                                && l.left.contains (main.getLocalArea (question, question->getLocalBounds())),
+                            juce::String (view) + ": the question in the left column");
+                    expect (main.getComponentAt (question->getBounds().getCentre()) != nullptr
+                                && question->isParentOf (main.getComponentAt (question->getBounds().getCentre())),
+                            "on top");
+                    auto* reset = findButton (*question, "Reset");
+                    auto* cancel = findButton (*question, "Cancel");
+                    expect (reset && cancel);
+                    if (! (reset && cancel))
+                        break;
+                    if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_RESET_SCREENSHOT", "");
+                        shot.isNotEmpty() && juce::String (view) == "Synth")
+                        if (auto stream = juce::File (shot).createOutputStream())
+                            juce::PNGImageFormat().writeImageToStream (
+                                main.createComponentSnapshot (main.getLocalBounds()), *stream);
+                    cancel->onClick();
+                    expect (! question->isVisible(), "Cancel closes it");
+                    const auto kept = processor.getControls();
+                    for (int i = 0; i < schema::kControlCount; ++i)
+                        expectEquals (kept[i], edited[i]);
+                    logo->onClick();
+                    reset->onClick();
+                    expect (! question->isVisible());
+                    const auto init = processor.getControls();
+                    const auto defaults = schema::Snapshot::defaults();
+                    for (int i = 0; i < schema::kControlCount; ++i)
+                        expectEquals (init[i], defaults[i]);
+                }
+            }
+        }
+
+        beginTest ("the orbit view's preset dots are 0.75x the study's (2.1 / 2.5 / 3.2 px)");
+        {
+            experimental::LabOrbit orbit;
+            expectWithinAbsoluteError (orbit.dotRadius (0), 0.75f * 2.5f, 1e-6f);
+            orbit.setCategoryHighlight (1);
+            expectWithinAbsoluteError (orbit.dotRadius (1), 0.75f * 3.2f, 1e-6f);
+            expectWithinAbsoluteError (orbit.dotRadius (0), 0.75f * 2.1f, 1e-6f);
+        }
+
+        beginTest ("Lab presets are saved with the state and restored, NaN codes too");
+        {
+            PluginProcessor processor;
+            juce::XmlElement presets ("LabPresets");
+            auto* p = presets.createNewChildElement ("Preset");
+            p->setAttribute ("name", "one");
+            p->setAttribute ("codes", "0.5 nan -1.25e-07");
+            processor.setLabPresets (presets);
+            const auto state = stateOf (processor);
+            PluginProcessor restored;
+            restored.setStateInformation (state.getData(), (int) state.getSize());
+            expect (restored.getLabPresets().isEquivalentTo (&presets, false), restored.getLabPresets().toString());
+            // A state without presets (older sessions) clears them
+            PluginProcessor older;
+            const auto empty = stateOf (older);
+            restored.setStateInformation (empty.getData(), (int) empty.getSize());
+            expectEquals (restored.getLabPresets().getNumChildElements(), 0);
         }
 
         beginTest ("the editor resizes at a fixed ratio and scales its inner component");
@@ -1613,6 +1708,200 @@ public:
                     for (int k = 0; k < 8 && ! redrawn; ++k)
                         redrawn = ! (choose (100) == start);
                     expect (redrawn, "choosing Random real preset again draws a new one");
+                });
+
+            // Task 23: presets
+            const auto sameCodes = [] (const std::vector<float>& a, const std::vector<float>& b)
+            {
+                if (a.size() != b.size() || a.empty())
+                    return false;
+                for (size_t i = 0; i < a.size(); ++i)
+                    if (std::isnan (a[i]) ? ! std::isnan (b[i]) : ! juce::exactlyEqual (a[i], b[i]))
+                        return false;
+                return true;
+            };
+            const auto shootLab = [] (juce::AudioProcessorEditor& editor, const char* variable)
+            {
+                const auto file = juce::SystemStats::getEnvironmentVariable (variable, "");
+                if (file.isNotEmpty())
+                    if (auto stream = juce::File (file).createOutputStream())
+                        juce::PNGImageFormat().writeImageToStream (
+                            mainOf (editor).createComponentSnapshot (mainOf (editor).getLocalBounds()), *stream);
+            };
+            // Visible up to the Lab (isShowing needs a window on screen)
+            const auto shown = [] (juce::Component* c, juce::Component& lab)
+            {
+                for (; c != nullptr && c != &lab; c = c->getParentComponent())
+                    if (! c->isVisible())
+                        return false;
+                return c == &lab;
+            };
+            beginTest ("presets: Save keeps the exact codes; a reopened editor lists it and loading plays them");
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                processor.prepareToPlay (48000.0, 512);
+                std::vector<float> saved;
+                if (auto editor = openLab (processor))
+                {
+                    auto& lab = *findChild<experimental::JointVaePanel> (*editor);
+                    findButton (mainOf (*editor), "VAE Lab")->onClick();
+                    auto* save = findButton (lab, "Save preset");
+                    auto* tab = findButton (lab, "PRESETS");
+                    expect (save && save->isVisible() && tab && tab->isVisible() && findButton (lab, "AXES"),
+                            "Save preset over the Axes | Presets tabs");
+                    shootLab (*editor, "VAE_LAB_AXES_SCREENSHOT");
+                    const auto before = lab.output().codes;
+                    moveHandle (*findChild<experimental::LabOrbit> (lab), 0.8f, 0.3f);
+                    expect (pumpUntil ([&] { return lab.output().codes != before; }, 30000));
+                    save->onClick();
+                    expect (lab.isNaming() && lab.nameFieldText().isNotEmpty(), "prefilled: " + lab.nameFieldText());
+                    expect (! lab.commitName ("  "), "an empty name is refused");
+                    expectEquals (lab.numPresets(), 0);
+                    expect (lab.commitName ("bright one") && ! lab.isNaming());
+                    expectEquals (lab.numPresets(), 1);
+                    saved = lab.presetCodes (0);
+                    expect (sameCodes (saved, lab.output().codes), "the exact decoded codes");
+                    expectEquals (processor.getLabPresets().getNumChildElements(), 1, "stored on the processor");
+                    for (auto* name : { "dark two", "third" })
+                    {
+                        moveHandle (*findChild<experimental::LabOrbit> (lab), 0.2f, 0.7f);
+                        save->onClick();
+                        lab.commitName (name);
+                    }
+                    lab.showPresetsTab (true);
+                    expect (shown (findButton (lab, "bright one"), lab), "the Presets tab lists it");
+                    auto* tune = findButton (lab, "Tune space to my presets");
+                    expect (shown (tune, lab) && tune->isEnabled(), "the demo button under the list");
+                    shootLab (*editor, "VAE_LAB_PRESETS_SCREENSHOT");
+                }
+                // Reopened: listed, and loading plays the stored codes exactly (through lab({codes}))
+                if (auto editor = openLab (processor))
+                {
+                    auto& lab = *findChild<experimental::JointVaePanel> (*editor);
+                    expect (lab.numPresets() == 3 && lab.presetNameAt (0) == "bright one" && lab.presetPlayable (0));
+                    expect (sameCodes (lab.presetCodes (0), saved), "the codes survive, NaN too");
+                    int played = 0;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        ++played;
+                        play (s);
+                    };
+                    lab.loadPreset (0);
+                    expect (pumpUntil ([&] { return played > 0 && sameCodes (lab.output().codes, saved); }, 30000),
+                            "load plays the exact codes");
+                    expect (lab.inBankMode() && same (processor.getControls(), liteOf (lab)), "on the synth");
+                    expect (lab.statusText().contains ("bright one"), lab.statusText());
+
+                    // The edit gate: a Synth edit, then a load asks; Keep editing keeps the edit
+                    lab.loadPreset (1);
+                    pumpUntil ([&] { return ! sameCodes (lab.output().codes, saved); }, 30000);
+                    const auto other = lab.output().codes;
+                    lab.markEdited();
+                    lab.loadPreset (0);
+                    expect (lab.isAskingToReplace(), "a load asks first while edited");
+                    lab.answerReplace (false);
+                    pumpUntil ([] { return false; }, 300);
+                    expect (sameCodes (lab.output().codes, other), "Keep editing loads nothing");
+                    lab.loadPreset (0);
+                    lab.answerReplace (true);
+                    expect (pumpUntil ([&] { return sameCodes (lab.output().codes, saved); }, 30000), "Replace loads");
+
+                    // Delete asks inline; Cancel keeps it
+                    lab.deletePreset (2);
+                    expect (lab.isAsking() && lab.numPresets() == 3, "Delete asks");
+                    lab.answer (false);
+                    expect (! lab.isAsking() && lab.numPresets() == 3);
+                    lab.deletePreset (2);
+                    lab.answer (true);
+                    expect (lab.numPresets() == 2 && processor.getLabPresets().getNumChildElements() == 2);
+                    // Rename through the name field
+                    lab.renamePreset (1);
+                    expect (lab.isNaming() && lab.nameFieldText() == "dark two");
+                    expect (lab.commitName ("dark 2") && lab.presetNameAt (1) == "dark 2");
+                }
+                // Restored from the processor state, NaN codes included
+                const auto state = stateOf (processor);
+                processor.releaseResources();
+                PluginProcessor restored;
+                settleModel (restored);
+                restored.setStateInformation (state.getData(), (int) state.getSize());
+                if (auto editor = openLab (restored))
+                {
+                    auto& lab = *findChild<experimental::JointVaePanel> (*editor);
+                    expect (lab.numPresets() == 2 && lab.presetNameAt (1) == "dark 2");
+                    expect (sameCodes (lab.presetCodes (0), saved), "restored codes");
+                    // Another bundle's preset shows disabled and does not load
+                    auto xml = restored.getLabPresets();
+                    xml.getChildElement (1)->setAttribute ("bundle", "another-bundle");
+                    xml.getChildElement (1)->setAttribute ("codes", "0.25 nan 3.0000001");
+                    lab.setPresets (xml);
+                    expect (lab.presetPlayable (0) && ! lab.presetPlayable (1));
+                    const auto& nanCodes = lab.presetCodes (1);
+                    expect (nanCodes.size() == 3 && juce::exactlyEqual (nanCodes[0], 0.25f) && std::isnan (nanCodes[1])
+                                && juce::exactlyEqual (nanCodes[2], 3.0000001f),
+                            "NaN reads back as an inactive code");
+                    lab.renamePreset (1); // writes the presets back through the Lab's own encoding
+                    lab.commitName ("other bundle");
+                    const auto back = restored.getLabPresets().getChildElement (1)->getStringAttribute ("codes");
+                    expect (back.contains ("nan") && sameCodes (lab.presetCodes (1), nanCodes), back);
+                    lab.showPresetsTab (true);
+                    auto* row = findButton (lab, "other bundle");
+                    expect (row && ! row->isEnabled() && row->getTooltip().contains ("another"), "disabled, with why");
+                    const auto codes = lab.output().codes;
+                    lab.loadPreset (1);
+                    pumpUntil ([] { return false; }, 300);
+                    expect (lab.output().codes == codes || sameCodes (lab.output().codes, codes), "nothing loads");
+                }
+            }
+
+            beginTest ("the fine-tune demo writes nothing and reaches 100% in 10 s");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit&)
+                {
+                    findButton (mainOf (editor), "VAE Lab")->onClick();
+                    lab.showPresetsTab (true);
+                    auto* tune = findButton (lab, "Tune space to my presets");
+                    expect (tune != nullptr && ! tune->isEnabled(), "off with fewer than 2 presets");
+                    for (auto* name : { "a", "b" })
+                    {
+                        lab.startSaving();
+                        lab.commitName (name);
+                    }
+                    expect (tune && tune->isEnabled(), "on with 2");
+                    int played = 0;
+                    lab.onLite = [&] (const schema::Snapshot&) { ++played; };
+                    const auto controls = processor.getControls();
+                    const auto codes = lab.output().codes;
+                    const auto state = processor.getLabPresets().toString();
+                    tune->onClick();
+                    expect (lab.isTuning() && lab.tuneProgress() < 0.01);
+                    expect (lab.tuneText().contains ("Demo only: nothing is trained or changed"), lab.tuneText());
+                    lab.fastForwardTune (4.2);
+                    expectWithinAbsoluteError (lab.tuneProgress(), 0.42, 0.02);
+                    shootLab (editor, "VAE_LAB_TUNE_SCREENSHOT");
+                    lab.fastForwardTune (5.5);
+                    expect (lab.tuneProgress() < 1.0 && ! lab.tuneText().contains ("Done"), "not done before 10 s");
+                    lab.fastForwardTune (0.4);
+                    expectEquals (lab.tuneProgress(), 1.0);
+                    expect (lab.tuneText().contains ("Done (demo)"), lab.tuneText());
+                    pumpUntil ([] { return false; }, 200);
+                    expectEquals (played, 0, "no audio");
+                    expect (same (processor.getControls(), controls), "no parameters");
+                    expect (lab.output().codes == codes || sameCodes (lab.output().codes, codes), "no model calls");
+                    expectEquals (processor.getLabPresets().toString(), state, "the presets stay");
+                    findButton (lab, "Close")->onClick();
+                    expect (! lab.isTuning());
+                    // Closing mid-way cancels it: the next run starts at 0
+                    lab.startTuneDemo();
+                    lab.fastForwardTune (3.0);
+                    lab.closeTuneDemo();
+                    expect (! lab.isTuning());
+                    lab.startTuneDemo();
+                    expect (lab.tuneProgress() < 0.01, "a new run starts again");
+                    lab.closeTuneDemo();
                 });
 
             beginTest ("camera gestures never decode or play");

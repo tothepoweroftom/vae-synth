@@ -1,4 +1,5 @@
 #include "JointVaePanel.h"
+#include <limits>
 
 namespace vae::experimental
 {
@@ -12,6 +13,7 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState&, juce::Typeface::Ptr, juc
 JointVaePanel::~JointVaePanel() = default;
 void JointVaePanel::loadBundle (const juce::File&) {}
 void JointVaePanel::markEdited() {}
+void JointVaePanel::setPresets (const juce::XmlElement&) {}
 void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
 void JointVaePanel::paint (juce::Graphics&) {}
 #else
@@ -45,6 +47,24 @@ juce::String presetName (const XyPadData& xy, size_t k)
     return (int) k < xy.presetName.size() && xy.presetName[(int) k].isNotEmpty() ? xy.presetName[(int) k]
                                                                                  : "preset " + juce::String (k);
 }
+/** Floats as text, locale-free and exact for a float (10 significant digits); NaN (an inactive code) is "nan". */
+juce::String floatsToText (const float* v, size_t n)
+{
+    juce::StringArray tokens;
+    for (size_t i = 0; i < n; ++i)
+        tokens.add (std::isnan (v[i]) ? juce::String ("nan") : juce::String ((double) v[i], 9, true));
+    return tokens.joinIntoString (" ");
+}
+std::vector<float> textToFloats (const juce::String& text)
+{
+    juce::StringArray tokens;
+    tokens.addTokens (text, " ", "");
+    tokens.removeEmptyStrings();
+    std::vector<float> v;
+    for (const auto& t : tokens)
+        v.push_back (t == "nan" ? std::numeric_limits<float>::quiet_NaN() : (float) t.getDoubleValue());
+    return v;
+}
 } // namespace
 
 JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr body, juce::Typeface::Ptr bold,
@@ -72,7 +92,6 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     }
     addChildComponent (pad);
     addChildComponent (findButton);
-    addChildComponent (experimentalTag);
     for (size_t i = 0; i < categoryRows.size(); ++i)
     {
         auto& row = categoryRows[i];
@@ -95,11 +114,43 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     askNote.setColour (juce::Label::textColourId, lab::ink);
     askNote.setMinimumHorizontalScale (1.0f); // wraps onto a second line instead of squeezing
     askNote.setJustificationType (juce::Justification::centredLeft);
-    askReplace.onClick = [this] { answerReplace (true); };
-    askKeep.onClick = [this] { answerReplace (false); };
-    experimentalTag.setFont (look.monoFont (10.0f));
-    experimentalTag.setColour (juce::Label::textColourId, lab::muted);
-    experimentalTag.setTooltip ("Learned prompt search is unproven: see docs/PROMPT-EVAL.md");
+    askReplace.onClick = [this] { pendingAnswer ? answer (true) : answerReplace (true); };
+    askKeep.onClick = [this] { pendingAnswer ? answer (false) : answerReplace (false); };
+
+    // Presets (Task 23): Save preset and the name field over the Axes | Presets tabs
+    for (auto* c : std::initializer_list<juce::Component*> { &saveButton, &axesTabButton, &presetsTabButton })
+        addAndMakeVisible (c);
+    for (auto* c : std::initializer_list<juce::Component*> { &nameBox, &nameSave, &nameCancel, &presetView })
+        addChildComponent (c);
+    saveButton.setTooltip ("Keep the current sound as a preset");
+    saveButton.onClick = [this] { startSaving(); };
+    nameBox.setFont (look.monoFont (12.0f));
+    nameBox.setIndents (6, 0);
+    nameBox.setJustification (juce::Justification::centredLeft);
+    nameBox.setTitle ("Preset name");
+    nameBox.onReturnKey = nameSave.onClick = [this] { commitName (nameBox.getText()); };
+    nameBox.onEscapeKey = nameCancel.onClick = [this] { endNaming(); };
+    for (auto* b : { &axesTabButton, &presetsTabButton })
+    {
+        b->getProperties().set ("tab", true); // the design's tabs, as the editor's view tabs
+        b->setClickingTogglesState (false);
+    }
+    axesTabButton.setToggleState (true, juce::dontSendNotification);
+    axesTabButton.onClick = [this] { showPresetsTab (false); };
+    presetsTabButton.onClick = [this] { showPresetsTab (true); };
+    presetView.setViewedComponent (&presetList, false);
+    presetView.setScrollBarsShown (true, false);
+    presetView.setScrollBarThickness (6);
+    presetList.addAndMakeVisible (tuneButton);
+    presetList.addChildComponent (presetHint);
+    presetHint.setFont (look.monoFont (10.0f));
+    presetHint.setColour (juce::Label::textColourId, lab::muted);
+    presetHint.setMinimumHorizontalScale (1.0f);
+    presetHint.setJustificationType (juce::Justification::topLeft);
+    tuneButton.setTooltip ("A demo of tuning the space to your presets: nothing is trained or changed");
+    tuneButton.onClick = [this] { startTuneDemo(); };
+    addChildComponent (tune);
+    tune.close.onClick = [this] { closeTuneDemo(); };
     for (size_t i = 0; i < chips.size(); ++i)
     {
         addChildComponent (chips[i]);
@@ -400,8 +451,10 @@ void JointVaePanel::markEdited()
 void JointVaePanel::edit (std::function<void()> change)
 {
     if (pendingEdit)
-        return;    // asking: further Lab edits are ignored
-    ++promptToken; // a Lab edit makes any prompt result still on its way obsolete
+        return; // asking: further Lab edits are ignored
+    if (pendingAnswer)
+        answer (false); // a sound edit drops a Delete question; the banner is the Replace question's next
+    ++promptToken;      // a Lab edit makes any prompt result still on its way obsolete
     if (! edited)
     {
         change();
@@ -416,13 +469,354 @@ void JointVaePanel::showAsk (bool show)
 {
     for (auto* c : std::initializer_list<juce::Component*> { &askNote, &askReplace, &askKeep })
         c->setVisible (show);
-    if (show)
+    if (show && pendingEdit)
+    {
+        askNote.setText ("Replace your Synth edits? The Lab's sound replaces the changes made in the Synth view.",
+                         juce::dontSendNotification);
+        askReplace.setButtonText ("Replace");
+        askKeep.setButtonText ("Keep editing");
         setStatus (kAsking);
+    }
     resized();
     repaint();
 }
 
 void JointVaePanel::answerReplace (bool replace) { resolveReplace (replace); }
+
+void JointVaePanel::ask (const juce::String& note, const juce::String& yes, std::function<void()> onYes)
+{
+    if (pendingEdit)
+        return; // the Replace question has the banner
+    pendingAnswer = std::move (onYes);
+    askNote.setText (note, juce::dontSendNotification);
+    askReplace.setButtonText (yes);
+    askKeep.setButtonText ("Cancel");
+    showAsk (true);
+}
+
+void JointVaePanel::answer (bool yes)
+{
+    if (! pendingAnswer)
+        return;
+    const auto onYes = std::exchange (pendingAnswer, nullptr);
+    showAsk (false);
+    if (yes)
+        onYes();
+}
+
+//==============================================================================
+// Presets (Task 23)
+void JointVaePanel::setPresets (const juce::XmlElement& xml)
+{
+    // The host's saved state: anything malformed is skipped
+    presets.clear();
+    for (auto* e : xml.getChildWithTagNameIterator ("Preset"))
+    {
+        Preset p;
+        p.name = e->getStringAttribute ("name").trim();
+        p.bundle = e->getStringAttribute ("bundle");
+        p.category = juce::jlimit (0, 8, e->getIntAttribute ("category", 8));
+        const auto zs = textToFloats (e->getStringAttribute ("z"));
+        const auto ps = textToFloats (e->getStringAttribute ("pos"));
+        p.codes = textToFloats (e->getStringAttribute ("codes"));
+        if (p.name.isEmpty() || zs.size() != p.z.size() || ps.size() != 3 || p.codes.empty())
+            continue;
+        std::copy (zs.begin(), zs.end(), p.z.begin());
+        for (size_t i = 0; i < 3; ++i)
+        {
+            p.pos[i] = juce::jlimit (0.0f, 1.0f, std::isnan (ps[i]) ? 0.5f : ps[i]);
+            p.axes[i] = e->getStringAttribute ("axis" + juce::String ((int) i));
+        }
+        presets.push_back (std::move (p));
+        if (presets.size() == kMaxPresets)
+            break;
+    }
+    presetsChanged (false);
+}
+
+bool JointVaePanel::presetPlayable (int i) const
+{
+    return i >= 0 && (size_t) i < presets.size() && xy != nullptr && current.layout.id.isNotEmpty()
+           && presets[(size_t) i].bundle == current.layout.id
+           && (current.codes.empty() || presets[(size_t) i].codes.size() == current.codes.size()); // host state
+}
+
+void JointVaePanel::startSaving()
+{
+    if (! outputValid || knobMode) // shortcut: the knob pad has no z to save; Save works on the latent pad
+        return setStatus (knobMode ? "Save presets from the latent pad" : "Nothing to save yet");
+    if (presets.size() >= kMaxPresets)
+        return setStatus (juce::String (kMaxPresets) + " presets is the limit: delete one first", true);
+    naming = -1;
+    // The last prompt, else the category guess
+    auto name = promptBox.getText().trim();
+    if (name.isEmpty())
+        name = jointLabels[std::max_element (current.guess.begin(), current.guess.end()) - current.guess.begin()];
+    nameBox.setText (name, false);
+    resized();
+    nameBox.grabKeyboardFocus();
+    nameBox.selectAll();
+}
+
+void JointVaePanel::renamePreset (int i)
+{
+    if (i < 0 || (size_t) i >= presets.size())
+        return;
+    naming = i;
+    nameBox.setText (presets[(size_t) i].name, false);
+    resized();
+    nameBox.grabKeyboardFocus();
+    nameBox.selectAll();
+}
+
+void JointVaePanel::endNaming()
+{
+    naming = -2;
+    resized();
+}
+
+bool JointVaePanel::commitName (const juce::String& text)
+{
+    const auto name = text.trim();
+    if (naming == -2)
+        return false;
+    if (name.isEmpty())
+    {
+        setStatus ("A preset needs a name", true);
+        return false;
+    }
+    if (naming >= 0 && (size_t) naming < presets.size())
+        presets[(size_t) naming].name = name;
+    else
+    {
+        if (! outputValid || presets.size() >= kMaxPresets)
+            return false;
+        // The orbit's centre, not the step it is on
+        const bool orbiting = orbitSettings.on && centreOut;
+        Preset p;
+        p.name = name;
+        p.bundle = current.layout.id;
+        p.category = juce::jlimit (0, 8, category.getSelectedId() - 1);
+        p.z = orbiting ? centreZ : z;
+        p.axes = axes;
+        p.pos = orbiting ? centre : pos;
+        p.codes = orbiting ? centreOut->codes : current.codes;
+        presets.push_back (std::move (p));
+        setStatus ("Saved " + quoted (name));
+    }
+    endNaming();
+    presetsChanged();
+    return true;
+}
+
+void JointVaePanel::loadPreset (int i)
+{
+    if (presetPlayable (i))
+        edit ([this, i] { applyPreset (i); });
+}
+
+void JointVaePanel::applyPreset (int i)
+{
+    if (! presetPlayable (i)) // a bundle may load while asking
+        return;
+    if (knobMode)
+        setKnobMode (false);
+    // As a Find pick: one state change, the stored codes play exactly, the next move explores from z
+    const auto& p = presets[(size_t) i];
+    userActed = true;
+    selected = -1;
+    bankMode = true;
+    bankCodes = p.codes;
+    z = p.z;
+    category.setSelectedId (p.category + 1, juce::dontSendNotification);
+    lockedTail.reset();
+    lockButton.setToggleState (false, juce::dontSendNotification);
+    // Its axes when this bundle still has them (X and Y set and distinct), and its pad positions
+    const auto known = [this] (const juce::String& id) { return id.isNotEmpty() && xy->find (id) != nullptr; };
+    if (known (p.axes[0]) && known (p.axes[1]) && p.axes[0] != p.axes[1]
+        && (p.axes[2].isEmpty() || (known (p.axes[2]) && p.axes[2] != p.axes[0] && p.axes[2] != p.axes[1])))
+        axes = p.axes;
+    pos = p.pos;
+    setStatus ("Loaded the preset " + quoted (p.name) + dotSep + "Lite preview");
+    updatePromptUi();
+    refresh();
+    updateDots();
+    decode(); // re-centres a running orbit, as a Find pick
+}
+
+void JointVaePanel::deletePreset (int i)
+{
+    if (i < 0 || (size_t) i >= presets.size())
+        return;
+    ask ("Delete the preset " + quoted (presets[(size_t) i].name) + "?", "Delete",
+         [this, name = presets[(size_t) i].name, i]
+         {
+             if ((size_t) i < presets.size() && presets[(size_t) i].name == name)
+             {
+                 presets.erase (presets.begin() + i);
+                 if (naming >= 0)
+                     endNaming();
+                 presetsChanged();
+             }
+         });
+}
+
+void JointVaePanel::showPresetsTab (bool show)
+{
+    axesTabButton.setToggleState (! show, juce::dontSendNotification);
+    presetsTabButton.setToggleState (show, juce::dontSendNotification);
+    listView.setVisible (! show);
+    presetView.setVisible (show);
+    resized();
+}
+
+void JointVaePanel::PresetRow::resized()
+{
+    auto r = getLocalBounds();
+    remove.setBounds (r.removeFromRight (54));
+    r.removeFromRight (4);
+    rename.setBounds (r.removeFromRight (62));
+    r.removeFromRight (4);
+    load.setBounds (r);
+}
+
+void JointVaePanel::presetsChanged (bool notify)
+{
+    // Rebuilt only here, never from resized(): a row's own click may be what resizes
+    presetRows.clear();
+    for (size_t i = 0; i < presets.size(); ++i)
+    {
+        auto* row = presetRows.add (new PresetRow());
+        const auto& p = presets[i];
+        row->load.setButtonText (p.name);
+        const bool playable = presetPlayable ((int) i);
+        row->load.setEnabled (playable);
+        row->load.setTooltip (playable ? "Play this preset: its exact settings"
+                                       : "Saved with another VAE bundle (" + p.bundle + "): it cannot play here");
+        row->rename.setTooltip ("Rename " + p.name);
+        row->remove.setTooltip ("Delete " + p.name);
+        row->load.onClick = [this, i] { loadPreset ((int) i); };
+        row->rename.onClick = [this, i] { renamePreset ((int) i); };
+        row->remove.onClick = [this, i] { deletePreset ((int) i); };
+        presetList.addAndMakeVisible (row);
+    }
+    tuneButton.setEnabled (presets.size() >= 2);
+    presetHint.setVisible (presets.empty());
+    layOutPresets();
+    if (! notify || ! onPresetsChanged)
+        return;
+    juce::XmlElement xml ("LabPresets");
+    for (const auto& p : presets)
+    {
+        auto* e = xml.createNewChildElement ("Preset");
+        e->setAttribute ("name", p.name);
+        e->setAttribute ("bundle", p.bundle);
+        e->setAttribute ("category", p.category);
+        e->setAttribute ("z", floatsToText (p.z.data(), p.z.size()));
+        for (size_t i = 0; i < 3; ++i)
+            e->setAttribute ("axis" + juce::String ((int) i), p.axes[i]);
+        e->setAttribute ("pos", floatsToText (p.pos.data(), 3));
+        e->setAttribute ("codes", floatsToText (p.codes.data(), p.codes.size()));
+    }
+    onPresetsChanged (xml);
+}
+
+void JointVaePanel::layOutPresets()
+{
+    const int width = juce::jmax (0, presetView.getWidth() - presetView.getScrollBarThickness());
+    int y = 0;
+    if (presets.empty())
+    {
+        presetHint.setBounds (0, 0, width, 34);
+        y = 40;
+    }
+    for (auto* row : presetRows)
+    {
+        row->setBounds (0, y, width, kRowH);
+        y += kRowH + 4;
+    }
+    tuneButton.setBounds (0, y + 6, width, kRowH);
+    presetList.setSize (width, y + 6 + kRowH);
+}
+
+//==============================================================================
+// The fine-tune demo: a dummy. It only shows progress: no parameters, no model calls, no audio.
+JointVaePanel::TuneOverlay::TuneOverlay()
+{
+    addAndMakeVisible (close);
+    setTitle ("Tune space to my presets (demo)");
+}
+
+juce::String JointVaePanel::TuneOverlay::text() const
+{
+    return juce::String ("Tune space to my presets\nDemo only: nothing is trained or changed\n")
+           + (progress >= 1.0 ? juce::String ("Done (demo)")
+                              : "Tuning... " + juce::String (juce::roundToInt (progress * 100)) + "%");
+}
+
+void JointVaePanel::TuneOverlay::paint (juce::Graphics& g)
+{
+    g.fillAll (lab::dialog);
+    g.setColour (lab::green);
+    g.drawRect (getLocalBounds(), 1);
+    auto r = getLocalBounds().reduced (18, 14);
+    const auto lines = juce::StringArray::fromLines (text());
+    g.setColour (lab::ink);
+    g.setFont (PitcherLookAndFeel::monoFontFor (*this, 13.0f).boldened());
+    g.drawText (lines[0].toUpperCase(), r.removeFromTop (22), juce::Justification::centredLeft);
+    g.setColour (lab::muted);
+    g.setFont (bodyFont (*this, 11.5f));
+    g.drawText (lines[1], r.removeFromTop (20), juce::Justification::centredLeft);
+    r.removeFromTop (12);
+    const auto bar = r.removeFromTop (6).toFloat();
+    g.setColour (lab::line);
+    g.fillRect (bar);
+    g.setColour (lab::green);
+    g.fillRect (bar.withWidth (bar.getWidth() * (float) juce::jlimit (0.0, 1.0, progress)));
+    r.removeFromTop (8);
+    g.setColour (progress >= 1.0 ? lab::green : lab::ink);
+    g.setFont (PitcherLookAndFeel::monoFontFor (*this, 11.0f));
+    g.drawText (lines[2], r.removeFromTop (18), juce::Justification::centredLeft);
+}
+
+void JointVaePanel::TuneOverlay::resized()
+{
+    close.setBounds (getLocalBounds().reduced (18, 14).removeFromBottom (kRowH).removeFromRight (80));
+}
+
+void JointVaePanel::startTuneDemo()
+{
+    if (presets.size() < 2)
+        return;
+    tuneStart = juce::Time::getMillisecondCounterHiRes();
+    tuneSkip = 0;
+    tune.progress = 0;
+    tune.setVisible (true);
+    tune.toFront (false);
+    resized();
+    tuneTimer.startTimerHz (30);
+}
+
+void JointVaePanel::closeTuneDemo()
+{
+    tuneTimer.stopTimer(); // mid-way: cancelled, nothing to undo
+    tune.setVisible (false);
+}
+
+void JointVaePanel::fastForwardTune (double seconds)
+{
+    tuneSkip += seconds * 1000.0;
+    tuneTick();
+}
+
+void JointVaePanel::tuneTick()
+{
+    tune.progress =
+        juce::jlimit (0.0, 1.0, (juce::Time::getMillisecondCounterHiRes() - tuneStart + tuneSkip) / kTuneMs);
+    if (tune.progress >= 1.0)
+        tuneTimer.stopTimer();
+    tune.repaint();
+}
 
 void JointVaePanel::resolveReplace (bool replace)
 {
@@ -581,6 +975,7 @@ void JointVaePanel::loadBundle (const juce::File& file)
                              }
                      }
                      self.list.setAxes (all);
+                     self.presetsChanged (false); // another bundle's presets show disabled
                      self.base.clear (juce::dontSendNotification);
                      for (int i = 0; i < 8; ++i)
                          if (self.xy->typical.count (jointLabels[i]) != 0)
@@ -653,7 +1048,6 @@ void JointVaePanel::loadPromptBundle (const juce::File& file)
 void JointVaePanel::updatePromptUi()
 {
     findButton.setVisible (promptReady && kShowLabControls);
-    experimentalTag.setVisible (promptReady);
     if (! promptReady)
         nudgeButton.setToggleState (true, juce::dontSendNotification);
     const bool find = promptReady && findButton.getToggleState();
@@ -1264,12 +1658,6 @@ void JointVaePanel::paint (juce::Graphics& g)
                     heading, juce::Justification::centredLeft);
     }
 
-    // The right sidebar's one tab: no Presets tab (Task 17 decision 3)
-    g.setFont (look.monoFont (11.0f));
-    g.setColour (lab::green);
-    g.drawText (knobMode ? "KNOB GROUPS" : "AXES", axesTab.reduced (4, 0), juce::Justification::centredLeft);
-    g.fillRect (axesTab.removeFromBottom (2));
-
     if (! askArea.isEmpty())
     {
         g.setColour (lab::green.withAlpha (0.07f));
@@ -1322,12 +1710,28 @@ void JointVaePanel::resized()
     left.removeFromTop (6);
     spectrum.setBounds (left); // at least kSpectrumH: the space the hidden controls free goes here, not to a gap
 
-    // Right: the axis list, scrolling within its height
+    // Right: Save preset (or the name field), the Axes | Presets tabs, then the axis or the preset list
     auto right = layout.right.withTrimmedLeft (20);
-    axesTab = right.removeFromTop (kTabH);
+    auto top = right.removeFromTop (kRowH);
+    for (auto* c : std::initializer_list<juce::Component*> { &nameBox, &nameSave, &nameCancel })
+        c->setVisible (naming != -2);
+    saveButton.setVisible (naming == -2);
+    saveButton.setBounds (top.withWidth (110));
+    nameCancel.setBounds (top.removeFromRight (62));
+    top.removeFromRight (4);
+    nameSave.setBounds (top.removeFromRight (50));
+    top.removeFromRight (4);
+    nameBox.setBounds (top);
+    right.removeFromTop (6);
+    auto tabs = right.removeFromTop (kTabH);
+    axesTabButton.setButtonText (knobMode ? "KNOB GROUPS" : "AXES");
+    axesTabButton.setBounds (tabs.removeFromLeft (tabs.getWidth() / 2));
+    presetsTabButton.setBounds (tabs);
     right.removeFromTop (10);
     listView.setBounds (right);
     list.layOut (listView.getWidth() - listView.getScrollBarThickness()); // rows never sit under the scroll bar
+    presetView.setBounds (right);
+    layOutPresets();
 
     // Centre: the view, the Replace question and Find's chips, the prompt and its status, the keyboard
     keyboard.setBounds (layout.keyboard);
@@ -1345,8 +1749,6 @@ void JointVaePanel::resized()
         nudgeButton.setBounds (line.removeFromLeft (80));
         line.removeFromLeft (8);
     }
-    if (experimentalTag.isVisible())
-        experimentalTag.setBounds (line.removeFromLeft (92));
     status.setBounds (line);
 
     auto view = layout.orbit;
@@ -1359,7 +1761,7 @@ void JointVaePanel::resized()
             chips[i].setBounds (row.removeFromLeft (w).withTrimmedRight (4));
     }
     askArea = {};
-    if (pendingEdit)
+    if (pendingEdit || pendingAnswer)
     {
         askArea = view.removeFromBottom (kAskH);
         view.removeFromBottom (kGap);
@@ -1372,6 +1774,7 @@ void JointVaePanel::resized()
     }
     orbit.setBounds (view);
     pad.setBounds (view);
+    tune.setBounds (view.withSizeKeepingCentre (juce::jmin (380, view.getWidth() - 40), 148));
 }
 #endif
 } // namespace vae::experimental

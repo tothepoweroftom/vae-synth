@@ -71,6 +71,12 @@ std::vector<OrbitView::Arrow> OrbitView::arrows() const
     return result;
 }
 
+float OrbitView::dotRadius(int category) const
+{
+    const auto matches = highlightedCategory < 0 || highlightedCategory == category;
+    return dotScale * (matches ? (highlightedCategory < 0 ? 2.5f : 3.2f) : 2.1f);
+}
+
 void OrbitView::paint(juce::Graphics& g)
 {
     const auto started = juce::Time::getMillisecondCounterHiRes();
@@ -102,7 +108,7 @@ void OrbitView::paint(juce::Graphics& g)
     for (const auto& dot : projected)
     {
         const auto matches = highlightedCategory < 0 || highlightedCategory == dot.category;
-        const auto radius = matches ? (highlightedCategory < 0 ? 2.5f : 3.2f) : 2.1f;
+        const auto radius = dotRadius(dot.category);
         const auto colour = dot.category >= 0 && dot.category < static_cast<int>(categoryColours.size())
                           ? categoryColours[static_cast<size_t>(dot.category)] : ink;
         g.setColour(colour.withAlpha(matches ? 1.0f : .12f));

@@ -113,6 +113,11 @@ public:
     float getEditorScale() const;
     void setEditorScale (float);
 
+    /** The Lab's saved presets (Task 23): an opaque element the Lab writes and reads, saved with the state as a
+        child element. Message thread. */
+    juce::XmlElement getLabPresets() const;
+    void setLabPresets (const juce::XmlElement&);
+
     /** Generator status, plus a note when the saved model file is missing. */
     juce::String describeModel() const;
 
@@ -140,6 +145,7 @@ private:
     bool modelMissing = false; // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
     float editorScale = 0.0f;
+    juce::XmlElement labPresets { "LabPresets" };
     std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
 
     std::optional<schema::Snapshot> labControls; // message thread

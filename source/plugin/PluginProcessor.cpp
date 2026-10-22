@@ -339,6 +339,7 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
         xml.setAttribute (kAttrModel, modelPath.getFullPathName());
         xml.setAttribute (kAttrPrompt, lastPrompt);
         xml.setAttribute (kAttrEditorScale, editorScale);
+        xml.addChildElement (new juce::XmlElement (labPresets));
     }
     copyXmlToBinary (xml, destData);
 }
@@ -365,6 +366,8 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         const juce::ScopedLock sl (stateLock);
         lastPrompt = xml->getStringAttribute (kAttrPrompt);
         editorScale = (float) xml->getDoubleAttribute (kAttrEditorScale, editorScale);
+        const auto* presets = xml->getChildByName (labPresets.getTagName());
+        labPresets = presets != nullptr ? *presets : juce::XmlElement (labPresets.getTagName()); // older states: none
         modelPath = model;
         modelMissing = missing;
     }
@@ -381,6 +384,18 @@ void vae::PluginProcessor::setLastPrompt (const juce::String& prompt)
 {
     const juce::ScopedLock sl (stateLock);
     lastPrompt = prompt;
+}
+
+juce::XmlElement vae::PluginProcessor::getLabPresets() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return labPresets;
+}
+
+void vae::PluginProcessor::setLabPresets (const juce::XmlElement& presets)
+{
+    const juce::ScopedLock sl (stateLock);
+    labPresets = presets;
 }
 
 float vae::PluginProcessor::getEditorScale() const
