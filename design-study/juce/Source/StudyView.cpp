@@ -18,9 +18,17 @@ StudyView::StudyView()
     if(!data.load(BinaryData::study_json,(size_t)BinaryData::study_jsonSize)){status.setText("Could not load study data",juce::dontSendNotification);}
     latent=data.initialLatent;category=data.initialCategory;
     addAndMakeVisible(orbit);orbit.setLabelFont(look.monoFont(10));addAndMakeVisible(spectrum);
+    orbit.onGestureStart=[this]{remember();};
     orbit.onPositionChanged=[this](auto p){data.moveTo(latent,assigned,p);refreshPosition();};
     for(int i=0;i<8;++i){auto& b=categories[(size_t)i];addAndMakeVisible(b);b.setButtonText(labels[(size_t)i]);b.getProperties().set("category",true);b.onClick=[this,i]{highlighted=highlighted==i?-1:i;orbit.setHighlight(highlighted);for(int j=0;j<8;++j)categories[(size_t)j].setToggleState(j==highlighted,juce::dontSendNotification);repaint();};}
-    for(auto* b:{&save,&axesTab,&presetsTab,&zoomOut,&zoomIn,&reset,&send,&tune})addAndMakeVisible(b);
+    for(auto* b:{&save,&axesTab,&presetsTab,&zoomOut,&zoomIn,&reset,&send,&tune,&back,&pin,&compare,&motion})addAndMakeVisible(b);
+    back.setEnabled(false);compare.setEnabled(false);
+    back.setTooltip("Return to the previous exploration gesture");
+    back.onClick=[this]{if(history.empty())return;auto state=history.back();history.pop_back();restore(state);back.setEnabled(!history.empty());};
+    pin.setTooltip("Keep this position and its axes as comparison A");
+    pin.onClick=[this]{pinned=Favourite{"",latent,assigned,category};compare.setEnabled(true);pin.setButtonText("A pinned");status.setText("Comparison A pinned / Swap A/B to compare predictions",juce::dontSendNotification);};
+    compare.onClick=[this]{if(!pinned)return;remember();auto other=*pinned;pinned=Favourite{"",latent,assigned,category};restore(other);status.setText("A/B predictions swapped / no audio in this study",juce::dontSendNotification);};
+    motion.onClick=[this]{reducedMotion=!reducedMotion;motion.setButtonText(reducedMotion?"Motion: off":"Motion: on");orbit.setReducedMotion(reducedMotion);for(auto& row:rows)row->setReducedMotion(reducedMotion);startTimerHz(60);};
     save.setButtonText("Save favourite");save.getProperties().set("save",true);save.setTooltip("Save current sound with a name");save.onClick=[this]{saveNamed();};
     axesTab.getProperties().set("tab",true);presetsTab.getProperties().set("tab",true);
     axesTab.onClick=[this]{selectTab(false);};presetsTab.onClick=[this]{selectTab(true);};
@@ -30,38 +38,69 @@ StudyView::StudyView()
     prompt.setBorder(juce::BorderSize<int>(1));prompt.setIndents(12,0);
     send.onClick=[this]{auto text=prompt.getText().toLowerCase();int found=-1;for(int i=0;i<8;++i)if(text.contains(labels[(size_t)i].toLowerCase())){found=i;break;}
         if(found<0){status.setText("Try bass, lead, pad, keys, pluck or synth - category words only.",juce::dontSendNotification);return;}
+        remember();
         for(size_t i=0;i<data.presets.size();++i)if(data.labels[i]==found){latent=data.presets[i];category=found;break;}
         status.setText(labels[(size_t)found]+" selected / category matching only",juce::dontSendNotification);refreshPosition();};
     prompt.onReturnKey=send.onClick;addAndMakeVisible(status);status.setFont(font(10));status.setColour(juce::Label::textColourId,muted);
     axisScroll.setViewedComponent(&axisContent,false);axisScroll.setScrollBarsShown(true,false);addAndMakeVisible(axisScroll);
     presetScroll.setViewedComponent(&presetContent,false);presetScroll.setScrollBarsShown(true,false);addChildComponent(presetScroll);
-    for(size_t i=0;i<data.axes.size();++i){auto row=std::make_unique<AxisRow>(data.axes[i].name,(int)i,[this](int index,int axis){
+    for(size_t i=0;i<data.axes.size();++i){auto row=std::make_unique<StudyAxisRow>(data.axes[i].name,(int)i,[this](int index,int axis){
+        remember();
         auto previous=assigned[(size_t)axis];for(int a=0;a<3;++a)if(assigned[(size_t)a]==index)assigned[(size_t)a]=previous;
         assigned[(size_t)axis]=index;refreshCloud();refreshPosition();},[this](int index,float value){
         auto pos=data.project(latent,assigned);for(int a=0;a<3;++a)if(assigned[(size_t)a]==index)pos[(size_t)a]=value;
-        data.moveTo(latent,assigned,pos);orbit.setPosition(pos);refreshPosition();});axisContent.addAndMakeVisible(*row);rows.push_back(std::move(row));}
+        data.moveTo(latent,assigned,pos);orbit.setPosition(pos);refreshPosition();});row->onGestureStart=[this](int){remember();};axisContent.addAndMakeVisible(*row);rows.push_back(std::move(row));}
     tune.onClick=[this]{showTune();};
     keyboard.setAvailableRange(48,84);keyboard.setBlackNoteLengthProportion(.61f);keyboard.setKeyPressBaseOctave(4);keyboard.setLowestVisibleKey(48);keyboard.setScrollButtonsVisible(false);
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId,juce::Colour(0xffb7bcb6));keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId,bg);
     keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,green.withAlpha(.8f));keyboard.setColour(juce::MidiKeyboardComponent::shadowColourId,juce::Colours::transparentBlack);
     addAndMakeVisible(keyboard);keyboard.setTitle("Visual keyboard - no audio engine in this study");
-    setSize(1380,800);refreshCloud();refreshPosition();selectTab(false);startTimerHz(20);
+    setSize(1380,800);refreshCloud();refreshPosition();selectTab(false);startTimerHz(60);
 }
 StudyView::~StudyView(){stopTimer();setLookAndFeel(nullptr);}
 void StudyView::refreshCloud()
 {
-    std::vector<PresetPoint> points;points.reserve(data.presets.size());for(size_t i=0;i<data.presets.size();++i)points.push_back({data.project(data.presets[i],assigned),data.labels[i]});orbit.setPoints(std::move(points));
+    std::vector<StudyPresetPoint> points;points.reserve(data.presets.size());for(size_t i=0;i<data.presets.size();++i)points.push_back({data.project(data.presets[i],assigned),data.labels[i]});orbit.setPoints(std::move(points));
 }
 void StudyView::refreshPosition()
 {
-    orbit.setPosition(data.project(latent,assigned));dirty=true;refreshRows();
+    orbit.setPosition(data.project(latent,assigned));dirty=true;orbit.setPredictionPending(true);startTimerHz(60);refreshRows();
     // Proximity summary is explicitly labelled; it is not the web demo's parameter forest.
     matches.fill(0);std::vector<std::pair<float,int>> distances;distances.reserve(data.presets.size());
     for(size_t i=0;i<data.presets.size();++i){float d=0;for(size_t k=0;k<32;++k){float delta=latent[k]-data.presets[i][k];d+=delta*delta;}distances.emplace_back(d,data.labels[i]);}
     std::sort(distances.begin(),distances.end());float sum=0;for(size_t i=0;i<std::min(size_t(32),distances.size());++i){auto [d,c]=distances[i];if(c>=0&&c<8){float w=1/(.5f+d);matches[(size_t)c]+=w;sum+=w;}}
     if(sum>0)for(auto& m:matches)m/=sum;for(int i=0;i<8;++i)categories[(size_t)i].getProperties().set("percent",juce::String(juce::roundToInt(matches[(size_t)i]*100))+"%");repaint();
 }
-void StudyView::timerCallback(){if(dirty){dirty=false;spectrum.image=data.spectrogram(latent,category);spectrum.setTooltip(data.soundTooltip()+"\nModel prediction, not an audio measurement.");spectrum.repaint();}}
+void StudyView::remember()
+{
+    if(!history.empty() && history.back().latent==latent && history.back().axes==assigned && history.back().category==category)return;
+    if(history.size()==64)history.erase(history.begin());
+    history.push_back({"",latent,assigned,category});back.setEnabled(true);
+}
+void StudyView::restore(const Favourite& state)
+{
+    latent=state.latent;assigned=state.axes;category=state.category;refreshCloud();refreshPosition();
+}
+void StudyView::timerCallback()
+{
+    if(!isShowing())return;
+    const auto now=juce::Time::getMillisecondCounterHiRes();
+    const auto dt=lastVisual==0?16.0:juce::jlimit(0.0,50.0,now-lastVisual);lastVisual=now;
+    bool moving=false;
+    for(size_t i=0;i<matches.size();++i) {
+        auto& value=displayedMatches[i];
+        value=reducedMotion?matches[i]:value+(matches[i]-value)*(float)(1-std::exp(-dt/65.0));
+        if(std::abs(value-matches[i])<.001f)value=matches[i];else moving=true;
+    }
+    if(dirty && now-lastInference>=50) {
+        dirty=false;lastInference=now;
+        spectrum.image=data.spectrogram(latent,category);
+        spectrum.setTooltip(data.soundTooltip()+"\nModel prediction, not an audio measurement.");
+        spectrum.repaint();orbit.setPredictionPending(false);
+    }
+    repaint(left);
+    if(!dirty&&!moving){stopTimer();lastVisual=0;}
+}
 void StudyView::refreshRows()
 {
     int y=0;for(size_t i=0;i<rows.size();++i){const auto& a=data.axes[i];float dot=std::inner_product(latent.begin(),latent.end(),a.direction.begin(),0.f);float value=.5f+(dot-a.mean)/(5*a.sd);rows[i]->update(assigned,juce::jlimit(0.f,1.f,value));rows[i]->setBounds(0,y,juce::jmax(1,axisScroll.getWidth()-12),rows[i]->getHeight());y+=rows[i]->getHeight();}axisContent.setSize(juce::jmax(1,axisScroll.getWidth()-12),y);
@@ -76,6 +115,9 @@ void StudyView::resized()
     int y=left.getY()+96;for(auto& b:categories){b.setBounds(left.getX(),y,left.getWidth()-20,27);y+=40;}save.setBounds(left.getX(),y+12,38,34);spectrum.setBounds(left.getX(),left.getBottom()-140,left.getWidth()-20,140);
     keyboard.setBounds(layout.keyboard);keyboard.setKeyWidth(layout.keyboard.getWidth()/22.f);
     status.setBounds(layout.status);send.setBounds(layout.submit);prompt.setBounds(layout.prompt);orbit.setBounds(layout.orbit);
+    auto actions=left.withY(left.getY()+470).withHeight(28).withWidth(left.getWidth()-20);
+    back.setBounds(actions.removeFromLeft(60));actions.removeFromLeft(6);pin.setBounds(actions.removeFromLeft(74));actions.removeFromLeft(6);compare.setBounds(actions);
+    motion.setBounds(left.getX(),left.getY()+500,110,22);
     auto middle=layout.orbit;
     auto controls=middle.reduced(12).removeFromTop(27);reset.setBounds(controls.removeFromRight(74));controls.removeFromRight(5);zoomIn.setBounds(controls.removeFromRight(27));controls.removeFromRight(5);zoomOut.setBounds(controls.removeFromRight(27));
     auto rail=right;rail.removeFromLeft(20);auto tabs=rail.removeFromTop(38);axesTab.setBounds(tabs.removeFromLeft(tabs.getWidth()/2));presetsTab.setBounds(tabs);rail.removeFromTop(10);axisScroll.setBounds(rail);tune.setBounds(rail.removeFromBottom(34));rail.removeFromBottom(12);presetScroll.setBounds(rail);refreshRows();rebuildFavourites();
@@ -86,7 +128,7 @@ void StudyView::paint(juce::Graphics& g)
     auto x=(float)left.getX(),y=(float)left.getY();g.setColour(green);juce::Path logo;logo.addArc(x+2,y+2,29,29,.45f,5.8f,true);logo.startNewSubPath(x+3,y+23);logo.cubicTo(x+10,y+3,x+24,y+1,x+33,y+7);logo.startNewSubPath(x+5,y+29);logo.cubicTo(x+16,y+10,x+27,y+9,x+34,y+13);g.strokePath(logo,juce::PathStrokeType(2));
     g.setColour(ink);g.setFont(juce::Font(juce::FontOptions(look.bold)).withHeight(27));g.drawText("pitcher",left.getX()+43,left.getY()-2,180,40,juce::Justification::centredLeft);
     g.setFont(look.monoFont(15).boldened());g.drawText("CATEGORY MATCH",left.getX(),left.getY()+53,left.getWidth(),22,juce::Justification::centredLeft);g.setColour(muted);g.setFont(look.monoFont(9));g.drawText("Nearby presets / study approximation",left.getX(),left.getY()+76,left.getWidth(),16,juce::Justification::centredLeft);
-    for(int i=0;i<8;++i){auto r=categories[(size_t)i].getBounds();g.setColour(line);g.fillRect(r.getX()+6,r.getBottom()+3,r.getWidth()-12,3);g.setColour(colours[(size_t)i]);g.fillRect((float)r.getX()+6,(float)r.getBottom()+3,(r.getWidth()-12)*matches[(size_t)i],3.f);}
+    for(int i=0;i<8;++i){auto r=categories[(size_t)i].getBounds();g.setColour(line);g.fillRect(r.getX()+6,r.getBottom()+3,r.getWidth()-12,3);g.setColour(colours[(size_t)i]);g.fillRect((float)r.getX()+6,(float)r.getBottom()+3,(r.getWidth()-12)*displayedMatches[(size_t)i],3.f);}
     if(presetsVisible&&favourites.empty()){g.setColour(muted);g.setFont(font(12));g.drawFittedText("Save a sound to keep it here.\nStudy favourites last for this session.",presetScroll.getBounds().reduced(10),juce::Justification::topLeft,3);}
 }
 void StudyView::saveNamed()
@@ -97,7 +139,7 @@ void StudyView::saveNamed()
 }
 void StudyView::rebuildFavourites()
 {
-    favouriteButtons.clear();int y=0;for(size_t i=0;i<favourites.size();++i){auto b=std::make_unique<juce::TextButton>(favourites[i].name);b->onClick=[this,i]{latent=favourites[i].latent;assigned=favourites[i].axes;category=favourites[i].category;refreshCloud();refreshPosition();status.setText("Favourite restored",juce::dontSendNotification);};presetContent.addAndMakeVisible(*b);b->setBounds(0,y,juce::jmax(1,presetScroll.getWidth()-12),36);y+=44;favouriteButtons.push_back(std::move(b));}presetContent.setSize(juce::jmax(1,presetScroll.getWidth()-12),y);tune.setEnabled(!favourites.empty());repaint();
+    favouriteButtons.clear();int y=0;for(size_t i=0;i<favourites.size();++i){auto b=std::make_unique<juce::TextButton>(favourites[i].name);b->onClick=[this,i]{remember();latent=favourites[i].latent;assigned=favourites[i].axes;category=favourites[i].category;refreshCloud();refreshPosition();status.setText("Favourite restored",juce::dontSendNotification);};presetContent.addAndMakeVisible(*b);b->setBounds(0,y,juce::jmax(1,presetScroll.getWidth()-12),36);y+=44;favouriteButtons.push_back(std::move(b));}presetContent.setSize(juce::jmax(1,presetScroll.getWidth()-12),y);tune.setEnabled(!favourites.empty());repaint();
 }
 void StudyView::showTune()
 {

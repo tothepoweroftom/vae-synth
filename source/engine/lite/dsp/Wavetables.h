@@ -25,7 +25,7 @@ public:
     static constexpr int kFrameSize = 2048; // source frame size
     static constexpr int kNumLevels = 11;   // 1024 harmonics down to 1
     static constexpr int kMaxFrames = 256;
-    static constexpr int kMinLevelSize = 256;
+    static constexpr int kMinLevelSize = 1024; // oversample the mips; Surge's table is 1024 samples
 
     /** Samples per frame at a mip level (a guard sample follows each frame). */
     static constexpr int levelSize (int level) noexcept

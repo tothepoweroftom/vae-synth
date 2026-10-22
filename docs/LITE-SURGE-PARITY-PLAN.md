@@ -1,11 +1,13 @@
 # Lite ↔ Surge XT parity plan
 
-**Status:** effects and high-res filters implemented, 2026-10-21
-**Result so far:** full-preset median engine gap **2.28 dB** (was ~3.5),
-p90 **5.37 dB**, loudness **0.84 dB** (was ~1.2). Isolated component medians:
-delay 1.04, chorus 1.53, flanger 1.04, distortion 0.43, EQ 0.84, phaser 1.66,
-reverb 2.17, filters 0.87. Remaining: the S&H/FM/wavetable oscillator detail,
-the attack measurement, and the category test.
+**Status:** effects, high-res filters and oscillator follow-ups implemented,
+2026-10-22
+**Result so far:** full-preset median engine gap **2.18 dB** (was ~3.5),
+p90 **5.24 dB**, loudness **0.82 dB** (was ~1.2). Isolated component medians:
+delay 1.02, chorus 1.49, flanger 1.06, distortion 0.42, EQ 0.84, phaser 1.59,
+reverb 2.18, filters 0.88, wavetable 0.60, S&H noise 1.89, FM ~1.0–1.5.
+Remaining: the attack measurement and the category test (the latter is an
+evaluation feature, not an engine sound).
 **Scope:** make the Lite engine's oscillators, filters and effects behave like the
 Surge backend for the same schema vector.
 **Reference:** Surge XT at `45568c7d60be52aa2a4f27dd7b7a074f56bd00ba`
@@ -23,7 +25,8 @@ low-resonance filters. The remaining gap is concentrated in four places:
    loud at high cutoff and resonance ≥ 0.9. Lite's damping/limiter topology is
    different from Surge's two-sub-step SVF at 2× rate.
 3. **S&H noise, FM and wavetable oscillators.** 2.6 / 1.5 / 1.6 dB in
-   isolation, from correlated noise, FM2 detail and interpolation differences.
+   isolation at the start; now 1.9 / ~1.0–1.5 / 0.6 dB, from the S&H hold
+   rate, FM2 detail and wavetable mip/interpolation.
 4. **Small voice/global details.** Keytrack during glide, pan law, LFO
    smooth-random shape, block-rate conventions.
 
@@ -54,9 +57,9 @@ lower is better):
 |---|---:|---|
 | baseline: saw, filter off, no FX | **0.66–0.78 dB** | engine calibration is good |
 | sine / triangle / saw / square | 0.12 / 0.23 / 0.81 / 0.50 dB | keep as regression targets |
-| S&H noise | **2.64 dB** | flatness differs by 0.036 |
-| wavetable | **1.64 dB** | linear vs windowed-sinc interpolation |
-| FM | **1.0–1.5 dB**, level varies with start phase | compare several renders |
+| S&H noise | **1.89 dB** (was 2.64) | hold rate fitted to 32/cycle |
+| wavetable | **0.60 dB** (was 1.64) | 1024-sample mips + cubic read |
+| FM | **~1.0–1.5 dB**, level varies with start phase | compare several renders |
 | LP12 at cutoff ≥0.55, res 0.9–0.99 | **4.0–8.8 dB**, 3.4–9.6 dB level (Lite louder) | resonance too strong |
 | LP24 at cutoff ≥0.7, res 0.9–0.99 | **1.5–6.3 dB**, up to 5.7 dB level (Lite louder) | limiter/topology |
 | HP12 at cutoff ≥0.55, res 0.9–0.99 | **4.2–9.7 dB**, 4.4–9.9 dB level (Lite louder) | resonance too strong |
@@ -238,12 +241,11 @@ Change:
 Isolated tests say the basic waves are already good. Do not rewrite them
 without evidence.
 
-- **S&H noise (2.64 dB).** Surge's `ot_shnoise` is a correlated-noise S&H
-  oscillator with BLIT-rendered (band-limited) steps, a width control, low/high
-  cut, and a sync rate; the backend sets correlation 0 and sync +48 st. Lite
-  is naive sample-and-hold at 24 values per cycle with no correlation or
-  band-limiting. Implement correlated S&H with band-limited transitions and
-  fit the hold rate/spectrum to Surge. Keep the current level (0.21 dB is fine).
+- **S&H noise (1.89 dB, was 2.64).** Surge's `ot_shnoise` is a correlated-noise
+  S&H oscillator with BLIT-rendered (band-limited) steps, a width control,
+  low/high cut, and a sync rate. The measured spectrum is best matched by a
+  32-values-per-note-cycle hold; a short edge ramp made it worse. The remaining
+  difference is the BLIT edge shaping. Keep the current level (0.24 dB).
 - **FM (~1–1.5 dB).** The backend sets M1 amount 0.3, M1 ratio 2, and leaves
   M2 amount/ratio/feedback at 0. Surge uses a quadrature modulator (`RM1.r`), a
   phase offset, 2× oversampling, and a full-scale sine output. Lite uses a sine
@@ -253,12 +255,10 @@ without evidence.
   FM2 randomises its start phase, which moves its RMS by up to ~2 dB between
   renders, so compare the median of several renders. Do not change the
   sine/wavetable gain to fix FM.
-- **Wavetable (1.64 dB).** Surge reads the table with a windowed-sinc FIR at
-  2× OS and mip levels, and morphs between frames; Lite reads one frame with
-  linear interpolation at base rate. With the shared one-frame table, the
-  remaining difference is interpolation/mip selection. Move the read to
-  cubic Hermite (or a short windowed-sinc) and align the mip selection with
-  Surge's `mipmap` rule. Check that the table normalisation and phase match.
+- **Wavetable (0.60 dB, was 1.64).** The problem was the mip size, not the
+  table content: at 256 samples the 96-harmonic table was barely oversampled.
+  Lite now keeps every mip at 1024 samples or more and reads it with Catmull-Rom
+  cubic. This matches Surge's 1024-sample table without a windowed-sinc read.
 - **Saw/square/triangle/sine.** Keep as regression probes. If Phase 3 stays at
   base rate (the CPU fallback), a high-note aliasing test may justify 2× OS for
   the classic waves; if Phase 3 runs the voice at 2×, they are already there.
@@ -442,14 +442,14 @@ the effect levels; only re-fit if the change is above 0.5 dB.
 
 | Metric | Today | Target |
 |---|---:|---:|
-| Full-preset median `frame_mel_db` (svec→lite) | ~3.5 dB | **≤2.0 dB** |
-| Full-preset p90 `frame_mel_db` | — | **≤5 dB** |
-| Median `d_level_db` | ~1.2 dB | **≤0.5 dB** |
-| Component baseline (saw, no FX, filter off) | 0.66–0.78 dB | **≤0.8 dB, no regression** |
-| Sine/triangle/saw/square | 0.12–0.81 dB | **≤0.9 dB** |
-| S&H noise / FM / wavetable | 1.5–2.6 dB | **≤1.2 dB** |
-| Filter, all types, res ≤0.99 | up to 10.2 dB | **≤1.5 dB, level ≤1.5 dB** |
-| Each effect, isolated | 2.8–13.8 dB | **≤2 dB, level ≤1 dB** |
+| Full-preset median `frame_mel_db` (svec→lite) | 2.18 dB | **≤2.0 dB** |
+| Full-preset p90 `frame_mel_db` | 5.24 dB | **≤5 dB** |
+| Median `d_level_db` | 0.82 dB | **≤0.5 dB** |
+| Component baseline (saw, no FX, filter off) | 0.70–0.78 dB | **≤0.8 dB, no regression** |
+| Sine/triangle/saw/square | 0.1–0.8 dB | **≤0.9 dB** |
+| S&H noise / FM / wavetable | 1.9 / ~1.0–1.5 / 0.6 dB | **≤1.2 dB** |
+| Filter, all types, res ≤0.99 | up to 2.6 dB | **≤1.5 dB, level ≤1.5 dB** |
+| Each effect, isolated | 0.4–2.2 dB | **≤2 dB, level ≤1 dB** |
 | Reverb RT60 per octave | — | **±10 %**, pre-delay ±2 ms |
 | CPU (16 voices, all FX) | measure | **≤2× current** |
 | Silence mismatches | 21 | **no regression** |
