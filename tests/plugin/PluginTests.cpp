@@ -1853,6 +1853,60 @@ public:
                     lab.loadPreset (1);
                     pumpUntil ([] { return false; }, 300);
                     expect (lab.output().codes == codes || sameCodes (lab.output().codes, codes), "nothing loads");
+
+                    // Malformed entries are skipped: a non-finite z, an unparseable code
+                    auto bad = restored.getLabPresets();
+                    auto* badZ = new juce::XmlElement (*bad.getChildElement (0));
+                    badZ->setAttribute ("name", "bad z");
+                    badZ->setAttribute ("z", badZ->getStringAttribute ("z").replaceFirstOccurrenceOf (" ", " inf "));
+                    bad.addChildElement (badZ);
+                    auto* badCode = new juce::XmlElement (*bad.getChildElement (0));
+                    badCode->setAttribute ("name", "bad code");
+                    badCode->setAttribute ("codes", "0.5 abc 1");
+                    bad.addChildElement (badCode);
+                    lab.setPresets (bad);
+                    expectEquals (lab.numPresets(), 2, "both malformed presets skipped");
+
+                    // A list replaced while Replace is asked: the pending load finds its preset gone and loads nothing
+                    lab.setPresets (restored.getLabPresets());
+                    const auto before = lab.output().codes;
+                    lab.markEdited();
+                    lab.loadPreset (0);
+                    expect (lab.isAskingToReplace());
+                    auto swapped = restored.getLabPresets();
+                    swapped.getChildElement (0)->setAttribute ("name", "swapped in");
+                    lab.setPresets (swapped);
+                    lab.answerReplace (true);
+                    pumpUntil ([] { return false; }, 300);
+                    expect (sameCodes (lab.output().codes, before) || lab.output().codes == before,
+                            "no other preset loads");
+                }
+
+                // A state load while the editor is open: the Lab follows it, and a Save keeps the restored presets
+                if (auto editor = openLab (restored))
+                {
+                    auto& lab = *findChild<experimental::JointVaePanel> (*editor);
+                    PluginProcessor other;
+                    juce::XmlElement theirs ("LabPresets");
+                    for (auto* name : { "host one", "host two" })
+                    {
+                        auto* e = new juce::XmlElement (*restored.getLabPresets().getChildElement (0));
+                        e->setAttribute ("name", name);
+                        theirs.addChildElement (e);
+                    }
+                    other.setLabPresets (theirs);
+                    const auto hostState = stateOf (other);
+                    restored.setStateInformation (hostState.getData(), (int) hostState.getSize());
+                    expect (pumpUntil ([&] { return lab.numPresets() == 2 && lab.presetNameAt (0) == "host one"; }),
+                            "the open Lab lists the restored presets");
+                    lab.startSaving();
+                    expect (lab.commitName ("after load"));
+                    const auto kept = restored.getLabPresets();
+                    expect (kept.getNumChildElements() == 3
+                                && kept.getChildElement (0)->getStringAttribute ("name") == "host one"
+                                && kept.getChildElement (1)->getStringAttribute ("name") == "host two"
+                                && kept.getChildElement (2)->getStringAttribute ("name") == "after load",
+                            kept.toString());
                 }
             }
 

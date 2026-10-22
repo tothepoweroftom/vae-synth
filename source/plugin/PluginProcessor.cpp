@@ -372,6 +372,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         modelMissing = missing;
     }
     requestModel (missing ? juce::File() : model, model, missing, nullptr);
+    stateLoaded.sendChangeMessage(); // an open editor re-reads the presets (Task 23 review)
 }
 
 juce::AudioProcessorEditor* PluginProcessor::createEditor() { return new PluginEditor (*this); }

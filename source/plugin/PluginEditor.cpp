@@ -394,6 +394,7 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
     jointVaePanel.toBack(); // under the left column's logo, tabs and reset question, which sit over its top
     jointVaePanel.setPresets (processor.getLabPresets()); // they outlive the editor (Task 23)
     jointVaePanel.onPresetsChanged = [this] (const juce::XmlElement& presets) { processor.setLabPresets (presets); };
+    processor.getStateLoaded().addChangeListener (this);
     jointVaePanel.onPatch = [this] (const juce::MemoryBlock& patch)
     {
         auto r = processor.loadSurgePatch (patch);
@@ -508,6 +509,7 @@ MainEditorComponent::~MainEditorComponent()
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().removeListener (schema::control (i).id, this);
     cancelPendingUpdate();
+    processor.getStateLoaded().removeChangeListener (this);
     for (auto* b : { &synthViewButton, &jointVaeViewButton })
         b->setLookAndFeel (nullptr);
     resetQuestion.setLookAndFeel (nullptr);

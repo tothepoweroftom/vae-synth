@@ -1,5 +1,6 @@
 #include "JointVaePanel.h"
 #include <limits>
+#include <optional>
 
 namespace vae::experimental
 {
@@ -55,14 +56,25 @@ juce::String floatsToText (const float* v, size_t n)
         tokens.add (std::isnan (v[i]) ? juce::String ("nan") : juce::String ((double) v[i], 9, true));
     return tokens.joinIntoString (" ");
 }
-std::vector<float> textToFloats (const juce::String& text)
+/** The reverse; nullopt when a token is neither "nan" nor a finite number (a malformed preset, not a 0). */
+std::optional<std::vector<float>> textToFloats (const juce::String& text)
 {
     juce::StringArray tokens;
     tokens.addTokens (text, " ", "");
     tokens.removeEmptyStrings();
     std::vector<float> v;
     for (const auto& t : tokens)
-        v.push_back (t == "nan" ? std::numeric_limits<float>::quiet_NaN() : (float) t.getDoubleValue());
+    {
+        if (t == "nan")
+        {
+            v.push_back (std::numeric_limits<float>::quiet_NaN());
+            continue;
+        }
+        const auto f = (float) t.getDoubleValue();
+        if (! t.containsOnly ("0123456789+-.eE") || ! t.containsAnyOf ("0123456789") || ! std::isfinite (f))
+            return std::nullopt;
+        v.push_back (f);
+    }
     return v;
 }
 } // namespace
@@ -510,6 +522,8 @@ void JointVaePanel::setPresets (const juce::XmlElement& xml)
 {
     // The host's saved state: anything malformed is skipped
     presets.clear();
+    if (naming >= 0) // the row it renamed may be gone
+        endNaming();
     for (auto* e : xml.getChildWithTagNameIterator ("Preset"))
     {
         Preset p;
@@ -518,13 +532,15 @@ void JointVaePanel::setPresets (const juce::XmlElement& xml)
         p.category = juce::jlimit (0, 8, e->getIntAttribute ("category", 8));
         const auto zs = textToFloats (e->getStringAttribute ("z"));
         const auto ps = textToFloats (e->getStringAttribute ("pos"));
-        p.codes = textToFloats (e->getStringAttribute ("codes"));
-        if (p.name.isEmpty() || zs.size() != p.z.size() || ps.size() != 3 || p.codes.empty())
+        const auto codes = textToFloats (e->getStringAttribute ("codes"));
+        if (p.name.isEmpty() || ! zs || ! ps || ! codes || zs->size() != p.z.size() || ps->size() != 3 || codes->empty()
+            || ! std::all_of (zs->begin(), zs->end(), [] (float v) { return std::isfinite (v); }))
             continue;
-        std::copy (zs.begin(), zs.end(), p.z.begin());
+        p.codes = *codes;
+        std::copy (zs->begin(), zs->end(), p.z.begin());
         for (size_t i = 0; i < 3; ++i)
         {
-            p.pos[i] = juce::jlimit (0.0f, 1.0f, std::isnan (ps[i]) ? 0.5f : ps[i]);
+            p.pos[i] = juce::jlimit (0.0f, 1.0f, std::isnan ((*ps)[i]) ? 0.5f : (*ps)[i]);
             p.axes[i] = e->getStringAttribute ("axis" + juce::String ((int) i));
         }
         presets.push_back (std::move (p));
@@ -612,20 +628,24 @@ bool JointVaePanel::commitName (const juce::String& text)
 void JointVaePanel::loadPreset (int i)
 {
     if (presetPlayable (i))
-        edit ([this, i] { applyPreset (i); });
+        edit (
+            [this, i, name = presets[(size_t) i].name]
+            {
+                // As Delete: the list may have been replaced (a state load) while Replace was asked
+                if ((size_t) i < presets.size() && presets[(size_t) i].name == name)
+                    applyPreset (i);
+            });
 }
 
 void JointVaePanel::applyPreset (int i)
 {
     if (! presetPlayable (i)) // a bundle may load while asking
         return;
-    if (knobMode)
-        setKnobMode (false);
     // As a Find pick: one state change, the stored codes play exactly, the next move explores from z
     const auto& p = presets[(size_t) i];
     userActed = true;
     selected = -1;
-    bankMode = true;
+    bankMode = true; // before leaving the knob pad, whose switch then decodes the stored codes once
     bankCodes = p.codes;
     z = p.z;
     category.setSelectedId (p.category + 1, juce::dontSendNotification);
@@ -633,15 +653,28 @@ void JointVaePanel::applyPreset (int i)
     lockButton.setToggleState (false, juce::dontSendNotification);
     // Its axes when this bundle still has them (X and Y set and distinct), and its pad positions
     const auto known = [this] (const juce::String& id) { return id.isNotEmpty() && xy->find (id) != nullptr; };
-    if (known (p.axes[0]) && known (p.axes[1]) && p.axes[0] != p.axes[1]
-        && (p.axes[2].isEmpty() || (known (p.axes[2]) && p.axes[2] != p.axes[0] && p.axes[2] != p.axes[1])))
+    const bool restore =
+        known (p.axes[0]) && known (p.axes[1]) && p.axes[0] != p.axes[1]
+        && (p.axes[2].isEmpty() || (known (p.axes[2]) && p.axes[2] != p.axes[0] && p.axes[2] != p.axes[1]));
+    const bool wasKnob = knobMode;
+    if (wasKnob)
+    {
+        if (restore)
+            latAxes = p.axes; // the latent pad comes back on them
+        setKnobMode (false);  // decodes
+    }
+    else if (restore)
         axes = p.axes;
-    pos = p.pos;
+    if (restore)
+        pos = p.pos;
+    else
+        syncPositions(); // the current axes, at the preset's z
     setStatus ("Loaded the preset " + quoted (p.name) + dotSep + "Lite preview");
     updatePromptUi();
     refresh();
     updateDots();
-    decode(); // re-centres a running orbit, as a Find pick
+    if (! wasKnob)
+        decode(); // re-centres a running orbit, as a Find pick
 }
 
 void JointVaePanel::deletePreset (int i)

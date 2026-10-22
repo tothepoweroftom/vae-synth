@@ -146,6 +146,7 @@ class MainEditorComponent final
     : public juce::Component
     , private params::ParamStore::Listener
     , private juce::AsyncUpdater
+    , private juce::ChangeListener
 {
 public:
     // The pre-Task 22 editor's size: 1240 px wide, and its height at that width
@@ -170,6 +171,11 @@ private:
     // (PluginProcessor::editedSinceLab).
     void paramChanged (const juce::String&, float) override { triggerAsyncUpdate(); }
     void handleAsyncUpdate() override;
+    // A host state load: the Lab's list follows the restored presets, so a later Save does not write a stale one back
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    {
+        jointVaePanel.setPresets (processor.getLabPresets());
+    }
     enum class View
     {
         synth,
