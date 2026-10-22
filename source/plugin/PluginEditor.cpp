@@ -281,6 +281,8 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
         resetQuestion.setVisible (false);
         processor.applyControls (schema::Snapshot::defaults()); // the old Init button's action
         setStatus ("Init");
+        handleAsyncUpdate(); // the edit gate now, so the reset's own status is the Lab's last
+        jointVaePanel.markReset();
         resized();
     };
 
@@ -424,6 +426,7 @@ MainEditorComponent::MainEditorComponent (PluginProcessor& p)
         setStatus (kSurgePatchStatus);
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().addListener (schema::control (i).id, this);
+    processor.getParams().addListener (PluginProcessor::kEngineParamId, this); // the orbit yields to the host
 #if VAE_PROMPT_TAB
 
     // shortcut: the pad drives latent dims 0 and 1 with the rest at 0; add per-axis dim pickers if wanted.
@@ -494,6 +497,11 @@ void MainEditorComponent::showView (View view)
 
 void MainEditorComponent::handleAsyncUpdate()
 {
+    // The Lab selects Lite synchronously as it plays, so off Lite here is another writer's (host automation)
+    const auto& kinds = processor.getEngineKinds();
+    if (const auto e = (size_t) processor.getParams().get (PluginProcessor::kEngineParamId);
+        e < kinds.size() && kinds[e] != EngineKind::Lite)
+        jointVaePanel.stopOrbitForEngine();
     if (! processor.editedSinceLab())
         return; // the Lab's own write (or nothing new)
     jointVaePanel.markEdited();
@@ -506,8 +514,10 @@ void MainEditorComponent::handleAsyncUpdate()
 
 MainEditorComponent::~MainEditorComponent()
 {
+    jointVaePanel.endOrbitForClose(); // while onLite and the processor are alive: the centre stays the sound
     for (int i = 0; i < schema::kControlCount; ++i)
         processor.getParams().removeListener (schema::control (i).id, this);
+    processor.getParams().removeListener (PluginProcessor::kEngineParamId, this);
     cancelPendingUpdate();
     processor.getStateLoaded().removeChangeListener (this);
     for (auto* b : { &synthViewButton, &jointVaeViewButton })
@@ -812,6 +822,8 @@ PluginEditor::Sizing PluginEditor::Sizing::forDisplay (juce::Rectangle<int> tota
     juce::ignoreUnused (dpi, kNativeDpi);
     float def = std::sqrt (area / kNativeDisplayArea);
 #else
+    // shortcut: JUCE sizes are logical on every platform, so this dpi factor may double-scale; revisit with a real
+    // Windows HiDPI host
     float def = std::sqrt (area / kNativeDisplayArea) * (dpi > 0 ? (float) dpi / kNativeDpi : 1.0f);
 #endif
     float max = def * 1.5f;

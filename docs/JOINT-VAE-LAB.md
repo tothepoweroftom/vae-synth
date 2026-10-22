@@ -83,7 +83,7 @@ column is flexible.
 - **The logo resets.** The Init button and the engine selector are gone from the left column. A click on the pitcher
   logo (pointer cursor, tooltip) asks "Reset the synth to its init patch?" with **Reset** and **Cancel** in a banner
   under the tabs, in both views, because the logo is easy to click by accident. Reset is the old Init: every control
-  to its schema default, which the Lab then counts as a Synth edit. Cancel changes nothing.
+  to its schema default, which the Lab then counts as a Synth edit (its status reads "Reset to init patch"). Cancel changes nothing.
 - **Smaller dots.** The orbit view's preset dots are 25% smaller at every radius (normal, current category,
   highlighted category: 1.58 / 1.88 / 2.4 px instead of 2.1 / 2.5 / 3.2). Find's numbered highlights keep their size.
   The radii live in the design study's `OrbitView`, which got a `setDotScale` setter that the Lab sets to 0.75.
@@ -120,7 +120,8 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 
 - **Synth edits carry back.** A change to any control that does not come from the Lab (a Synth-view knob, the logo reset, host
   automation) marks the Lab's sound edited, and its status line reads "Edited in Synth view". The next Lab edit
-  (handle, slider, prompt, base, category, lock, preset dot or a saved preset) first asks "Replace your Synth edits?" in a banner
+  (handle, slider, prompt, preset dot, a saved preset or Orbit LFO; base, category and lock too, with the controls
+  hidden by `kShowLabControls` shown) first asks "Replace your Synth edits?" in a banner
   above the Lab's prompt box, and the status line says a question is waiting until you answer, whatever else reports (R21: no separate dialog window, which some
   hosts open behind the plug-in). Other Lab edits are ignored until you answer. **Replace** applies the Lab edit;
   **Keep editing** leaves the sound and the Lab as they were.
@@ -145,7 +146,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
    **Matches in the cloud.** Find marks its presets in the orbit view as numbered dots (a green ring, 1-8, above the
    preset dots) at their z on the current axes; they follow axis changes and stay until the next Find, Reset, a base change
    or a bundle change. Clicking a numbered dot or its chip selects that preset: it plays its exact stored settings
-   (Lite preview; Send to Surge builds the same codes, no decoder) and the handle moves to it. Exploring is never
+   (Lite preview; Send to Surge, hidden by `kShowLabControls`, builds the same codes, no decoder) and the handle moves to it. Exploring is never
    locked (there is no Explore button): the first handle, axis-slider, category or word-list move decodes from that preset's z ("Exploring from
    <name>"; the model's approximation, so the sound may change), dragging continues live, and Send to Surge then
    sends the decoded patch. The knob pad edits a copy of the bank settings. Selecting the preset again restores them
@@ -154,8 +155,9 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 2. **Preset.** The decoded point plays at once on Lite, once you have acted in the Lab (see limits).
 3. **Orbit.** Drag the handle. X, Y and Z are any of the five sound axes or the latent dimensions. The sound
    follows while you drag, without clicks. Drag empty space to turn the cloud.
-4. **Tweak.** Type follow-ups ("brighter", "a lot longer", "slightly less noisy"), move an axis slider, click a
-   preset dot to jump to that real preset, or switch to the knob pad for fine adjustments.
+4. **Tweak.** Move an axis slider, click a preset dot to jump to that real preset, run the Orbit LFO, or save the
+   point as a preset. Word-list follow-ups ("brighter", "a lot longer", "slightly less noisy") run only without a
+   prompt bundle: with p1 installed, Return runs Find. The knob pad is hidden by `kShowLabControls`.
 
 ## Controls
 
@@ -163,12 +165,12 @@ All controls but the axis list are in the left sidebar, under CATEGORY MATCH.
 
 | Control | What it does |
 |---|---|
-| Latent pad / Knob pad | The latent pad is the orbit view over sound axes and latent dimensions. The knob pad is a flat XY pad that moves groups of the student's knobs together, over a category map. |
-| Start from | Typical <label>, or a random real preset. |
-| Category | The category the decoder is conditioned on (8 labels plus Unknown). |
-| Lock structure | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the handle. |
-| Reset | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
-| Send to Surge | Builds the full Surge patch for this point and plays it on the Surge engine. |
+| Latent pad / Knob pad (hidden: `kShowLabControls`) | The latent pad is the orbit view over sound axes and latent dimensions. The knob pad is a flat XY pad that moves groups of the student's knobs together, over a category map. |
+| Start from (hidden: `kShowLabControls`) | Typical <label>, or a random real preset. |
+| Category (hidden: `kShowLabControls`) | The category the decoder is conditioned on (8 labels plus Unknown). |
+| Lock structure (hidden: `kShowLabControls`) | Freezes oscillator types, on/off switches and choices at the lock time. Only continuous values follow the handle. |
+| Reset (hidden: `kShowLabControls`) | Back to the start point (the same preset for Random real preset; choosing that item again draws a new one). |
+| Send to Surge (hidden: `kShowLabControls`) | Builds the full Surge patch for this point and plays it on the Surge engine. |
 | Orbit LFO | Moves the sound slowly around the current point (see below). Latent pad only. |
 | Rate | How fast the orbit goes round: 0.02-2 Hz on a log scale, default 0.1 Hz. Free-running, not tempo-synced. |
 | Depth | How far it strays: 0-0.25 pad units of radius, default 0.08. |
@@ -196,8 +198,11 @@ the handle's Z wobble takes it off the ring), and the moving handle; the axis sl
   move the centre to the new point; changing an axis assignment keeps the centre's sound in the new axes.
 - **Stopping.** Every stop returns the Lab to the centre point. The button again stops it and plays the centre. Reset
   and Start from load their start; Category decodes the centre in the new category; the knob pad enters from the
-  centre's output and plays it; loading a bundle stops it. A Synth-view or host edit stops it too, and the edit stays
-  (the orbit never overwrites it).
+  centre's output and plays it (those four are hidden by `kShowLabControls`); loading a bundle stops it. A
+  Synth-view or host edit, or the logo reset, stops it too, and the edit stays (the orbit never overwrites it). An
+  engine change from outside the Lab (host automation selecting Surge XT) stops it at the centre and plays nothing,
+  so the orbit never switches the engine back. Closing the editor stops it and plays the centre. A step still being
+  decoded when the orbit stops is dropped.
 - **The edit gate.** Turning it on is a user action (R14). If the sound was edited in the Synth view it asks "Replace
   your Synth edits?" first, as any Lab edit does.
 - **Send to Surge** during an orbit stops it and, once the centre is decoded, sends the centre's full Surge patch
@@ -307,34 +312,41 @@ Surge.
 - Lab state is not saved in the host project, except the saved presets (Task 23). The Lab's last write (the edited
   gate) lasts for the session only, and a reopened Lab starts from its first base, not where the pad was left.
 - The fine-tune demo is only a demo: the space is never tuned to your presets.
+- The orbit runs only while the editor is open.
+- While the orbit runs, the Lab writes the changing controls to the host at up to 30 Hz without gestures. Hosts in
+  Write mode may record it, and some may mark the project modified.
+- The default window scale can open below 1x on some Mac laptops (about 0.8 on a 1440 x 900 display). Resize to
+  taste; the size is saved.
 
 ## Try it
 
 Run `scripts/install-models.sh`, then open `build-surge/VAESynth_artefacts/Release/Standalone/VAE Synth.app`, go to
-VAE Lab, hold a note, and check each line. Note anything that differs.
+VAE Lab, hold a note, and check each line. Note anything that differs. This covers what the UI shows now; the
+controls hidden by `kShowLabControls` / `kShowEngineChoice` (knob pad, Start from, Category, Lock, Reset, Send to
+Surge, the Find / Word list switch, the engine selector) are covered by the tests.
 
-- [ ] Type "dark reese bass": you hear Lite, and the reply names Bass and the dark step.
-- [ ] Drag the orbit handle with a held note: the sound follows, no clicks.
+- [ ] Type "dark reese bass" and press Return: Find lists up to 8 matches as chips and numbered dots, the first
+      plays on Lite. Click another chip or dot: its exact preset plays.
+- [ ] Drag the orbit handle with a held note: the sound follows, no clicks ("Exploring from <name>").
 - [ ] Drag empty space, zoom, Reset view: the cloud turns and the sound does not change.
-- [ ] Type "longer": the handle moves along the Short/Long axis.
-- [ ] Lock structure, then drag: oscillator types and switches stay the same.
+- [ ] Assign another axis to X, Y or Z and move its slider: the handle and the sound follow.
 - [ ] Click a preset dot of the current category: jumps to that preset.
 - [ ] Click a CATEGORY MATCH row: the cloud highlights it; the sound does not change.
-- [ ] Knob pad: fine-tune and hear it.
-- [ ] Send to Surge: the Surge patch plays (a held note may cut once on the switch).
-- [ ] Drag again: back on Lite.
+- [ ] Hold a note and turn on Orbit LFO: the sound drifts smoothly around the preset with no flutter, clicks or
+      switch changes; try Rate 2 Hz and Depth 0.25 too. Turn it off: back to the starting sound.
+- [ ] With the orbit running, close and reopen the editor: the starting sound plays, not a step of the orbit.
 - [ ] Close and reopen the editor: your sound is unchanged until you act in the Lab.
 - [ ] Move a knob in the Synth view, then drag the Lab handle: it asks "Replace your Synth edits?"; Keep editing keeps
       your knob, Replace plays the pad.
 - [ ] Drag the handle, close the editor, move a knob in the host (or change nothing), reopen and drag: it asks only
       when something changed.
-- [ ] Send to Surge, close and reopen: the Synth view still says the Surge patch is playing; a knob returns to Lite.
 - [ ] Save preset, name it, move away, open PRESETS and click it: the saved sound plays exactly. Close and reopen
       the editor (or the host project): it is still listed. Rename and Delete (which asks) work.
 - [ ] With 2 presets, Tune space to my presets: the demo fills over 10 s and says "Done (demo)"; nothing changes.
-- [ ] Click the logo: it asks before resetting; Cancel keeps the sound, Reset gives the init patch.
-- [ ] Hold a note and turn on Orbit LFO: the sound drifts smoothly around the preset with no flutter, clicks or
-      switch changes; try Rate 2 Hz and Depth 0.25 too. Turn it off: back to the starting sound.
+- [ ] Click the logo: it asks before resetting; Cancel keeps the sound, Reset gives the init patch, and the Lab's
+      status reads "Reset to init patch".
+- [ ] Resize the window from its corner: it keeps its shape; double-click the corner for the default size; close and
+      reopen: the size is kept.
 
 ## Rendering and profiling the prompt feature
 

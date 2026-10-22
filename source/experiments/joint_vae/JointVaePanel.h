@@ -46,6 +46,13 @@ public:
     /** A change to the controls that did not come from onLite (Synth view, host): the sound is
         "edited" and the next Lab sound edit asks before replacing it (Task 16; message thread). */
     void markEdited();
+    /** The engine left Lite from outside the Lab (host automation): the orbit stops at the centre and plays
+        nothing, so it never switches the engine back (message thread). */
+    void stopOrbitForEngine();
+    /** The editor is closing: the orbit stops and the centre plays, so no off-centre step stays as the sound. */
+    void endOrbitForClose();
+    /** Task 23's logo reset, after the editor's gate check: the Lab's status says so, not "Edited in Synth view". */
+    void markReset();
     /** Task 23: the saved presets as the processor stores them (the editor sets them on open), and their changes
         (message thread). */
     void setPresets (const juce::XmlElement&);

@@ -14,6 +14,9 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState&, juce::Typeface::Ptr, juc
 JointVaePanel::~JointVaePanel() = default;
 void JointVaePanel::loadBundle (const juce::File&) {}
 void JointVaePanel::markEdited() {}
+void JointVaePanel::stopOrbitForEngine() {}
+void JointVaePanel::endOrbitForClose() {}
+void JointVaePanel::markReset() {}
 void JointVaePanel::setPresets (const juce::XmlElement&) {}
 void JointVaePanel::resized() { note.setBounds (getLocalBounds()); }
 void JointVaePanel::paint (juce::Graphics&) {}
@@ -459,6 +462,26 @@ void JointVaePanel::markEdited()
     if (! std::exchange (edited, true))
         setStatus ("Edited in Synth view");
 }
+
+void JointVaePanel::stopOrbitForEngine()
+{
+    if (! orbitSettings.on)
+        return;
+    stopOrbit (false); // playing the centre would select Lite again
+    setStatus ("Orbit stopped: the engine changed");
+}
+
+void JointVaePanel::endOrbitForClose()
+{
+    if (! orbitSettings.on)
+        return;
+    const bool centreDecoded = centreOut.has_value();
+    stopOrbit (false); // current is the centre's output again
+    if (centreDecoded && onLite)
+        onLite (current.lite);
+}
+
+void JointVaePanel::markReset() { setStatus ("Reset to init patch"); }
 
 void JointVaePanel::edit (std::function<void()> change)
 {
@@ -1469,10 +1492,10 @@ void JointVaePanel::decode (bool orbitStep)
     else if (bankMode)
         request.codes = bankCodes; // no decoder: the stored preset plays exactly
     worker.lab (std::move (request),
-                [safe = juce::Component::SafePointer (this)] (juce::Result r, JointVaeWorker::Output out)
+                [safe = juce::Component::SafePointer (this), orbitStep] (juce::Result r, JointVaeWorker::Output out)
                 {
-                    if (! safe)
-                        return;
+                    if (! safe || (orbitStep && ! safe->orbitSettings.on))
+                        return;                     // a step the orbit's stop left behind: the centre stays the sound
                     safe->orbitStepPending = false; // this, or a newer request that superseded the step
                     if (r.failed())
                     {
@@ -1507,7 +1530,11 @@ void JointVaePanel::decode (bool orbitStep)
                     const bool playable = safe->current.patchResult.wasOk();
                     safe->sendButton.setEnabled (playable);
                     if (! playable)
+                    {
                         safe->setStatus (safe->current.patchResult.getErrorMessage(), true);
+                        if (safe->orbitSettings.on && ! safe->centreOut)
+                            safe->stopOrbit (false); // no centre to hold
+                    }
                     else
                     {
                         if (safe->errorShown)

@@ -1239,6 +1239,11 @@ public:
                     const auto defaults = schema::Snapshot::defaults();
                     for (int i = 0; i < schema::kControlCount; ++i)
                         expectEquals (init[i], defaults[i]);
+#if VAE_WITH_SURGE
+                    pumpUntil ([] { return false; }, 100); // the edit gate's async check
+                    if (auto* lab = findChild<experimental::JointVaePanel> (main); juce::String (view) == "VAE Lab")
+                        expect (lab && lab->statusText() == "Reset to init patch", lab ? lab->statusText() : "no Lab");
+#endif
                 }
             }
         }
@@ -2378,6 +2383,73 @@ public:
                     expect (sent.size() == 1 && sent[0] == centrePatch, "the centre's patch");
                     expect (lab.statusText().contains ("on Surge"), lab.statusText());
                 });
+
+            beginTest ("an engine change from outside the Lab stops the orbit instead of being undone");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit&)
+                {
+                    findButton (editor, "VAE Lab")->onClick();
+                    auto* button = findButton (lab, "Orbit LFO");
+                    const auto& kinds = processor.getEngineKinds();
+                    const auto surge = std::find (kinds.begin(), kinds.end(), EngineKind::Surge);
+                    expect (button != nullptr && surge != kinds.end());
+                    if (button == nullptr || surge == kinds.end())
+                        return;
+                    int lites = 0;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        ++lites;
+                        if (play)
+                            play (s);
+                    };
+                    button->onClick();
+                    pumpUntil ([] { return false; }, 600);
+                    expect (lab.isOrbiting() && lites > 3);
+                    const auto surgeIndex = (float) std::distance (kinds.begin(), surge);
+                    processor.getParams().set (PluginProcessor::kEngineParamId, surgeIndex); // as host automation
+                    pumpUntil ([] { return false; }, 300);
+                    expect (! lab.isOrbiting(), "the orbit stops");
+                    const int after = lites;
+                    pumpUntil ([] { return false; }, 300);
+                    expectEquals (lites, after, "no Lite write follows");
+                    expectEquals (processor.getParams().get (PluginProcessor::kEngineParamId), surgeIndex,
+                                  "the engine stays Surge");
+                });
+
+            beginTest ("closing the editor mid-orbit leaves the centre playing");
+            {
+                PluginProcessor processor;
+                settleModel (processor);
+                processor.prepareToPlay (48000.0, 512);
+                if (auto editor = openLab (processor))
+                {
+                    auto& lab = *findChild<experimental::JointVaePanel> (*editor);
+                    findButton (*editor, "VAE Lab")->onClick();
+                    std::optional<schema::Snapshot> centre;
+                    auto play = lab.onLite;
+                    lab.onLite = [&] (const schema::Snapshot& s)
+                    {
+                        if (! centre)
+                            centre = s;
+                        if (play)
+                            play (s);
+                    };
+                    findButton (lab, "Orbit LFO")->onClick();
+                    pumpUntil ([] { return false; }, 900);
+                    expect (centre.has_value() && lab.isOrbiting());
+                    if (centre)
+                    {
+                        for (int i = 0; i < schema::kControlCount; ++i)
+                            (*centre)[i] = schema::sanitiseValue (i, (*centre)[i]);
+                        expect (! same (processor.getControls(), *centre), "an off-centre step is playing");
+                        editor.reset();
+                        expect (same (processor.getControls(), *centre), "the centre plays after the close");
+                    }
+                }
+                processor.releaseResources();
+            }
 
             beginTest ("a status written while the Replace question is open shows after the answer");
             withLab (
