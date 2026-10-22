@@ -60,11 +60,16 @@ JointVaePanel::JointVaePanel (juce::MidiKeyboardState& keys, juce::Typeface::Ptr
     base.setLookAndFeel (&comboLook);
     category.setLookAndFeel (&comboLook);
 
-    for (auto* c : std::initializer_list<juce::Component*> {
-             &latentButton, &knobButton,  &base,      &category,   &lockButton,     &resetButton,    &sendButton,
-             &spectrum,     &orbit,       &listView,  &status,     &promptBox,      &promptGo,       &nudgeButton,
-             &keyboard,     &orbitButton, &orbitRate, &orbitDepth, &orbitRateLabel, &orbitDepthLabel })
+    for (auto* c : std::initializer_list<juce::Component*> { &spectrum, &orbit, &listView, &status, &promptBox,
+                                                             &promptGo, &keyboard, &orbitButton, &orbitRate,
+                                                             &orbitDepth, &orbitRateLabel, &orbitDepthLabel })
         addAndMakeVisible (c);
+    for (auto* c : std::initializer_list<juce::Component*> { &latentButton, &knobButton, &base, &category, &lockButton,
+                                                             &resetButton, &sendButton, &nudgeButton })
+    {
+        addChildComponent (c);
+        c->setVisible (kShowLabControls);
+    }
     addChildComponent (pad);
     addChildComponent (findButton);
     addChildComponent (experimentalTag);
@@ -647,13 +652,14 @@ void JointVaePanel::loadPromptBundle (const juce::File& file)
 
 void JointVaePanel::updatePromptUi()
 {
-    findButton.setVisible (promptReady);
+    findButton.setVisible (promptReady && kShowLabControls);
     experimentalTag.setVisible (promptReady);
     if (! promptReady)
         nudgeButton.setToggleState (true, juce::dontSendNotification);
     const bool find = promptReady && findButton.getToggleState();
-    promptBox.setTextToShowWhenEmpty (find ? "Describe a sound to find, like deep sub bass"
-                                           : "Describe a sound: dark bass, then brighter",
+    promptBox.setTextToShowWhenEmpty (find               ? "Describe a sound to find, like deep sub bass"
+                                      : kShowLabControls ? "Describe a sound: dark bass, then brighter"
+                                                         : "No prompt model: word list, like dark bass, then brighter",
                                       lab::muted);
     if (! knobMode)
         promptGo.setTooltip (find ? "Find presets for this description" : "Apply the word list");
@@ -1242,19 +1248,8 @@ void JointVaePanel::paint (juce::Graphics& g)
     g.drawVerticalLine (layout.left.getRight(), (float) layout.left.getY(), (float) layout.left.getBottom());
     g.drawVerticalLine (layout.right.getX(), (float) layout.right.getY(), (float) layout.right.getBottom());
 
-    // Identity: the green swish mark and the lowercase wordmark
-    const auto x = (float) layout.left.getX(), y = (float) layout.left.getY();
-    juce::Path mark;
-    mark.addArc (x + 2, y + 2, 29, 29, 0.45f, 5.8f, true);
-    mark.startNewSubPath (x + 3, y + 23);
-    mark.cubicTo (x + 10, y + 3, x + 24, y + 1, x + 33, y + 7);
-    mark.startNewSubPath (x + 5, y + 29);
-    mark.cubicTo (x + 16, y + 10, x + 27, y + 9, x + 34, y + 13);
-    g.setColour (lab::green);
-    g.strokePath (mark, juce::PathStrokeType (2.0f));
-    g.setColour (lab::ink);
-    g.setFont (bodyFont (*this, 25.0f, true));
-    g.drawText ("pitcher", (int) x + 43, (int) y - 2, 180, 38, juce::Justification::centredLeft);
+    // Identity: the green swish mark and the lowercase wordmark (the editor's view tabs sit under it)
+    lab::drawWordmark (g, (float) layout.left.getX(), (float) layout.left.getY(), bodyFont (*this, 25.0f, true));
 
     auto heading = categoryArea;
     g.setFont (look.monoFont (15.0f).boldened());
@@ -1290,12 +1285,11 @@ void JointVaePanel::resized()
 
     // Left: identity, category match, the controls (Task 17 decision 2), the spectrogram at the bottom
     auto left = layout.left.withTrimmedRight (20);
-    left.removeFromTop (52);
+    left.removeFromTop (kLeftTop);
     categoryArea = left.removeFromTop (44);
-    spectrum.setBounds (left.removeFromBottom (kSpectrumH));
-    left.removeFromBottom (12);
-    constexpr int controlsH = 8 * kRowH + 7 * kRowGap;
-    const int rowH = juce::jlimit (22, 32, (left.getHeight() - controlsH - 12) / 8);
+    constexpr int rows = kShowLabControls ? 8 : 3; // the Orbit LFO's three rows stay
+    constexpr int controlsH = rows * (kRowH + kRowGap);
+    const int rowH = juce::jlimit (22, 36, (left.getHeight() - controlsH - 12 - 6 - kSpectrumH) / 8);
     for (auto& row : categoryRows)
         row.setBounds (left.removeFromTop (rowH));
     left.removeFromTop (12);
@@ -1305,15 +1299,18 @@ void JointVaePanel::resized()
         left.removeFromTop (kRowGap);
         return r;
     };
-    auto modes = controlRow();
-    latentButton.setBounds (modes.removeFromLeft (modes.getWidth() / 2).withTrimmedRight (3));
-    knobButton.setBounds (modes.withTrimmedLeft (3));
-    base.setBounds (controlRow());
-    category.setBounds (controlRow());
-    auto lockRow = controlRow();
-    lockButton.setBounds (lockRow.removeFromLeft (lockRow.getWidth() * 3 / 5).withTrimmedRight (3));
-    resetButton.setBounds (lockRow.withTrimmedLeft (3));
-    sendButton.setBounds (controlRow());
+    if (kShowLabControls)
+    {
+        auto modes = controlRow();
+        latentButton.setBounds (modes.removeFromLeft (modes.getWidth() / 2).withTrimmedRight (3));
+        knobButton.setBounds (modes.withTrimmedLeft (3));
+        base.setBounds (controlRow());
+        category.setBounds (controlRow());
+        auto lockRow = controlRow();
+        lockButton.setBounds (lockRow.removeFromLeft (lockRow.getWidth() * 3 / 5).withTrimmedRight (3));
+        resetButton.setBounds (lockRow.withTrimmedLeft (3));
+        sendButton.setBounds (controlRow());
+    }
     orbitButton.setBounds (controlRow());
     for (auto [slider, label] :
          { std::pair { &orbitRate, &orbitRateLabel }, std::pair { &orbitDepth, &orbitDepthLabel } })
@@ -1322,6 +1319,8 @@ void JointVaePanel::resized()
         label->setBounds (r.removeFromLeft (r.getWidth() * 2 / 5));
         slider->setBounds (r);
     }
+    left.removeFromTop (6);
+    spectrum.setBounds (left); // at least kSpectrumH: the space the hidden controls free goes here, not to a gap
 
     // Right: the axis list, scrolling within its height
     auto right = layout.right.withTrimmedLeft (20);
@@ -1341,8 +1340,11 @@ void JointVaePanel::resized()
         findButton.setBounds (line.removeFromLeft (92));
         line.removeFromLeft (4);
     }
-    nudgeButton.setBounds (line.removeFromLeft (80));
-    line.removeFromLeft (8);
+    if (nudgeButton.isVisible())
+    {
+        nudgeButton.setBounds (line.removeFromLeft (80));
+        line.removeFromLeft (8);
+    }
     if (experimentalTag.isVisible())
         experimentalTag.setBounds (line.removeFromLeft (92));
     status.setBounds (line);

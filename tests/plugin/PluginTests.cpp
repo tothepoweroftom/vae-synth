@@ -101,11 +101,30 @@ juce::TextButton* findButton (juce::Component& parent, const juce::String& text)
     return nullptr;
 }
 
+/** The editor's inner component (Task 22: the shell scales it), or `editor` itself. */
+juce::Component& mainOf (juce::Component& editor)
+{
+    for (auto* child : editor.getChildren())
+        if (auto* main = dynamic_cast<MainEditorComponent*> (child))
+            return *main;
+    return editor;
+}
+
+/** The first direct child of type T. */
+template <typename T>
+T* directChild (juce::Component& parent)
+{
+    for (auto* child : parent.getChildren())
+        if (auto* hit = dynamic_cast<T*> (child))
+            return hit;
+    return nullptr;
+}
+
 /** The Synth view's knob for a continuous control (its tooltip starts with the control id). */
 juce::Slider* synthKnob (juce::Component& editor, int control)
 {
     const juce::String id (schema::control (control).id);
-    for (auto* child : editor.getChildren())
+    for (auto* child : mainOf (editor).getChildren())
         if (auto* section = dynamic_cast<ControlSection*> (child))
             for (auto* cell : section->getChildren())
                 for (auto* c : cell->getChildren())
@@ -127,7 +146,7 @@ int firstContinuous()
 /** The editor's header status label (a direct child; the Lab has its own). */
 juce::Label* headerStatus (juce::Component& editor)
 {
-    for (auto* child : editor.getChildren())
+    for (auto* child : mainOf (editor).getChildren())
         if (auto* l = dynamic_cast<juce::Label*> (child))
             return l;
     return nullptr;
@@ -305,6 +324,7 @@ DragStats playDrag (const std::vector<schema::Snapshot>& results, int perSecond 
 #if VAE_WITH_SURGE
 /** The Lab's orbit handle moved to x, y with Z kept, as a handle drag reports it. */
 void moveHandle (experimental::LabOrbit& orbit, float x, float y) { orbit.moved ({ x, y, orbit.getHandle()[2] }); }
+#endif
 
 /** A mouse event on `c` at `at` (local); `dragged` marks a release after a drag. */
 juce::MouseEvent mouseAt (juce::Component& c, juce::Point<float> at, juce::Point<float> down, bool dragged = false)
@@ -326,7 +346,6 @@ juce::MouseEvent mouseAt (juce::Component& c, juce::Point<float> at, juce::Point
              1,
              dragged };
 }
-#endif
 } // namespace
 
 class PluginTests final : public juce::UnitTest
@@ -478,13 +497,14 @@ public:
                 if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_BANK_SCREENSHOT", "");
                     shot.isNotEmpty())
                 {
-                    for (auto* child : t->editor->getChildren())
+                    for (auto* child : mainOf (*t->editor).getChildren())
                         if (auto* b = dynamic_cast<juce::TextButton*> (child); b && b->getButtonText() == "VAE Lab")
                             b->onClick();
                     pumpUntil ([] { return false; }, 500);
                     if (auto stream = juce::File (shot).createOutputStream())
                         juce::PNGImageFormat().writeImageToStream (
-                            t->editor->createComponentSnapshot (t->editor->getLocalBounds()), *stream);
+                            mainOf (*t->editor).createComponentSnapshot (mainOf (*t->editor).getLocalBounds()),
+                            *stream);
                 }
             }
         }
@@ -861,7 +881,7 @@ public:
             experimental::JointVaePanel* lab = nullptr;
             juce::TextButton* labButton = nullptr;
             juce::TextButton* synthButton = nullptr;
-            for (auto* child : editor->getChildren())
+            for (auto* child : mainOf (*editor).getChildren())
             {
                 if (auto* panel = dynamic_cast<experimental::JointVaePanel*> (child))
                     lab = panel;
@@ -895,7 +915,7 @@ public:
             std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
             auto* lab = findChild<experimental::JointVaePanel> (*editor);
             auto* labButton = findButton (*editor, "VAE Lab");
-            auto* editorKeys = findChild<FlatKeyboard> (*editor);
+            auto* editorKeys = directChild<PitcherKeyboard> (mainOf (*editor));
             expect (lab != nullptr && labButton != nullptr && editorKeys != nullptr);
             if (lab && labButton && editorKeys)
             {
@@ -906,7 +926,7 @@ public:
                     if (file.isNotEmpty())
                         if (auto stream = juce::File (file).createOutputStream())
                             juce::PNGImageFormat().writeImageToStream (
-                                editor->createComponentSnapshot (editor->getLocalBounds()), *stream);
+                                mainOf (*editor).createComponentSnapshot (mainOf (*editor).getLocalBounds()), *stream);
                 };
 #if VAE_WITH_SURGE
                 auto* orbit = findChild<experimental::LabOrbit> (*lab);
@@ -998,7 +1018,7 @@ public:
                 expect (note != nullptr && note->getText() == "VAE Lab needs a Surge build");
                 shoot ("VAE_LAB_SCREENSHOT");
 #endif
-                expect (editor->createComponentSnapshot (editor->getLocalBounds()).isValid());
+                expect (mainOf (*editor).createComponentSnapshot (mainOf (*editor).getLocalBounds()).isValid());
                 findButton (*editor, "Synth")->onClick();
                 expect (editorKeys->isVisible(), "the editor keyboard is back in the Synth view");
             }
@@ -1028,6 +1048,247 @@ public:
                     status ? status->getText() : juce::String());
         }
 #endif
+
+        // Task 22: no header row; one left column (logo, view tabs, Init, engine) in both views
+        beginTest ("no header row: the view tabs, Init and the engine sit in the left column in both views");
+        {
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto& main = mainOf (*editor);
+            auto* lab = findChild<experimental::JointVaePanel> (main);
+            auto* keys = directChild<PitcherKeyboard> (main);
+            auto* synthTab = findButton (main, "Synth");
+            auto* labTab = findButton (main, "VAE Lab");
+            auto* init = findButton (main, "Init");
+            auto* engine = directChild<juce::ComboBox> (main);
+            auto* status = headerStatus (*editor);
+            expect (dynamic_cast<MainEditorComponent*> (&main) != nullptr, "an inner editor component");
+            expect (lab && keys && synthTab && labTab && init && engine && status);
+            if (lab && keys && synthTab && labTab && init && engine && status)
+            {
+                expect (main.getWidth() == MainEditorComponent::kNativeWidth
+                            && main.getHeight() == MainEditorComponent::kNativeHeight,
+                        "native size " + main.getBounds().toString());
+                const auto l = PitcherLayout::calculate (main.getLocalBounds());
+                const auto inMain = [&] (juce::Component& c) { return main.getLocalArea (&c, c.getLocalBounds()); };
+                const auto checkNav = [&] (const char* view)
+                {
+                    for (auto* c : std::initializer_list<juce::Component*> { synthTab, labTab, init, engine })
+                    {
+                        const auto b = inMain (*c);
+                        expect (c->isVisible() && l.left.contains (b) && b.getY() >= l.left.getY() + 36,
+                                juce::String (view) + ": under the logo in the left column " + b.toString());
+                        auto* hit = main.getComponentAt (b.getCentre()); // the engine box's own label counts
+                        expect (hit == c || c->isParentOf (hit), juce::String (view) + ": on top");
+                    }
+                    expect (inMain (*synthTab).getY() == inMain (*labTab).getY()
+                                && inMain (*synthTab).getRight() <= inMain (*labTab).getX(),
+                            "the tabs share a row");
+                    expect (inMain (*init).getY() >= inMain (*synthTab).getBottom()
+                                && inMain (*engine).getY() >= inMain (*synthTab).getBottom(),
+                            "Init and the engine under the tabs");
+                };
+                // Synth: the sections and the keyboard in the right area, from the top margin
+                checkNav ("Synth");
+                expect (l.left.contains (inMain (*status)) && inMain (*status).getY() >= inMain (*engine).getBottom(),
+                        "the status banner under Init and the engine");
+                int top = main.getHeight();
+                for (auto* section : findAll<ControlSection> (main))
+                {
+                    const auto b = inMain (*section);
+                    top = juce::jmin (top, b.getY());
+                    expect (section->isVisible() && b.getX() >= l.centre.getX() && b.getRight() <= l.right.getRight()
+                                && b.getBottom() <= inMain (*keys).getY(),
+                            "a section right of the left column, above the keyboard: " + b.toString());
+                }
+                expectEquals (top, l.left.getY(), "the workspace starts at the top margin");
+                const auto k = inMain (*keys);
+                expect (keys->isVisible() && k.getX() >= l.centre.getX() && k.getRight() <= l.right.getRight()
+                            && k.getBottom() <= l.left.getBottom(),
+                        "the keyboard is in the right area: " + k.toString());
+                expect (keys->getRangeStart() == 48 && keys->getRangeEnd() == 84, "the Lab's 3-octave keyboard");
+                // Themed: the Synth view's look draws with the Lab's tokens
+                expect (VaeLookAndFeel::paper == experimental::lab::workspace
+                            && VaeLookAndFeel::accent == experimental::lab::green
+                            && VaeLookAndFeel::faint == experimental::lab::line,
+                        "one set of colours");
+                if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_SYNTH_SCREENSHOT", "");
+                    shot.isNotEmpty())
+                    if (auto stream = juce::File (shot).createOutputStream())
+                        juce::PNGImageFormat().writeImageToStream (main.createComponentSnapshot (main.getLocalBounds()),
+                                                                   *stream);
+                labTab->onClick();
+                checkNav ("Lab");
+#if VAE_WITH_SURGE
+                expect (inMain (*lab) == main.getLocalBounds(), "the Lab runs edge to edge: no header");
+                auto* orbit = findChild<experimental::LabOrbit> (*lab);
+                expect (orbit != nullptr && inMain (*orbit).getY() == l.left.getY(),
+                        "the orbit starts at the top margin");
+                // Hidden for now (kShowLabControls): there, but not shown
+                for (auto* text : { "Latent pad", "Knob pad", "Lock structure", "Reset", "Send to Surge", "Find sounds",
+                                    "Word list" })
+                {
+                    auto* b = findButton (*lab, text);
+                    expect (b != nullptr && b->isVisible() == experimental::kShowLabControls, text);
+                }
+                for (auto* box : findAll<juce::ComboBox> (*lab))
+                    expect (box->isVisible() == experimental::kShowLabControls, "the start and category boxes");
+                expect (findButton (*lab, "Orbit LFO") != nullptr && findButton (*lab, "Orbit LFO")->isVisible());
+                // The left column: nothing clipped or overlapping, and no gap above the spectrogram
+                std::vector<juce::Rectangle<int>> column { inMain (*synthTab), inMain (*labTab), inMain (*init),
+                                                           inMain (*engine) };
+                juce::Rectangle<int> spectrum;
+                int above = 0;
+                for (auto* c : lab->getChildren())
+                    if (c->isVisible() && c->getBounds().intersects (l.left))
+                    {
+                        column.push_back (c->getBounds());
+                        if (dynamic_cast<Spectrum*> (c))
+                            spectrum = c->getBounds();
+                        else
+                            above = juce::jmax (above, c->getBottom());
+                    }
+                for (size_t i = 0; i < column.size(); ++i)
+                {
+                    expect (! column[i].isEmpty() && l.left.contains (column[i]),
+                            "not clipped: " + column[i].toString());
+                    for (size_t j = i + 1; j < column.size(); ++j)
+                        expect (! column[i].intersects (column[j]),
+                                "no overlap: " + column[i].toString() + " / " + column[j].toString());
+                }
+                expect (
+                    ! spectrum.isEmpty() && spectrum.getY() - above <= 12 && spectrum.getBottom() == l.left.getBottom(),
+                    "the spectrogram takes the freed space: " + spectrum.toString() + " under " + juce::String (above));
+#else
+                expect (inMain (*lab).getX() >= l.left.getRight() && lab->isVisible(), "the label right of the column");
+                expect (keys->isVisible(), "the editor keyboard under the label");
+#endif
+            }
+        }
+
+        beginTest ("the editor resizes at a fixed ratio and scales its inner component");
+        {
+            PluginProcessor processor;
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* shell = dynamic_cast<PluginEditor*> (editor.get());
+            expect (shell != nullptr && editor->isResizable() && editor->getConstrainer() != nullptr);
+            if (shell && editor->getConstrainer())
+            {
+                constexpr int W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
+                auto& main = mainOf (*editor);
+                const auto s = shell->getSizing();
+                expect (s.min > 0 && s.min <= s.def && s.def <= s.max, "limits");
+                expectWithinAbsoluteError (editor->getConstrainer()->getFixedAspectRatio(), W / (double) H, 1e-9);
+                expectEquals (editor->getConstrainer()->getMinimumWidth(), juce::roundToInt (W * s.min));
+                expectEquals (editor->getConstrainer()->getMaximumWidth(), juce::roundToInt (W * s.max));
+                shell->setSizing ({ 1.0f, 0.5f, 2.0f });
+                for (const auto& b :
+                     { juce::Rectangle<int> (0, 0, W * 2, H), juce::Rectangle<int> (0, 0, W, H / 2 + 10),
+                       juce::Rectangle<int> (0, 0, 1500, 1500) })
+                {
+                    editor->setBoundsConstrained (b);
+                    expectWithinAbsoluteError (editor->getWidth() / (double) editor->getHeight(), W / (double) H, 0.005,
+                                               "the ratio holds at " + editor->getBounds().toString());
+                    const auto scale = shell->getScale();
+                    expectWithinAbsoluteError (scale, (float) editor->getHeight() / H, 1e-4f);
+                    expect (main.getWidth() == W && main.getHeight() == H, "always laid out at the native size");
+                    expect (main.getTransform() == juce::AffineTransform::scale (scale), "scaled by a transform");
+                }
+                // A host scale factor is not applied on top of the transform
+                editor->setScaleFactor (2.0f);
+                expect (editor->getTransform().isIdentity());
+            }
+        }
+
+        beginTest ("the editor scale is saved and restored with the state (not a parameter)");
+        {
+            constexpr int W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
+            const auto params = PluginProcessor().getParameters().size();
+            juce::MemoryBlock state;
+            {
+                PluginProcessor processor;
+                std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+                auto* shell = dynamic_cast<PluginEditor*> (editor.get());
+                expect (shell != nullptr);
+                if (shell)
+                {
+                    shell->setSizing ({ 1.0f, 0.5f, 2.0f });
+                    editor->setSize (juce::roundToInt (W * 1.25f), juce::roundToInt (H * 1.25f));
+                    expectWithinAbsoluteError (processor.getEditorScale(), 1.25f, 0.002f);
+                }
+                expectEquals (processor.getParameters().size(), params, "no host parameter");
+                state = stateOf (processor);
+            }
+            PluginProcessor restored;
+            restored.setStateInformation (state.getData(), (int) state.getSize());
+            expectWithinAbsoluteError (restored.getEditorScale(), 1.25f, 0.002f);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (restored.createEditor());
+            if (auto* shell = dynamic_cast<PluginEditor*> (editor.get()))
+            {
+                const auto s = shell->getSizing();
+                expectWithinAbsoluteError (shell->getScale(), juce::jlimit (s.min, s.max, 1.25f), 0.002f,
+                                           "the editor opens at the saved scale, clamped");
+                // A double-click on the resize corner resets to the default
+                expect (editor->resizableCorner != nullptr);
+                if (editor->resizableCorner != nullptr)
+                {
+                    shell->mouseDoubleClick (mouseAt (*editor->resizableCorner, {}, {}));
+                    expectWithinAbsoluteError (shell->getScale(), s.def, 0.002f, "back to the default");
+                    expectWithinAbsoluteError (restored.getEditorScale(), s.def, 0.002f);
+                }
+            }
+        }
+
+        beginTest ("the default scale follows the display and fits it");
+        {
+            constexpr float W = MainEditorComponent::kNativeWidth, H = MainEditorComponent::kNativeHeight;
+            const auto hd = PluginEditor::Sizing::forDisplay ({ 0, 0, 1920, 1080 }, { 0, 25, 1920, 1055 }, 96.0);
+            expectWithinAbsoluteError (hd.def, 1.0f, 1e-4f);
+            expectWithinAbsoluteError (hd.min, 1.0f / 1.5f, 1e-4f);
+            expectWithinAbsoluteError (hd.max, 1.5f, 1e-4f);
+            const auto small = PluginEditor::Sizing::forDisplay ({ 0, 0, 1280, 800 }, { 0, 25, 1280, 775 }, 96.0);
+            expectWithinAbsoluteError (small.def, std::sqrt (1280.0f * 800.0f / (1920.0f * 1080.0f)), 1e-4f);
+            // A dense display asks for more than fits: the default is clamped to 90% of the user area
+            const auto dense = PluginEditor::Sizing::forDisplay ({ 0, 0, 1512, 982 }, { 0, 38, 1512, 944 }, 254.0);
+            expect (W * dense.def <= 0.9f * 1512 + 0.5f && H * dense.def <= 0.9f * 944 + 0.5f, "fits");
+            expectWithinAbsoluteError (dense.def, juce::jmin (0.9f * 1512 / W, 0.9f * 944 / H), 1e-4f);
+            expectWithinAbsoluteError (dense.max, dense.def * 1.5f, 1e-4f);
+        }
+
+        beginTest ("at 1.5x, the knobs and the keyboard hit as at 1x");
+        {
+            PluginProcessor processor;
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* shell = dynamic_cast<PluginEditor*> (editor.get());
+            auto& main = mainOf (*editor);
+            auto* knob = synthKnob (*editor, firstContinuous());
+            auto* keys = directChild<PitcherKeyboard> (main);
+            expect (shell && knob && keys);
+            if (shell && knob && keys)
+            {
+                shell->setSizing ({ 1.0f, 0.5f, 2.0f });
+                editor->setSize (MainEditorComponent::kNativeWidth * 3 / 2, MainEditorComponent::kNativeHeight * 3 / 2);
+                expectWithinAbsoluteError (shell->getScale(), 1.5f, 1e-4f);
+                const auto at = [&] (juce::Component& c, juce::Point<float> local)
+                { return main.getLocalPoint (&c, local) * 1.5f; }; // the shell's point for a native local point
+                const auto centre = knob->getLocalBounds().getCentre().toFloat();
+                editor->setVisible (true); // hit-testing skips invisible components, as a host shows the editor
+                expect (editor->getComponentAt (at (*knob, centre).roundToInt()) == knob, "the knob");
+                const auto d = mouseAt (*editor, at (*knob, centre), at (*knob, centre))
+                                   .getEventRelativeTo (knob)
+                                   .position.getDistanceFrom (centre);
+                expect (d < 0.01f, "native local position, off by " + juce::String (d));
+                const juce::Point<float> key { keys->getKeyStartPosition (60) + keys->getKeyWidth() * 0.5f,
+                                               (float) keys->getHeight() * 0.85f };
+                expect (editor->getComponentAt (at (*keys, key).roundToInt()) == keys, "the keyboard");
+                // The note lookup needs a window on screen (Component::contains), so check the key geometry instead
+                const auto lp = mouseAt (*editor, at (*keys, key), {}).getEventRelativeTo (keys).position;
+                expect (lp.getDistanceFrom (key) < 0.01f && lp.x > keys->getKeyStartPosition (60)
+                            && lp.x < keys->getKeyStartPosition (60) + keys->getKeyWidth(),
+                        "middle C, at " + lp.toString());
+            }
+        }
 
 #if VAE_WITH_SURGE
         if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
@@ -1155,7 +1416,7 @@ public:
                         shot.isNotEmpty())
                         if (auto stream = juce::File (shot).createOutputStream())
                             juce::PNGImageFormat().writeImageToStream (
-                                editor.createComponentSnapshot (editor.getLocalBounds()), *stream);
+                                mainOf (editor).createComponentSnapshot (mainOf (editor).getLocalBounds()), *stream);
                     expect (! lab.isEdited(), "showing the Synth view is not an edit");
 
                     // Send to Surge: the Synth view says so; the first knob move returns to Lite
@@ -1413,6 +1674,105 @@ public:
                         "the constrained z decodes and plays");
                 });
 
+            beginTest ("at 1.5x, an orbit handle drag, a dot click, the knob pad and the axis sliders hit as at 1x");
+            withLab (
+                [&] (juce::AudioProcessorEditor& editor, PluginProcessor&, experimental::JointVaePanel& lab,
+                     experimental::LabOrbit& orbit)
+                {
+                    auto* shell = dynamic_cast<PluginEditor*> (&editor);
+                    auto* view = findChild<OrbitView> (orbit);
+                    expect (shell != nullptr && view != nullptr);
+                    if (shell == nullptr || view == nullptr)
+                        return;
+                    findButton (editor, "VAE Lab")->onClick();
+                    editor.setVisible (true); // hit-testing skips invisible components, as a host shows the editor
+                    auto& main = mainOf (editor);
+                    // The shell's point for a native local point, at the current scale
+                    const auto at = [&] (juce::Component& c, juce::Point<float> local)
+                    { return main.getLocalPoint (&c, local) * shell->getScale(); };
+                    const auto event = [&] (juce::Component& target, juce::Point<float> to, juce::Point<float> from)
+                    { return mouseAt (editor, at (target, to), at (target, from)).getEventRelativeTo (&target); };
+                    const auto start = orbit.getHandle();
+                    const auto from = orbit.project (start);
+                    const auto to = from + juce::Point<float> (30.0f, -20.0f);
+                    // The same handle drag at 1x, then at 1.5x
+                    const auto drag = [&]
+                    {
+                        orbit.setHandle (start);
+                        const auto f = view->getLocalPoint (&orbit, from), t = view->getLocalPoint (&orbit, to);
+                        expect (editor.getComponentAt (at (*view, f).roundToInt()) == view,
+                                "the handle is on the view");
+                        view->mouseDown (event (*view, f, f));
+                        view->mouseDrag (event (*view, t, f));
+                        view->mouseUp (event (*view, t, f));
+                        return orbit.getHandle();
+                    };
+                    shell->setSizing ({ 1.0f, 0.5f, 2.0f });
+                    editor.setSize (MainEditorComponent::kNativeWidth, MainEditorComponent::kNativeHeight);
+                    const auto one = drag();
+                    editor.setSize (MainEditorComponent::kNativeWidth * 3 / 2,
+                                    MainEditorComponent::kNativeHeight * 3 / 2);
+                    expectWithinAbsoluteError (shell->getScale(), 1.5f, 1e-4f);
+                    const auto scaled = drag();
+                    expect (one != start, "the handle moved");
+                    for (size_t i = 0; i < 3; ++i)
+                        expectWithinAbsoluteError (scaled[i], one[i], 1e-4f, "the same drag at 1.5x");
+                    if (const auto shot = juce::SystemStats::getEnvironmentVariable ("VAE_LAB_SCALED_SCREENSHOT", "");
+                        shot.isNotEmpty())
+                        if (auto stream = juce::File (shot).createOutputStream())
+                            juce::PNGImageFormat().writeImageToStream (
+                                editor.createComponentSnapshot (editor.getLocalBounds()), *stream);
+                    // A dot click: the 7 px hit radius is native pixels at every scale
+                    const experimental::LabOrbit::Position dot { 0.3f, 0.4f, 0.5f };
+                    auto picked = orbit.picked;
+                    int hit = -1;
+                    orbit.picked = [&hit] (int i) { hit = i; };
+                    orbit.setHighlights ({ dot }, -1);
+                    const auto click = [&] (juce::Point<float> p)
+                    {
+                        hit = -1;
+                        orbit.mouseDown (event (orbit, p, p));
+                        orbit.mouseUp (event (orbit, p, p));
+                        return hit;
+                    };
+                    expectEquals (click (orbit.project (dot) + juce::Point<float> (5.0f, 0)), 0, "5 native px: a hit");
+                    expectEquals (click (orbit.project (dot) + juce::Point<float> (9.0f, 0)), -1,
+                                  "9 native px: a miss");
+                    orbit.setHighlights ({}, -1);
+                    orbit.picked = picked;
+                    // An axis slider
+                    for (auto* slider : findAll<juce::Slider> (*findChild<juce::Viewport> (lab)))
+                        if (slider->isShowing())
+                        {
+                            const auto c = slider->getLocalBounds().getCentre().toFloat();
+                            expect (editor.getComponentAt (at (*slider, c).roundToInt()) == slider, "an axis slider");
+                            break;
+                        }
+                    // The knob pad: a press lands where it does at 1x; drag distances are native pixels
+                    if (auto* knob = findButton (lab, "Knob pad");
+                        knob && pumpUntil ([&] { return knob->isEnabled(); }, 30000))
+                    {
+                        knob->onClick();
+                        auto* pad = findChild<experimental::LabPad> (lab);
+                        expect (pad != nullptr && pad->isVisible());
+                        if (pad)
+                        {
+                            const juce::Point<float> p { pad->getWidth() * 0.25f, pad->getHeight() * 0.25f };
+                            expect (editor.getComponentAt (at (*pad, p).roundToInt()) == pad, "the pad");
+                            pad->mouseDown (event (*pad, p, p));
+                            expectWithinAbsoluteError (pad->getDot().x, 0.25f, 1e-3f);
+                            expectWithinAbsoluteError (pad->getDot().y, 0.75f, 1e-3f);
+                            const auto moved =
+                                mouseAt (editor, at (*pad, p) + juce::Point<float> (4.5f, 0), at (*pad, p))
+                                    .getEventRelativeTo (pad);
+                            expectWithinAbsoluteError ((float) moved.getDistanceFromDragStart(), 3.0f, 0.5f,
+                                                       "4.5 screen px is 3 native px");
+                        }
+                    }
+                    else
+                        expect (false, "the knob pad");
+                });
+
             beginTest ("the orbit LFO moves around the point with Lock on and every switch held (Task 19)");
             withLab (
                 [&] (juce::AudioProcessorEditor& editor, PluginProcessor& processor, experimental::JointVaePanel& lab,
@@ -1483,7 +1843,7 @@ public:
                         juce::File (shot).deleteFile();
                         if (auto stream = juce::File (shot).createOutputStream())
                             juce::PNGImageFormat().writeImageToStream (
-                                editor.createComponentSnapshot (editor.getLocalBounds()), *stream);
+                                mainOf (editor).createComponentSnapshot (mainOf (editor).getLocalBounds()), *stream);
                     }
 
                     // Off: the sound returns to the centre point, and Lock to how the user left it
@@ -1901,6 +2261,29 @@ public:
                     expectWithinAbsoluteError (axisPosition (*brightness, lab->latent()), typical, 1e-3f);
                     expect (pumpUntil ([&] { return played > 0; }, 30000), "a prompt plays");
                 }
+            }
+        }
+
+        if (const auto bundle = juce::SystemStats::getEnvironmentVariable ("VAE_JOINT_BUNDLE", ""); bundle.isNotEmpty())
+        {
+            beginTest ("without a prompt bundle, Return runs the word list and the placeholder says so");
+            PluginProcessor processor;
+            settleModel (processor);
+            std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+            auto* lab = findChild<experimental::JointVaePanel> (*editor);
+            auto* prompt = lab ? findChild<juce::TextEditor> (*lab) : nullptr;
+            expect (lab && prompt);
+            if (lab && prompt)
+            {
+                lab->loadBundle (juce::File (bundle));
+                expect (pumpUntil ([&] { return lab->hasOutput(); }, 60000), "bundle loaded");
+                lab->loadPromptBundle (juce::File());
+                expect (! lab->isPromptReady());
+                expect (prompt->getTextToShowWhenEmpty().containsIgnoreCase ("word list"),
+                        prompt->getTextToShowWhenEmpty());
+                lab->submitPrompt ("dark bass");
+                expect (lab->statusText().contains ("Bass"), lab->statusText());
+                expect (lab->promptCandidates().empty(), "no Find");
             }
         }
 

@@ -1,6 +1,8 @@
 /*
-  Editor: Synth and VAE Lab views over one header (engine choice, init, status) and an on-screen
-  keyboard. Both show one sound: the Lab plays by writing the schema controls, which the Synth
+  Editor: Synth and VAE Lab views beside one left column (the pitcher logo, the view tabs, Init, the
+  engine choice and the status banner; no header row), each with a 3-octave keyboard. PluginEditor is a
+  resizable shell that scales MainEditorComponent, always laid out at its native size, by a transform
+  (Task 22). Both views show one sound: the Lab plays by writing the schema controls, which the Synth
   view's knobs (grouped by schema "section") show and edit; an edit there marks the Lab's sound
   edited. The Prompt view (prompt and model tools, a latent XY pad, a sidebar of every control as a
   linear bar) builds only with VAE_PROMPT_TAB=1. Every control binds through params::SliderBinding /
@@ -58,7 +60,8 @@ public:
     int getPreferredWidth() const;
     int getNumCells() const { return cells.size(); }
 
-    static constexpr int kCellW = 64, kCellH = 66, kHeaderH = 28, kRows = 2;
+    static constexpr int kCellW = 64, kCellH = 66, kHeaderH = 28,
+                         kRows = 3; // 3 rows: every section fits beside the left column
     static constexpr int kHeight = kHeaderH + kRows * kCellH;
 
 private:
@@ -116,14 +119,18 @@ private:
     bool spinning = false;
 };
 
-class PluginEditor final
-    : public juce::AudioProcessorEditor
+/** Everything the editor shows, laid out at one native size for both views (the shell scales it). */
+class MainEditorComponent final
+    : public juce::Component
     , private params::ParamStore::Listener
     , private juce::AsyncUpdater
 {
 public:
-    explicit PluginEditor (PluginProcessor&);
-    ~PluginEditor() override;
+    // The pre-Task 22 editor's size: 1240 px wide, and its height at that width
+    static constexpr int kNativeWidth = 1240, kNativeHeight = 820;
+
+    explicit MainEditorComponent (PluginProcessor&);
+    ~MainEditorComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -154,6 +161,9 @@ private:
     PluginProcessor& processor;
     // Shared by every open editor: it is also the global default, which is where JUCE resolves fonts.
     juce::SharedResourcePointer<VaeLookAndFeel> lookAndFeel;
+    // The design's Inter, Inter Bold and Space Mono: the Lab's and the left column's looks
+    juce::Typeface::Ptr inter, interBold, spaceMono;
+    PitcherLookAndFeel columnLook; // the view tabs and Init, as the Lab's buttons
 
     juce::TextButton initButton { "Init" };
 #if VAE_PROMPT_TAB
@@ -182,8 +192,42 @@ private:
     experimental::JointVaePanel jointVaePanel; // its edited gate and Surge patch state live on the processor
 
     juce::OwnedArray<ControlSection> sections;
-    FlatKeyboard keyboard;
+    PitcherKeyboard keyboard; // the Lab's 3-octave keyboard style
     juce::TooltipWindow tooltips { this };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainEditorComponent)
+};
+
+/** The plug-in's editor: a resizable shell at a fixed aspect ratio that scales MainEditorComponent. */
+class PluginEditor final : public juce::AudioProcessorEditor
+{
+public:
+    /** The default scale and its limits. */
+    struct Sizing
+    {
+        float def = 1.0f, min = 1.0f / 1.5f, max = 1.5f;
+        /** From a display's total and user areas and its dpi: sqrt (area / 1920 x 1080) x dpi / 96, clamped so the
+            window fits 90% of the user area; the limits are the default / 1.5 and x 1.5. */
+        static Sizing forDisplay (juce::Rectangle<int> total, juce::Rectangle<int> user, double dpi);
+    };
+
+    explicit PluginEditor (PluginProcessor&);
+
+    void resized() override;
+    void mouseDoubleClick (const juce::MouseEvent&) override; // on the resize corner: back to the default scale
+    // Intentionally empty: the shell scales its content itself, so a host's DPI scale on top would apply twice
+    void setScaleFactor (float) override {}
+
+    float getScale() const { return scale; }
+    const Sizing& getSizing() const { return sizing; }
+    /** Sets the limits and the constrainer, and resizes to the saved scale within them (tests set fixed limits). */
+    void setSizing (Sizing);
+
+private:
+    PluginProcessor& pluginProcessor;
+    MainEditorComponent main;
+    Sizing sizing;
+    float scale = 1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
 };

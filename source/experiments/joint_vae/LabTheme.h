@@ -21,4 +21,32 @@ inline const juce::Colour categories[9] = { juce::Colour (0xff70bcff), juce::Col
                                             juce::Colour (0xffb4b9b4) };
 /** The knob pad's category map alpha (page --map-alpha). */
 inline constexpr float mapAlpha = 0.36f;
+
+/** The identity at the top of the left column, shared by the Lab and the Synth view: the green "spinning ball
+    stripes" mark (a 100 x 100 design drawn in a 32 px square at (x, y)) and the lowercase wordmark in `bold`
+    (25 px Inter Bold), 36 px tall from (x, y). */
+inline void drawWordmark (juce::Graphics& g, float x, float y, juce::Font bold)
+{
+    const auto toMark = juce::AffineTransform::scale (0.32f).translated (x, y);
+    juce::Path clip; // a ball and the rect trailing it
+    clip.addEllipse (36, 24, 52, 52);
+    clip.addRectangle (0, 24, 62, 52);
+    juce::Path stripes;
+    for (const auto& r : { juce::Rectangle<float> (44, 24, 50, 5),
+                           { 26, 33, 70, 5 },
+                           { 12, 42, 84, 5 },
+                           { 4, 51, 92, 5 },
+                           { 18, 60, 78, 5 },
+                           { 36, 69, 60, 5 } })
+        stripes.addRoundedRectangle (r, 2.5f);
+    {
+        const juce::Graphics::ScopedSaveState saved (g);
+        g.reduceClipRegion (clip, toMark);
+        g.setColour (green);
+        g.fillPath (stripes, toMark);
+    }
+    g.setColour (ink);
+    g.setFont (bold);
+    g.drawText ("pitcher", (int) x + 43, (int) y - 2, 180, 38, juce::Justification::centredLeft);
+}
 } // namespace vae::experimental::lab

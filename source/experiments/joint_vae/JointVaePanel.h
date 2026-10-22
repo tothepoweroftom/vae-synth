@@ -13,6 +13,11 @@
 
 namespace vae::experimental
 {
+/** Task 22: hides the Lab's control group (Latent pad / Knob pad, Start from, Category, Lock structure, Reset,
+    Send to Surge) and the prompt's Find sounds / Word list switch. They still work (tests drive them); true shows
+    them again. */
+inline constexpr bool kShowLabControls = false;
+
 // VAE Lab v2: the student's XY-pad page (vae/pitcher/xypad/page_v2.template.html) as a native screen, in the
 // brutalist layout of docs/design/PITCHER-BRUTALIST-JUCE.md: category match and the controls on the left, the
 // orbit view (or the knob pad), the prompt and a 3-octave keyboard in the centre, the axis list on the right.
@@ -27,6 +32,9 @@ public:
     ~JointVaePanel() override;
     void resized() override;
     void paint (juce::Graphics&) override;
+    /** The top of the left column that the Lab leaves to the logo (36 px) and the editor's view tabs, Init and
+        engine selector, which sit over the panel (Task 22). */
+    static constexpr int kLeftTop = 124;
     /** Plays a decoded point on the Lite engine (set by the editor; message thread). */
     std::function<void (const schema::Snapshot&)> onLite;
     /** Plays a decoded full Surge patch (set by the editor; message thread). */

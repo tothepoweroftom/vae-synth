@@ -11,20 +11,48 @@ The Lab needs a `VAE_WITH_SURGE=ON` build; the default build shows "VAE Lab need
 ## Layout (Task 17)
 
 The Lab is laid out as the brutalist design study (`docs/design/PITCHER-BRUTALIST-JUCE.md`, reference image
-`docs/design/pitcher-native-study.png`), in three columns on one continuous `#252525` workspace that runs up under
-the editor's Synth / VAE Lab header. The two sidebars have equal widths and heights; the centre column is flexible.
+`docs/design/pitcher-native-study.png`), in three columns on one continuous `#252525` workspace. There is no header
+row (Task 22): every column starts at the top margin. The two sidebars have equal widths and heights; the centre
+column is flexible.
 
-- **Left:** the pitcher mark, **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> ·
-  <n>%" and eight rows with 3 px bars), then the controls: Latent pad / Knob pad, Start from, Category, Lock structure,
-  Reset, Send to Surge, then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the spectrogram, 0 s / 2 s / 6 s) sits at the bottom; hover it for the
-  details: brightness, attack, length and noise, then the decoded preset.
+- **Left:** the pitcher logo (the green "spinning ball stripes" mark and the lowercase wordmark), the editor's
+  **Synth / VAE Lab** tabs, **Init** and the engine selector (these three are the editor's and are the same in both
+  views), then **CATEGORY MATCH** (the knob forest's guess at the current sound, "Closest: <label> · <n>%" and eight
+  rows with 3 px bars), then the **Orbit LFO** button with its Rate and Depth sliders. **Expected sound** (the
+  spectrogram, 0 s / 2 s / 6 s) fills the rest of the column down to the bottom; hover it for the details:
+  brightness, attack, length and noise, then the decoded preset. The control group is hidden for now (see below).
 - **Centre:** the orbit view (or, on the knob pad, the flat pad with its category map), the Replace banner and Find's
-  chips when there are any, the single-line prompt with its submit button, a line with Find sounds / Word list, the
-  "experimental" tag and the status, and the 3-octave keyboard (C3-C6, MIDI 48-84), which replaces the editor's
+  chips when there are any, the single-line prompt with its submit button, a line with the "experimental" tag and
+  the status, and the 3-octave keyboard (C3-C6, MIDI 48-84), which replaces the editor's
   keyboard while the Lab is shown.
 - **Right:** the axis list under one **AXES** tab (**KNOB GROUPS** on the knob pad): a flat list, sound axes first,
   then the latent dimensions in bundle order, each row with X / Y / Z buttons and, when assigned, its low-high slider.
   It scrolls within its height. There is no Presets tab and no favourites.
+
+### The Synth view, sizing and hidden controls (Task 22)
+
+- **Synth view.** The same left column (logo, tabs, Init, engine, then the status banner, for example "Playing the
+  full Surge patch from the Lab. Knobs return to Lite"), then the knob sections in the remaining width, three rows of
+  cells per section, and the Lab's 3-octave `PitcherKeyboard` along the bottom. It uses the same tokens: the Synth
+  view's `VaeLookAndFeel` takes its colours from `LabTheme.h` (graphite, ink, green, hairline), the tabs and Init use
+  `PitcherLookAndFeel`, and section rules are hairlines. Every control behaves as before. The default (non-Surge)
+  build shows the same column and the "VAE Lab needs a Surge build" label right of it.
+- **Resizing.** `PluginEditor` is a thin resizable shell. `MainEditorComponent` holds everything and is always laid
+  out at its native size, 1240 x 820 px (`kNativeWidth`, `kNativeHeight`; the same for both views). The shell scales
+  it by an `AffineTransform`, so the window keeps that aspect ratio at any size; mouse, keyboard and hit-testing go
+  through the transform and stay in native pixels (the 7 px dot and 14 px handle radii, pad presses and drag
+  distances). The default scale comes from the primary display, `sqrt (area / 1920 x 1080) x dpi / 96`, clamped so
+  the window fits 90% of the display's user area. The limits are the default / 1.5 and x 1.5. The scale is saved
+  with the plug-in state (the `editorScale` attribute, not a host parameter) and restored, clamped, when the editor
+  opens. Double-click the resize corner to go back to the default. The host's own DPI scale factor is ignored
+  (`setScaleFactor` does nothing) so it is not applied twice.
+- **Hidden for now.** Latent pad / Knob pad, Start from (Typical <label> / Random real preset), Category, Lock
+  structure, Reset, Send to Surge and the prompt's Find sounds / Word list switch are hidden, not removed: their code
+  and tests stay, and the freed space goes to Category match and Expected sound. To show them again, set
+  `kShowLabControls` to `true` in `source/experiments/joint_vae/JointVaePanel.h`.
+- **Prompt while the switch is hidden.** Return runs **Find sounds** whenever a prompt bundle is installed. Without
+  one, the box falls back to the word list, and its placeholder says so ("No prompt model: word list, ..."). With p1
+  installed, word-list nudges such as "brighter" cannot be reached from the UI until the switch is shown again.
 
 Clicking a CATEGORY MATCH row highlights that category's presets in the cloud (and dims the rest); clicking it again
 clears it. It is visual only: the decoder's category and the sound stay.
@@ -73,7 +101,7 @@ schema controls, so the Synth view's knobs show the Lab's preset and you can twe
 ## Workflow: prompt, preset, pad, tweak
 
 1. **Prompt.** Type a sound ("deep sub bass") in the box under the orbit view. Two actions share the box, chosen by
-   the Find sounds / Word list switch under it; Return runs the chosen one:
+   the Find sounds / Word list switch (hidden for now: Return runs Find with a prompt bundle, else the word list):
    - **Find sounds** (experimental; the default with the prompt bundle installed) sends the whole text to the student's text
      model and lists up to 8 real presets from its bank, like `Bass · 0142`. The first is selected. No word-list
      adjectives are applied on top.
@@ -218,7 +246,7 @@ Surge.
 - The knob pad has no preset dots and no axis captions on the pad (the axis list shows which group is on X and Y).
 - In the orbit view the arrow keys move the handle (as the old pad); the study's arrow-key camera rotation is not
   available from the keyboard (drag to orbit, Home to reset).
-- The Lab needs the editor's 1240 px width; `PitcherLayout` targets at least 1000 px and has no compact layout.
+- The editor lays out at 1240 x 820 px and scales as a whole; `PitcherLayout` has no compact layout of its own.
 - `pruning.json` for `j48w_b05` is assumed identical to `j48`'s. The student has not confirmed it, and a wrong one
   would give wrong patches silently.
 - The p0/p1 text-encoder preprocessing is our reading of the student's code; there are no student golden outputs.

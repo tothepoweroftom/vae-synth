@@ -109,6 +109,9 @@ public:
     juce::File getDecoderModelFile() const;
     juce::String getLastPrompt() const;
     void setLastPrompt (const juce::String& prompt);
+    /** The editor's scale (Task 22): saved with the state, not a host parameter. 0 until an editor sets it. */
+    float getEditorScale() const;
+    void setEditorScale (float);
 
     /** Generator status, plus a note when the saved model file is missing. */
     juce::String describeModel() const;
@@ -136,6 +139,7 @@ private:
     juce::File modelPath;      // saved with the state; may point at a missing file
     bool modelMissing = false; // modelPath did not exist when the state was loaded
     juce::String lastPrompt;
+    float editorScale = 0.0f;
     std::atomic<uint64_t> modelRequest { 0 }; // latest loadDecoderModel / state load wins
 
     std::optional<schema::Snapshot> labControls; // message thread

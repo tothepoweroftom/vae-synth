@@ -18,6 +18,7 @@ constexpr const char* kAttrParams = "params";
 constexpr const char* kAttrModel = "decoderModel";
 constexpr const char* kAttrPrompt = "prompt";
 constexpr const char* kAttrSchema = "schemaVersion";
+constexpr const char* kAttrEditorScale = "editorScale";
 } // namespace
 
 PluginProcessor::PluginProcessor()
@@ -337,6 +338,7 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
         const juce::ScopedLock sl (stateLock);
         xml.setAttribute (kAttrModel, modelPath.getFullPathName());
         xml.setAttribute (kAttrPrompt, lastPrompt);
+        xml.setAttribute (kAttrEditorScale, editorScale);
     }
     copyXmlToBinary (xml, destData);
 }
@@ -362,6 +364,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         // so saving again does not lose the reference.
         const juce::ScopedLock sl (stateLock);
         lastPrompt = xml->getStringAttribute (kAttrPrompt);
+        editorScale = (float) xml->getDoubleAttribute (kAttrEditorScale, editorScale);
         modelPath = model;
         modelMissing = missing;
     }
@@ -378,4 +381,16 @@ void vae::PluginProcessor::setLastPrompt (const juce::String& prompt)
 {
     const juce::ScopedLock sl (stateLock);
     lastPrompt = prompt;
+}
+
+float vae::PluginProcessor::getEditorScale() const
+{
+    const juce::ScopedLock sl (stateLock);
+    return editorScale;
+}
+
+void vae::PluginProcessor::setEditorScale (float scale)
+{
+    const juce::ScopedLock sl (stateLock);
+    editorScale = scale;
 }
