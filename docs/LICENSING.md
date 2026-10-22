@@ -14,10 +14,10 @@ Not legal advice. Get a review before distributing binaries.
 
 ## Build variants
 
-- **Default (`VAE_WITH_SURGE=OFF`)**: contains no Surge code. The schema
+- **Lite-only (`VAE_WITH_SURGE=OFF`)**: contains no Surge code. The schema
   stores Surge parameter *names* and `SurgeCurves.h` re-implements Surge's
   documented value ranges; no Surge source is copied.
-- **`VAE_WITH_SURGE=ON`**: the plug-in links Surge XT, so a distributed binary
+- **Default (`VAE_WITH_SURGE=ON`)**: the plug-in links Surge XT, so a distributed binary
   is a combined work under the GPL-3.0-or-later. Use it for research and
   dataset rendering, or ship it as GPL with corresponding source.
 

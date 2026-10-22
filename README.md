@@ -72,7 +72,7 @@ Options:
 
 | Option | Default | |
 |---|---|---|
-| `VAE_WITH_SURGE` | `ON` | Include the Surge XT backend by default. **Makes the binary GPL-3.0-or-later**; see `docs/LICENSING.md`. |
+| `VAE_WITH_SURGE` | `ON` | Include the Surge XT backend. **Makes the binary GPL-3.0-or-later**; see `docs/LICENSING.md`. Set `OFF` for a Lite-only build. |
 | `VAE_JUCE_DIR` | fetch `VAE_JUCE_TAG` (8.0.10) | Use a local JUCE checkout |
 | `VAE_ORT_ROOT` | fetch `VAE_ORT_VERSION` (1.22.0) | Use an extracted ONNX Runtime package |
 | `VAE_SURGE_DIR` | fetch `VAE_SURGE_REV` | Use a local Surge checkout (with submodules) |

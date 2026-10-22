@@ -192,6 +192,20 @@ def windows_redist(work):
     return dest
 
 
+def validate_surge_models(source):
+    data = source / "surge-data"
+    if not (data / "patches_factory/Templates/Init Saw.fxp").is_file():
+        raise FileNotFoundError("Surge installers require surge-data/patches_factory/Templates/Init Saw.fxp in the model bundle.")
+    schema = source / "joint-vae/schema.json"
+    if schema.is_file():
+        features = json.loads(schema.read_text(encoding="utf-8"))["features"]
+        needed = {name for feature in features if feature["name"].endswith("/wt")
+                  for name in feature["options"] if name != "other"} | {"Sine Octaves"}
+        present = {path.stem for path in data.rglob("*") if path.suffix.lower() in (".wt", ".wav")}
+        if needed - present:
+            raise FileNotFoundError("Missing Surge wavetables: " + ", ".join(sorted(needed - present)))
+
+
 def stage_models(source, destination):
     required = {
         "joint-vae": ("bundle.json", "decoder.onnx", "sound_encoder.onnx", "sound_decoder.onnx",
@@ -258,6 +272,8 @@ def windows_package(artifacts, work, info, args):
     models = work / "models"
     models.mkdir()
     if args.models_dir:
+        if info.get("surge", "OFF").upper() in ("ON", "TRUE", "1"):
+            validate_surge_models(args.models_dir)
         stage_models(args.models_dir, models)
     elif not args.without_models:
         raise ValueError("Windows installers require --models-dir (or --without-models for a stub-only development installer).")
@@ -277,8 +293,11 @@ def windows_package(artifacts, work, info, args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path)
-    parser.add_argument("--with-surge", action="store_true", default=True,
-                        help="Include the Surge backend (enabled by default)")
+    engines = parser.add_mutually_exclusive_group()
+    engines.add_argument("--with-surge", dest="with_surge", action="store_true", default=None,
+                         help="Build with Surge (the default)")
+    engines.add_argument("--without-surge", dest="with_surge", action="store_false",
+                         help="Explicitly build the Lite-only variant")
     parser.add_argument("--test", action="store_true", help="Build tests and require CTest to pass")
     parser.add_argument("--package", action="store_true", help="Create an installer after building")
     parser.add_argument("--package-only", action="store_true", help="Package an existing Release build")
@@ -307,7 +326,7 @@ def main():
             parser.error("Copy the Mac runtime bundles to installer/models, or pass --models-dir. Use --without-models only for a stub-only installer.")
     if args.sign and not packaging:
         parser.error("--sign requires --package or --package-only")
-    if args.package_only and (args.test or args.cmake_arg):
+    if args.package_only and (args.test or args.with_surge is not None or args.cmake_arg):
         parser.error("--package-only uses the existing build; omit build/test options")
     if args.sign:
         if system == "Darwin":
@@ -322,14 +341,14 @@ def main():
             require_env(name)
     if args.notarize:
         require_env("VAE_MAC_NOTARY_PROFILE")
-    variant = "surge" if args.with_surge else "lite"
+    variant = "lite" if args.with_surge is False else "surge"
     label = f"mac-{args.mac_arch}" if system == "Darwin" else "windows-x64"
     build = (args.build_dir or ROOT / f"build-release-{label}-{variant}").resolve()
     if not args.package_only:
         generator = ["-G", "Xcode", f'-DCMAKE_OSX_ARCHITECTURES={"arm64;x86_64" if args.mac_arch == "universal" else args.mac_arch}'] if system == "Darwin" else [
             "-G", "Visual Studio 17 2022", "-A", "x64"]
         run("cmake", "-S", ROOT, "-B", build, *generator,
-            f'-DVAE_WITH_SURGE={"ON" if args.with_surge else "OFF"}',
+            f'-DVAE_WITH_SURGE={"OFF" if args.with_surge is False else "ON"}',
             f'-DVAE_BUILD_TESTS={"ON" if args.test else "OFF"}',
             "-DVAE_PLUGIN_FORMATS=VST3;Standalone", *args.cmake_arg)
         run("cmake", "--build", build, "--config", "Release", "--parallel", args.jobs)

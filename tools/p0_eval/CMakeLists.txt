@@ -6,3 +6,6 @@ target_compile_definitions(vae_p0_eval PRIVATE JUCE_MODAL_LOOPS_PERMITTED=1 JUCE
 target_link_libraries(vae_p0_eval PRIVATE vae_engine vae_joint_experiment juce::juce_audio_formats juce::juce_dsp
     juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 vae_copy_onnxruntime_next_to(vae_p0_eval)
+if(WIN32)
+    target_link_libraries(vae_p0_eval PRIVATE psapi)
+endif()

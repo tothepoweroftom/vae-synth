@@ -10,6 +10,17 @@ import release
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_release_defaults_to_surge_with_explicit_lite_opt_out(self):
+        for flags, expected, suffix in (([], "ON", "surge"), (["--without-surge"], "OFF", "lite"),
+                                        (["--with-surge"], "ON", "surge")):
+            with self.subTest(flags=flags), patch("sys.argv", ["release.py", *flags]), \
+                    patch.object(release.platform, "system", return_value="Windows"), \
+                    patch.object(release, "run") as run:
+                release.main()
+            configure = run.call_args_list[0].args
+            self.assertIn(f"-DVAE_WITH_SURGE={expected}", configure)
+            self.assertTrue(str(configure[configure.index("-B") + 1]).endswith(f"windows-x64-{suffix}"))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="vae release test ")
         self.addCleanup(self.temp.cleanup)
@@ -100,6 +111,21 @@ class ReleaseTests(unittest.TestCase):
         (source / "generator").mkdir(parents=True)
         with self.assertRaisesRegex(FileNotFoundError, "Incomplete model bundle"):
             release.stage_models(source, self.work / "models")
+
+    def test_surge_packaging_requires_template_and_schema_wavetables(self):
+        source = self.root / "models"
+        with self.assertRaisesRegex(FileNotFoundError, "Surge installers require"):
+            release.validate_surge_models(source)
+        template = source / "surge-data/patches_factory/Templates/Init Saw.fxp"
+        template.parent.mkdir(parents=True)
+        template.write_bytes(b"patch")
+        schema = source / "joint-vae/schema.json"
+        schema.parent.mkdir()
+        schema.write_text(json.dumps({"features": [{"name": "osc/wt", "options": ["Sine Octaves", "other"]}]}))
+        with self.assertRaisesRegex(FileNotFoundError, "Missing Surge wavetables: Sine Octaves"):
+            release.validate_surge_models(source)
+        (source / "surge-data/Sine Octaves.wt").write_bytes(b"wavetable")
+        release.validate_surge_models(source)
 
     def test_signtool_uses_explicit_certificate_and_verifies(self):
         with patch.dict(release.os.environ, {

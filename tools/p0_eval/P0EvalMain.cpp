@@ -22,8 +22,19 @@
 #include "experiments/joint_vae/PromptModel.h"
 #include "experiments/joint_vae/PromptWords.h"
 
+#if JUCE_WINDOWS
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <psapi.h>
+#elif JUCE_MAC
 #include <mach/mach.h>
 #include <sys/resource.h>
+#else
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
 
 #include <atomic>
 #include <iostream>
@@ -45,16 +56,38 @@ const std::vector<juce::String> kPrompts = {
 
 double residentMb()
 {
+#if JUCE_WINDOWS
+    PROCESS_MEMORY_COUNTERS info {};
+    if (! GetProcessMemoryInfo (GetCurrentProcess(), &info, sizeof (info)))
+        return 0.0;
+    return (double) info.WorkingSetSize / 1048576.0;
+#elif JUCE_MAC
     mach_task_basic_info info {};
     mach_msg_type_number_t n = MACH_TASK_BASIC_INFO_COUNT;
     task_info (mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t) &info, &n);
     return (double) info.resident_size / 1048576.0;
+#else
+    const auto fields = juce::StringArray::fromTokens (juce::File ("/proc/self/statm").loadFileAsString(), false);
+    return fields.size() > 1 ? (double) fields[1].getLargeIntValue() * (double) sysconf (_SC_PAGESIZE) / 1048576.0
+                             : 0.0;
+#endif
 }
 double peakMb()
 {
+#if JUCE_WINDOWS
+    PROCESS_MEMORY_COUNTERS info {};
+    if (! GetProcessMemoryInfo (GetCurrentProcess(), &info, sizeof (info)))
+        return 0.0;
+    return (double) info.PeakWorkingSetSize / 1048576.0;
+#else
     rusage u {};
     getrusage (RUSAGE_SELF, &u);
+#if JUCE_MAC
     return (double) u.ru_maxrss / 1048576.0; // bytes on macOS
+#else
+    return (double) u.ru_maxrss / 1024.0; // KiB on Linux
+#endif
+#endif
 }
 void pump (int ms) { juce::MessageManager::getInstance()->runDispatchLoopUntil (ms); }
 bool pumpUntil (const std::function<bool()>& done, int timeoutMs)

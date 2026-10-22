@@ -39,7 +39,35 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
+if(MSVC)
+    # Surge forces /MT, while JUCE and the Rust tokenizer use /MD. LuaJIT is
+    # built by a batch script at configure time, so it needs the same CRT via CL.
+    set(_vae_saved_cl "$ENV{CL}")
+    set(ENV{CL} "$ENV{CL} /MD")
+    set(_vae_luajit_crt_stamp "${CMAKE_BINARY_DIR}/vae-luajit-md.stamp")
+    if(NOT EXISTS "${_vae_luajit_crt_stamp}")
+        file(REMOVE "${CMAKE_BINARY_DIR}/libs/luajitlib/LuaJIT/bin/lua51.lib")
+    endif()
+endif()
+
 add_subdirectory("${VAE_SURGE_DIR}" "${CMAKE_BINARY_DIR}/_deps/surge-build" EXCLUDE_FROM_ALL)
+
+if(MSVC)
+    set(ENV{CL} "${_vae_saved_cl}")
+    file(WRITE "${_vae_luajit_crt_stamp}" "LuaJIT built with /MD\n")
+    function(vae_surge_dynamic_crt directory)
+        get_property(targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+        foreach(target IN LISTS targets)
+            set_property(TARGET ${target} PROPERTY
+                MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+        endforeach()
+        get_property(children DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+        foreach(child IN LISTS children)
+            vae_surge_dynamic_crt("${child}")
+        endforeach()
+    endfunction()
+    vae_surge_dynamic_crt("${VAE_SURGE_DIR}")
+endif()
 
 # Surge's common/CMakeLists.txt assumes it is the top-level project and refers
 # to ${CMAKE_SOURCE_DIR}/libs/r8brain-free-src. Re-point those entries at the

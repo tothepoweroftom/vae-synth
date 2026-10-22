@@ -37,8 +37,11 @@ py -3 scripts/release.py --test
 
 Both wrappers use `scripts/release.py`. Builds live in
 `build-release-<platform>-<variant>/VAESynth_artefacts/Release`.
-Default variant: Surge (`VAE_WITH_SURGE=ON`). The legacy `--with-surge` flag
-is still accepted. See [licensing notes](LICENSING.md) before distributing it.
+Default variant: Surge (including the Lite backend). Use `--without-surge` for
+an explicit Lite-only build in its own directory; `--with-surge` remains accepted.
+Surge builds are GPL-3.0-or-later; see [licensing notes](LICENSING.md).
+Existing CMake caches keep their previous setting: reconfigure them with
+`-DVAE_WITH_SURGE=ON`, or use the default `build-release-windows-x64-surge` directory.
 `--test` builds and runs the project's CTest suite, stopping on failure.
 Use `--jobs 6` to change parallelism (default: 3).
 
@@ -71,6 +74,8 @@ Windows release installers embed the exported model bundles. Copy the Mac's
 NPZ files and ONNX external weights. Run `git lfs pull` if these assets use LFS.
 Packaging rejects missing required files and unresolved LFS pointers, and records
 SHA-256 hashes of the embedded files in `installed-manifest.json`.
+Surge installers also require the Init Saw template and every wavetable named
+by the joint-VAE schema, so Lab playback works without the source checkout.
 When the joint-vae and prompt-p1 manifests are present at configure time, CTest
 also runs `vae_model_bundle_tests`: native ONNX inference and parity checks on
 the exact bundled models, using an isolated per-user cache directory.
