@@ -740,3 +740,34 @@ std::array<float, 3> orbitPosition (std::array<float, 3> centre, const OrbitSett
 - [ ] **Step 2:** Run the native `PromptModelTests` and the plugin prompt tests with `VAE_PROMPT_BUNDLE=models/prompt-p1/prompt.json`. Expected: parity passes, with no code changes beyond any hard-coded p0 assumptions. Keep the p0 tests passing too.
 - [ ] **Step 3:** Re-render the listening sheet with p1, using the same prompts and `vae_p0_eval`. Record next to p0: the categories returned, whether the contrasting pairs (dark/bright, short/long, soft/sharp) now select different first rows, and coverage. Make no quality claims; listening is the user's.
 - [ ] **Step 4:** Switch the installer and docs to p1, then run the full ctest in both builds and commit.
+
+---
+
+### Task 22: No header row; brutalist theme for the Synth view too (after Task 19)
+
+*User request (22 Oct 2026): "avoid the empty space up top, move the Synth / VAE Lab buttons to the first column under the logo name. Also theme the Synth view the same way as the Lab."*
+
+**Behaviour (my calls are marked):**
+- **Remove the editor's top header row** in both views. The workspace starts at the top margin.
+- **Left column, shared by both views, from the top:**
+  - the "pitcher" logo;
+  - the **Synth / VAE Lab** view tabs, styled as the design doc's tabs;
+  - *my call:* **Init** and the **engine selector** (Lite / Surge XT) directly under the tabs;
+  - *my call:* the Surge banner ("Playing the full Surge patch from the Lab…") moves here from the old header.
+- **Lab view:** the rest of the left column stays as Task 17/19 built it: Category match, the controls, the Orbit LFO controls, and the Expected sound at the bottom. The column now starts with the logo and tabs, so recheck that everything still fits without clipping at the editor's size, and compact it where needed.
+- **Synth view:** the same left column, then the existing knob sections in the remaining width.
+  - Theme it with the brutalist tokens: graphite `#252525`, green `#70ff63` accents, square controls, Space Mono labels and hairline section rules. Use `PitcherLookAndFeel` plus `LabTheme.h`, so every colour is still defined once.
+  - *My call:* use the same 3-octave `PitcherKeyboard` along the bottom of the Synth view's right area, so both views share one keyboard style.
+  - Section layout and every control's behaviour stay unchanged.
+- The non-Surge build still works: the Lab shows its label, and the Synth view is fully themed.
+
+**Files:** `source/plugin/PluginEditor.{h,cpp}` (header removal, shared left column, Synth theming), possibly the `JointVaePanel` left-column layout, `tests/plugin/PluginTests.cpp`, and `docs/JOINT-VAE-LAB.md`.
+
+- [ ] **Step 1: Write failing layout tests:**
+  - No component sits in a top header band in either view.
+  - The view tabs, Init and the engine selector sit in the left column under the logo in both views.
+  - The Synth view's sections are right of the left column and don't overlap it.
+  - The keyboard is inside the right/centre area.
+  - Lab layout: no left-column component is clipped.
+- [ ] **Step 2:** Implement.
+- [ ] **Step 3:** Take screenshots of both views and compare them with `docs/design/pitcher-native-study.png`. Run the full ctest in both builds. vae_format_check failures on the user's uncommitted Lite files are expected. Commit.
